@@ -122,47 +122,34 @@ const BookingForm = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!formData.price) {
-      setError("Please wait for the price calculation before submitting.");
-      return;
-    }
+  setLoading(true);
+  try {
+    console.log("Submitting booking data:", formData);
+    const response = await api.post("/create-payment-intent", {
+      price: formData.price,
+      bookingData: {
+        ...formData,
+        price: Number(formData.price),
+        adults: Number(formData.adults),
+        children: Number(formData.children),
+        deposit: Number(formData.deposit),
+      },
+    });
 
-    const today = new Date().toISOString().split("T")[0];
-    if (formData.arrivalDate < today) {
-      setError("Arrival date cannot be before today.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await api.post("/create-payment-intent", {
-        price: formData.price,
-        bookingData: {
-          ...formData,
-          price: Number(formData.price),
-          adults: Number(formData.adults),
-          children: Number(formData.children),
-          deposit: Number(formData.deposit),
-        },
-      });
-
-      console.log("Payment intent response:", response.data);
-      setClientSecret(response.data.clientSecret);
-      setShowPayment(true);
-      setError(null);
-    } catch (err) {
-      console.error("Error initializing payment:", err);
-      setError(
-        err.response?.data?.error ||
-          "An error occurred while initializing payment."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    console.log("Payment intent created:", response.data);
+    setClientSecret(response.data.clientSecret);
+    setShowPayment(true);
+    setError(null);
+  } catch (err) {
+    console.error("Error:", err);
+    setError(err.response?.data?.error || "An error occurred");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handlePaymentSuccess = () => {
     setSuccessMessage("Payment successful! Your booking is confirmed.");

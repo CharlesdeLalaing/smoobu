@@ -50,12 +50,12 @@ const BookingConfirmation = () => {
           </h1>
 
           <p className="text-lg text-gray-600 mb-8">
-            Thank you for your booking. We've sent a confirmation email with all
+            Thank you for your booking. Weve sent a confirmation email with all
             the details.
           </p>
 
           <div className="bg-gray-50 rounded-lg p-6 mb-8">
-            <h3 className="text-lg font-semibold mb-2">What's Next?</h3>
+            <h3 className="text-lg font-semibold mb-2">Whats Next?</h3>
             <ul className="text-left space-y-3">
               <li className="flex items-start">
                 <svg
