@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import PaymentForm from "./components/PaymentForm";
 
+// Initialize Stripe
+const stripePromise = loadStripe(
+  "pk_test_51QHmafIhkftuEy3nUnQeADHtSgrHJDHFtkQDfKK7dtkN8XwYw4qImtQTAgGiV0o9TR2m2DZfHhc4VmugNUw0pEuF009YsiV98I"
+); // Replace with your key
+
+// Create API instance
 const api = axios.create({
   baseURL: "http://localhost:3000/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 const BookingForm = () => {
@@ -32,6 +44,8 @@ const BookingForm = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [dailyRates, setDailyRates] = useState({});
   const [priceDetails, setPriceDetails] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
+  const [clientSecret, setClientSecret] = useState(null);
 
   const fetchRates = async (apartmentId, startDate, endDate) => {
     if (!apartmentId || !startDate || !endDate) return;
@@ -56,7 +70,7 @@ const BookingForm = () => {
 
         setFormData((prevData) => ({
           ...prevData,
-          price: response.data.priceDetails.finalPrice,
+          price: response.data.priceDetails?.finalPrice || 0,
         }));
 
         setError(null);
@@ -108,66 +122,58 @@ const BookingForm = () => {
     }));
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!formData.price) {
-    setError("Please wait for the price calculation before submitting.");
-    return;
-  }
-
-  const today = new Date().toISOString().split("T")[0];
-  if (formData.arrivalDate < today) {
-    setError("Arrival date cannot be before today.");
-    return;
-  }
-
-  setLoading(true);
-  try {
-    // Prepare the reservation data
-    const reservationData = {
-      ...formData,
-      price: Number(formData.price),
-      adults: Number(formData.adults),
-      children: Number(formData.children),
-      deposit: Number(formData.deposit),
-      // Make sure dates are in the correct format
-      arrivalDate: formData.arrivalDate,
-      departureDate: formData.departureDate,
-      // Add any required fields that Smoobu expects
-      priceStatus: 1,
-      depositStatus: 1,
-      language: "en",
-    };
-
-    console.log("Submitting reservation:", reservationData);
-
-    const response = await api.post("/reservations", reservationData);
-
-    console.log("Booking response:", response.data);
-    setSuccessMessage("Booking created successfully!");
-    setError(null);
-
-    // Optionally reset form or redirect
-    // resetForm(); // If you want to reset the form
-    // or
-    // window.location.href = '/confirmation'; // If you want to redirect
-  } catch (err) {
-    console.error("Booking error:", err);
-    const errorMessage =
-      err.response?.data?.error ||
-      err.response?.data?.detail ||
-      "An error occurred while creating the booking.";
-    setError(errorMessage);
-
-    // Log detailed error information
-    if (err.response?.data) {
-      console.error("Error details:", err.response.data);
+    if (!formData.price) {
+      setError("Please wait for the price calculation before submitting.");
+      return;
     }
-  } finally {
-    setLoading(false);
-  }
-};
+
+    const today = new Date().toISOString().split("T")[0];
+    if (formData.arrivalDate < today) {
+      setError("Arrival date cannot be before today.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await api.post("/create-payment-intent", {
+        price: formData.price,
+        bookingData: {
+          ...formData,
+          price: Number(formData.price),
+          adults: Number(formData.adults),
+          children: Number(formData.children),
+          deposit: Number(formData.deposit),
+        },
+      });
+
+      console.log("Payment intent response:", response.data);
+      setClientSecret(response.data.clientSecret);
+      setShowPayment(true);
+      setError(null);
+    } catch (err) {
+      console.error("Error initializing payment:", err);
+      setError(
+        err.response?.data?.error ||
+          "An error occurred while initializing payment."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    setSuccessMessage("Payment successful! Your booking is confirmed.");
+    setShowPayment(false);
+    // Optionally redirect to confirmation page
+    // window.location.href = '/booking-confirmation';
+  };
+
+  const handlePaymentError = (errorMessage) => {
+    setError(`Payment failed: ${errorMessage}`);
+  };
 
   const renderPriceDetails = () => {
     if (!priceDetails) return null;
@@ -194,63 +200,20 @@ const handleSubmit = async (e) => {
         </div>
         {priceDetails.discount > 0 && (
           <div className="mt-2 text-sm text-green-600">
-            Vous économisez {priceDetails.discount.toFixed(2)} avec notre discount
+            Youre saving {priceDetails.discount.toFixed(2)} EUR with our length
+            of stay discount!
           </div>
         )}
       </div>
     );
   };
 
-  const renderDailyRates = () => {
-    if (
-      !formData.arrivalDate ||
-      !formData.departureDate ||
-      !Object.keys(dailyRates).length
-    ) {
-      return null;
-    }
-
-    const dates = [];
-    let currentDate = new Date(formData.arrivalDate);
-    const endDate = new Date(formData.departureDate);
-
-    while (currentDate < endDate) {
-      const dateStr = currentDate.toISOString().split("T")[0];
-      dates.push({
-        date: dateStr,
-        rate: dailyRates[dateStr],
-      });
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return (
-      <div className="mt-4">
-        <h3 className="font-bold mb-2">Daily Base Rates:</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {dates.map(({ date, rate }) => (
-            <div key={date} className="text-sm">
-              {date}: {rate?.price || "N/A"} EUR{" "}
-              {rate?.available === 1 ? "(Available)" : "(Unavailable)"}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  return (
+  const renderBookingForm = () => (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-2xl font-bold mb-4">Create Booking</h2>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      {successMessage && (
-        <p className="text-green-500 mb-4">{successMessage}</p>
-      )}
-      {loading && <p className="text-blue-500 mb-4">Loading...</p>}
-
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-1">
-            First Name:
+            First Name
             <input
               type="text"
               name="firstName"
@@ -264,7 +227,7 @@ const handleSubmit = async (e) => {
 
         <div>
           <label className="block text-sm font-medium mb-1">
-            Last Name:
+            Last Name
             <input
               type="text"
               name="lastName"
@@ -278,7 +241,7 @@ const handleSubmit = async (e) => {
 
         <div>
           <label className="block text-sm font-medium mb-1">
-            Email:
+            Email
             <input
               type="email"
               name="email"
@@ -292,7 +255,7 @@ const handleSubmit = async (e) => {
 
         <div>
           <label className="block text-sm font-medium mb-1">
-            Phone:
+            Phone
             <input
               type="tel"
               name="phone"
@@ -306,7 +269,35 @@ const handleSubmit = async (e) => {
 
         <div>
           <label className="block text-sm font-medium mb-1">
-            Number of Adults:
+            Arrival Date
+            <input
+              type="date"
+              name="arrivalDate"
+              value={formData.arrivalDate}
+              onChange={handleChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            />
+          </label>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Departure Date
+            <input
+              type="date"
+              name="departureDate"
+              value={formData.departureDate}
+              onChange={handleChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            />
+          </label>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Number of Adults
             <input
               type="number"
               name="adults"
@@ -322,7 +313,7 @@ const handleSubmit = async (e) => {
 
         <div>
           <label className="block text-sm font-medium mb-1">
-            Number of Children:
+            Number of Children
             <input
               type="number"
               name="children"
@@ -333,60 +324,58 @@ const handleSubmit = async (e) => {
             />
           </label>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Arrival Date:
-            <input
-              type="date"
-              name="arrivalDate"
-              value={formData.arrivalDate}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
-          </label>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Departure Date:
-            <input
-              type="date"
-              name="departureDate"
-              value={formData.departureDate}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
-          </label>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Notes:
-            <textarea
-              name="notice"
-              value={formData.notice}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              rows="3"
-            />
-          </label>
-        </div>
-
-        {renderPriceDetails()}
-        {renderDailyRates()}
-
-        <button
-          type="submit"
-          disabled={loading || !formData.price}
-          className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
-        >
-          {loading ? "Creating Booking..." : "Create Booking"}
-        </button>
       </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">
+          Notes
+          <textarea
+            name="notice"
+            value={formData.notice}
+            onChange={handleChange}
+            rows="3"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          />
+        </label>
+      </div>
+
+      {renderPriceDetails()}
+
+      <button
+        type="submit"
+        disabled={loading || !formData.price}
+        className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
+      >
+        {loading ? "Processing..." : "Proceed to Payment"}
+      </button>
     </form>
+  );
+
+  const renderPaymentForm = () => (
+    <div className="mt-8">
+      <h3 className="text-lg font-medium mb-4">Complete your payment</h3>
+      {clientSecret && (
+        <Elements stripe={stripePromise} options={{ clientSecret }}>
+          <PaymentForm
+            onSuccess={handlePaymentSuccess}
+            onError={handlePaymentError}
+          />
+        </Elements>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="max-w-2xl mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-4">Book Your Stay</h2>
+      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {successMessage && (
+        <p className="text-green-500 mb-4">{successMessage}</p>
+      )}
+      {loading && <p className="text-blue-500 mb-4">Loading...</p>}
+
+      {!showPayment ? renderBookingForm() : renderPaymentForm()}
+    </div>
   );
 };
 

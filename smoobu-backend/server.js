@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import axios from "axios";
+import Stripe from "stripe";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
@@ -10,8 +11,12 @@ const __dirname = dirname(__filename);
 
 dotenv.config();
 
+const stripe = new Stripe(
+  "sk_test_51QHmafIhkftuEy3nihoW4ZunaXVY1D85r176d91x9BAhGfvW92zG7r7A5rVeGuL1ysHVMOzflF0jwoCpyKJl760n00GC9ZYSJ4"
+);
 const app = express();
 
+app.use("/api/webhook", express.raw({ type: "application/json" }));
 // Enable CORS for your frontend
 app.use(
   cors({
@@ -50,6 +55,8 @@ app.use(
   })
 );
 
+const pendingBookings = new Map();
+
 app.use(express.json());
 
 // New endpoint to get discount settings
@@ -79,7 +86,6 @@ const calculatePriceWithSettings = (
   const currentDate = new Date(startDate);
   const endDateTime = new Date(endDate);
 
-  // Calculate base price and nights
   while (currentDate < endDateTime) {
     const dateStr = currentDate.toISOString().split("T")[0];
     const dayRate = rates[dateStr];
@@ -92,65 +98,16 @@ const calculatePriceWithSettings = (
     currentDate.setDate(currentDate.getDate() + 1);
   }
 
-  // Calculate extra guests fee
   const extraGuests = Math.max(0, numberOfGuests - settings.startingAtGuest);
   const extraGuestsFee =
     extraGuests * settings.extraGuestsPerNight * numberOfNights;
-
-  // Calculate extra children fee
   const extraChildrenFee =
     numberOfChildren * settings.extraChildPerNight * numberOfNights;
 
-  // Calculate length of stay discount
   let discount = 0;
   if (numberOfNights >= settings.lengthOfStayDiscount.minNights) {
     discount =
       (totalPrice * settings.lengthOfStayDiscount.discountPercentage) / 100;
-  }
-
-  const priceElements = [
-    {
-      type: "basePrice",
-      name: "Base price",
-      amount: totalPrice,
-      currencyCode: "EUR",
-    },
-  ];
-
-  if (extraGuestsFee > 0) {
-    priceElements.push({
-      type: "addon",
-      name: "Extra guests fee",
-      amount: extraGuestsFee,
-      currencyCode: "EUR",
-    });
-  }
-
-  if (extraChildrenFee > 0) {
-    priceElements.push({
-      type: "addon",
-      name: "Extra children fee",
-      amount: extraChildrenFee,
-      currencyCode: "EUR",
-    });
-  }
-
-  if (settings.cleaningFee > 0) {
-    priceElements.push({
-      type: "cleaningFee",
-      name: "Cleaning fee",
-      amount: settings.cleaningFee,
-      currencyCode: "EUR",
-    });
-  }
-
-  if (discount > 0) {
-    priceElements.push({
-      type: "longStayDiscount",
-      name: `Long stay discount (${settings.lengthOfStayDiscount.discountPercentage}%)`,
-      amount: -discount,
-      currencyCode: "EUR",
-    });
   }
 
   const subtotal =
@@ -165,8 +122,54 @@ const calculatePriceWithSettings = (
     discount,
     finalPrice,
     numberOfNights,
-    priceElements,
-    settings,
+    priceElements: [
+      {
+        type: "basePrice",
+        name: "Base price",
+        amount: totalPrice,
+        currencyCode: "EUR",
+      },
+      ...(extraGuestsFee > 0
+        ? [
+            {
+              type: "addon",
+              name: "Extra guests fee",
+              amount: extraGuestsFee,
+              currencyCode: "EUR",
+            },
+          ]
+        : []),
+      ...(extraChildrenFee > 0
+        ? [
+            {
+              type: "addon",
+              name: "Extra children fee",
+              amount: extraChildrenFee,
+              currencyCode: "EUR",
+            },
+          ]
+        : []),
+      ...(settings.cleaningFee > 0
+        ? [
+            {
+              type: "cleaningFee",
+              name: "Cleaning fee",
+              amount: settings.cleaningFee,
+              currencyCode: "EUR",
+            },
+          ]
+        : []),
+      ...(discount > 0
+        ? [
+            {
+              type: "longStayDiscount",
+              name: `Long stay discount (${settings.lengthOfStayDiscount.discountPercentage}%)`,
+              amount: -discount,
+              currencyCode: "EUR",
+            },
+          ]
+        : []),
+    ],
   };
 };
 
@@ -255,6 +258,77 @@ app.post("/api/reservations", async (req, res) => {
     });
   }
 });
+
+app.post("/api/create-payment-intent", async (req, res) => {
+  try {
+    const { price, bookingData } = req.body;
+
+    const bookingReference = `BOOKING-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+    pendingBookings.set(bookingReference, bookingData);
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(price * 100),
+      currency: "eur",
+      metadata: {
+        bookingReference: bookingReference,
+      },
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      bookingReference: bookingReference,
+    });
+  } catch (error) {
+    console.error("Payment intent error:", error);
+    res.status(500).json({ error: "Failed to create payment intent" });
+  }
+});
+
+app.post("/api/webhook", async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+
+  try {
+    const event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      "whsec_d9b86273072de6b319134fbc08752e2b4e66bae72aaa2cf4cb7db1411974c20a"
+    );
+
+    if (event.type === "payment_intent.succeeded") {
+      const paymentIntent = event.data.object;
+      const bookingReference = paymentIntent.metadata.bookingReference;
+      const bookingData = pendingBookings.get(bookingReference);
+
+      if (bookingData) {
+        const response = await axios.post(
+          "https://login.smoobu.com/api/reservations",
+          bookingData,
+          {
+            headers: {
+              "Api-Key": "3QrCCtDgMURVQn1DslPKbUu69DReBzWRY0DOe2SIVB",
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        pendingBookings.delete(bookingReference);
+        console.log("Booking created:", response.data);
+      }
+    }
+
+    res.json({ received: true });
+  } catch (err) {
+    console.error("Webhook error:", err);
+    res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+});
+
+
 
 const PORT = 3000;
 app.listen(PORT, () => {
