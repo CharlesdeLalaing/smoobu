@@ -75,7 +75,7 @@ const calculatePriceWithSettings = (
   const priceElements = [
     {
       type: "basePrice",
-      name: "Base price",
+      name: "Prix de base",
       amount: totalPrice,
       currencyCode: "EUR",
     },
@@ -111,7 +111,7 @@ const calculatePriceWithSettings = (
   if (discount > 0) {
     priceElements.push({
       type: "longStayDiscount",
-      name: `Long stay discount (${settings.lengthOfStayDiscount.discountPercentage}%)`,
+      name: `Réduction pour long séjour (${settings.lengthOfStayDiscount.discountPercentage}%)`,
       amount: -discount,
       currencyCode: "EUR",
     });
@@ -134,6 +134,98 @@ const calculatePriceWithSettings = (
   };
 };
 
+// Webhook endpoint must come before JSON middleware
+app.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const sig = req.headers["stripe-signature"];
+    let event;
+
+    console.log("Received webhook call");
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        "whsec_d9b86273072de6b319134fbc08752e2b4e66bae72aaa2cf4cb7db1411974c20a"
+      );
+
+      console.log("Webhook event verified:", event.type);
+
+      if (event.type === "payment_intent.succeeded") {
+        const paymentIntent = event.data.object;
+        const bookingReference = paymentIntent.metadata.bookingReference;
+        const bookingData = pendingBookings.get(bookingReference);
+
+        console.log("Retrieved booking data:", bookingData);
+
+        if (!bookingData) {
+          console.error(
+            "No booking data found for reference:",
+            bookingReference
+          );
+          return res.status(400).json({ error: "Booking data not found" });
+        }
+
+        try {
+          const smoobuResponse = await axios.post(
+            "https://login.smoobu.com/api/reservations",
+            {
+              arrivalDate: bookingData.arrivalDate,
+              departureDate: bookingData.departureDate,
+              channelId: bookingData.channelId,
+              apartmentId: bookingData.apartmentId,
+              firstName: bookingData.firstName,
+              lastName: bookingData.lastName,
+              email: bookingData.email,
+              phone: bookingData.phone,
+              notice: bookingData.notice,
+              adults: Number(bookingData.adults),
+              children: Number(bookingData.children),
+              price: Number(bookingData.price),
+              priceStatus: 1,
+              deposit: Number(bookingData.deposit),
+              depositStatus: 1,
+              language: "en",
+            },
+            {
+              headers: {
+                "Api-Key": "3QrCCtDgMURVQn1DslPKbUu69DReBzWRY0DOe2SIVB",
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          console.log("Smoobu booking created:", smoobuResponse.data);
+          pendingBookings.delete(bookingReference);
+        } catch (error) {
+          console.error(
+            "Error creating Smoobu booking:",
+            error.response?.data || error.message
+          );
+        }
+      }
+
+      res.json({ received: true });
+    } catch (err) {
+      console.error("Webhook Error:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+  }
+);
+
+// Use JSON parsing and CORS for all other routes
+app.use(express.json());
+app.use(
+  cors({
+    origin: "http://127.0.0.1:5173",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// Get rates endpoint
 // Webhook endpoint must come before JSON middleware
 app.post(
   "/webhook",
