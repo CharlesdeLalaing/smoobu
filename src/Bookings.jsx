@@ -263,15 +263,26 @@ const extras = [
             <span>{Math.abs(element.amount).toFixed(2)} {element.currencyCode}</span>
           </div>
         ))}
-        
+  
         {extrasTotal > 0 && (
-          <div className="flex justify-between items-center mt-2">
-            <span>Extras</span>
-            <span>{extrasTotal.toFixed(2)} EUR</span>
+          <div className="mt-4">
+            <h4 className="font-semibold">Extras sélectionnés:</h4>
+            {Object.entries(selectedExtras).map(([extraId, quantity]) => {
+              if (quantity > 0) {
+                const extra = extras.find(e => e.id === extraId);
+                return (
+                  <div key={extraId} className="flex justify-between items-center">
+                    <span>{extra.name} x {quantity}</span>
+                    <span>{(extra.price * quantity).toFixed(2)} EUR</span>
+                  </div>
+                );
+              }
+              return null;
+            })}
           </div>
         )}
   
-        <div className="mt-2 pt-2 border-t border-gray-200 font-bold flex justify-between items-center">
+        <div className="mt-4 pt-2 border-t border-gray-200 font-bold flex justify-between items-center">
           <span>Prix final</span>
           <span>{finalTotal.toFixed(2)} EUR</span>
         </div>
@@ -424,7 +435,7 @@ const extras = [
           {/* Main Content Section */}
           <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
             {/* Left Column - Property Details */}
-            <div className="w-full md:w-1/3 border p-4 rounded text-left">
+            <div className="w-full md:w-1/3 border border-[#668E73] p-4 rounded text-left">
               <img
                 src="https://images.unsplash.com/photo-1720293315632-37efe958d5ec?q=80&w=3432&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                 alt="Property"
