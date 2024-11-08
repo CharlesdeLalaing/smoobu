@@ -782,7 +782,7 @@ const extras = [
                 onClick={handleApplyDiscount}
                 className="mt-2 px-4 py-2 bg-[#668E73] text-white rounded shadow"
               >
-                Appliquer le code
+                Appliquer le code //DISCOUNT
               </button>
             </div>
 
