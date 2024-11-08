@@ -58,6 +58,11 @@ const BookingForm = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [clientSecret, setClientSecret] = useState("");
 
+//DISCOUNT
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [isDiscountValid, setIsDiscountValid] = useState(false);
+
   const [showExtras, setShowExtras] = useState(false);
 const [selectedExtras, setSelectedExtras] = useState({});
 
@@ -121,11 +126,15 @@ const extras = [
     }));
   };
   
+  //DISCOUNT
   const calculateExtrasTotal = () => {
-    return Object.entries(selectedExtras).reduce((total, [extraId, quantity]) => {
+    const extrasTotal = Object.entries(selectedExtras).reduce((total, [extraId, quantity]) => {
       const extra = extras.find(e => e.id === extraId);
       return total + (extra?.price || 0) * quantity;
     }, 0);
+  
+    // Apply discount if valid
+    return extrasTotal - (isDiscountValid ? discountAmount : 0);
   };
   
 
@@ -248,11 +257,33 @@ const extras = [
     setError(`Échec du paiement: ${errorMessage}`);
   };
 
+  //DISCOUNT
+  const handleApplyDiscount = async () => {
+    try {
+      // Example API call to verify discount code
+      const response = await api.post("/booking/checkApartmentAvailability", { code: discountCode });
+      if (response.data.isValid) {
+        setDiscountAmount(response.data.discountAmount);
+        setIsDiscountValid(true);
+        setError(null);
+      } else {
+        setDiscountAmount(0);
+        setIsDiscountValid(false);
+        setError("Code de réduction invalide.");
+      }
+    } catch (err) {
+      console.error("Discount verification error:", err);
+      setError("Erreur lors de la vérification du code.");
+    }
+  };
+
+
+  //DISCOUNT
   const renderPriceDetails = () => {
     if (!priceDetails) return null;
   
     const extrasTotal = calculateExtrasTotal();
-    const finalTotal = priceDetails.finalPrice + extrasTotal;
+    const finalTotal = priceDetails.finalPrice + extrasTotal - (isDiscountValid ? discountAmount : 0);
   
     return (
       <div className="mt-4 p-4 bg-gray-50 rounded-lg">
@@ -281,6 +312,12 @@ const extras = [
             })}
           </div>
         )}
+        {isDiscountValid && (
+          <div className="mt-2 text-green-600 flex justify-between items-center">
+            <span>Réduction</span>
+            <span>-{discountAmount.toFixed(2)} EUR</span>
+          </div>
+        )}
   
         <div className="mt-4 pt-2 border-t border-gray-200 font-bold flex justify-between items-center">
           <span>Prix final</span>
@@ -289,6 +326,7 @@ const extras = [
       </div>
     );
   };
+  
 
   const renderPaymentForm = () => (
     <div className="mt-8">
@@ -727,6 +765,26 @@ const extras = [
     </div>
   )}
 </div>
+
+<div className="mt-4">
+              <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
+                Code de réduction
+                <input
+                  type="text"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                  placeholder="Entrez le code"
+                  className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={handleApplyDiscount}
+                className="mt-2 px-4 py-2 bg-[#668E73] text-white rounded shadow"
+              >
+                Appliquer le code
+              </button>
+            </div>
 
               <button
                 type="submit"
