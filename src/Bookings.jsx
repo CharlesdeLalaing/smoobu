@@ -587,6 +587,41 @@ const extras = [
                 />
               </label>
             </div>
+
+            <div>
+              <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
+                Check-in*
+                <select
+                  name="arrivalTime"
+                  value={formData.arrivalTime}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2 appearance-none"
+                  required
+                  style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='green' d='M5.23 7.21a.75.75 0 011.06 0L10 10.92l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.23 8.27a.75.75 0 010-1.06z'/%3E%3C/svg%3E")`,
+                  backgroundPosition: "right 0.5rem center",
+                  backgroundRepeat: "no-repeat",
+                  backgroundSize: "1.5rem 1.5rem",
+                }}
+                >
+                  <option value="">Heure d'arrivée</option>
+                  <option value="17:00">17:00</option>
+                  <option value="17:30">17:30</option>
+                  <option value="18:00">18:00</option>
+                  <option value="18:30">18:30</option>
+                  <option value="19:00">19:00</option>
+                  <option value="19:30">19:30</option>
+                  <option value="20:00">20:00</option>
+                  <option value="20:30">20:30</option>
+                  <option value="21:00">21:00</option>
+                  <option value="21:30">21:30</option>
+                  <option value="22:00">22:00</option>
+                  <option value="22:30">22:30</option>
+                  <option value="23:00">23:00</option>
+                </select>
+              </label>
+            </div>
+
           </div>
 
           <div className="mt-8">
