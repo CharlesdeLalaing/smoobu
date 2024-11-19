@@ -106,7 +106,7 @@ const BookingForm = () => {
     { id: 11, quantity: '10' },
   ];
 
-
+  const [showSteps, setShowSteps] = useState(false); // State to control step visibility
   const [currentStep, setCurrentStep] = useState(1); // Step state
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -1256,6 +1256,10 @@ const handlePaymentSuccess = () => {
     </div>
   );
 
+  const handleStartNow = () => {
+    setShowSteps(true); // Show the steps when "Start Now" is clicked
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -1538,57 +1542,75 @@ const handlePaymentSuccess = () => {
 
             {/* Right Column - Contact Form */}
             <div className="w-full md:w-2/3 border border-[#668E73] p-4 rounded space-y-4 text-left">
-
-
+              {!showSteps ? (
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setShowSteps(true)}
+                    className="px-6 py-3 text-white bg-[#668E73] rounded-lg hover:bg-opacity-90"
+                  >
+                    Start Now
+                  </button>
+                </div>
+              ) : (
+                <>
                   {currentStep == 1 && (
-                    <h2 className="text-[18px] md:text-[23px] font-normal text-black"> Extras </h2>
+                    <h2 className="text-[18px] md:text-[23px] font-normal text-black">
+                      Extras
+                    </h2>
                   )}
                   {currentStep == 2 && (
-                    <h2 className="text-[18px] md:text-[23px] font-normal text-black"> Notes </h2>
+                    <h2 className="text-[18px] md:text-[23px] font-normal text-black">
+                      Notes
+                    </h2>
                   )}
                   {currentStep == 3 && (
-                    <h2 className="text-[18px] md:text-[23px] font-normal text-black"> Contact </h2>
+                    <h2 className="text-[18px] md:text-[23px] font-normal text-black">
+                      Contact
+                    </h2>
                   )}
 
-              {/* Render progress bar */}
-              {renderProgressBar()}
+                  {/* Render progress bar */}
+                  {renderProgressBar()}
 
-              {/* Render current step content */}
-              {renderStepContent()}
+                  {/* Render current step content */}
+                  {renderStepContent()}
 
-              {/* Navigation buttons */}
-                <div className="flex justify-between mt-6">
-                  {currentStep > 1 && (
-                    <button
-                      type="button"
-                      onClick={prevStep}
-                      className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                    >
-                      Précédent
-                    </button>
-                  )}
-                  {currentStep < 3 && (
-                    <button
-                      type="button"
-                      onClick={nextStep}
-                      className="px-4 py-2 bg-[#668E73] text-white rounded hover:bg-opacity-90"
-                    >
-                      Suivant
-                    </button>
-                  )}
-                  {currentStep === 3 && (
-                    <button
-                      type="submit"
-                      disabled={!isStepValid()}
-                      className={`px-4 py-2 ${
-                        isStepValid() ? "bg-[#668E73] hover:bg-opacity-90" : "bg-gray-300 cursor-not-allowed"
-                      } text-white rounded`}
-                    >
-                      {loading ? "En cours..." : "Passer au paiement"}
-                    </button>
-                  )}
-                </div>
-
+                  {/* Navigation buttons */}
+                  <div className="flex justify-between mt-6">
+                    {currentStep > 1 && (
+                      <button
+                        type="button"
+                        onClick={prevStep}
+                        className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                      >
+                        Précédent
+                      </button>
+                    )}
+                    {currentStep < 3 && (
+                      <button
+                        type="button"
+                        onClick={nextStep}
+                        className="px-4 py-2 bg-[#668E73] text-white rounded hover:bg-opacity-90"
+                      >
+                        Suivant
+                      </button>
+                    )}
+                    {currentStep === 3 && (
+                      <button
+                        type="submit"
+                        disabled={!isStepValid()}
+                        className={`px-4 py-2 ${
+                          isStepValid()
+                            ? "bg-[#668E73] hover:bg-opacity-90"
+                            : "bg-gray-300 cursor-not-allowed"
+                        } text-white rounded`}
+                      >
+                        {loading ? "En cours..." : "Passer au paiement"}
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </form>
