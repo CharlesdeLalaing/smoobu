@@ -1306,7 +1306,7 @@ const handlePaymentSuccess = () => {
   );
 
   return (
-    <div className="p-6 mx-auto h-[100vh] overflow-scroll w-full lg:w-[1024px] xl:w-[1440px] ">
+    <div className="p-6 mx-auto h-[100vh] overflow-y-scroll w-full lg:w-[1024px] xl:w-[1440px] ">
       {error && <p className="mb-4 text-red-500">{error}</p>}
       {successMessage && (
         <p className="mb-4 text-green-500">{successMessage}</p>
@@ -1319,84 +1319,58 @@ const handlePaymentSuccess = () => {
           <div className="border border-[#668E73] p-5 rounded space-y-4">
             <div className="grid grid-cols-1 gap-4 text-left md:grid-cols-4 lg:grid-cols-5">
               {/* Arrival Date */}
-              <div className="relative">
-                <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
-                  Arrivée
-                  <DatePicker
-                    selected={startDate}
-                    onChange={(date) => handleDateSelect(date, true)}
-                    selectsStart
-                    startDate={startDate}
-                    endDate={endDate}
-                    minDate={
-                      new Date(new Date().setDate(new Date().getDate() + 1))
-                    } // This sets minimum date to tomorrow
-                    locale="fr"
-                    dateFormat="dd/MM/yyyy"
-                    placeholderText="Sélectionnez une date"
-                    className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
-                    filterDate={(date) => !isDateUnavailable(date, true)}
-                    isClearable={true}
-                  />
-                </label>
-              </div>
-
-              <div className="relative">
-                <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
-                  Départ
-                  <DatePicker
-                    selected={endDate}
-                    onChange={(date) => handleDateSelect(date, false)}
-                    selectsEnd
-                    startDate={startDate}
-                    endDate={endDate}
-                    minDate={startDate || new Date()}
-                    locale="fr"
-                    dateFormat="dd/MM/yyyy"
-                    placeholderText="Sélectionnez une date"
-                    className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
-                    filterDate={(date) => !isDateUnavailable(date, false)}
-                    isClearable={true}
-                    disabled={!startDate}
-                  />
-                </label>
-              </div>
-
-              {dateError && (
-                <div className="mt-2 text-sm font-medium text-red-500">
-                  {dateError}
-                </div>
-              )}
-
-              {/* Adults Dropdown */}
-              {/* <div>
-                <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
-                  Adultes
-                  <select
-                    name="adults"
-                    value={formData.adults}
-                    onChange={handleChange}
-                    className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2 appearance-none"
-                    required
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23668E73' d='M5.23 7.21a.75.75 0 011.06 0L10 10.92l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.23 8.27a.75.75 0 010-1.06z'/%3E%3C/svg%3E")`,
-                      backgroundPosition: "right 0.5rem center",
-                      backgroundRepeat: "no-repeat",
-                      backgroundSize: "1.5rem 1.5rem",
-                    }}
-                  >
-                    {[...Array(10)].map((_, i) => (
-                      <option key={i + 1} value={i + 1} >
-                        {i + 1}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div> */}
-
-              <div>
+              <div className="relative w-full">
                 <label
-                  htmlFor="adults"
+                  htmlFor="arrivalDate"
+                  className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1"
+                >
+                  Arrivée
+                </label>
+                <DatePicker
+                  id="arrivalDate"
+                  selected={startDate}
+                  onChange={(date) => handleDateSelect(date, true)}
+                  selectsStart
+                  startDate={startDate}
+                  endDate={endDate}
+                  minDate={new Date(new Date().setDate(new Date().getDate() + 1))} // Minimum date is tomorrow
+                  locale="fr"
+                  dateFormat="dd/MM/yyyy"
+                  placeholderText="Sélectionnez une date"
+                  className="block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
+                  filterDate={(date) => !isDateUnavailable(date, true)}
+                  isClearable={true}
+                />
+              </div>
+
+              <div className="relative w-full">
+                <label
+                  htmlFor="departureDate"
+                  className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1"
+                >
+                  Départ
+                </label>
+                <DatePicker
+                  id="departureDate"
+                  selected={endDate}
+                  onChange={(date) => handleDateSelect(date, false)}
+                  selectsEnd
+                  startDate={startDate}
+                  endDate={endDate}
+                  minDate={startDate || new Date()}
+                  locale="fr"
+                  dateFormat="dd/MM/yyyy"
+                  placeholderText="Sélectionnez une date"
+                  className="block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
+                  filterDate={(date) => !isDateUnavailable(date, false)}
+                  isClearable={true}
+                  disabled={!startDate}
+                />
+              </div>
+
+              <div className="relative w-full">
+                <label
+                  htmlFor="adultsDropdown"
                   className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1"
                 >
                   Adultes
@@ -1411,8 +1385,8 @@ const handlePaymentSuccess = () => {
                 >
                   <div className="relative">
                     <Listbox.Button
-                      id="adults" // Add an id to the Listbox button to associate it with the label
-                      className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
+                      id="adultsDropdown"
+                      className="block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
                     >
                       <span className="flex items-center">
                         <span className="block ml-3 truncate">
@@ -1426,7 +1400,6 @@ const handlePaymentSuccess = () => {
                         />
                       </span>
                     </Listbox.Button>
-
                     <Listbox.Options className="absolute z-10 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-56 ring-1 ring-black/5 focus:outline-none sm:text-sm">
                       {adultes.map((adulte) => (
                         <Listbox.Option
@@ -1449,34 +1422,9 @@ const handlePaymentSuccess = () => {
                 </Listbox>
               </div>
 
-              {/* Children Dropdown */}
-              {/* <div>
-                <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
-                  Enfants
-                  <select
-                    name="children"
-                    value={formData.children}
-                    onChange={handleChange}
-                    className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2 appearance-none"
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23668E73' d='M5.23 7.21a.75.75 0 011.06 0L10 10.92l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.23 8.27a.75.75 0 010-1.06z'/%3E%3C/svg%3E")`,
-                      backgroundPosition: "right 0.5rem center",
-                      backgroundRepeat: "no-repeat",
-                      backgroundSize: "1.5rem 1.5rem",
-                    }}
-                  >
-                    {[...Array(11)].map((_, i) => (
-                      <option key={i} value={i}>
-                        {i}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div> */}
-
-              <div>
+              <div className="relative w-full">
                 <label
-                  htmlFor="childrenDropdown" // Unique id for the Listbox
+                  htmlFor="childrenDropdown"
                   className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1"
                 >
                   Enfants
@@ -1491,8 +1439,8 @@ const handlePaymentSuccess = () => {
                 >
                   <div className="relative">
                     <Listbox.Button
-                      id="childrenDropdown" // Ensure unique id here
-                      className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
+                      id="childrenDropdown"
+                      className="block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
                     >
                       <span className="flex items-center">
                         <span className="block ml-3 truncate">
@@ -1506,11 +1454,10 @@ const handlePaymentSuccess = () => {
                         />
                       </span>
                     </Listbox.Button>
-
                     <Listbox.Options className="absolute z-10 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-56 ring-1 ring-black/5 focus:outline-none sm:text-sm">
                       {childrenOptions.map((child) => (
                         <Listbox.Option
-                          key={child.id} // Ensure unique key for each option
+                          key={child.id}
                           value={child}
                           className="group relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 data-[focus]:bg-[#668E73] data-[focus]:text-white"
                         >
@@ -1528,6 +1475,7 @@ const handlePaymentSuccess = () => {
                   </div>
                 </Listbox>
               </div>
+
 
               {/* Check Availability Button */}
               <div className="block align-baseline">
