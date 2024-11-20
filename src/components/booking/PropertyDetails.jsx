@@ -2,6 +2,9 @@
 import React from 'react';
 import { PriceDetails } from "./PriceDetails";
 
+import Calendar from "../../assets/icons8-calendar-50.png";
+import Group from "../../assets/icons8-group-48.png";
+
 export const PropertyDetails = ({
  formData,
  startDate,
@@ -31,7 +34,7 @@ export const PropertyDetails = ({
      </h2>
 
      <div className="flex items-center justify-between mt-4">
-       <img src="/icons/group.png" alt="Profile Icon" className="w-6 h-6" />
+       <img src={Calendar} alt="Profile Icon" className="w-6 h-6" />
        <span className="text-[16px] font-light text-black">
          {Number(formData.adults) + Number(formData.children)}{" "}
          {Number(formData.adults) + Number(formData.children) > 1
@@ -41,7 +44,7 @@ export const PropertyDetails = ({
      </div>
 
      <div className="flex items-center justify-between mt-2 mb-5">
-       <img src="/icons/calendar.png" alt="Calendar Icon" className="w-6 h-6" />
+       <img src={Group} alt="Calendar Icon" className="w-6 h-6" />
        <div className="flex items-center text-[16px] font-light text-black">
          {startDate && <span>{formatDate(startDate)}</span>}
          {(startDate || endDate) && <span className="mx-2 text-black">→</span>}
