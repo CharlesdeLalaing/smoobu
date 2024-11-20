@@ -5,11 +5,12 @@ import { calculateExtrasTotal } from "../utils/booking";
 import { extraCategories } from "../extraCategories";
 
 export const useBookingForm = () => {
-  const today = new Date(); // Get today's date
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
 
   // Form State
   const [formData, setFormData] = useState({
-    arrivalDate: today.toISOString().split("T")[0], // Default to today
+    arrivalDate: tomorrow.toISOString().split("T")[0], // Default to today
     departureDate: "",
     channelId: 4033148,
     apartmentId: 2428698,
@@ -49,7 +50,7 @@ export const useBookingForm = () => {
   const [priceDetails, setPriceDetails] = useState(null);
   const [clientSecret, setClientSecret] = useState("");
   const [selectedExtras, setSelectedExtras] = useState({});
-  const [startDate, setStartDate] = useState(today); // Default to today
+  const [startDate, setStartDate] = useState(tomorrow); // Default to today
   const [endDate, setEndDate] = useState(null);
 
   // Coupon State
