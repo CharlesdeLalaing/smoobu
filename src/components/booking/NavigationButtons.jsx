@@ -6,7 +6,8 @@ export const NavigationButtons = ({
   loading,
 }) => (
   <div className="flex justify-between mt-6">
-    {currentStep > 1 && (
+    {/* Display "Précédent" button if currentStep is 1 or greater */}
+    {currentStep >= 1 && (
       <button
         type="button"
         onClick={prevStep}
@@ -15,6 +16,8 @@ export const NavigationButtons = ({
         Précédent
       </button>
     )}
+
+    {/* Display "Suivant" button if currentStep is less than 3 */}
     {currentStep < 3 && (
       <button
         type="button"
@@ -24,6 +27,8 @@ export const NavigationButtons = ({
         Suivant
       </button>
     )}
+
+    {/* Display "Passer au paiement" button if currentStep is 3 */}
     {currentStep === 3 && (
       <button
         type="submit"

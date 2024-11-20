@@ -33,7 +33,7 @@ export const useBookingForm = () => {
   });
 
   // UI State
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
@@ -301,7 +301,7 @@ const handleApplyCoupon = (couponCode) => {
   setCoupon("");
 };
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
-  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
+  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
   const isStepValid = () => {
     switch (currentStep) {
@@ -316,6 +316,8 @@ const handleApplyCoupon = (couponCode) => {
       case 2:
         return true;
       case 1:
+        return true;
+      case 0:
         return true;
       default:
         return false;

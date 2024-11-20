@@ -3,6 +3,7 @@ import React from "react";
 import { SearchSection } from "./SearchSection";
 import { PropertyDetails } from "./PropertyDetails";
 import { BookingSteps } from "./BookingSteps";
+import { IntroRoomSection } from "./IntroRoomSection";
 import { ContactSection } from "./ContactSection";
 import { ExtrasSection } from "./ExtrasSection";
 import { InfoSupSection } from "./InfoSupSection";
@@ -177,6 +178,7 @@ const infoSupSectionProps = {
             {/* Form Steps */}
             <div className="w-full md:w-2/3 border border-[#668E73] p-4 rounded space-y-4 text-left">
               <h2 className="text-[18px] md:text-[23px] font-normal text-black">
+                {currentStep === 0 && ""}
                 {currentStep === 1 && "Extras"}
                 {currentStep === 2 && "Notes"}
                 {currentStep === 3 && "Contact"}
@@ -185,6 +187,7 @@ const infoSupSectionProps = {
               <BookingSteps currentStep={currentStep} />
 
               {/* Step Content */}
+              {currentStep === 0 && <IntroRoomSection />}
               {currentStep === 1 && <ExtrasSection {...extrasSectionProps} />}
               {currentStep === 2 && <InfoSupSection {...infoSupSectionProps} />}
               {currentStep === 3 && <ContactSection {...contactSectionProps} />}
