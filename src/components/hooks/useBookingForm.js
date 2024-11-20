@@ -252,42 +252,54 @@ export const useBookingForm = () => {
     window.location.href = `/booking-confirmation?payment_intent=${paymentIntent}`;
   };
 
-  const handleApplyCoupon = () => {
-    setCouponError(null);
+ // useBookingForm.js
+const handleApplyCoupon = (couponCode) => {
+  console.log('handleApplyCoupon called with:', couponCode);
+  setCouponError(null);
 
-    if (!coupon) {
-      setCouponError("Veuillez entrer un code promo");
-      return;
-    }
+  if (!couponCode) {
+    console.log('No coupon code provided');
+    setCouponError("Veuillez entrer un code promo");
+    return;
+  }
 
-    const couponInfo = VALID_COUPONS[coupon.toUpperCase()];
+  const couponInfo = VALID_COUPONS[couponCode.toUpperCase()];
+  console.log('Found coupon info:', couponInfo);
 
-    if (!couponInfo) {
-      setCouponError("Code promo invalide");
-      return;
-    }
+  if (!couponInfo) {
+    console.log('Invalid coupon code');
+    setCouponError("Code promo invalide");
+    return;
+  }
 
-    setAppliedCoupon({
-      code: coupon.toUpperCase(),
-      ...couponInfo,
-    });
+  setAppliedCoupon({
+    code: couponCode.toUpperCase(),
+    ...couponInfo,
+  });
+  console.log('Applied coupon:', {
+    code: couponCode.toUpperCase(),
+    ...couponInfo,
+  });
 
-    setPriceDetails((prev) => ({
+  setPriceDetails((prev) => {
+    const newPriceDetails = {
       ...prev,
       priceElements: [
         ...(prev?.priceElements || []),
         {
           type: "coupon",
-          name: `Code promo ${coupon.toUpperCase()}`,
+          name: `Code promo ${couponCode.toUpperCase()}`,
           amount: -couponInfo.discount,
           currencyCode: couponInfo.currency,
         },
       ],
-    }));
+    };
+    console.log('Updated price details:', newPriceDetails);
+    return newPriceDetails;
+  });
 
-    setCoupon("");
-  };
-
+  setCoupon("");
+};
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
