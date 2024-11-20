@@ -47,9 +47,17 @@ export const useBookingForm = () => {
   const [priceDetails, setPriceDetails] = useState(null);
   const [clientSecret, setClientSecret] = useState("");
   const [selectedExtras, setSelectedExtras] = useState({});
-  const [startDate, setStartDate] = useState(null);
+
+
+  const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+
+const [startDate, setStartDate] = useState(tomorrow);
+
   const [endDate, setEndDate] = useState(null);
 
+
+  
   // Coupon State
   const [coupon, setCoupon] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);

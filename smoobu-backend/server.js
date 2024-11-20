@@ -346,6 +346,42 @@ app.use(
   })
 );
 
+app.get('/api/apartments', async (req, res) => {
+  try {
+    const response = await axios.get('https://login.smoobu.com/api/apartments', {
+      headers: {
+        'Api-Key': "vm6Hj5pppW8JlK9lyLv4PcFqfB1B1KfiQ12P0wt8rb",
+        'Cache-Control': 'no-cache',
+        "Content-Type": "application/json",
+      }
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      status: error.response?.status,
+      title: error.response?.data?.title || 'Error',
+      detail: error.response?.data?.detail || 'Failed to fetch apartments'
+    });
+  }
+});
+
+app.get('/api/apartments/:id', async (req, res) => {
+  try {
+    const response = await axios.get(`https://login.smoobu.com/api/apartments/${req.params.id}`, {
+      headers: {
+        'Api-Key': "vm6Hj5pppW8JlK9lyLv4PcFqfB1B1KfiQ12P0wt8rb",
+        "Content-Type": "application/json",
+      }
+    });
+    
+    // Smoobu API returns images in the response
+    const images = response.data.images || [];
+    res.json({ images });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch apartment images' });
+  }
+});
+
 // Get rates endpoint
 app.get("/api/rates", async (req, res) => {
   try {
