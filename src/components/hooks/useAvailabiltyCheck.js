@@ -7,12 +7,19 @@ export const useAvailabilityCheck = (formData) => {
   const [availableDates, setAvailableDates] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  // Add this function to reset states
+  const resetAvailability = () => {
+    setHasSearched(false);
+    setAvailableDates({});
+    setError(null);
+  };
 
   const checkAvailability = async (startDate, endDate) => {
     if (!startDate || !endDate) {
       return null;
     }
-
     setLoading(true);
     setError(null);
     
@@ -28,12 +35,12 @@ export const useAvailabilityCheck = (formData) => {
           children: formData.children || 0,
         },
       });
-
+      
       console.log("API Response:", response.data);
-
       if (response.data && response.data.data) {
         setAvailableDates(response.data.data);
-        return response.data; // Return both data and priceDetails
+        setHasSearched(true);
+        return response.data;
       }
       
       setError("No availability data found");
@@ -51,6 +58,8 @@ export const useAvailabilityCheck = (formData) => {
     availableDates,
     loading,
     error,
+    hasSearched,
     checkAvailability,
+    resetAvailability, // Export the reset function
   };
 };

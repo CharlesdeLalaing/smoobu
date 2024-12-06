@@ -59,7 +59,9 @@ const BookingForm = () => {
     availableDates,
     loading: availabilityLoading,
     error: availabilityError,
+    hasSearched,
     checkAvailability,
+    resetAvailability,
   } = useAvailabilityCheck(formData);
 
   const handleRoomSelect = async (roomId) => {
@@ -151,7 +153,7 @@ const BookingForm = () => {
       setDateError("");
       return;
     }
-
+  
     const selectedDate = new Date(date.setHours(12, 0, 0, 0));
     if (isStart) {
       setStartDate(selectedDate);
@@ -164,6 +166,11 @@ const BookingForm = () => {
         },
       });
       handleChange({ target: { name: "departureDate", value: "" } });
+      
+      // Reset availability states when dates change
+      setIsAvailable(false);
+      setShowPriceDetails(false);
+      
     } else {
       setEndDate(selectedDate);
       setDateError("");
@@ -173,6 +180,10 @@ const BookingForm = () => {
           value: selectedDate.toISOString().split("T")[0],
         },
       });
+      
+      // Reset availability states when dates change
+      setIsAvailable(false);
+      setShowPriceDetails(false);
     }
   };
 
@@ -184,6 +195,7 @@ const BookingForm = () => {
     handleDateSelect,
     dateError,
     handleCheckAvailability: handleAvailabilityCheck,
+    resetAvailability,
   };
 
   const propertyDetailsProps = {
@@ -197,6 +209,7 @@ const BookingForm = () => {
     onRoomSelect: handleRoomSelect,
     availableDates,
     loading: availabilityLoading,
+    hasSearched,
   };
 
   const extrasSectionProps = {

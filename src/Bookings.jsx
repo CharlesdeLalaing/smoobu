@@ -247,80 +247,40 @@ const handleDateSelect = (date, isStart) => {
     if (isStart) {
       setStartDate(null);
       setEndDate(null);
-      handleChange({
-        target: { name: "arrivalDate", value: "" },
-      });
-      handleChange({
-        target: { name: "departureDate", value: "" },
-      });
+      handleChange({ target: { name: "arrivalDate", value: "" } });
+      handleChange({ target: { name: "departureDate", value: "" } });
     } else {
       setEndDate(null);
-      handleChange({
-        target: { name: "departureDate", value: "" },
-      });
+      handleChange({ target: { name: "departureDate", value: "" } });
     }
     setDateError("");
     return;
   }
 
-  // Add this block at the beginning of date selection
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const selectedDay = new Date(date);
-  selectedDay.setHours(0, 0, 0, 0);
-
-  if (selectedDay.getTime() <= today.getTime()) {
-    setDateError(
-      "Vous ne pouvez pas sélectionner la date d'aujourd'hui ou une date passée"
-    );
-    return;
-  }
-
-  // Rest of your existing code
   const selectedDate = new Date(date.setHours(12, 0, 0, 0));
-
   if (isStart) {
-    if (isDateUnavailable(selectedDate, isStart)) {
-      setDateError("Cette date n'est pas disponible pour l'arrivée");
-      return;
-    }
     setStartDate(selectedDate);
     setEndDate(null);
     setDateError("");
-
-    const dateStr = selectedDate.toISOString().split("T")[0];
     handleChange({
       target: {
         name: "arrivalDate",
-        value: dateStr,
+        value: selectedDate.toISOString().split("T")[0],
       },
     });
-    handleChange({
-      target: {
-        name: "departureDate",
-        value: "",
-      },
-    });
+    handleChange({ target: { name: "departureDate", value: "" } });
   } else {
-    if (isDateUnavailable(selectedDate, isStart)) {
-      setDateError("Cette date n'est pas disponible pour le départ");
-      return;
-    }
     setEndDate(selectedDate);
     setDateError("");
-
-    // Format date as YYYY-MM-DD without timezone conversion
-    const dateStr = selectedDate.toISOString().split("T")[0];
     handleChange({
       target: {
         name: "departureDate",
-        value: dateStr,
+        value: selectedDate.toISOString().split("T")[0],
       },
     });
   }
+  // Remove all the reset states here - don't reset isAvailable or showPriceDetails
 };
-
-
 
   const VALID_COUPONS = {
     TESTDISCOUNT: {
