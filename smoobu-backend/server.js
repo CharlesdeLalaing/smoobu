@@ -19,7 +19,7 @@ const pendingBookings = new Map();
 
 // Discount settings
 const discountSettings = {
-  2428698: {
+  2467648: {
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
@@ -32,20 +32,7 @@ const discountSettings = {
       discountPercentage: 40,
     },
   },
-  2428703: {
-    cleaningFee: 0,
-    prepayment: 0,
-    minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
-    startingAtGuest: 2,
-    maxGuests: 4,
-    extraChildPerNight: 20,
-    lengthOfStayDiscount: {
-      minNights: 2,
-      discountPercentage: 40,
-    },
-  },
-  2432648: {
+  2467653: {
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
@@ -278,7 +265,7 @@ app.post(
            },
            {
              headers: {
-               "Api-Key": "vm6Hj5pppW8JlK9lyLv4PcFqfB1B1KfiQ12P0wt8rb",
+               "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
                "Content-Type": "application/json",
              },
            }
@@ -305,7 +292,7 @@ app.post(
                  },
                  {
                    headers: {
-                     "Api-Key": "vm6Hj5pppW8JlK9lyLv4PcFqfB1B1KfiQ12P0wt8rb",
+                     "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
                      "Content-Type": "application/json",
                    },
                  }
@@ -325,7 +312,7 @@ app.post(
                    },
                    {
                      headers: {
-                       "Api-Key": "vm6Hj5pppW8JlK9lyLv4PcFqfB1B1KfiQ12P0wt8rb",
+                       "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
                        "Content-Type": "application/json",
                      },
                    }
@@ -376,7 +363,7 @@ app.get('/api/apartments', async (req, res) => {
   try {
     const response = await axios.get('https://login.smoobu.com/api/apartments', {
       headers: {
-        'Api-Key': "vm6Hj5pppW8JlK9lyLv4PcFqfB1B1KfiQ12P0wt8rb",
+        'Api-Key': "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
         'Cache-Control': 'no-cache',
         "Content-Type": "application/json",
       }
@@ -395,7 +382,7 @@ app.get('/api/apartments/:id', async (req, res) => {
   try {
     const response = await axios.get(`https://login.smoobu.com/api/apartments/${req.params.id}`, {
       headers: {
-        'Api-Key': "vm6Hj5pppW8JlK9lyLv4PcFqfB1B1KfiQ12P0wt8rb",
+        'Api-Key': "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
         "Content-Type": "application/json",
       }
     });
@@ -424,7 +411,7 @@ app.get("/api/rates", async (req, res) => {
 
     const response = await axios.get("https://login.smoobu.com/api/rates", {
       headers: {
-        "Api-Key": "vm6Hj5pppW8JlK9lyLv4PcFqfB1B1KfiQ12P0wt8rb",
+        "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
         "Content-Type": "application/json",
       },
       params: {
@@ -692,7 +679,7 @@ app.post("/api/test-smoobu", async (req, res) => {
       testBooking,
       {
         headers: {
-          "Api-Key": "vm6Hj5pppW8JlK9lyLv4PcFqfB1B1KfiQ12P0wt8rb",
+          "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
           "Content-Type": "application/json",
         },
       }

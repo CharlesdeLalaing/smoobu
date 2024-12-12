@@ -15,10 +15,11 @@ import toilet from "../../assets/Chambres/icons8-toilet-50.png";
 import wifi from "../../assets/Chambres/icons8-wifi-50.png";
 
 export const roomsData = {
-  2428698: {
-    id: 2428698,
+  2467648: {
+    id: 2467648,
     name: "La porte du Chalet",
-    description: "Plongez-vous dans l’intimité de la Chambre de Blé – un refuge douillet au cœur d’une grange restaurée avec soin. Conçue pour accueillir deux adultes et jusqu’à deux enfants, cette chambre rustique allie harmonieusement le charme d’antan et les commodités modernes. Idéale pour une escapade en amoureux ou des vacances en famille, réservez dès maintenant et laissez-vous séduire par l’ambiance chaleureuse de la Chambre de Blé",
+    description:
+      "Plongez-vous dans l’intimité de la Chambre de Blé – un refuge douillet au cœur d’une grange restaurée avec soin. Conçue pour accueillir deux adultes et jusqu’à deux enfants, cette chambre rustique allie harmonieusement le charme d’antan et les commodités modernes. Idéale pour une escapade en amoureux ou des vacances en famille, réservez dès maintenant et laissez-vous séduire par l’ambiance chaleureuse de la Chambre de Blé",
     images: {
       main: tinyHouse,
       secondary: tinyHouse,
@@ -44,10 +45,11 @@ export const roomsData = {
         "https://login.smoobu.com/fr/cockpit/widget/show-calendar-iframe/2428698/b0f41e1cdaa98e3e16052ad9121912d4c5971e3457de260cd25d5a54de7fc73e",
     },
   },
-  2428703: {
-    id: 2428703,
+  2467653: {
+    id: 2467653,
     name: "La canne à sucre",
-    description: "Plongez-vous dans l’intimité de la Chambre de Blé – un refuge douillet au cœur d’une grange restaurée avec soin. Conçue pour accueillir deux adultes et jusqu’à deux enfants, cette chambre rustique allie harmonieusement le charme d’antan et les commodités modernes. Idéale pour une escapade en amoureux ou des vacances en famille, réservez dès maintenant et laissez-vous séduire par l’ambiance chaleureuse de la Chambre de Blé",
+    description:
+      "Plongez-vous dans l’intimité de la Chambre de Blé – un refuge douillet au cœur d’une grange restaurée avec soin. Conçue pour accueillir deux adultes et jusqu’à deux enfants, cette chambre rustique allie harmonieusement le charme d’antan et les commodités modernes. Idéale pour une escapade en amoureux ou des vacances en famille, réservez dès maintenant et laissez-vous séduire par l’ambiance chaleureuse de la Chambre de Blé",
     images: {
       main: tinyHouse2,
       secondary: tinyHouse2,
@@ -71,35 +73,6 @@ export const roomsData = {
         "https://login.smoobu.com/fr/cockpit/widget/show-calendar-iframe/2428703/38dab3c9ee90c8353a2ceed7b25848d794a3f8b15f44ef189b116150a43243f0",
       bigDevices:
         "https://login.smoobu.com/fr/cockpit/widget/show-calendar-iframe/2428703/38dab3c9ee90c8353a2ceed7b25848d794a3f8b15f44ef189b116150a43243f0",
-    },
-  },
-  2432648: {
-    id: 2432648,
-    name: "La suite du Bar",
-    description: "Plongez-vous dans l’intimité de la Chambre de Blé – un refuge douillet au cœur d’une grange restaurée avec soin. Conçue pour accueillir deux adultes et jusqu’à deux enfants, cette chambre rustique allie harmonieusement le charme d’antan et les commodités modernes. Idéale pour une escapade en amoureux ou des vacances en famille, réservez dès maintenant et laissez-vous séduire par l’ambiance chaleureuse de la Chambre de Blé",
-    images: {
-      main: tinyHouse3,
-      secondary: tinyHouse3,
-      tertiary: tinyHouse3,
-    },
-    maxGuests: 2,
-    features: [
-      { icon: wifi, title: "WiFi" },
-      { icon: bed, title: "Lit king size et matelas chauffant" },
-      { icon: dog, title: "Animaux non admis" },
-      { icon: fire, title: "Brasero" },
-      { icon: heater, title: "Chauffage électrique" },
-      { icon: shower, title: "1 salles de bain et 1 toilette" },
-      { icon: spoon, title: "Cuisine équipée" },
-      { icon: toilet, title: "Toilette sêche" },
-      { icon: people, title: "Max 2 adultes et 2 enfants" },
-    ],
-    size: "40m²",
-    calendarIframe: {
-      smallDevices:
-        "https://login.smoobu.com/fr/cockpit/widget/show-calendar-iframe/2432648/a197f6e3fc489c5308cea4dbadcf9097be1ffdb524fcc59b79e2d201b85fd5dc",
-      bigDevices:
-        "https://login.smoobu.com/fr/cockpit/widget/show-calendar-iframe/2432648/a197f6e3fc489c5308cea4dbadcf9097be1ffdb524fcc59b79e2d201b85fd5dc",
     },
   },
 };

@@ -24,7 +24,7 @@ export const useAvailabilityCheck = (formData) => {
     setError(null);
     
     try {
-      const apartmentIds = ["2428698", "2428703", "2432648"];
+      const apartmentIds = ["2467648", "2467653"];
       
       const response = await api.get("/rates", {
         params: {
