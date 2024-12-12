@@ -3,9 +3,12 @@ import { api } from "../utils/api";
 import { VALID_COUPONS } from "../utils/coupons";
 import { calculateExtrasTotal } from "../utils/booking";
 import { extraCategories } from "../extraCategories"
+import { useNavigate } from "react-router-dom";
 
 export const useBookingForm = () => {
   // Form State
+
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     arrivalDate: "",
     departureDate: "",
@@ -316,7 +319,7 @@ const handleCheckAvailability = async () => {
     localStorage.setItem("bookingData", JSON.stringify(bookingData));
 
     const paymentIntent = clientSecret.split("_secret")[0];
-    window.location.href = `/booking-confirmation?payment_intent=${paymentIntent}`;
+    navigate(`/booking-confirmation?payment_intent=${paymentIntent}`);
   };
 
  // useBookingForm.js

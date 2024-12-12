@@ -679,51 +679,6 @@ app.get("/api/bookings/:paymentIntentId", async (req, res) => {
 
 
 
-// Test Smoobu endpoint
-app.post("/api/test-smoobu", async (req, res) => {
-  try {
-    const testBooking = {
-      arrivalDate: "2024-11-10",
-      departureDate: "2024-11-12",
-      channelId: 3960043,
-      apartmentId: 2402388,
-      firstName: "Test",
-      lastName: "Booking",
-      email: "test@example.com",
-      phone: "1234567890",
-      adults: 1,
-      children: 0,
-      price: 100,
-      priceStatus: 1,
-      deposit: 0,
-      depositStatus: 1,
-      language: "en",
-    };
-
-    console.log("Testing Smoobu API with data:", testBooking);
-
-    const response = await axios.post(
-      "https://login.smoobu.com/api/reservations",
-      testBooking,
-      {
-        headers: {
-          "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    console.log("Smoobu test response:", response.data);
-    res.json(response.data);
-  } catch (error) {
-    console.error("Smoobu test error:", error.response?.data || error.message);
-    res.status(500).json({
-      error: "Smoobu test failed",
-      details: error.response?.data,
-    });
-  }
-});
-
 // Debug endpoint to check pending bookings
 app.get("/api/pending-bookings", (req, res) => {
   const bookings = Array.from(pendingBookings.entries());
