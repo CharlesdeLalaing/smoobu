@@ -10,11 +10,12 @@ export const calculateBasePrice = (pricePerNight, numberOfNights) => {
   return pricePerNight * numberOfNights;
 };
 
-export const calculateExtrasTotal = (selectedExtrasArray) => {
-  return selectedExtrasArray.reduce(
-    (sum, extra) => sum + extra.amount + (extra.extraPersonAmount || 0),
-    0
-  );
+export const calculateExtrasTotal = (extras) => {
+  return extras.reduce((sum, extra) => {
+    const baseAmount = extra.amount;
+    const extraPersonAmount = extra.extraPersonAmount || 0;
+    return sum + baseAmount + extraPersonAmount;
+  }, 0);
 };
 
 export const calculateDiscounts = (subtotal, discounts) => {

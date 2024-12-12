@@ -11,6 +11,7 @@ export const PriceDetails = ({
   }
 
   // Calculate selected extras details
+  // Calculate selected extras details
   const selectedExtrasDetails = Object.entries(selectedExtras || {})
     .filter(([_, quantity]) => quantity > 0)
     .map(([extraId, quantity]) => {
@@ -18,6 +19,7 @@ export const PriceDetails = ({
       const baseExtraId = isExtraPerson
         ? extraId.replace("-extra", "")
         : extraId;
+
       const extra = Object.values(extraCategories)
         .flatMap((category) => category.items)
         .find((item) => item.id === baseExtraId);
@@ -64,7 +66,10 @@ export const PriceDetails = ({
   }
 
   return (
-    <div className="p-4 mt-4 rounded-lg bg-gray-50" style={{ height: "350px", overflow: "scroll" }}>
+    <div
+      className="p-4 mt-4 rounded-lg bg-gray-50"
+      style={{ height: "350px", overflow: "scroll" }}
+    >
       <h3 className="mb-2 font-bold">Détail des prix:</h3>
 
       {/* Base price */}
@@ -73,6 +78,7 @@ export const PriceDetails = ({
         <span>{priceDetails.originalPrice.toFixed(2)} EUR</span>
       </div>
 
+      {/* Extras */}
       {/* Extras */}
       {selectedExtrasDetails.map((extra, index) => (
         <div
