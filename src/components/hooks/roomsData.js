@@ -53,12 +53,11 @@ import wifi from "../../assets/Chambres/icons8-wifi-50.png";
 
 
 export const roomsData = {
-
-  1644643: {
-    id: 1644643,
-    type: "logement insolites",
-    name: "La Bulle du Ruisseau",
-    description: "Plongez dans l'intimité apaisante de la Bulle du Ruisseau - un cocon insolite niché entre terre et eau, bercé par le chant du ruisseau et les murmures de la nature. Avec son fauteuil Crusoé et son lit king-size, cet espace vous offre un confort raffiné au cœur de la nature. Profitez également du braséro pour des soirées conviviales sous les étoiles, parfaites pour griller des guimauves et partager des moments inoubliables. Réservez dès maintenant et laissez-vous envoûter par la sérénité magique de la Bulle du Ruisseau.",
+  2467648: {
+    id: 2467648,
+    name: "La porte du Chalet",
+    description:
+      "Plongez-vous dans l’intimité de la Chambre de Blé – un refuge douillet au cœur d’une grange restaurée avec soin. Conçue pour accueillir deux adultes et jusqu’à deux enfants, cette chambre rustique allie harmonieusement le charme d’antan et les commodités modernes. Idéale pour une escapade en amoureux ou des vacances en famille, réservez dès maintenant et laissez-vous séduire par l’ambiance chaleureuse de la Chambre de Blé",
     images: {
       main: Bulle_img_1,
       secondary: Bulle_img_2,
@@ -111,12 +110,11 @@ export const roomsData = {
       verification: "8dedff27d1d2b0d2872fb29c6ba8c480a5a23b80a7a712c846f6198df9fc9efb"
     }
   },
-
-  1946279: {
-    id: 1946279,
-    type: "Gîte & Chmabre d'hôte",
-    name: "Le Moulin",
-    description: "Immergez-vous dans l'atmosphère envoûtante du Moulin- un studio romantique conçu pour deux personnes où confort moderne et charme passé s'entremêlent. Avec son lit Queen size en mezzanine, un canapé-lit douillet pouvant accueillir des enfants, cet espace vous offre une escapade intime et confortable. Ajoutez à cela une cuisine équipée pour des moments conviviaux. Réservez dès maintenant et laissez-vous séduire par le charme irrésistible du Moulin.",
+  2467653: {
+    id: 2467653,
+    name: "La canne à sucre",
+    description:
+      "Plongez-vous dans l’intimité de la Chambre de Blé – un refuge douillet au cœur d’une grange restaurée avec soin. Conçue pour accueillir deux adultes et jusqu’à deux enfants, cette chambre rustique allie harmonieusement le charme d’antan et les commodités modernes. Idéale pour une escapade en amoureux ou des vacances en famille, réservez dès maintenant et laissez-vous séduire par l’ambiance chaleureuse de la Chambre de Blé",
     images: {
       main: Moulin_img_1,
       secondary: Moulin_img_2,
@@ -138,69 +136,6 @@ export const roomsData = {
       id: "1946279fr",
       url: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/1946279",
       verification: "5ef22b823e6c18979c1585d55bf5061d6ea312e1f2a2979fba3ae2657fde3d92"
-    }
-  },
-
-
-  1946276: {
-    id: 1946276,
-    type: "Gîte & Chmabre d'hôte",
-    name: "La Chambre de Blé",
-    description: "Plongez-vous dans l'intimité de la Chambre de Blé - un refuge douillet au cœur d'une grange restaurée avec soin. Conçue pour accueillir deux adultes et jusqu'à deux enfants, cette chambre rustique allie harmonieusement le charme d'antan et les commodités modernes. Idéale pour une escapade en amoureux ou des vacances en famille, réservez dès maintenant et laissez-vous séduire par l'ambiance chaleureuse de la Chambre de Blé",
-    images: {
-      main: Ble_img_1,
-      secondary: Ble_img_2,
-      tertiary: Ble_img_3,
-      quaternary: Ble_img_4,
-      quinary: Ble_img_5,
-    },
-    maxGuests: 2,
-    features: [
-      { icon: people, title: "Max 4 personnes" },
-      { icon: bed, title: "1 lit king size et 2 lits simples" },
-      { icon: dog, title: "Animaux non admis" },
-      { icon: shower, title: "Une salle de bain et 1 toilette" },
-      { icon: fire, title: "Brasero" },
-      { icon: spoon, title: "Cuisine équipée" },
-      { icon: wifi, title: "WiFi" },
-    ],
-    size: "30m²",
-    calendarData: {
-      id: "1946276fr",
-      url: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/1946276",
-      verification: "fcee1e857b4c7c0814ac06951737c53a3cb6a04b4ef66fed5717b2d013ed0b4b"
-    }
-  },
-
-
-  1946270: {
-    id: 1946270,
-    type: "Gîte & Chmabre d'hôte",
-    name: "Le Logis",
-    description: "Plongez dans l’intimité chaleureuse du Logis – un refuge rustique pouvant accueillir jusqu’à 8 convives, parfait pour des retrouvailles en famille ou entre amis. Niché dans une grange restaurée avec soin, c’est l’invitation à une escapade authentique, où se mêlent confort moderne et charme d’antan. Réservez et laissez-vous envoûter par l’atmosphère unique du Logis.",
-    images: {
-      main: Logis_img_1,
-      secondary: Logis_img_2,
-      tertiary: Logis_img_3,
-      quaternary: Logis_img_4,
-      quinary: Logis_img_5,
-      senary: Logis_img_6,
-      septenary: Logis_img_7
-    },
-    maxGuests: 8,
-    features: [
-      { icon: people, title: "Max 8 personnes" },
-      { icon: bed, title: "2 lit king size et 4 lits simples" },
-      { icon: dog, title: "Animaux non admis" },
-      { icon: shower, title: "2 salles de bains et 2 toilettes" },
-      { icon: spoon, title: "Cuisine équipée" },
-      { icon: wifi, title: "WiFi" },
-    ],
-    size: "30m²",
-    calendarData: {
-      id: "1946270fr",
-      url: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/1946270",
-      verification: "7d848002b5314b96a1b0f56b859443aaab0e1a892b6de144078389a1dea3cc4f"
     }
   },
 };

@@ -1,6 +1,7 @@
 import React from "react";
 import DatePicker from "react-datepicker";
 import { Listbox } from "@headlessui/react";
+import "react-datepicker/dist/react-datepicker.css";
 import { GuestSelect } from "./GuestSelect";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { adultes, childrenOptions } from "../utils/constants";
@@ -15,7 +16,7 @@ export const SearchSection = ({
   handleDateSelect,
   handleCheckAvailability,
   dateError,
-  resetAvailability
+  resetAvailability,
 }) => {
   const handleSearch = (e) => {
     e.preventDefault(); // Prevent form refresh
@@ -27,10 +28,9 @@ export const SearchSection = ({
     handleDateSelect(date, isStart);
   };
 
-
   return (
     <div
-      className="w-4/5 md:w-full lg:w-4/5 m-auto text-center font-montserrat relative"
+      className="relative w-4/5 m-auto text-center md:w-full lg:w-4/5 font-montserrat"
       style={{ backgroundColor: "#668E73", padding: "60px 20px" }}
     >
     {/* Squirrel Image */}
@@ -38,7 +38,7 @@ export const SearchSection = ({
         <img 
           src={Bird}
           alt="Squirrel"
-          className="w-24 md:w-32 lg:w-40 h-auto"
+          className="w-24 h-auto md:w-32 lg:w-40"
         />
       </div>
       {/* Title */}
@@ -113,7 +113,9 @@ export const SearchSection = ({
             </select> */}
             <Listbox
               value={formData.adults}
-              onChange={(value) => handleChange({ target: { name: "adults", value } })}
+              onChange={(value) =>
+                handleChange({ target: { name: "adults", value } })
+              }
             >
               <div className="relative">
                 <Listbox.Button
@@ -121,10 +123,15 @@ export const SearchSection = ({
                   className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2"
                 >
                   <span className="flex items-center">
-                    <span className="block ml-3 truncate">{formData.adults || "Select a number"}</span>
+                    <span className="block ml-3 truncate">
+                      {formData.adults || "Select a number"}
+                    </span>
                   </span>
                   <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                    <ChevronUpDownIcon aria-hidden="true" className="text-gray-400 size-5" />
+                    <ChevronUpDownIcon
+                      aria-hidden="true"
+                      className="text-gray-400 size-5"
+                    />
                   </span>
                 </Listbox.Button>
 
@@ -169,7 +176,9 @@ export const SearchSection = ({
             </select> */}
             <Listbox
               value={formData.children}
-              onChange={(value) => handleChange({ target: { name: "children", value } })}
+              onChange={(value) =>
+                handleChange({ target: { name: "children", value } })
+              }
             >
               <div className="relative">
                 <Listbox.Button
@@ -177,10 +186,15 @@ export const SearchSection = ({
                   className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
                 >
                   <span className="flex items-center">
-                    <span className="block ml-3 truncate">{formData.children || "0"}</span>
+                    <span className="block ml-3 truncate">
+                      {formData.children || "0"}
+                    </span>
                   </span>
                   <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                    <ChevronUpDownIcon aria-hidden="true" className="text-gray-400 size-5" />
+                    <ChevronUpDownIcon
+                      aria-hidden="true"
+                      className="text-gray-400 size-5"
+                    />
                   </span>
                 </Listbox.Button>
 

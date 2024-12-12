@@ -41,14 +41,14 @@ export const HeaderSection = () => {
     const currentLang = languages.find(lang => lang.code === currentLanguage) || languages[0];
 
     return (
-        <header className="w-full fixed top-0 left-0 bg-white z-50">
+        <header className="fixed top-0 left-0 z-50 w-full bg-white">
             {/* Top Bar */}           
         <div className="bg-[#668E73] text-white h-auto md:h-[44px] font-montserrat">
             <div className="mx-auto flex flex-col md:flex-row justify-between items-center text-xs h-full px-4 py-2 md:py-0 md:px-[5%]">
                 {/* Contact Information */}
-                <div className="flex md:flex-row md:items-center md:space-x-6 w-full md:w-auto">
+                <div className="flex w-full md:flex-row md:items-center md:space-x-6 md:w-auto">
                     {/* Mobile: Icon only with click action, Desktop: Full content */}
-                    <div className="flex md:hidden justify-center gap-7 md:gap-0 md:justify-between w-full">
+                    <div className="flex justify-center w-full md:hidden gap-7 md:gap-0 md:justify-between">
                         <a href="tel:+32475201619" className="flex items-center">
                             <img src={Phone} alt="phone" className="h-[18px] w-[18px]" />
                         </a>
@@ -76,7 +76,7 @@ export const HeaderSection = () => {
                 </div>
 
                 {/* Social and Language - Remains unchanged */}
-                <div className="flex space-x-4 items-center mt-2 md:mt-0">
+                <div className="flex items-center mt-2 space-x-4 md:mt-0">
                     <div className="group">
                         <button className="flex items-center gap-2 hover:text-gray-200">
                             <img 
@@ -98,8 +98,8 @@ export const HeaderSection = () => {
                                 />
                             </svg>
                         </button>
-                        <div className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-300 absolute mt-2">
-                            <div className="flex flex-col gap-2 bg-white p-2 rounded shadow">
+                        <div className="absolute invisible mt-2 transition-all duration-300 opacity-0 group-hover:visible group-hover:opacity-100">
+                            <div className="flex flex-col gap-2 p-2 bg-white rounded shadow">
                                 {languages
                                     .filter(lang => lang.code !== currentLanguage)
                                     .map((lang) => (
@@ -141,14 +141,14 @@ export const HeaderSection = () => {
             {/* Main Navigation */}
             <div className="h-auto md:h-[130px] bg-[#fbfdfb] font-montserrat">
                 <nav className="w-full px-4 lg:px-40 h-[100px] md:h-full">
-                    <div className="flex items-center justify-between lg:justify-center relative w-full h-full">
+                    <div className="relative flex items-center justify-between w-full h-full lg:justify-center">
                         <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2">
                             <img src={Logo} alt="Logo" className="w-[80px] h-[80px] md:w-[100px] md:h-[100px]" />
                         </div>
 
                     {/* Hamburger Menu Button */}
                     <button 
-                        className="lg:hidden p-2 ml-auto"
+                        className="p-2 ml-auto lg:hidden"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         aria-label="Toggle menu"
                     >
@@ -158,8 +158,8 @@ export const HeaderSection = () => {
                     </button>
 
                     {/* Desktop Navigation */}
-                    <div className="hidden lg:flex justify-between w-full items-center">
-                        <div className="flex space-x-10 gap-5 w-1/3 justify-center">
+                    <div className="items-center justify-between hidden w-full lg:flex">
+                        <div className="flex justify-center w-1/3 gap-5 space-x-10">
                             <a href="#" className="text-gray-700 text-[16px] font-light">Accueil</a>
                             <div className="relative group">
                                 <a href="#" className="text-gray-700 text-[16px] font-light flex items-center gap-2">
@@ -178,7 +178,7 @@ export const HeaderSection = () => {
                                         />
                                     </svg>
                                 </a>
-                                <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+                                <div className="absolute left-0 invisible w-48 py-1 mt-2 transition-all duration-300 bg-white rounded-md shadow-lg opacity-0 group-hover:opacity-100 group-hover:visible">
                                     <a href="#" className="block px-4 py-2 text-[16px] text-gray-700 hover:bg-gray-100 font-light">
                                         Logements Insolites
                                     </a>
@@ -189,7 +189,7 @@ export const HeaderSection = () => {
                             </div>
                             <a href="#" className="text-gray-700 text-[16px] font-light">Extras</a>
                         </div>
-                        <div className="flex space-x-6 w-1/3 justify-start">
+                        <div className="flex justify-start w-1/3 space-x-6">
                             <a href="#" className="text-gray-700 text-[16px] font-light">Activités & Partenaires</a>
                             <a href="#" className="text-gray-700 text-[16px] font-light">Qui Sommes-Nous ?</a>
                             <a href="#" className="text-gray-700 text-[16px] font-light">Info & Presse</a>
@@ -198,9 +198,9 @@ export const HeaderSection = () => {
 
                     {/* Mobile Menu */}
                     {isMenuOpen && (
-                        <div className="fixed inset-0 bg-white z-50 lg:hidden overflow-y-auto">
+                        <div className="fixed inset-0 z-50 overflow-y-auto bg-white lg:hidden">
                             <div className="p-4">
-                                <div className="flex justify-between items-center mb-6">
+                                <div className="flex items-center justify-between mb-6">
                                     <img src={Logo} alt="Logo" className="w-[80px] h-[80px]" />
                                     <button 
                                         onClick={() => setIsMenuOpen(false)}
@@ -213,16 +213,16 @@ export const HeaderSection = () => {
                                 </div>
                                 {menuItems.map((item, index) => (
                                     <div key={index} className="py-3 border-b border-gray-100">
-                                        <a href={item.url} className="text-gray-700 text-lg font-light block">
+                                        <a href={item.url} className="block text-lg font-light text-gray-700">
                                             {item.label}
                                         </a>
                                         {item.submenu && (
-                                            <div className="mt-2 pl-4">
+                                            <div className="pl-4 mt-2">
                                                 {item.submenu.map((subItem, subIndex) => (
                                                     <a 
                                                         key={subIndex}
                                                         href={subItem.url}
-                                                        className="text-gray-600 text-base font-light block py-2"
+                                                        className="block py-2 text-base font-light text-gray-600"
                                                     >
                                                         {subItem.label}
                                                     </a>

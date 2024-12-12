@@ -20,33 +20,7 @@ const pendingBookings = new Map();
 
 // Discount settings
 const discountSettings = {
-  1644643: {
-    cleaningFee: 0,
-    prepayment: 0,
-    minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
-    startingAtGuest: 2,
-    maxGuests: 2,
-    extraChildPerNight: 0,
-    lengthOfStayDiscount: {
-      minNights: 0,
-      discountPercentage: 0,
-    },
-  },
-  1946282: {
-    cleaningFee: 0,
-    prepayment: 0,
-    minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
-    startingAtGuest: 3,
-    maxGuests: 4,
-    extraChildPerNight: 20,
-    lengthOfStayDiscount: {
-      minNights: 0,
-      discountPercentage: 0,
-    },
-  },
-  1946279: {
+  2467648: {
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
@@ -59,20 +33,7 @@ const discountSettings = {
       discountPercentage: 40,
     },
   },
-  1946276: {
-    cleaningFee: 0,
-    prepayment: 0,
-    minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
-    startingAtGuest: 2,
-    maxGuests: 4,
-    extraChildPerNight: 20,
-    lengthOfStayDiscount: {
-      minNights: 2,
-      discountPercentage: 40,
-    },
-  },
-  1946270: {
+  2467653: {
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
@@ -413,6 +374,9 @@ app.get("/api/test", (req, res) => {
 });
 
 // Webhook endpoint must come before JSON middleware
+// Helper function for delays
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 app.post(
   "/webhook",
   express.raw({ type: "application/json" }),
@@ -430,120 +394,144 @@ app.post(
 
       console.log("Webhook event verified:", event.type);
 
-     if (event.type === "payment_intent.succeeded") {
-       const paymentIntent = event.data.object;
-       const bookingReference = paymentIntent.metadata.bookingReference;
-       const bookingData = pendingBookings.get(bookingReference);
+      if (event.type === "payment_intent.succeeded") {
+        const paymentIntent = event.data.object;
+        const bookingReference = paymentIntent.metadata.bookingReference;
+        const bookingData = pendingBookings.get(bookingReference);
 
-       console.log("Retrieved booking data:", bookingData);
+        console.log("Retrieved booking data:", bookingData);
 
-       if (!bookingData) {
-         console.error(
-           "No booking data found for reference:",
-           bookingReference
-         );
-         return res.status(400).json({ error: "Booking data not found !" });
-       }
+        if (!bookingData) {
+          console.error(
+            "No booking data found for reference:",
+            bookingReference
+          );
+          return res.status(400).json({ error: "Booking data not found!" });
+        }
 
-       try {
-         // First create the main booking
-         const smoobuResponse = await axios.post(
-           "https://login.smoobu.com/api/reservations",
-           {
-             arrivalDate: bookingData.arrivalDate,
-             departureDate: bookingData.departureDate,
-             arrivalTime: bookingData.arrivalTime,
-             channelId: bookingData.channelId,
-             apartmentId: bookingData.apartmentId,
-             firstName: bookingData.firstName,
-             lastName: bookingData.lastName,
-             email: bookingData.email,
-             phone: bookingData.phone,
-             notice: bookingData.notice,
-             adults: Number(bookingData.adults),
-             children: Number(bookingData.children),
-             price: Number(bookingData.price),
-             priceStatus: 1,
-             deposit: Number(bookingData.deposit),
-             depositStatus: 1,
-             language: "en",
-           },
-           {
-             headers: {
-               "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-               "Content-Type": "application/json",
-             },
-           }
-         );
+        try {
+          // First create the main booking
+          const smoobuResponse = await axios.post(
+            "https://login.smoobu.com/api/reservations",
+            {
+              arrivalDate: bookingData.arrivalDate,
+              departureDate: bookingData.departureDate,
+              channelId: bookingData.channelId,
+              apartmentId: bookingData.apartmentId,
+              firstName: bookingData.firstName,
+              lastName: bookingData.lastName,
+              email: bookingData.email,
+              phone: bookingData.phone,
+              notice: bookingData.notice,
+              adults: Number(bookingData.adults),
+              children: Number(bookingData.children),
+              price: Number(bookingData.price),
+              priceStatus: 1,
+              deposit: Number(bookingData.deposit),
+              depositStatus: 1,
+              language: "en",
+            },
+            {
+              headers: {
+                "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
+                "Content-Type": "application/json",
+              },
+            }
+          );
 
-         console.log("Smoobu booking created:", smoobuResponse.data);
+          console.log("Smoobu booking created:", smoobuResponse.data);
+          const reservationId = smoobuResponse.data.id;
 
-         // If there are extras, create them as price elements
-         if (bookingData.extras && bookingData.extras.length > 0) {
-           console.log("Creating extras as price elements...");
-           const reservationId = smoobuResponse.data.id;
+          // Add initial delay after booking creation
+          await wait(2000);
 
-           for (const extra of bookingData.extras) {
-             try {
-               // Handle base extra
-               const extraResponse = await axios.post(
-                 `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-                 {
-                   type: "addon",
-                   name: extra.name,
-                   amount: extra.amount,
-                   quantity: extra.quantity,
-                   currencyCode: "EUR",
-                 },
-                 {
-                   headers: {
-                     "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-                     "Content-Type": "application/json",
-                   },
-                 }
-               );
-               console.log(`Added extra: ${extra.name}`, extraResponse.data);
+          // Process extras if they exist
+          if (bookingData.extras && bookingData.extras.length > 0) {
+            console.log("Creating extras as price elements...");
 
-               // Handle extra person price if it exists
-               if (extra.extraPersonPrice && extra.extraPersonQuantity > 0) {
-                 const extraPersonResponse = await axios.post(
-                   `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-                   {
-                     type: "addon",
-                     name: `${extra.name} - Personne supplémentaire`,
-                     amount: extra.extraPersonPrice * extra.extraPersonQuantity,
-                     quantity: extra.extraPersonQuantity,
-                     currencyCode: "EUR",
-                   },
-                   {
-                     headers: {
-                       "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-                       "Content-Type": "application/json",
-                     },
-                   }
-                 );
-                 console.log(
-                   `Added extra person charges for: ${extra.name}`,
-                   extraPersonResponse.data
-                 );
-               }
-             } catch (extraError) {
-               console.error(
-                 `Error adding extra ${extra.name}:`,
-                 extraError.response?.data || extraError.message
-               );
-             }
-           }
-         }
+            for (const extra of bookingData.extras) {
+              let retryCount = 0;
+              const maxRetries = 3;
 
-         pendingBookings.delete(bookingReference);
-       } catch (error) {
-         console.error(
-           "Error creating Smoobu booking:",
-           error.response?.data || error.message
-         );
-       }
-     }
+              while (retryCount < maxRetries) {
+                try {
+                  // Add base extra
+                  if (!extra.name.includes('Personne supplémentaire')) {
+                    const extraResponse = await axios.post(
+                      `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+                      {
+                        type: "addon",
+                        name: extra.name,
+                        amount: extra.amount,
+                        quantity: extra.quantity,
+                        currencyCode: "EUR",
+                      },
+                      {
+                        headers: {
+                          "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
+                          "Content-Type": "application/json",
+                        },
+                      }
+                    );
+                    console.log(`Added base extra: ${extra.name}`, extraResponse.data);
+                  }
+
+                  // If there are extra persons, add them as a separate price element
+                  if (extra.extraPersonQuantity > 0 && extra.extraPersonPrice) {
+                    await wait(1000); // Wait between requests
+                    const extraPersonResponse = await axios.post(
+                      `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+                      {
+                        type: "addon",
+                        name: `${extra.name} - Personne supplémentaire`,
+                        amount: extra.extraPersonPrice * extra.extraPersonQuantity,
+                        quantity: extra.extraPersonQuantity,
+                        currencyCode: "EUR",
+                      },
+                      {
+                        headers: {
+                          "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
+                          "Content-Type": "application/json",
+                        },
+                      }
+                    );
+                    console.log(`Added extra person charges for: ${extra.name}`, extraPersonResponse.data);
+                  }
+
+                  break; // Success - exit retry loop
+                } catch (extraError) {
+                  retryCount++;
+                  console.log(`Retry ${retryCount} for extra ${extra.name}`);
+                  
+                  if (retryCount === maxRetries) {
+                    console.error(
+                      `Failed to add extra ${extra.name} after ${maxRetries} attempts:`,
+                      extraError.response?.data || extraError.message
+                    );
+                  } else {
+                    await wait(2000 * retryCount); // Exponential backoff
+                    continue;
+                  }
+                }
+              }
+            }
+          }
+
+          // Clean up the pending booking after successful processing
+          pendingBookings.delete(bookingReference);
+          console.log("Successfully processed booking and removed from pending bookings");
+
+        } catch (error) {
+          console.error(
+            "Error creating Smoobu booking:",
+            error.response?.data || error.message
+          );
+          return res.status(500).json({
+            error: "Failed to create booking in Smoobu",
+            details: error.response?.data || error.message
+          });
+        }
+      }
 
       res.json({ received: true });
     } catch (err) {
@@ -559,7 +547,7 @@ app.get('/api/apartments', async (req, res) => {
   try {
     const response = await axios.get('https://login.smoobu.com/api/apartments', {
       headers: {
-        'Api-Key': "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+        'Api-Key': "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
         'Cache-Control': 'no-cache',
         "Content-Type": "application/json",
       }
@@ -578,7 +566,7 @@ app.get('/api/apartments/:id', async (req, res) => {
   try {
     const response = await axios.get(`https://login.smoobu.com/api/apartments/${req.params.id}`, {
       headers: {
-        'Api-Key': "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+        'Api-Key': "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
         "Content-Type": "application/json",
       }
     });
@@ -612,7 +600,7 @@ app.get("/api/rates", async (req, res) => {
 
     const response = await axios.get("https://login.smoobu.com/api/rates", {
       headers: {
-        "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+        "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
         "Content-Type": "application/json",
       },
       params: {
@@ -870,7 +858,6 @@ app.get("/api/bookings/:paymentIntentId", async (req, res) => {
     });
   }
 });
-
 
 
 
