@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { roomsData } from "../hooks/roomsData";
 
 const BookingForm = () => {
-  const navigate = useNavigate();
+   const navigate = useNavigate();
   const {
     formData,
     currentStep,
@@ -155,7 +155,7 @@ const BookingForm = () => {
       setDateError("");
       return;
     }
-
+  
     const selectedDate = new Date(date.setHours(12, 0, 0, 0));
     if (isStart) {
       setStartDate(selectedDate);
@@ -172,6 +172,7 @@ const BookingForm = () => {
       // Reset availability states when dates change
       setIsAvailable(false);
       setShowPriceDetails(false);
+
     } else {
       setEndDate(selectedDate);
       setDateError("");
@@ -254,16 +255,16 @@ const BookingForm = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#fbfdfb]">
-      <HeaderSection />
-      <div className=" mx-auto h-[100vh] w-full mt-[174px]">
-        {error && <ErrorMessage message={error} />}
-        {availabilityError && <ErrorMessage message={availabilityError} />}
-        {successMessage && (
-          <div className="mb-4 text-green-500">{successMessage}</div>
-        )}
-        {(loading || availabilityLoading) && <LoadingSpinner />}
+          <HeaderSection />
+    <div className=" mx-auto h-[100vh] w-full mt-[174px]">
+      {error && <ErrorMessage message={error} />}
+      {availabilityError && <ErrorMessage message={availabilityError} />}
+      {successMessage && (
+        <div className="mb-4 text-green-500">{successMessage}</div>
+      )}
+      {(loading || availabilityLoading) && <LoadingSpinner />}
 
-        {!showPayment ? (
+      {!showPayment ? (
           <form onSubmit={handleSubmit} className="mx-auto space-y-4">
             <div style={{ backgroundColor: "#668E73" }}>
               <SearchSection {...searchSectionProps} />
@@ -271,41 +272,35 @@ const BookingForm = () => {
             </div>
 
             <div className="space-y-8 px-[5%] py-[1%]">
-              {formData.apartmentId && (
-                <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
-                  <div className="w-full h-full lg:w-1/2">
-                    <div className="h-full overflow-auto">
-                      <PropertyDetails
-                        {...propertyDetailsProps}
-                        showOnlySelected={true}
-                        selectedRoomId={formData.apartmentId}
-                      />
-                    </div>
+            {formData.apartmentId && (
+              <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
+                <div className="w-full h-full lg:w-1/2">
+                  <div className="h-full overflow-auto">
+                    <PropertyDetails
+                      {...propertyDetailsProps}
+                      showOnlySelected={true}
+                      selectedRoomId={formData.apartmentId}
+                    />
                   </div>
+                </div>
 
-                  <div className="w-full h-full lg:w-1/2">
-                    <div className="border border-[#668E73] p-4 rounded h-full flex flex-col">
-                      <h2 className="text-xl font-semibold text-[#668E73] mb-6">
-                        Choix des extras
-                      </h2>
-                      <BookingSteps currentStep={currentStep} />
-                      <div className="flex-1 mt-4 overflow-y-auto">
-                        {currentStep === 1 && (
-                          <ExtrasSection {...extrasSectionProps} />
-                        )}
-                        {currentStep === 2 && (
-                          <InfoSupSection {...infoSupSectionProps} />
-                        )}
-                        {currentStep === 3 && (
-                          <ContactSection {...contactSectionProps} />
-                        )}
-                      </div>
-                      <div className="pt-4 mt-4 border-t border-gray-200">
-                        <NavigationButtons {...navigationButtonsProps} />
-                      </div>
+                <div className="w-full h-full lg:w-1/2">
+                  <div className="border border-[#668E73] p-4 rounded h-full flex flex-col">
+                    <h2 className="text-xl font-semibold text-[#668E73] mb-6">
+                      Choix des extras
+                    </h2>
+                    <BookingSteps currentStep={currentStep} />
+                    <div className="flex-1 mt-4 overflow-y-auto">
+                      {currentStep === 1 && <ExtrasSection {...extrasSectionProps} />}
+                      {currentStep === 2 && <InfoSupSection {...infoSupSectionProps} />}
+                      {currentStep === 3 && <ContactSection {...contactSectionProps} />}
+                    </div>
+                    <div className="pt-4 mt-4 border-t border-gray-200">
+                      <NavigationButtons {...navigationButtonsProps} />
                     </div>
                   </div>
                 </div>
+              </div>
               )}
 
               <div className="w-full">
@@ -318,25 +313,22 @@ const BookingForm = () => {
           </form>
         ) : (
           <div className="fixed inset-0 flex items-center justify-center">
-            <div className="w-full p-5 mx-auto md:w-1/2">
-              <h3 className="mb-4 text-lg font-medium">
-                Finaliser votre paiement
-              </h3>
-              {clientSecret && (
-                <StripeWrapper
-                  clientSecret={clientSecret}
-                  onSuccess={handlePaymentSuccess}
-                  onError={(error) => setError(error)}
-                >
-                  <PaymentForm />
-                </StripeWrapper>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+  <div className="w-full p-5 mx-auto md:w-1/2">
+    <h3 className="mb-4 text-lg font-medium">Finaliser votre paiement</h3>
+    {clientSecret && (
+      <StripeWrapper
+        clientSecret={clientSecret}
+        onSuccess={handlePaymentSuccess}
+        onError={(error) => setError(error)}
+      >
+        <PaymentForm />
+      </StripeWrapper>
+    )}
+  </div>
+</div>
+      )}
     </div>
-
+    </div>
 
   );
 };
