@@ -13,7 +13,7 @@ dotenv.config();
 
 const app = express();
 const stripe = new Stripe(
-  "whsec_uzumVmrKDrksQlTpgo5gEUPk1HIxZwBv"
+  "sk_test_51QHmafIhkftuEy3nihoW4ZunaXVY1D85r176d91x9BAhGfvW92zG7r7A5rVeGuL1ysHVMOzflF0jwoCpyKJl760n00GC9ZYSJ4"
 );
 const pendingBookings = new Map();
 
@@ -263,7 +263,7 @@ app.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        "whsec_d9b86273072de6b319134fbc08752e2b4e66bae72aaa2cf4cb7db1411974c20a"
+        "whsec_uzumVmrKDrksQlTpgo5gEUPk1HIxZwBv"
       );
 
       console.log("Webhook event verified:", event.type);
@@ -290,7 +290,6 @@ app.post(
             {
               arrivalDate: bookingData.arrivalDate,
               departureDate: bookingData.departureDate,
-              arrivalTime: bookingData.arrivalTime,
               channelId: bookingData.channelId,
               apartmentId: bookingData.apartmentId,
               firstName: bookingData.firstName,
@@ -308,7 +307,7 @@ app.post(
             },
             {
               headers: {
-                "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
                 "Content-Type": "application/json",
               },
             }
@@ -343,7 +342,7 @@ app.post(
                       },
                       {
                         headers: {
-                          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                          "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
                           "Content-Type": "application/json",
                         },
                       }
@@ -365,7 +364,7 @@ app.post(
                       },
                       {
                         headers: {
-                          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                          "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
                           "Content-Type": "application/json",
                         },
                       }
@@ -415,6 +414,7 @@ app.post(
     }
   }
 );
+
 
 // Use JSON parsing and CORS for all other routes
 app.use(express.json());
@@ -616,8 +616,8 @@ app.post("/api/create-payment-intent", async (req, res) => {
     const { price, bookingData } = req.body;
 
     const bookingReference = `BOOKING-${Date.now()}-${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
+    .toString(36)
+    .substr(2, 9)}`;
     console.log("Generated booking reference:", bookingReference);
 
     // Store booking data for webhook
@@ -651,6 +651,7 @@ app.post("/api/create-payment-intent", async (req, res) => {
     res.status(500).json({ error: "Failed to create payment intent" });
   }
 });
+
 
 app.get("/api/bookings/:paymentIntentId", async (req, res) => {
   try {
