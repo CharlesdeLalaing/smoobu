@@ -9,8 +9,6 @@ const BookingConfirmation = () => {
   const [searchParams] = useSearchParams();
   const paymentIntent = searchParams.get("payment_intent");
 
-  const API_URL = "https://booking-9u8u.onrender.com";
-
   useEffect(() => {
     const storedBookingData = localStorage.getItem("bookingData");
     if (storedBookingData) {
@@ -28,11 +26,14 @@ const BookingConfirmation = () => {
     }
   }, [paymentIntent]);
 
+  const API_URL = "https://booking-9u8u.onrender.com/"
+
   const fetchBookingDetails = async (paymentIntentId) => {
+
     try {
-       const response = await fetch(
-         `${API_URL}/api/bookings/${paymentIntentId}`
-       );
+      const response = await fetch(
+        `${API_URL}/api/bookings/${paymentIntentId}`
+      );
       const data = await response.json();
       if (data.error) throw new Error(data.error);
       setBookingDetails(data);
