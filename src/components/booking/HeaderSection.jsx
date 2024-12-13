@@ -49,7 +49,7 @@ export const HeaderSection = () => {
           {/* Contact Information */}
           <div className="flex w-full md:flex-row md:items-center md:space-x-6 md:w-auto">
             {/* Mobile: Icon only with click action, Desktop: Full content */}
-            <div className="flex justify-center w-full md:hidden gap-7 md:gap-0 md:justify-between">
+            <div className="justify-center w-full hidden gap-7 md:gap-0 md:justify-between">
               <a href="tel:+32475201619" className="flex items-center">
                 <img src={Phone} alt="phone" className="h-[18px] w-[18px]" />
               </a>
