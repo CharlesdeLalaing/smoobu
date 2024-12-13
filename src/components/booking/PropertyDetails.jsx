@@ -81,7 +81,20 @@ export const PropertyDetails = ({
   };
 
   const sortRooms = (rooms) => {
-    return [...rooms].sort((a, b) => (a.id === formData.apartmentId ? -1 : 1));
+    // Define the desired order of room IDs
+    const customOrder = [1644643, 1946282, 1946279, 1946276, 1946270];
+    
+    return [...rooms].sort((a, b) => {
+      // First priority: selected room
+      if (a.id === formData.apartmentId) return -1;
+      if (b.id === formData.apartmentId) return 1;
+      
+      // Second priority: custom order
+      const indexA = customOrder.indexOf(a.id);
+      const indexB = customOrder.indexOf(b.id);
+      
+      return indexA - indexB;
+    });
   };
 
   const groupedRooms = Object.values(roomsData).reduce(
