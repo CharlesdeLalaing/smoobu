@@ -126,33 +126,38 @@ const BookingConfirmation = () => {
 
 
           {/* Price Details */}
+          {/* Price Details */}
           <div className="details-card">
-
-
-          <LocalStorageDebug />
-
-
             <h2 className="titleConfirmation">Détails du prix</h2>
-            <p>Prix de base: {bookingDetails?.priceBreakdown?.basePrice?.toFixed(2)}€</p>
+            <p>Prix de base: {(bookingDetails?.priceBreakdown?.basePrice || 0).toFixed(2)}€</p>
+            
+            {/* Show extras */}
             {bookingDetails?.extras?.map((extra, index) => (
               <p key={index}>
-                {extra.name} (x{extra.quantity}): {extra.amount?.toFixed(2)}€
+                {extra.name} (x{extra.quantity}): {((extra.amount || 0) + (extra.extraPersonAmount || 0)).toFixed(2)}€
+                {extra.extraPersonQuantity > 0 && ` (dont ${extra.extraPersonQuantity} personne(s) supplémentaire(s))`}
               </p>
             ))}
+
+            {/* Long stay discount if applicable */}
             {bookingDetails?.priceDetails?.discount > 0 && (
               <p className="discount-text">
                 Réduction long séjour ({bookingDetails.priceDetails.settings.lengthOfStayDiscount.discountPercentage}%): 
                 -{bookingDetails.priceDetails.discount.toFixed(2)}€
               </p>
             )}
+
+            {/* Coupon discount if applicable */}
             {bookingDetails?.couponApplied && (
               <p className="discount-text">
                 Code promo ({bookingDetails.couponApplied.code}): 
                 -{bookingDetails.couponApplied.discount.toFixed(2)}€
               </p>
             )}
+
+            {/* Total */}
             <div className="total-section">
-              <p className="total-text">Total: {bookingDetails?.price?.toFixed(2)}€</p>
+              <p className="total-text">Total: {(bookingDetails?.price || 0).toFixed(2)}€</p>
               <p>Conditions générales: Acceptée</p>
             </div>
           </div>

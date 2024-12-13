@@ -303,39 +303,65 @@ const handleCheckAvailability = async () => {
 
   const handlePaymentSuccess = () => {
     const selectedExtrasArray = createSelectedExtrasArray();
-    const extrasTotal = calculateExtrasTotal(selectedExtrasArray);
-    const subtotal = priceDetails.finalPrice + extrasTotal;
+    
+    // Calculate extras total
+    const extrasTotal = selectedExtrasArray.reduce((sum, extra) => 
+      sum + extra.amount + (extra.extraPersonAmount || 0), 0
+    );
+    
+    // Get base price from priceDetails
+    const basePrice = priceDetails?.basePrice || priceDetails?.originalPrice || 0;
+    
+    // Calculate total before discounts
+    const subtotalBeforeDiscounts = basePrice + extrasTotal;
+    
+    // Apply discounts
+    const longStayDiscount = priceDetails?.discount || 0;
     const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-    const finalTotal = subtotal - couponDiscount;
+    
+    // Calculate final total
+    const finalTotal = subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
   
     const bookingData = {
       ...formData,
       extras: selectedExtrasArray,
       priceBreakdown: {
-        basePrice: priceDetails.originalPrice || priceDetails.basePrice,
-        finalPrice: finalTotal
+        basePrice: basePrice,
+        finalPrice: finalTotal,
+        extrasTotal: extrasTotal
       },
       priceDetails: {
-        discount: priceDetails.discount || 0,
+        discount: longStayDiscount,
         settings: {
           lengthOfStayDiscount: {
-            discountPercentage: priceDetails.discountPercentage || 0
+            discountPercentage: priceDetails?.discountPercentage || 0
           }
         }
       },
-      price: finalTotal,
+      price: finalTotal, // Make sure this is set
       couponApplied: appliedCoupon ? {
         code: appliedCoupon.code,
-        discount: appliedCoupon.discount
+        discount: couponDiscount
       } : null
     };
   
-    console.log('Saving booking data:', bookingData); // Debug log
+    // Debug log to verify data
+    console.log('Saving booking data with prices:', {
+      basePrice,
+      extrasTotal,
+      subtotalBeforeDiscounts,
+      longStayDiscount,
+      couponDiscount,
+      finalTotal,
+      fullBookingData: bookingData
+    });
+  
     localStorage.setItem("bookingData", JSON.stringify(bookingData));
   
     const paymentIntent = clientSecret.split("_secret")[0];
     navigate(`/booking-confirmation?payment_intent=${paymentIntent}`);
   };
+  
  // useBookingForm.js
 const handleApplyCoupon = (couponCode) => {
   console.log('handleApplyCoupon called with:', couponCode);
