@@ -63,7 +63,7 @@ export const SearchSection = ({
               locale="fr"
               dateFormat="dd/MM/yyyy"
               placeholderText="Sélectionnez une date"
-              className="w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
+              className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
               filterDate={(date) => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -87,7 +87,7 @@ export const SearchSection = ({
               minDate={startDate || new Date()}
               dateFormat="dd/MM/yyyy"
               placeholderText="Sélectionnez une date"
-              className="w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
+              className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
               isClearable={true}
               disabled={!startDate}
             />
