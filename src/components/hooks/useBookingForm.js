@@ -142,13 +142,13 @@ const calculateNumberOfNights = (startDate, endDate) => {
     }
   
     const numberOfNights = calculateNumberOfNights(startDate, endDate);
-  console.log("Debugging dates:", {
-    formDataArrival: formData.arrivalDate,
-    formDataDeparture: formData.departureDate,
-    startDate: startDate,
-    endDate: endDate,
-    calculatedNights: numberOfNights,
-  });
+    console.log("Debugging dates:", {
+      formDataArrival: formData.arrivalDate,
+      formDataDeparture: formData.departureDate,
+      startDate: startDate,
+      endDate: endDate,
+      calculatedNights: numberOfNights,
+    });
     setLoading(true);
     setError(null);
   
