@@ -148,7 +148,7 @@ export const PropertyDetails = ({
             : ''
         } ${
           formData.apartmentId === room.id && showOnlySelected 
-            ? 'h-fit' 
+            ? 'h-fit sm:h-[calc(100vh-200px)] overflow-hidden' 
             : 'h-fit'
         }`}
       >
