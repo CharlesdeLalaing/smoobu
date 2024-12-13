@@ -239,7 +239,7 @@ export const RoomNavigation = ({ rooms, onRoomSelect }) => {
   return (
     <div
       className="flex flex-wrap justify-center gap-4 my-8 pb-[60px] font-montserrat"
-      id="main-container"
+      
     >
       {rooms.map((room) => (
         <button
@@ -251,6 +251,7 @@ export const RoomNavigation = ({ rooms, onRoomSelect }) => {
           {room.name}
         </button>
       ))}
+      <p id="main-container"></p>
     </div>
   );
 };
