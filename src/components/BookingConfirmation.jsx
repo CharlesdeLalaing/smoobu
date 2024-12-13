@@ -13,19 +13,29 @@ const BookingConfirmation = () => {
   const paymentIntent = searchParams.get("payment_intent");
 
   useEffect(() => {
+    console.log('Payment Intent:', paymentIntent);
     const storedBookingData = localStorage.getItem("bookingData");
+    console.log('Initial stored data:', storedBookingData);
+    
     if (storedBookingData) {
       try {
         const parsedData = JSON.parse(storedBookingData);
+        console.log('Parsed booking data:', parsedData);
         setBookingDetails(parsedData);
         setStatus("success");
-        localStorage.removeItem("bookingData");
+        // Only remove after confirming the data is displayed
+        if (parsedData) {
+          localStorage.removeItem("bookingData");
+        }
       } catch (error) {
         console.error("Error parsing booking data:", error);
         setStatus("error");
       }
     } else {
-      fetchBookingDetails(paymentIntent);
+      if (paymentIntent) {
+        console.log('No stored data, fetching from API...');
+        fetchBookingDetails(paymentIntent);
+      }
     }
   }, [paymentIntent]);
 
