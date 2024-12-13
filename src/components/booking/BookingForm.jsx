@@ -96,16 +96,26 @@ const BookingForm = () => {
   };
 
   const handleAvailabilityCheck = async () => {
+    console.log('handleAvailabilityCheck called with:', {
+      startDate,
+      endDate,
+      formDataDates: {
+        arrival: formData.arrivalDate,
+        departure: formData.departureDate
+      }
+    });
+  
     if (!startDate || !endDate) {
       setDateError("Please select both arrival and departure dates");
       return;
     }
-
+  
     setError("");
     setDateError("");
-
+  
     try {
       const availabilityData = await checkAvailability(startDate, endDate);
+      console.log('Availability data received:', availabilityData);
 
       if (availabilityData) {
         if (availabilityData.priceDetails) {
@@ -142,6 +152,7 @@ const BookingForm = () => {
   };
 
   const handleDateSelect = (date, isStart) => {
+    // Reset handling
     if (!date) {
       if (isStart) {
         setStartDate(null);
@@ -153,14 +164,17 @@ const BookingForm = () => {
         handleChange({ target: { name: "departureDate", value: "" } });
       }
       setDateError("");
+      resetAvailability(); // Add this to ensure state is reset
       return;
     }
   
+    // Set the selected date
     const selectedDate = new Date(date.setHours(12, 0, 0, 0));
+  
     if (isStart) {
+      // Setting start date
       setStartDate(selectedDate);
-      setEndDate(null);
-      setDateError("");
+      setEndDate(null); // Clear end date when start date changes
       handleChange({
         target: {
           name: "arrivalDate",
@@ -168,24 +182,32 @@ const BookingForm = () => {
         },
       });
       handleChange({ target: { name: "departureDate", value: "" } });
-  
-      // Reset availability states when dates change
+      
+      // Reset states
       setIsAvailable(false);
       setShowPriceDetails(false);
+      resetAvailability();
     } else {
+      // Setting end date
       setEndDate(selectedDate);
-      setDateError("");
       handleChange({
         target: {
           name: "departureDate",
           value: selectedDate.toISOString().split("T")[0],
         },
       });
+    }
   
-      // Add this: Automatically check availability when both dates are set
-      if (startDate && selectedDate) {
-        handleAvailabilityCheck();
-      }
+    // Check availability if both dates are set (moved outside the if/else)
+    const updatedStartDate = isStart ? selectedDate : startDate;
+    const updatedEndDate = isStart ? null : selectedDate;
+  
+    if (updatedStartDate && updatedEndDate) {
+      console.log('Both dates set, checking availability:', {
+        start: updatedStartDate,
+        end: updatedEndDate
+      });
+      handleAvailabilityCheck();
     }
   };
 
