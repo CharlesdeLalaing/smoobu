@@ -30,8 +30,7 @@ export const SearchSection = ({
 
   return (
     <div
-      className="relative w-4/5 m-auto text-center md:w-full lg:w-4/5 font-montserrat"
-      style={{ backgroundColor: "#668E73", padding: "60px 20px" }}
+      className="relative w-4/5 mx-auto text-center md:w-full lg:w-4/5 font-montserrat bg-[#668E73] px-0 py-[60px] md:px-5"
     >
       {/* Squirrel Image */}
       <div className="absolute top-[65px] left-[-30px] sm:top-[70px] sm:left-[-30px] md:top-8 md:left-[-20px] lg:top-4 lg:left-[-50px]">
@@ -60,11 +59,11 @@ export const SearchSection = ({
               selectsStart
               startDate={startDate}
               endDate={endDate}
-              minDate={new Date().setHours(24, 0, 0, 0)} // This forces tomorrow as minimum
+              minDate={new Date().setHours(24, 0, 0, 0)}
               locale="fr"
               dateFormat="dd/MM/yyyy"
               placeholderText="Sélectionnez une date"
-              className="mt-1 block w-full rounded bg-[#fbfdfb] border-[#668E73] border text-[14px] md:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black h-12 p-2"
+              className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
               filterDate={(date) => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -88,7 +87,7 @@ export const SearchSection = ({
               minDate={startDate || new Date()}
               dateFormat="dd/MM/yyyy"
               placeholderText="Sélectionnez une date"
-              className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2"
+              className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
               isClearable={true}
               disabled={!startDate}
             />
