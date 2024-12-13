@@ -144,7 +144,7 @@ const calculatePriceWithSettings = (
     nextDate.setDate(nextDate.getDate() + 1);
     const nextDateStr = nextDate.toISOString().split("T")[0];
     
-    // Only count if this is not the departure day
+    // Only count if this is not the departure day OK
     if (dateStr !== endDateTime.toISOString().split("T")[0]) {
       const dayRate = rates[dateStr];
       if (dayRate) {
