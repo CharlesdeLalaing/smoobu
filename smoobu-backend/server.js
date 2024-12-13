@@ -17,7 +17,6 @@ const stripe = new Stripe(
 );
 const pendingBookings = new Map();
 
-
 // Discount settings
 const discountSettings = {
   1644643: {
@@ -284,36 +283,35 @@ app.post(
           return res.status(400).json({ error: "Booking data not found!" });
         }
 
-       try {
-         // First create the main booking
-         const smoobuResponse = await axios.post(
-           "https://login.smoobu.com/api/reservations",
-           {
-             arrivalDate: bookingData.arrivalDate,
-             departureDate: bookingData.departureDate,
-             arrivalTime: bookingData.arrivalTime,
-             channelId: bookingData.channelId,
-             apartmentId: bookingData.apartmentId,
-             firstName: bookingData.firstName,
-             lastName: bookingData.lastName,
-             email: bookingData.email,
-             phone: bookingData.phone,
-             notice: bookingData.notice,
-             adults: Number(bookingData.adults),
-             children: Number(bookingData.children),
-             price: Number(bookingData.price),
-             priceStatus: 1,
-             deposit: Number(bookingData.deposit),
-             depositStatus: 1,
-             language: "en",
-           },
-           {
-             headers: {
-               "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
-               "Content-Type": "application/json",
-             },
-           }
-         );
+        try {
+          // First create the main booking
+          const smoobuResponse = await axios.post(
+            "https://login.smoobu.com/api/reservations",
+            {
+              arrivalDate: bookingData.arrivalDate,
+              departureDate: bookingData.departureDate,
+              channelId: bookingData.channelId,
+              apartmentId: bookingData.apartmentId,
+              firstName: bookingData.firstName,
+              lastName: bookingData.lastName,
+              email: bookingData.email,
+              phone: bookingData.phone,
+              notice: bookingData.notice,
+              adults: Number(bookingData.adults),
+              children: Number(bookingData.children),
+              price: Number(bookingData.price),
+              priceStatus: 1,
+              deposit: Number(bookingData.deposit),
+              depositStatus: 1,
+              language: "en",
+            },
+            {
+              headers: {
+                "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
+                "Content-Type": "application/json",
+              },
+            }
+          );
 
           console.log("Smoobu booking created:", smoobuResponse.data);
           const reservationId = smoobuResponse.data.id;
@@ -466,165 +464,16 @@ app.get('/api/apartments/:id', async (req, res) => {
 
 // Get rates endpoint
 // In your server file where you handle /api/rates endpoint
-// app.get("/api/rates", async (req, res) => {
-//   try {
-//     const { apartments, start_date, end_date, adults, children } = req.query;
-
-//     console.log("Processing rates request:", {
-//       apartments,
-//       start_date,
-//       end_date,
-//       adults,
-//       children
-//     });
-
-//     const response = await axios.get("https://login.smoobu.com/api/rates", {
-//       headers: {
-//         "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-//         "Content-Type": "application/json",
-//       },
-//       params: {
-//         apartments: Array.isArray(apartments) ? apartments : [apartments],
-//         start_date,
-//         end_date,
-//       },
-//     });
-
-//     if (!response.data || !response.data.data) {
-//       return res.status(404).json({ error: "No rates found" });
-//     }
-
-//     const formattedData = {};
-//     const priceDetailsByApartment = {};
-
-//     // Helper function to calculate nights
-//     const calculateNumberOfNights = (startDate, endDate) => {
-//       const start = new Date(startDate);
-//       const end = new Date(endDate);
-//       return Math.floor((end - start) / (1000 * 60 * 60 * 24));
-//     };
-
-//     // Process each apartment
-//     (Array.isArray(apartments) ? apartments : [apartments]).forEach(apartmentId => {
-//       const apartmentData = response.data.data[apartmentId];
-//       formattedData[apartmentId] = apartmentData;
-
-//       const settings = discountSettings[apartmentId];
-//       if (!settings) return;
-
-//       // Calculate base price
-//       let totalPrice = 0;
-//       const dates = Object.keys(apartmentData).sort();
-//       dates.forEach(date => {
-//         if (apartmentData[date].available === 1) {
-//           totalPrice += apartmentData[date].price;
-//         }
-//       });
-
-//       // Calculate numbers of nights and discount
-//       const numberOfNights = calculateNumberOfNights(start_date, end_date);
-//       let discount = 0;
-//       if (numberOfNights >= settings.lengthOfStayDiscount.minNights) {
-//         discount = (totalPrice * settings.lengthOfStayDiscount.discountPercentage) / 100;
-//       }
-
-//       // Calculate extra guest fees
-//       const extraGuests = Math.max(0, parseInt(adults) - settings.startingAtGuest);
-//       const extraGuestsFee = extraGuests * settings.extraGuestsPerNight * numberOfNights;
-//       const extraChildrenFee = parseInt(children) * settings.extraChildPerNight * numberOfNights;
-
-//       // Store price details for this apartment
-//       priceDetailsByApartment[apartmentId] = {
-//         originalPrice: totalPrice,
-//         extraGuestsFee,
-//         extraChildrenFee,
-//         cleaningFee: settings.cleaningFee,
-//         discount,
-//         finalPrice: totalPrice + extraGuestsFee + extraChildrenFee + settings.cleaningFee - discount,
-//         numberOfNights,
-//         pricePerNight: Math.round(totalPrice / numberOfNights),
-//         settings,
-//         priceElements: [
-//           {
-//             type: "basePrice",
-//             name: "Prix de base",
-//             amount: totalPrice,
-//             currencyCode: "EUR"
-//           }
-//         ]
-//       };
-
-//       // Add extra fees to price elements if they exist
-//       if (extraGuestsFee > 0) {
-//         priceDetailsByApartment[apartmentId].priceElements.push({
-//           type: "addon",
-//           name: "Frais de personne supplémentaire",
-//           amount: extraGuestsFee,
-//           currencyCode: "EUR"
-//         });
-//       }
-
-//       if (extraChildrenFee > 0) {
-//         priceDetailsByApartment[apartmentId].priceElements.push({
-//           type: "addon",
-//           name: "Frais d'enfants supplémentaires",
-//           amount: extraChildrenFee,
-//           currencyCode: "EUR"
-//         });
-//       }
-
-//       if (settings.cleaningFee > 0) {
-//         priceDetailsByApartment[apartmentId].priceElements.push({
-//           type: "cleaningFee",
-//           name: "Frais de nettoyage",
-//           amount: settings.cleaningFee,
-//           currencyCode: "EUR"
-//         });
-//       }
-
-//       if (discount > 0) {
-//         priceDetailsByApartment[apartmentId].priceElements.push({
-//           type: "discount",
-//           name: `Réduction long séjour (${settings.lengthOfStayDiscount.discountPercentage}%)`,
-//           amount: -discount,
-//           currencyCode: "EUR"
-//         });
-//       }
-//     });
-
-//     console.log("Sending response with price details:", {
-//       apartmentCount: Object.keys(priceDetailsByApartment).length,
-//       priceDetails: priceDetailsByApartment
-//     });
-
-//     res.json({
-//       data: formattedData,
-//       priceDetails: priceDetailsByApartment
-//     });
-
-//   } catch (error) {
-//     console.error("Error fetching rates:", error);
-//     res.status(500).json({
-//       error: "Failed to fetch rates",
-//       details: error.message
-//     });
-//   }
-// });
-
 app.get("/api/rates", async (req, res) => {
   try {
     const { apartments, start_date, end_date, adults, children } = req.query;
-
-    if (!start_date || !end_date || !apartments) {
-      return res.status(400).json({ error: "Missing required parameters" });
-    }
 
     console.log("Processing rates request:", {
       apartments,
       start_date,
       end_date,
-      adults: Number(adults) || 0,
-      children: Number(children) || 0
+      adults,
+      children
     });
 
     const response = await axios.get("https://login.smoobu.com/api/rates", {
@@ -646,67 +495,50 @@ app.get("/api/rates", async (req, res) => {
     const formattedData = {};
     const priceDetailsByApartment = {};
 
+    // Helper function to calculate nights
+    const calculateNumberOfNights = (startDate, endDate) => {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      return Math.floor((end - start) / (1000 * 60 * 60 * 24));
+    };
+
     // Process each apartment
     (Array.isArray(apartments) ? apartments : [apartments]).forEach(apartmentId => {
       const apartmentData = response.data.data[apartmentId];
-      if (!apartmentData) return;
-      
       formattedData[apartmentId] = apartmentData;
-      
+
       const settings = discountSettings[apartmentId];
       if (!settings) return;
 
-      // Calculate base price and check availability
+      // Calculate base price
       let totalPrice = 0;
-      let numberOfNights = 0;
-      let isFullyAvailable = true;
-      
-      const startDateTime = new Date(start_date);
-      const endDateTime = new Date(end_date);
-      const currentDate = new Date(startDateTime);
-
-      while (currentDate < endDateTime) {
-        const dateStr = currentDate.toISOString().split('T')[0];
-        const dayData = apartmentData[dateStr];
-        
-        if (!dayData || dayData.available !== 1) {
-          isFullyAvailable = false;
-          break;
+      const dates = Object.keys(apartmentData).sort();
+      dates.forEach(date => {
+        if (apartmentData[date].available === 1) {
+          totalPrice += apartmentData[date].price;
         }
-        
-        totalPrice += dayData.price;
-        numberOfNights++;
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
+      });
 
-      if (!isFullyAvailable || numberOfNights === 0) {
-        return;
-      }
-
-      // Calculate discounts
+      // Calculate numbers of nights and discount
+      const numberOfNights = calculateNumberOfNights(start_date, end_date);
       let discount = 0;
       if (numberOfNights >= settings.lengthOfStayDiscount.minNights) {
         discount = (totalPrice * settings.lengthOfStayDiscount.discountPercentage) / 100;
       }
 
-      // Calculate guest fees
-      const numAdults = Number(adults) || 0;
-      const numChildren = Number(children) || 0;
-      const extraGuests = Math.max(0, numAdults - settings.startingAtGuest);
+      // Calculate extra guest fees
+      const extraGuests = Math.max(0, parseInt(adults) - settings.startingAtGuest);
       const extraGuestsFee = extraGuests * settings.extraGuestsPerNight * numberOfNights;
-      const extraChildrenFee = numChildren * settings.extraChildPerNight * numberOfNights;
+      const extraChildrenFee = parseInt(children) * settings.extraChildPerNight * numberOfNights;
 
-      // Calculate final price
-      const subtotal = totalPrice + extraGuestsFee + extraChildrenFee + settings.cleaningFee;
-      const finalPrice = subtotal - discount;
-
+      // Store price details for this apartment
       priceDetailsByApartment[apartmentId] = {
         originalPrice: totalPrice,
         extraGuestsFee,
         extraChildrenFee,
         cleaningFee: settings.cleaningFee,
         discount,
-        finalPrice,
+        finalPrice: totalPrice + extraGuestsFee + extraChildrenFee + settings.cleaningFee - discount,
         numberOfNights,
         pricePerNight: Math.round(totalPrice / numberOfNights),
         settings,
@@ -720,11 +552,11 @@ app.get("/api/rates", async (req, res) => {
         ]
       };
 
-      // Add extra fees to price elements
+      // Add extra fees to price elements if they exist
       if (extraGuestsFee > 0) {
         priceDetailsByApartment[apartmentId].priceElements.push({
           type: "addon",
-          name: `Frais de personne supplémentaire (${extraGuests} × ${settings.extraGuestsPerNight}€ × ${numberOfNights} nuits)`,
+          name: "Frais de personne supplémentaire",
           amount: extraGuestsFee,
           currencyCode: "EUR"
         });
@@ -733,7 +565,7 @@ app.get("/api/rates", async (req, res) => {
       if (extraChildrenFee > 0) {
         priceDetailsByApartment[apartmentId].priceElements.push({
           type: "addon",
-          name: `Frais d'enfants supplémentaires (${numChildren} × ${settings.extraChildPerNight}€ × ${numberOfNights} nuits)`,
+          name: "Frais d'enfants supplémentaires",
           amount: extraChildrenFee,
           currencyCode: "EUR"
         });
@@ -760,11 +592,7 @@ app.get("/api/rates", async (req, res) => {
 
     console.log("Sending response with price details:", {
       apartmentCount: Object.keys(priceDetailsByApartment).length,
-      samplePrices: Object.entries(priceDetailsByApartment).map(([id, details]) => ({
-        id,
-        finalPrice: details.finalPrice,
-        breakdown: details.priceElements
-      }))
+      priceDetails: priceDetailsByApartment
     });
 
     res.json({
