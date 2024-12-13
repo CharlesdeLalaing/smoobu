@@ -135,59 +135,66 @@ const calculateNumberOfNights = (startDate, endDate) => {
     return Array.from(extrasMap.values());
   };
 
-const handleCheckAvailability = async () => {
-  if (!formData.arrivalDate || !formData.departureDate) {
-    setDateError("Please select both dates");
-    return;
-  }
-
-  const numberOfNights = calculateNumberOfNights(startDate, endDate);
-  console.log(`Number of nights: ${numberOfNights}`);
-  setLoading(true);
-  setError(null);
-
-  try {
-    console.log("Checking rates for:", {
-      dates: {
-        arrival: formData.arrivalDate,
-        departure: formData.departureDate,
-      },
-      guests: {
-        adults: formData.adults,
-        children: formData.children,
-      },
-    });
-
-    const response = await api.get("/rates", {
-      params: {
-        apartments: formData.apartmentId || ["1644643", "1946282", "1946279", "1946276", "1946270"],
-        start_date: formData.arrivalDate,
-        end_date: formData.departureDate,
-        adults: formData.adults,
-        children: formData.children,
-      },
-    });
-
-    console.log("Rates response:", response.data);
-
-    if (response.data.priceDetails) {
-      setPriceDetails(response.data.priceDetails);
-      setShowPriceDetails(true);
-      setIsAvailable(true);
-    } else {
-      setError("No rates available for selected dates");
+  const handleCheckAvailability = async () => {
+    if (!formData.arrivalDate || !formData.departureDate) {
+      setDateError("Please select both dates");
+      return;
+    }
+  
+    const numberOfNights = calculateNumberOfNights(startDate, endDate);
+    console.log(`Number of nights: ${numberOfNights}`);
+    setLoading(true);
+    setError(null);
+  
+    try {
+      console.log("Checking rates for:", {
+        dates: {
+          arrival: formData.arrivalDate,
+          departure: formData.departureDate,
+        },
+        guests: {
+          adults: formData.adults,
+          children: formData.children,
+        },
+        apartmentId: formData.apartmentId
+      });
+  
+      const response = await api.get("/rates", {
+        params: {
+          apartments: formData.apartmentId || ["1644643", "1946282", "1946279", "1946276", "1946270"],
+          start_date: formData.arrivalDate,
+          end_date: formData.departureDate,
+          adults: formData.adults,
+          children: formData.children,
+        },
+      });
+  
+      // Detailed logging of the response
+      console.log("Full rates response:", response.data);
+      console.log("Price details for selected apartment:", 
+        response.data.priceDetails?.[formData.apartmentId]);
+      console.log("Original price:", 
+        response.data.priceDetails?.[formData.apartmentId]?.originalPrice);
+  
+      if (response.data.priceDetails) {
+        setPriceDetails(response.data.priceDetails);
+        setShowPriceDetails(true);
+        setIsAvailable(true);
+      } else {
+        setError("No rates available for selected dates");
+        setShowPriceDetails(false);
+        setIsAvailable(false);
+      }
+    } catch (error) {
+      console.error("Error fetching rates:", error);
+      setError(error.response?.data?.error || "Unable to fetch rates");
       setShowPriceDetails(false);
       setIsAvailable(false);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching rates:", error);
-    setError(error.response?.data?.error || "Unable to fetch rates");
-    setShowPriceDetails(false);
-    setIsAvailable(false);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -302,66 +309,63 @@ const handleCheckAvailability = async () => {
   };
 
   const handlePaymentSuccess = () => {
-    const selectedExtrasArray = createSelectedExtrasArray();
-    
-    // Calculate extras total
-    const extrasTotal = selectedExtrasArray.reduce((sum, extra) => 
-      sum + extra.amount + (extra.extraPersonAmount || 0), 0
-    );
-    
-    // Get base price from priceDetails
-    const basePrice = priceDetails?.basePrice || priceDetails?.originalPrice || 0;
-    
-    // Calculate total before discounts
-    const subtotalBeforeDiscounts = basePrice + extrasTotal;
-    
-    // Apply discounts
-    const longStayDiscount = priceDetails?.discount || 0;
-    const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-    
-    // Calculate final total
-    const finalTotal = subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
+  const selectedExtrasArray = createSelectedExtrasArray();
   
-    const bookingData = {
-      ...formData,
-      extras: selectedExtrasArray,
-      priceBreakdown: {
-        basePrice: basePrice,
-        finalPrice: finalTotal,
-        extrasTotal: extrasTotal
-      },
-      priceDetails: {
-        discount: longStayDiscount,
-        settings: {
-          lengthOfStayDiscount: {
-            discountPercentage: priceDetails?.discountPercentage || 0
-          }
+  // Get the base room price from priceDetails
+  const selectedApartmentPriceDetails = priceDetails?.[formData.apartmentId];
+  console.log("Selected apartment price details:", selectedApartmentPriceDetails);
+  
+  const roomBasePrice = selectedApartmentPriceDetails?.originalPrice || 0;
+  console.log("Room base price:", roomBasePrice);
+  
+  // Calculate extras total
+  const extrasTotal = selectedExtrasArray.reduce((sum, extra) => 
+    sum + extra.amount + (extra.extraPersonAmount || 0), 0
+  );
+  console.log("Extras total:", extrasTotal);
+  
+  // Calculate total before discounts
+  const subtotalBeforeDiscounts = roomBasePrice + extrasTotal;
+  
+  // Apply discounts
+  const longStayDiscount = selectedApartmentPriceDetails?.discount || 0;
+  const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
+  
+  // Calculate final total
+  const finalTotal = subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
+
+  const bookingData = {
+    ...formData,
+    extras: selectedExtrasArray,
+    priceBreakdown: {
+      basePrice: roomBasePrice,
+      finalPrice: finalTotal,
+      extrasTotal: extrasTotal
+    },
+    priceDetails: {
+      ...selectedApartmentPriceDetails,
+      discount: longStayDiscount,
+      settings: selectedApartmentPriceDetails?.settings || {
+        lengthOfStayDiscount: {
+          discountPercentage: 0
         }
-      },
-      price: finalTotal, // Make sure this is set
-      couponApplied: appliedCoupon ? {
-        code: appliedCoupon.code,
-        discount: couponDiscount
-      } : null
-    };
-  
-    // Debug log to verify data
-    console.log('Saving booking data with prices:', {
-      basePrice,
-      extrasTotal,
-      subtotalBeforeDiscounts,
-      longStayDiscount,
-      couponDiscount,
-      finalTotal,
-      fullBookingData: bookingData
-    });
-  
-    localStorage.setItem("bookingData", JSON.stringify(bookingData));
-  
-    const paymentIntent = clientSecret.split("_secret")[0];
-    navigate(`/booking-confirmation?payment_intent=${paymentIntent}`);
+      }
+    },
+    price: finalTotal,
+    couponApplied: appliedCoupon ? {
+      code: appliedCoupon.code,
+      discount: couponDiscount
+    } : null
   };
-  
+
+  console.log('Final booking data:', bookingData);
+
+  localStorage.setItem("bookingData", JSON.stringify(bookingData));
+
+  const paymentIntent = clientSecret.split("_secret")[0];
+  navigate(`/booking-confirmation?payment_intent=${paymentIntent}`);
+};
+
  // useBookingForm.js
 const handleApplyCoupon = (couponCode) => {
   console.log('handleApplyCoupon called with:', couponCode);
