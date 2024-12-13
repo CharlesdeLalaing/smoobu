@@ -73,11 +73,16 @@ const calculateNumberOfNights = (startDate, endDate) => {
   // Handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    if (name === "arrivalDate" || name === "departureDate") {
+  
+    if (name === "arrivalDate") {
+      setStartDate(value);
       setShowPriceDetails(false);
     }
-
+    if (name === "departureDate") {
+      setEndDate(value);
+      setShowPriceDetails(false);
+    }
+  
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
