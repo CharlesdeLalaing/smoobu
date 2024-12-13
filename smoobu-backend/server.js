@@ -19,33 +19,7 @@ const pendingBookings = new Map();
 
 // Discount settings
 const discountSettings = {
-  1644643: {
-    cleaningFee: 0,
-    prepayment: 0,
-    minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
-    startingAtGuest: 2,
-    maxGuests: 2,
-    extraChildPerNight: 0,
-    lengthOfStayDiscount: {
-      minNights: 0,
-      discountPercentage: 0,
-    },
-  },
-  1946282: {
-    cleaningFee: 0,
-    prepayment: 0,
-    minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
-    startingAtGuest: 3,
-    maxGuests: 4,
-    extraChildPerNight: 20,
-    lengthOfStayDiscount: {
-      minNights: 0,
-      discountPercentage: 0,
-    },
-  },
-  1946279: {
+  2467648: {
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
@@ -58,7 +32,7 @@ const discountSettings = {
       discountPercentage: 40,
     },
   },
-  1946276: {
+  2467653: {
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
@@ -69,19 +43,6 @@ const discountSettings = {
     lengthOfStayDiscount: {
       minNights: 2,
       discountPercentage: 40,
-    },
-  },
-  1946270: {
-    cleaningFee: 0,
-    prepayment: 0,
-    minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
-    startingAtGuest: 5,
-    maxGuests: 8,
-    extraChildPerNight: 20,
-    lengthOfStayDiscount: {
-      minNights: 3,
-      discountPercentage: 30,
     },
   },
 };
