@@ -100,7 +100,7 @@ const BookingConfirmation = () => {
           </div>
           <div>
             <h1 className="title">Réservation Confirmée</h1>
-            <p className="subtitle">Une confirmation a été envoyée à {bookingDetails?.email}</p>
+            <p className="subtitle">Une confirmation vous a été envoyée à {bookingDetails?.email}</p>
           </div>
         </div>
 
