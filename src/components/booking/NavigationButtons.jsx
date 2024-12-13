@@ -7,10 +7,12 @@ export const NavigationButtons = ({
 }) => {
   const handleNext = () => {
     nextStep();
-    // Scroll to the top of the extras section
-    const element = document.getElementById('extra_top');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    // Only scroll on mobile devices (screen width less than 640px - Tailwind's sm breakpoint)
+    if (window.innerWidth < 640) {
+      const element = document.getElementById('extra_top');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
