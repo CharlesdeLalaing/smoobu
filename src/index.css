@@ -23,3 +23,9 @@ body {
   min-width: 320px;
   min-height: 100%;
 }
+
+.react-datepicker-wrapper {
+  display: block !important;
+  padding: 0;
+  border: 0;
+}
