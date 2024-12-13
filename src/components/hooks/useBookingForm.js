@@ -12,7 +12,7 @@ export const useBookingForm = () => {
   const [formData, setFormData] = useState({
     arrivalDate: "",
     departureDate: "",
-    channelId: 4106338,
+    channelId: 2323525,
     apartmentId: "",
     arrivalTime: "",
     departureTime: "",
@@ -92,49 +92,48 @@ const calculateNumberOfNights = (startDate, endDate) => {
     }));
   };
 
- const createSelectedExtrasArray = () => {
-   // First, gather all base extras with their extra person info
-   const extrasMap = new Map();
+  const createSelectedExtrasArray = () => {
+    // First, gather all base extras with their extra person info
+    const extrasMap = new Map();
 
-   Object.entries(selectedExtras)
-     .filter(([_, quantity]) => quantity > 0)
-     .forEach(([extraId, quantity]) => {
-       const isExtraPerson = extraId.endsWith("-extra");
-       const baseExtraId = isExtraPerson
-         ? extraId.replace("-extra", "")
-         : extraId;
+    Object.entries(selectedExtras)
+      .filter(([_, quantity]) => quantity > 0)
+      .forEach(([extraId, quantity]) => {
+        const isExtraPerson = extraId.endsWith("-extra");
+        const baseExtraId = isExtraPerson
+          ? extraId.replace("-extra", "")
+          : extraId;
 
-       const extra = Object.values(extraCategories)
-         .flatMap((category) => category.items)
-         .find((item) => item.id === baseExtraId);
+        const extra = Object.values(extraCategories)
+          .flatMap((category) => category.items)
+          .find((item) => item.id === baseExtraId);
 
-       if (!extra) return;
+        if (!extra) return;
 
-       if (isExtraPerson) {
-         // If this is an extra person entry, add it to the base extra
-         const baseExtra = extrasMap.get(baseExtraId);
-         if (baseExtra) {
-           baseExtra.extraPersonQuantity = quantity;
-           baseExtra.extraPersonAmount = extra.extraPersonPrice * quantity;
-         }
-       } else {
-         // This is a base extra
-         extrasMap.set(baseExtraId, {
-           type: "addon",
-           name: extra.name,
-           amount: extra.price * quantity,
-           quantity: quantity,
-           currencyCode: "EUR",
-           extraPersonPrice: extra.extraPersonPrice,
-           extraPersonQuantity: 0, // Will be updated if there's an extra person
-           extraPersonAmount: 0, // Will be updated if there's an extra person
-         });
-       }
-     });
-
-   // Convert the map back to an array
-   return Array.from(extrasMap.values());
- };
+        if (isExtraPerson) {
+          // If this is an extra person entry, add it to the base extra
+          const baseExtra = extrasMap.get(baseExtraId);
+          if (baseExtra) {
+            baseExtra.extraPersonQuantity = quantity;
+            baseExtra.extraPersonAmount = extra.extraPersonPrice * quantity;
+          }
+        } else {
+          // This is a base extra
+          extrasMap.set(baseExtraId, {
+            type: "addon",
+            name: extra.name,
+            amount: extra.price * quantity,
+            quantity: quantity,
+            currencyCode: "EUR",
+            extraPersonPrice: extra.extraPersonPrice,
+            extraPersonQuantity: 0, // Will be updated if there's an extra person
+            extraPersonAmount: 0, // Will be updated if there's an extra person
+          });
+        }
+      });
+    // Convert the map back to an array
+    return Array.from(extrasMap.values());
+  };
 
 const handleCheckAvailability = async () => {
   if (!formData.arrivalDate || !formData.departureDate) {
