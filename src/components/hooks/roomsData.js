@@ -114,7 +114,7 @@ export const roomsData = {
 
   1946279: {
     id: 1946279,
-    type: "Gîte & Chmabre d'hôte",
+    type: "Gîte & Chambre d'hôte",
     name: "Le Moulin",
     description: "Immergez-vous dans l'atmosphère envoûtante du Moulin- un studio romantique conçu pour deux personnes où confort moderne et charme passé s'entremêlent. Avec son lit Queen size en mezzanine, un canapé-lit douillet pouvant accueillir des enfants, cet espace vous offre une escapade intime et confortable. Ajoutez à cela une cuisine équipée pour des moments conviviaux. Réservez dès maintenant et laissez-vous séduire par le charme irrésistible du Moulin.",
     images: {
@@ -144,7 +144,7 @@ export const roomsData = {
   
   1946276: {
     id: 1946276,
-    type: "Gîte & Chmabre d'hôte",
+    type: "Gîte & Chambre d'hôte",
     name: "La Chambre de Blé",
     description: "Plongez-vous dans l'intimité de la Chambre de Blé - un refuge douillet au cœur d'une grange restaurée avec soin. Conçue pour accueillir deux adultes et jusqu'à deux enfants, cette chambre rustique allie harmonieusement le charme d'antan et les commodités modernes. Idéale pour une escapade en amoureux ou des vacances en famille, réservez dès maintenant et laissez-vous séduire par l'ambiance chaleureuse de la Chambre de Blé",
     images: {
@@ -175,7 +175,7 @@ export const roomsData = {
 
   1946270: {
     id: 1946270,
-    type: "Gîte & Chmabre d'hôte",
+    type: "Gîte & Chambre d'hôte",
     name: "Le Logis",
     description: "Plongez dans l’intimité chaleureuse du Logis – un refuge rustique pouvant accueillir jusqu’à 8 convives, parfait pour des retrouvailles en famille ou entre amis. Niché dans une grange restaurée avec soin, c’est l’invitation à une escapade authentique, où se mêlent confort moderne et charme d’antan. Réservez et laissez-vous envoûter par l’atmosphère unique du Logis.",
     images: {
