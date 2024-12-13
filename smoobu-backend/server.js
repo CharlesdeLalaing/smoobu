@@ -13,11 +13,10 @@ dotenv.config();
 
 const app = express();
 const stripe = new Stripe(
-  "sk_test_51QHmafIhkftuEy3nihoW4ZunaXVY1D85r176d91x9BAhGfvW92zG7r7A5rVeGuL1ysHVMOzflF0jwoCpyKJl760n00GC9ZYSJ4"
+  "whsec_uzumVmrKDrksQlTpgo5gEUPk1HIxZwBv"
 );
 const pendingBookings = new Map();
 
-// Discount settings
 // Discount settings
 const discountSettings = {
   1644643: {
@@ -86,7 +85,6 @@ const discountSettings = {
     },
   },
 };
-
 
 // Calculate price with settings
 const calculatePriceWithSettings = (
@@ -265,7 +263,7 @@ app.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        "whsec_uzumVmrKDrksQlTpgo5gEUPk1HIxZwBv"
+        "whsec_d9b86273072de6b319134fbc08752e2b4e66bae72aaa2cf4cb7db1411974c20a"
       );
 
       console.log("Webhook event verified:", event.type);
@@ -292,6 +290,7 @@ app.post(
             {
               arrivalDate: bookingData.arrivalDate,
               departureDate: bookingData.departureDate,
+              arrivalTime: bookingData.arrivalTime,
               channelId: bookingData.channelId,
               apartmentId: bookingData.apartmentId,
               firstName: bookingData.firstName,
@@ -424,7 +423,7 @@ app.use(
     origin: "https://booking-rho-plum.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
+    credentials: true
   })
 );
 
