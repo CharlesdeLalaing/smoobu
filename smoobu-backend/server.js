@@ -265,7 +265,7 @@ app.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        "whsec_d9b86273072de6b319134fbc08752e2b4e66bae72aaa2cf4cb7db1411974c20a"
+        "whsec_uzumVmrKDrksQlTpgo5gEUPk1HIxZwBv"
       );
 
       console.log("Webhook event verified:", event.type);
@@ -309,7 +309,7 @@ app.post(
             },
             {
               headers: {
-                "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
+                "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
                 "Content-Type": "application/json",
               },
             }
@@ -344,7 +344,7 @@ app.post(
                       },
                       {
                         headers: {
-                          "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
+                          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
                           "Content-Type": "application/json",
                         },
                       }
@@ -366,7 +366,7 @@ app.post(
                       },
                       {
                         headers: {
-                          "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
+                          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
                           "Content-Type": "application/json",
                         },
                       }
@@ -421,10 +421,10 @@ app.post(
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://127.0.0.1:5173",
+    origin: "https://booking-rho-plum.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true
+    credentials: true,
   })
 );
 
@@ -432,7 +432,7 @@ app.get('/api/apartments', async (req, res) => {
   try {
     const response = await axios.get('https://login.smoobu.com/api/apartments', {
       headers: {
-        'Api-Key': "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
+        'Api-Key': "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
         'Cache-Control': 'no-cache',
         "Content-Type": "application/json",
       }
@@ -451,7 +451,7 @@ app.get('/api/apartments/:id', async (req, res) => {
   try {
     const response = await axios.get(`https://login.smoobu.com/api/apartments/${req.params.id}`, {
       headers: {
-        'Api-Key': "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
+        'Api-Key': "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
         "Content-Type": "application/json",
       }
     });
@@ -480,7 +480,7 @@ app.get("/api/rates", async (req, res) => {
 
     const response = await axios.get("https://login.smoobu.com/api/rates", {
       headers: {
-        "Api-Key": "nWi4dEUcB2ZCbBgSuoVJjB14o9wPBDQIuLbnfG1u72",
+        "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
         "Content-Type": "application/json",
       },
       params: {

@@ -1,24 +1,24 @@
-import axios from 'axios';
+import axios from "axios";
 
-const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://booking-9u8u.onrender.com";
 
 export const fetchAvailability = async (apartmentId, startDate, endDate) => {
-    try {
-      const response = await axios.get('http://localhost:3000/api/rates', {
-        params: {
-          apartments: [apartmentId],
-          start_date: startDate,
-          end_date: endDate
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching availability:', error);
-      throw error;
-    }
-  };
+  try {
+    const response = await axios.get(`${API_URL}/api/rates`, {
+      params: {
+        apartments: [apartmentId],
+        start_date: startDate,
+        end_date: endDate,
+      },
+      headers: {
+        "Content-Type": "application/json",
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching availability:", error);
+    throw error;
+  }
+};
