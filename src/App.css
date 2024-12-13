@@ -2,6 +2,19 @@
   width: 100%;
   margin: 0 auto;
   padding: 2rem;
-  text-align: center;
+  text-align: center;;
 }
 
+@font-face {
+  font-family: 'Font1Name';
+  src: url('/fonts/CormorantGaramond-Medium.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Font2Name';
+  src: url('/fonts/Montserrat-VariableFont_wght.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}

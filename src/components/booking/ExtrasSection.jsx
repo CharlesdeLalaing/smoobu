@@ -8,7 +8,7 @@ export const ExtrasSection = ({
   setSelectedCategory,
 }) => {
   return (
-    <div className="flex flex-col h-[600px] overflow-scroll">
+    <div className="flex flex-col h-[600px] overflow-hidden">
       {/* Categories */}
       <div className="mb-4 shrink-0">
         <div className="flex flex-wrap gap-3">

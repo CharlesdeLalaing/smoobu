@@ -161,7 +161,7 @@ const handleCheckAvailability = async () => {
 
     const response = await api.get("/rates", {
       params: {
-        apartments: formData.apartmentId || ["2428698", "2428703", "2432648"],
+        apartments: formData.apartmentId || ["1644643", "1946282", "1946279", "1946276", "1946270"],
         start_date: formData.arrivalDate,
         end_date: formData.departureDate,
         adults: formData.adults,

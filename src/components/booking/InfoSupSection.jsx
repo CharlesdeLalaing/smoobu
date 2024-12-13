@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { InputField } from "./InputField";
 
+import LongBird from '../../assets/GlobalImg/long_bird.webp';
+
+
 export const InfoSupSection = ({
   formData,
   handleChange,
@@ -20,7 +23,7 @@ const onApplyCoupon = () => {
   }
 };
   return (
-    <div className="w-full mt-6 space-y-8">
+    <div className="w-full mt-6 space-y-8 relative">
       {/* Notes Section */}
       <div className="col-span-full">
         <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
@@ -69,7 +72,13 @@ const onApplyCoupon = () => {
           </div>
         )}
       </div>
-
+      <div className="absolute top-[70px] left-[220px] sm:top-[70px] sm:left-[250px] md:top-[50px] md:left-[550px] lg:top-[50px] lg:left-[300px] xl:top-[230px] xl:left-[550px]">
+                      <img 
+                        src={LongBird}
+                        alt="Squirrel"
+                        className="w-24 md:w-32 lg:w-40 h-auto"
+                      />
+      </div>
       {/* Special Requests Section */}
     </div>
   );

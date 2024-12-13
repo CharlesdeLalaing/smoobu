@@ -5,6 +5,10 @@ import { isRoomAvailable } from "../hooks/roomUtils";
 import { PriceDetails } from "./PriceDetails";
 import { CalendarRoom } from "./CalendarRoom";
 
+import Squirell from '../../assets/GlobalImg/squirrel.webp';
+import Fox from '../../assets/GlobalImg/fox.webp';
+
+
 import Calendar from "../../assets/icons8-calendar-50.png";
 import Group from "../../assets/icons8-group-48.png";
 
@@ -138,15 +142,21 @@ export const PropertyDetails = ({
     return (
       <div
         id={`room-${room.id}`}
-        className={`p-6 border rounded shadow-sm ${
-          isAvailable ? "border-[#668E73]" : "border-gray-300"
-        } ${formData.apartmentId === room.id && showOnlySelected ? 'h-[calc(100vh-200px)] overflow-hidden' : 'h-fit'}`}
+        className={`py-8 ${
+          formData.apartmentId === room.id 
+            ? 'border border-[#668E73] p-4 rounded' 
+            : ''
+        } ${
+          formData.apartmentId === room.id && showOnlySelected 
+            ? 'h-[calc(100vh-200px)] overflow-hidden' 
+            : 'h-fit'
+        }`}
       >
         {!isAvailable && getUnavailableDatesMessage(room.id)}
   
         {formData.apartmentId === room.id ? (
-          <div className="flex flex-col h-full" id="main-container">
-            <div className="flex justify-around border-b border-gray-300 mb-4">
+          <div className="flex flex-col h-full">
+            <div className="flex justify-around border-b border-grey-300 mb-4 ">
               <button
                 type="button"
                 className={`py-2 px-4 ${
@@ -170,7 +180,7 @@ export const PropertyDetails = ({
             <div className="flex-1 overflow-y-none">
               {activeTab === "roomInfo" && (
                 <div className="h-full">
-                  <div className="h-[40vh] sm:h-auto md:h-[50vh]">
+                  {/* <div className="h-[40vh] sm:h-auto md:h-[50vh]">
                     <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
                       {Object.values(room.images).map((image, index) => (
                         <img
@@ -181,66 +191,104 @@ export const PropertyDetails = ({
                         />
                       ))}
                     </Slider>
-  
-                    <div className="mt-4 sm:mt-2 md:mt-3">
-                      <Slider {...thumbnailSettings}>
-                        {Object.values(room.images).map((image, index) => (
-                          <div key={index} className="px-2 sm:px-1 md:px-1.5">
-                            <img
-                              src={image}
-                              alt={`${room.name} Thumbnail ${index + 1}`}
-                              className="object-cover cursor-pointer h-[50px] sm:h-[50px] md:h-[60px] lg:h-[60px] xl:h-[70px] w-full"
-                            />
-                          </div>
-                        ))}
-                      </Slider>
+                  </div>
+                  <div className="features-container overflow-x-auto w-full mt-4 sm:mt-2 md:mt-3 font-cormorant">
+                    <div className="features-list flex sm:flex-wrap md:flex-nowrap">
+                      {room.features.map((feature, index) => (
+                        <div
+                          key={index}
+                          className="feature-item flex flex-col items-center text-center p-4 sm:p-2 md:p-3 bg-[#668E73] "
+                          style={{ minWidth: "100px", flex: "0 0 auto" }}
+                        >
+                          <img
+                            src={feature.icon}
+                            alt={feature.title}
+                            style={{
+                              height: "30px",
+                              width: "30px",
+                              filter: "invert(100%)",
+                            }}
+                            className="sm:h-5 sm:w-5 md:h-6 md:w-6"
+                          />
+                          <span className="text-sm mt-2 text-white sm:text-xs md:text-sm sm:mt-1 md:mt-1.5">{feature.title}</span>
+                        </div>
+                      ))}
                     </div>
-  
-                    <div className="features-container overflow-x-auto w-full mt-4 sm:mt-2 md:mt-3">
-                      <div className="features-list flex sm:flex-wrap md:flex-nowrap">
-                        {room.features.map((feature, index) => (
-                          <div
-                            key={index}
-                            className="feature-item flex flex-col items-center text-center p-4 sm:p-2 md:p-3 bg-[#668E73]"
-                            style={{ minWidth: "100px", flex: "0 0 auto" }}
-                          >
-                            <img
-                              src={feature.icon}
-                              alt={feature.title}
-                              style={{
-                                height: "30px",
-                                width: "30px",
-                                filter: "invert(100%)",
-                              }}
-                              className="sm:h-5 sm:w-5 md:h-6 md:w-6"
-                            />
-                            <span className="text-sm mt-2 text-white sm:text-xs md:text-sm sm:mt-1 md:mt-1.5">
-                              {feature.title}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                  </div> */}
+                  <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
+                    {Object.values(room.images).map((image, index) => (
+                      <img
+                        key={index}
+                        src={image}
+                        alt={`${room.name} ${index + 1}`}
+                        className="w-full h-[400px] object-cover"
+                      />
+                    ))}
+                  </Slider>
+      
+                  <div className="mt-4">
+                    <Slider {...thumbnailSettings}>
+                      {Object.values(room.images).map((image, index) => (
+                        <div key={index} className="px-2">
+                          <img
+                            src={image}
+                            alt={`${room.name} Thumbnail ${index + 1}`}
+                            className="object-cover cursor-pointer h-[57px] w-full"
+                          />
+                        </div>
+                      ))}
+                    </Slider>
+                  </div>
+      
+                  <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
+                    <div className="features-list flex">
+                      {room.features.map((feature, index) => (
+                        <div
+                          key={index}
+                          className="feature-item flex flex-col items-center text-center p-2 bg-[#668E73]"
+                          style={{ minWidth: "100px", flex: "0 0 auto" }}
+                        >
+                          <img
+                            src={feature.icon}
+                            alt={feature.title}
+                            style={{
+                              height: "30px",
+                              width: "30px",
+                              filter: "invert(100%)",
+                            }}
+                          />
+                          <span className="text-sm mt-2 text-white">{feature.title}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
               )}
   
               {activeTab === "priceDetails" && roomPriceDetails && (
-                <div className="h-full overflow-y-auto sm:overflow-visible md:overflow-y-auto">
-                  <h2 className="text-lg sm:text-base md:text-lg font-medium uppercase sm:mb-2 md:mb-10 sm:mt-2 md:mt-10 sm:my-3 md:my-4 underline">
-                    {room.name}
-                  </h2>
-  
-                  <div className="flex items-center justify-between sm:mb-2 md:mb-4 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
-                    <img src={Group} alt="Profile Icon" className="w-6 h-6 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                <div className="h-full overflow-y-auto sm:overflow-visible md:overflow-y-auto relative">
+                    {/* Squirrel Image */}
+                  <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[100px] xl:left-[450px]">
+                      <img 
+                        src={Fox}
+                        alt="Squirrel"
+                        className="w-24 md:w-32 lg:w-40 h-auto"
+                      />
+                  </div>
+                  <div className="my-5">
+                  <p className="text-lg sm:text-base md:text-lg font-montserrat text-[#D3B574]">{room.type}</p>
+                  <h2 className="text-lg sm:text-base md:text-[25px] font-medium uppercase sm:mb-2 md:mb-10 sm:my-3 md:my-4 font-cormorant">{room.name}</h2>
+                  </div>
+                  <div className="flex items-center justify-left sm:mb-2 md:mb-4 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
+                    <img src={Group} alt="Profile Icon" className="w-6 h-6 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-4" />
                     <span className="text-[18px] sm:text-sm md:text-base font-light text-black">
                       {Number(formData.adults) + Number(formData.children)}{" "}
                       {Number(formData.adults) + Number(formData.children) > 1 ? "personnes" : "personne"}
                     </span>
                   </div>
-  
-                  <div className="flex items-center justify-between sm:mb-2 md:mb-10 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
-                    <img src={Calendar} alt="Calendar Icon" className="w-6 h-6 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+
+                  <div className="flex items-center justify-left sm:mb-2 md:mb-10 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
+                    <img src={Calendar} alt="Calendar Icon" className="w-6 h-6 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-4" />
                     <div className="flex items-center text-[18px] sm:text-sm md:text-base font-light text-black">
                       {startDate && <span>{formatDate(startDate)}</span>}
                       {(startDate || endDate) && <span className="mx-2 sm:mx-1 md:mx-1.5">→</span>}
@@ -258,11 +306,11 @@ export const PropertyDetails = ({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col xl:flex-row gap-4">
+          <div className="flex flex-col xl:flex-row gap-10 w-[90%] mx-auto">
             <div className="w-full xl:w-2/5">
-              <h2 className="text-[18px] md:text-[23px] font-normal text-black mb-2">
+              {/* <h2 className="text-[18px] md:text-[23px] font-normal text-black mb-2">
                 {room.name}
-              </h2>
+              </h2> */}
   
               <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
                 {Object.values(room.images).map((image, index) => (
@@ -289,12 +337,12 @@ export const PropertyDetails = ({
                 </Slider>
               </div>
   
-              <div className="features-container overflow-x-auto w-full mt-4">
+              <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
                 <div className="features-list flex">
                   {room.features.map((feature, index) => (
                     <div
                       key={index}
-                      className="feature-item flex flex-col items-center text-center p-4 bg-[#668E73]"
+                      className="feature-item flex flex-col items-center text-center p-2 bg-[#668E73]"
                       style={{ minWidth: "100px", flex: "0 0 auto" }}
                     >
                       <img
@@ -313,17 +361,18 @@ export const PropertyDetails = ({
               </div>
             </div>
   
-            <div className="w-full xl:w-3/5">
-              <h2 className="text-[18px] md:text-[23px] font-normal text-black mb-2">
+            <div className="w-full xl:w-3/5">  
+              {/* <h2 className="text-[18px] md:text-[23px] font-normal text-black mb-2">
                 Disponibilités
-              </h2>
-              <CalendarRoom
+              </h2> */}
+              {/* <CalendarRoom 
                 roomId={room.id}
                 availableDates={availableDates}
                 selectedStartDate={startDate}
                 selectedEndDate={endDate}
-              />
-              <p className="text-gray-600 mb-4">{room.description}</p>
+              /> */}
+              <CalendarRoom roomId={room.id} />
+              <p className="text-gray-600 my-4 font-cormorant">{room.description}</p>
               <button
                 type="button"
                 onClick={() => {
@@ -359,7 +408,7 @@ export const PropertyDetails = ({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 bg-[#fbfdfb]">
       {filteredAvailableRooms.length > 0 && (
         <div>
           {!showOnlySelected && !showOnlyUnselected && (
@@ -367,22 +416,60 @@ export const PropertyDetails = ({
               Chambres disponibles
             </h2>
           )}
-          <div className="grid grid-cols-1 gap-8">
+          <div className="grid grid-cols-1 gap-20 w-[100%] mx-auto relative">
             {filteredAvailableRooms.map((room) => (
-              <RoomCard key={room.id} room={room} isAvailable={true} />
+              <div key={room.id} className="space-y-4">
+                {formData.apartmentId !== room.id && (
+                  <div className="text-left mb-4">
+                  <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[60px] xl:left-[680px]">
+                        <img 
+                          src={Squirell}
+                          alt="Squirrel"
+                          className="w-14 md:w-14 lg:w-24 h-auto"
+                        />
+                  </div>
+                    <h4 className="font-montserrat text-xl md:text-1xl lg:text-2xl mb-4 text-[#D3B574]">
+                      {room.type}
+                    </h4>
+                    <h3 className="font-cormorant text-3xl text-gray-800 mb-2 md:text-2xl lg:text-[40px] font-light">
+                      {room.name}
+                    </h3>
+                  </div>
+                )}
+                <RoomCard key={room.id} room={room} isAvailable={true} />
+              </div>
             ))}
           </div>
         </div>
       )}
 
       {!showOnlySelected && groupedRooms.unavailable.length > 0 && (
-        <div className="mt-8">
-          <h2 className="mb-6 text-xl font-semibold text-gray-500">
+        <div className="mt-0 py-10">
+          {/* <h2 className="mb-6 text-xl font-semibold text-gray-500">
             Chambres non disponibles
-          </h2>
-          <div className="grid grid-cols-1 gap-8 w-[90%] mx-auto">
+          </h2> */}
+          <div className="grid grid-cols-1 gap-20 w-[100%] mx-auto relative">
             {groupedRooms.unavailable.map((room) => (
-              <RoomCard key={room.id} room={room} isAvailable={false} />
+              <div key={room.id} className="space-y-4">
+                <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[60px] xl:left-[680px]">
+                        <img 
+                          src={Squirell}
+                          alt="Squirrel"
+                          className="w-14 md:w-14 lg:w-24 h-auto"
+                        />
+                  </div>
+                <div className="text-left mb-4">
+                  {/* Room Type - Larger text that becomes smaller on mobile */}
+                  <h4 className="font-montserrat text-xl text-[#D3B574] md:text-xl lg:text-2xl mb-4">
+                    {room.type}
+                  </h4>
+                  {/* Room Name - Medium text that becomes smaller on mobile */}
+                  <h3 className="font-cormorant text-3xl text-gray-800 mb-2 md:text-2xl lg:text-[40px] font-light">
+                    {room.name}
+                  </h3>
+                </div>
+                <RoomCard room={room} isAvailable={false} />
+              </div>
             ))}
           </div>
         </div>
