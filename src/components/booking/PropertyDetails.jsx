@@ -421,13 +421,13 @@ export const PropertyDetails = ({
               <div key={room.id} className="space-y-4">
                 {formData.apartmentId !== room.id && (
                   <div className="text-left mb-4">
-                  <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[60px] xl:left-[680px]">
+                  {/* <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[60px] xl:left-[680px]">
                         <img 
                           src={Squirell}
                           alt="Squirrel"
                           className="w-14 md:w-14 lg:w-24 h-auto"
                         />
-                  </div>
+                  </div> */}
                     <h4 className="font-montserrat text-xl md:text-1xl lg:text-2xl mb-4 text-[#D3B574]">
                       {room.type}
                     </h4>
@@ -451,13 +451,13 @@ export const PropertyDetails = ({
           <div className="grid grid-cols-1 gap-20 w-[100%] mx-auto relative">
             {groupedRooms.unavailable.map((room) => (
               <div key={room.id} className="space-y-4">
-                <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[60px] xl:left-[680px]">
+                {/* <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[60px] xl:left-[680px]">
                         <img 
                           src={Squirell}
                           alt="Squirrel"
                           className="w-14 md:w-14 lg:w-24 h-auto"
                         />
-                  </div>
+                  </div> */}
                 <div className="text-left mb-4">
                   {/* Room Type - Larger text that becomes smaller on mobile */}
                   <h4 className="font-montserrat text-xl text-[#D3B574] md:text-xl lg:text-2xl mb-4">

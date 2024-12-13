@@ -33,7 +33,7 @@ export const SearchSection = ({
       className="relative w-4/5 mx-auto text-center md:w-full lg:w-4/5 font-montserrat bg-[#668E73] px-0 py-[60px] md:px-5"
     >
       {/* Squirrel Image */}
-      <div className="absolute top-[65px] left-[-30px] sm:top-[70px] sm:left-[-30px] md:top-8 md:left-[-20px] lg:top-4 lg:left-[-50px]">
+      <div className="absolute top-[65px] left-[-50px] sm:top-[70px] sm:left-[-30px] xs:left-[-50px] md:top-8 md:left-[-20px] lg:top-4 lg:left-[-50px]">
         <img
           src={Bird}
           alt="Squirrel"

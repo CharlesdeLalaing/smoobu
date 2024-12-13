@@ -42,7 +42,7 @@ export const HeaderSection = () => {
     languages.find((lang) => lang.code === currentLanguage) || languages[0];
 
   return (
-    <header className="fixed top-0 left-0 z-50 w-full bg-white">
+    <header className="z-50 w-full bg-white">
       {/* Top Bar */}
       <div className="bg-[#668E73] text-white h-auto md:h-[44px] font-montserrat">
         <div className="mx-auto flex flex-col md:flex-row justify-between items-center text-xs h-full px-4 py-2 md:py-0 md:px-[5%]">

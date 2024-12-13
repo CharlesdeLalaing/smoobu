@@ -255,7 +255,7 @@ const BookingForm = () => {
   return (
     <div className="flex flex-col min-h-screen bg-[#fbfdfb]">
       <HeaderSection />
-      <div className=" mx-auto h-[100vh] w-full mt-[174px]">
+      <div className=" mx-auto h-[100vh] w-full">
         {error && <ErrorMessage message={error} />}
         {availabilityError && <ErrorMessage message={availabilityError} />}
         {successMessage && (
@@ -270,7 +270,7 @@ const BookingForm = () => {
               <RoomNavigation {...roomNavigationProps} />
             </div>
 
-            <div className="space-y-8 px-[5%] py-[1%]">
+            <div className="space-y-8 px-[2%] py-[1%]">
               {formData.apartmentId && (
                 <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
                   <div className="w-full h-full lg:w-1/2">
