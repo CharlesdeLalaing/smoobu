@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+
+import LocalStorageDebugger from './LocalStorageDebugger';
+
 import logoBaseilles from "../assets/logoBaseilles.webp"
 import "../assets/bookingConfirmation.css"
 
@@ -111,8 +114,14 @@ const BookingConfirmation = () => {
             <p>Téléphone: {bookingDetails?.phone || "-"}</p>
           </div>
 
+
           {/* Price Details */}
           <div className="details-card">
+
+
+          <LocalStorageDebugger />
+
+          
             <h2 className="titleConfirmation">Détails du prix</h2>
             <p>Prix de base: {bookingDetails?.priceBreakdown?.basePrice?.toFixed(2)}€</p>
             {bookingDetails?.extras?.map((extra, index) => (
