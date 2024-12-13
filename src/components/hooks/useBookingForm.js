@@ -75,11 +75,11 @@ const calculateNumberOfNights = (startDate, endDate) => {
     const { name, value } = e.target;
   
     if (name === "arrivalDate") {
-      setStartDate(value);
+      setStartDate(new Date(value));  // Convert to Date object
       setShowPriceDetails(false);
     }
     if (name === "departureDate") {
-      setEndDate(value);
+      setEndDate(new Date(value));    // Convert to Date object
       setShowPriceDetails(false);
     }
   
