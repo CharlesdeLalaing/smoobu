@@ -13,39 +13,19 @@ export const SearchSection = ({
   handleChange,
   startDate,
   endDate,
-  setStartDate,
-  setEndDate,
+  handleDateSelect,
   handleCheckAvailability,
   dateError,
   resetAvailability,
-  setFormData  // Make sure this prop is passed
 }) => {
   const handleSearch = (e) => {
     e.preventDefault(); // Prevent form refresh
     handleCheckAvailability();
   };
 
-  const handleDateSelect = (date, isStart) => {
+  const handleDateChange = (date, isStart) => {
     resetAvailability(); // Reset availability when dates change
-    
-    if (isStart) {
-      setStartDate(date);
-      setFormData(prev => ({
-        ...prev,
-        arrivalDate: date ? date.toISOString().split('T')[0] : ""
-      }));
-    } else {
-      setEndDate(date);
-      setFormData(prev => ({
-        ...prev,
-        departureDate: date ? date.toISOString().split('T')[0] : ""
-      }));
-    }
-    
-    // Auto-trigger price check when both dates are selected
-    if (isStart ? (date && endDate) : (startDate && date)) {
-      handleCheckAvailability();
-    }
+    handleDateSelect(date, isStart); 
   };
 
   return (
@@ -75,7 +55,7 @@ export const SearchSection = ({
             </label>
             <DatePicker
               selected={startDate}
-              onChange={(date) => handleDateSelect(date, true)}
+              onChange={(date) => handleDateChange(date, true)}
               selectsStart
               startDate={startDate}
               endDate={endDate}
@@ -100,7 +80,7 @@ export const SearchSection = ({
             </label>
             <DatePicker
               selected={endDate}
-              onChange={(date) => handleDateSelect(date, false)}
+              onChange={(date) => handleDateChange(date, false)}
               selectsEnd
               startDate={startDate}
               endDate={endDate}
