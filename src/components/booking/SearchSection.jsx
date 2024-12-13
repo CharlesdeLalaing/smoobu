@@ -25,7 +25,7 @@ export const SearchSection = ({
 
   const handleDateChange = (date, isStart) => {
     resetAvailability(); // Reset availability when dates change
-    handleDateSelect(date, isStart); 
+    handleDateSelect(date, isStart) ; 
   };
 
   return (
