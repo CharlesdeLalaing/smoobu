@@ -119,25 +119,49 @@ const calculatePriceWithSettings = (
     numberOfChildren,
   });
 
-  while (currentDate < endDateTime) {
-    const dateStr = currentDate.toISOString().split("T")[0];
-    const dayRate = rates[dateStr];
+  // while (currentDate < endDateTime) {
+  //   const dateStr = currentDate.toISOString().split("T")[0];
+  //   const dayRate = rates[dateStr];
 
-    if (dayRate) {
-      // Allow booking if it's either available or it's a departure-arrival day
-      if (
-        dayRate.available === 1 ||
-        (dateStr === startDateStr && isDepartureDay)
-      ) {
-        totalPrice += dayRate.price;
-        numberOfNights++;
-        console.log(`Adding price for ${dateStr}:`, dayRate.price);
+  //   if (dayRate) {
+  //     // Allow booking if it's either available or it's a departure-arrival day
+  //     if (
+  //       dayRate.available === 1 ||
+  //       (dateStr === startDateStr && isDepartureDay)
+  //     ) {
+  //       totalPrice += dayRate.price;
+  //       numberOfNights++;
+  //       console.log(`Adding price for ${dateStr}:`, dayRate.price);
+  //     }
+  //   }
+
+  //   currentDate.setDate(currentDate.getDate() + 1);
+  // }
+
+  while (currentDate <= endDateTime) {
+    const dateStr = currentDate.toISOString().split("T")[0];
+    const nextDate = new Date(currentDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    const nextDateStr = nextDate.toISOString().split("T")[0];
+    
+    // Only count if this is not the departure day
+    if (dateStr !== endDateTime.toISOString().split("T")[0]) {
+      const dayRate = rates[dateStr];
+      if (dayRate) {
+        if (
+          dayRate.available === 1 ||
+          (dateStr === startDateStr && isDepartureDay)
+        ) {
+          totalPrice += dayRate.price;
+          numberOfNights++;
+          console.log(`Adding price for ${dateStr}:`, dayRate.price);
+        }
       }
     }
-
+  
     currentDate.setDate(currentDate.getDate() + 1);
   }
-
+  
   console.log("Base calculation:", {
     totalPrice,
     numberOfNights,
