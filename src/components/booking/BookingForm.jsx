@@ -155,7 +155,7 @@ const BookingForm = () => {
       setDateError("");
       return;
     }
-
+  
     const selectedDate = new Date(date.setHours(12, 0, 0, 0));
     if (isStart) {
       setStartDate(selectedDate);
@@ -168,7 +168,7 @@ const BookingForm = () => {
         },
       });
       handleChange({ target: { name: "departureDate", value: "" } });
-
+  
       // Reset availability states when dates change
       setIsAvailable(false);
       setShowPriceDetails(false);
@@ -181,10 +181,11 @@ const BookingForm = () => {
           value: selectedDate.toISOString().split("T")[0],
         },
       });
-
-      // Reset availability states when dates change
-      setIsAvailable(false);
-      setShowPriceDetails(false);
+  
+      // Add this: Automatically check availability when both dates are set
+      if (startDate && selectedDate) {
+        handleAvailabilityCheck();
+      }
     }
   };
 
@@ -197,6 +198,9 @@ const BookingForm = () => {
     dateError,
     handleCheckAvailability: handleAvailabilityCheck,
     resetAvailability,
+    setStartDate,  // Add this
+    setEndDate,    // Add this
+    setFormData    // Add this
   };
 
   const propertyDetailsProps = {
