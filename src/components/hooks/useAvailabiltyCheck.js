@@ -1,17 +1,50 @@
-// hooks/useAvailabilityCheck.js
 import { useState } from "react";
 import { api } from "../utils/api";
 
-// hooks/useAvailabilityCheck.js
+// Helper function for checking room availability
+export const isRoomAvailable = (roomId, startDate, endDate, availableDates, hasSearched = false) => {
+  console.log("isRoomAvailable check:", {
+    roomId,
+    startDate,
+    endDate,
+    hasAvailableDates: !!availableDates,
+    hasSearched
+  });
+
+  if (!availableDates || !startDate || !endDate) {
+    return false;
+  }
+
+  const roomData = availableDates[roomId];
+  if (!roomData) {
+    return false;
+  }
+
+  const start = new Date(startDate).toISOString().split("T")[0];
+  const end = new Date(endDate).toISOString().split("T")[0];
+  let currentDate = new Date(start);
+  const endDateTime = new Date(end);
+
+  while (currentDate <= endDateTime) {
+    const dateStr = currentDate.toISOString().split("T")[0];
+    const dayData = roomData[dateStr];
+    if (!dayData || dayData.available === 0) {
+      return false;
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return true;
+};
+
+// Main hook for availability checking
 export const useAvailabilityCheck = (formData) => {
   const [availableDates, setAvailableDates] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Add this function to reset states
   const resetAvailability = () => {
-    setHasSearched(false);
     setAvailableDates({});
     setError(null);
   };
@@ -20,12 +53,20 @@ export const useAvailabilityCheck = (formData) => {
     if (!startDate || !endDate) {
       return null;
     }
+    
     setLoading(true);
     setError(null);
-    
+
     try {
       const apartmentIds = ["1644643", "1946282", "1946279", "1946276", "1946270"];
       
+      console.log("Checking availability for:", {
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        adults: formData.adults,
+        children: formData.children
+      });
+
       const response = await api.get("/rates", {
         params: {
           apartments: apartmentIds,
@@ -35,14 +76,15 @@ export const useAvailabilityCheck = (formData) => {
           children: formData.children || 0,
         },
       });
-      
+
       console.log("API Response:", response.data);
+      
       if (response.data && response.data.data) {
         setAvailableDates(response.data.data);
         setHasSearched(true);
         return response.data;
       }
-      
+
       setError("No availability data found");
       return null;
     } catch (error) {
@@ -60,6 +102,9 @@ export const useAvailabilityCheck = (formData) => {
     error,
     hasSearched,
     checkAvailability,
-    resetAvailability, // Export the reset function
+    resetAvailability,
+    setHasSearched,
+    setAvailableDates,
+    setError
   };
 };

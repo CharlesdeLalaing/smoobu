@@ -18,6 +18,45 @@ import { roomsData } from "../hooks/roomsData";
 
 const BookingForm = () => {
   const navigate = useNavigate();
+  // const {
+  //   formData,
+  //   currentStep,
+  //   error,
+  //   loading,
+  //   isAvailable,
+  //   showPriceDetails,
+  //   successMessage,
+  //   priceDetails,
+  //   showPayment,
+  //   clientSecret,
+  //   selectedExtras,
+  //   dateError,
+  //   startDate,
+  //   endDate,
+  //   appliedCoupon,
+  //   selectedCategory,
+  //   setSelectedCategory,
+  //   handleChange,
+  //   handleExtraChange,
+  //   handleCheckAvailability,
+  //   handleSubmit,
+  //   nextStep,
+  //   prevStep,
+  //   isStepValid,
+  //   handlePaymentSuccess,
+  //   setError,
+  //   setStartDate,
+  //   setIsAvailable,
+  //   setEndDate,
+  //   setDateError,
+  //   setCurrentStep,
+  //   setPriceDetails,
+  //   setShowPriceDetails,
+  //   setShowPayment,
+  //   setFormData,
+  //   handleApplyCoupon,
+  // } = useBookingForm();
+
   const {
     formData,
     currentStep,
@@ -56,6 +95,15 @@ const BookingForm = () => {
     setFormData,
     handleApplyCoupon,
   } = useBookingForm();
+
+  // const {
+  //   availableDates,
+  //   loading: availabilityLoading,
+  //   error: availabilityError,
+  //   hasSearched,
+  //   checkAvailability,
+  //   resetAvailability,
+  // } = useAvailabilityCheck(formData);
 
   const {
     availableDates,
@@ -260,56 +308,147 @@ const BookingForm = () => {
 
 
    // Replace your existing handleDateSelect with this version
-    const handleDateSelect = (date, isStart) => {
-      // Handle date clearing
-      if (!date) {
-        if (isStart) {
-          setStartDate(null);
-          setEndDate(null);
-          handleChange({ target: { name: "arrivalDate", value: "" } });
-          handleChange({ target: { name: "departureDate", value: "" } });
-        } else {
-          setEndDate(null);
-          handleChange({ target: { name: "departureDate", value: "" } });
+    // const handleDateSelect = (date, isStart) => {
+    //   // Handle date clearing
+    //   if (!date) {
+    //     if (isStart) {
+    //       setStartDate(null);
+    //       setEndDate(null);
+    //       handleChange({ target: { name: "arrivalDate", value: "" } });
+    //       handleChange({ target: { name: "departureDate", value: "" } });
+    //     } else {
+    //       setEndDate(null);
+    //       handleChange({ target: { name: "departureDate", value: "" } });
+    //     }
+    //     setDateError("");
+    //     resetAvailability();
+    //     setPriceDetails({});
+    //     setShowPriceDetails(false);
+    //     setIsAvailable(false);
+    //     return;
+    //   }
+
+    //   // Set the selected date
+    //   const selectedDate = new Date(date.setHours(12, 0, 0, 0));
+
+    //   if (isStart) {
+    //     setStartDate(selectedDate);
+    //     setEndDate(null);
+    //     handleChange({
+    //       target: {
+    //         name: "arrivalDate",
+    //         value: selectedDate.toISOString().split("T")[0],
+    //       },
+    //     });
+    //     handleChange({ target: { name: "departureDate", value: "" } });
+    //   } else {
+    //     setEndDate(selectedDate);
+    //     handleChange({
+    //       target: {
+    //         name: "departureDate",
+    //         value: selectedDate.toISOString().split("T")[0],
+    //       },
+    //     });
+    //   }
+
+    //   // Get the updated dates
+    //   const updatedStartDate = isStart ? selectedDate : startDate;
+    //   const updatedEndDate = isStart ? null : selectedDate;
+
+    //   // Check availability if both dates are set
+    //   if (updatedStartDate && updatedEndDate) {
+    //     handleAvailabilityCheck();
+    //   }
+    // };
+
+    const handleDateSelect = async (date, isStart) => {
+      try {
+        // Handle date clearing
+        if (!date) {
+          if (isStart) {
+            setStartDate(null);
+            setEndDate(null);
+            handleChange({ target: { name: "arrivalDate", value: "" } });
+            handleChange({ target: { name: "departureDate", value: "" } });
+            resetAvailability();
+          } else {
+            setEndDate(null);
+            handleChange({ target: { name: "departureDate", value: "" } });
+          }
+          setDateError("");
+          return;
         }
-        setDateError("");
-        resetAvailability();
-        setPriceDetails({});
-        setShowPriceDetails(false);
-        setIsAvailable(false);
-        return;
-      }
-
-      // Set the selected date
-      const selectedDate = new Date(date.setHours(12, 0, 0, 0));
-
-      if (isStart) {
-        setStartDate(selectedDate);
-        setEndDate(null);
-        handleChange({
-          target: {
-            name: "arrivalDate",
-            value: selectedDate.toISOString().split("T")[0],
-          },
-        });
-        handleChange({ target: { name: "departureDate", value: "" } });
-      } else {
-        setEndDate(selectedDate);
-        handleChange({
-          target: {
-            name: "departureDate",
-            value: selectedDate.toISOString().split("T")[0],
-          },
-        });
-      }
-
-      // Get the updated dates
-      const updatedStartDate = isStart ? selectedDate : startDate;
-      const updatedEndDate = isStart ? null : selectedDate;
-
-      // Check availability if both dates are set
-      if (updatedStartDate && updatedEndDate) {
-        handleAvailabilityCheck();
+    
+        // Set the selected date
+        const selectedDate = new Date(date.setHours(12, 0, 0, 0));
+    
+        if (isStart) {
+          // Setting start date
+          setStartDate(selectedDate);
+          setEndDate(null);
+          handleChange({
+            target: {
+              name: "arrivalDate",
+              value: selectedDate.toISOString().split("T")[0],
+            },
+          });
+          handleChange({ target: { name: "departureDate", value: "" } });
+          
+          // Keep showing existing data but reset availability
+          resetAvailability();
+        } else {
+          // Setting end date
+          setEndDate(selectedDate);
+          handleChange({
+            target: {
+              name: "departureDate",
+              value: selectedDate.toISOString().split("T")[0],
+            },
+          });
+        }
+    
+        // Get updated dates for availability check
+        const updatedStartDate = isStart ? selectedDate : startDate;
+        const updatedEndDate = isStart ? null : selectedDate;
+    
+        // Only check availability if both dates are set
+        if (updatedStartDate && updatedEndDate) {
+          console.log('Both dates set, checking availability:', {
+            start: updatedStartDate,
+            end: updatedEndDate
+          });
+    
+          try {
+            const availabilityData = await checkAvailability(updatedStartDate, updatedEndDate);
+            
+            if (availabilityData?.priceDetails) {
+              setPriceDetails(availabilityData.priceDetails);
+              setShowPriceDetails(true);
+              setIsAvailable(true);
+    
+              // Update price if a room is already selected
+              if (formData.apartmentId && availabilityData.priceDetails[formData.apartmentId]) {
+                setFormData(prev => ({
+                  ...prev,
+                  price: availabilityData.priceDetails[formData.apartmentId].finalPrice
+                }));
+              }
+            } else {
+              // Even if no availability, keep showing the existing data
+              setDateError("No rates available for selected dates");
+            }
+          } catch (err) {
+            console.error("Error checking availability:", err);
+            setError("Error checking availability");
+            // Don't hide price details on error
+          }
+        } else {
+          // Keep showing price details while user selects second date
+          setShowPriceDetails(true);
+        }
+      } catch (error) {
+        console.error("Error in handleDateSelect:", error);
+        setError("An error occurred while processing the date selection");
       }
     };
 
