@@ -490,78 +490,203 @@ app.get('/api/apartments/:id', async (req, res) => {
 
 // Get rates endpoint
   // In your server file where you handle /api/rates endpoint
-  app.get("/api/rates", async (req, res) => {
-    try {
-      const { apartments, start_date, end_date, adults, children } = req.query;
+  // app.get("/api/rates", async (req, res) => {
+  //   try {
+  //     const { apartments, start_date, end_date, adults, children } = req.query;
 
-      console.log("Processing rates request:", {
-        apartments,
+  //     console.log("Processing rates request:", {
+  //       apartments,
+  //       start_date,
+  //       end_date,
+  //       adults,
+  //       children
+  //     });
+
+  //     const response = await axios.get("https://login.smoobu.com/api/rates", {
+  //       headers: {
+  //         "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+  //         "Content-Type": "application/json",
+  //       },
+  //       params: {
+  //         apartments: Array.isArray(apartments) ? apartments : [apartments],
+  //         start_date,
+  //         end_date,
+  //       },
+  //     });
+
+  //     if (!response.data || !response.data.data) {
+  //       return res.status(404).json({ error: "No rates found" });
+  //     }
+
+  //     const formattedData = {};
+  //     const priceDetailsByApartment = {};
+
+  //     // Process each apartment
+  //     (Array.isArray(apartments) ? apartments : [apartments]).forEach(apartmentId => {
+  //       const apartmentData = response.data.data[apartmentId];
+  //       formattedData[apartmentId] = apartmentData;
+
+  //       const settings = discountSettings[apartmentId];
+  //       if (!settings) return;
+
+  //       // Use the centralized price calculation function
+  //       const priceCalculation = calculatePriceWithSettings(
+  //         apartmentData,
+  //         start_date,
+  //         end_date,
+  //         parseInt(adults),
+  //         parseInt(children),
+  //         settings
+  //       );
+
+  //       // Store price details for this apartment
+  //       priceDetailsByApartment[apartmentId] = priceCalculation;
+  //     });
+
+  //     console.log("Sending response with price details:", {
+  //       apartmentCount: Object.keys(priceDetailsByApartment).length,
+  //       priceDetails: priceDetailsByApartment
+  //     });
+
+  //     res.json({
+  //       data: formattedData,
+  //       priceDetails: priceDetailsByApartment
+  //     });
+
+  //   } catch (error) {
+  //     console.error("Error fetching rates:", error);
+  //     res.status(500).json({
+  //       error: "Failed to fetch rates",
+  //       details: error.message
+  //     });
+  //   }
+  // });
+
+  // Replace your current /api/rates endpoint with this one
+app.get("/api/rates", async (req, res) => {
+  try {
+    const { apartments, start_date, end_date, adults, children } = req.query;
+
+    console.log("Processing rates request:", {
+      apartments,
+      start_date,
+      end_date,
+      adults,
+      children
+    });
+
+    // Validate required parameters
+    if (!start_date || !end_date) {
+      return res.status(400).json({
+        error: "Missing dates",
+        details: "Both start_date and end_date are required"
+      });
+    }
+
+    if (!apartments) {
+      return res.status(400).json({
+        error: "Missing apartments",
+        details: "Apartments parameter is required"
+      });
+    }
+
+    // Make the API call to Smoobu
+    const response = await axios.get("https://login.smoobu.com/api/rates", {
+      headers: {
+        "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+        "Content-Type": "application/json",
+      },
+      params: {
+        apartments: Array.isArray(apartments) ? apartments : [apartments],
         start_date,
         end_date,
-        adults,
-        children
-      });
+      },
+    });
 
-      const response = await axios.get("https://login.smoobu.com/api/rates", {
-        headers: {
-          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-          "Content-Type": "application/json",
-        },
-        params: {
-          apartments: Array.isArray(apartments) ? apartments : [apartments],
-          start_date,
-          end_date,
-        },
+    if (!response.data || !response.data.data) {
+      return res.status(404).json({ 
+        error: "No rates found",
+        details: "The API returned no data"
       });
+    }
 
-      if (!response.data || !response.data.data) {
-        return res.status(404).json({ error: "No rates found" });
+    const formattedData = {};
+    const priceDetailsByApartment = {};
+    let hasAvailability = false;
+
+    // Process each apartment
+    (Array.isArray(apartments) ? apartments : [apartments]).forEach(apartmentId => {
+      const apartmentData = response.data.data[apartmentId];
+      if (!apartmentData) return;
+
+      formattedData[apartmentId] = apartmentData;
+      const settings = discountSettings[apartmentId];
+      
+      if (!settings) {
+        console.log(`No settings found for apartment ${apartmentId}`);
+        return;
       }
 
-      const formattedData = {};
-      const priceDetailsByApartment = {};
-
-      // Process each apartment
-      (Array.isArray(apartments) ? apartments : [apartments]).forEach(apartmentId => {
-        const apartmentData = response.data.data[apartmentId];
-        formattedData[apartmentId] = apartmentData;
-
-        const settings = discountSettings[apartmentId];
-        if (!settings) return;
-
-        // Use the centralized price calculation function
+      try {
+        // Calculate price details using your existing function
         const priceCalculation = calculatePriceWithSettings(
           apartmentData,
           start_date,
           end_date,
-          parseInt(adults),
-          parseInt(children),
+          parseInt(adults) || 1,
+          parseInt(children) || 0,
           settings
         );
 
-        // Store price details for this apartment
-        priceDetailsByApartment[apartmentId] = priceCalculation;
-      });
+        if (priceCalculation && priceCalculation.finalPrice > 0) {
+          priceDetailsByApartment[apartmentId] = {
+            ...priceCalculation,
+            isAvailable: true,
+            settings: {
+              maxGuests: settings.maxGuests,
+              startingAtGuest: settings.startingAtGuest,
+              extraGuestsPerNight: settings.extraGuestsPerNight,
+              extraChildPerNight: settings.extraChildPerNight,
+              lengthOfStayDiscount: settings.lengthOfStayDiscount
+            }
+          };
+          hasAvailability = true;
+        }
+      } catch (calcError) {
+        console.error(`Error calculating price for apartment ${apartmentId}:`, calcError);
+      }
+    });
 
-      console.log("Sending response with price details:", {
-        apartmentCount: Object.keys(priceDetailsByApartment).length,
-        priceDetails: priceDetailsByApartment
-      });
-
-      res.json({
+    // Check if we found any available apartments
+    if (!hasAvailability) {
+      return res.status(200).json({
         data: formattedData,
-        priceDetails: priceDetailsByApartment
-      });
-
-    } catch (error) {
-      console.error("Error fetching rates:", error);
-      res.status(500).json({
-        error: "Failed to fetch rates",
-        details: error.message
+        priceDetails: {},
+        hasAvailability: false,
+        message: "No apartments available for the selected dates and guests"
       });
     }
-  });
 
+    console.log("Sending response with price details:", {
+      apartmentCount: Object.keys(priceDetailsByApartment).length,
+      availableApartments: Object.keys(priceDetailsByApartment)
+    });
+
+    res.json({
+      data: formattedData,
+      priceDetails: priceDetailsByApartment,
+      hasAvailability: true
+    });
+
+  } catch (error) {
+    console.error("Error in /api/rates:", error);
+    res.status(500).json({
+      error: "Failed to fetch rates",
+      details: error.response?.data || error.message,
+      status: error.response?.status || 500
+    });
+  }
+});
 
 app.post("/api/create-payment-intent", async (req, res) => {
   try {
