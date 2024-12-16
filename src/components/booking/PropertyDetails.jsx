@@ -434,6 +434,7 @@ export const PropertyDetails = ({
 
   return (
     <div className="space-y-8 bg-[#fbfdfb]">
+
       {filteredAvailableRooms.length > 0 && (
         <div>
           {!showOnlySelected && !showOnlyUnselected && (

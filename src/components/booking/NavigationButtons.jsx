@@ -4,7 +4,6 @@ export const NavigationButtons = ({
   nextStep,
   isStepValid,
   loading,
-  disabled  // Add this new prop
 }) => {
   const handleNext = () => {
     nextStep();
@@ -23,10 +22,7 @@ export const NavigationButtons = ({
         <button
           type="button"
           onClick={prevStep}
-          disabled={disabled}  // Add this
-          className={`px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 ${
-            disabled ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
+          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
         >
           Précédent
         </button>
@@ -35,10 +31,7 @@ export const NavigationButtons = ({
         <button
           type="button"
           onClick={handleNext}
-          disabled={disabled}  // Add this
-          className={`px-4 py-2 bg-[#668E73] text-white rounded hover:bg-opacity-90 ${
-            disabled ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
+          className="px-4 py-2 bg-[#668E73] text-white rounded hover:bg-opacity-90"
         >
           Suivant
         </button>
@@ -46,14 +39,12 @@ export const NavigationButtons = ({
       {currentStep === 3 && (
         <button
           type="submit"
-          disabled={!isStepValid() || disabled}  // Add disabled here too
+          disabled={!isStepValid()}
           className={`px-4 py-2 ${
-            isStepValid() && !disabled
+            isStepValid()
               ? "bg-[#668E73] hover:bg-opacity-90"
               : "bg-gray-300 cursor-not-allowed"
-          } text-white rounded ${
-            disabled ? 'opacity-50' : ''
-          }`}
+          } text-white rounded`}
         >
           {loading ? "En cours..." : "Passer au paiement"}
         </button>
