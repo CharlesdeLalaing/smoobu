@@ -71,18 +71,83 @@ const calculateNumberOfNights = (startDate, endDate) => {
 
 
   // Handlers
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  // const handleChange = (e) => {
+  //   const { name, value } = e.target;
 
-    if (name === "arrivalDate" || name === "departureDate") {
-      setShowPriceDetails(false);
+  //   if (name === "arrivalDate" || name === "departureDate") {
+  //     setShowPriceDetails(false);
+  //   }
+
+  //   setFormData((prevData) => ({
+  //     ...prevData,
+  //     [name]: value,
+  //   }));
+  // };
+
+  // Replace your current handleChange function with this one
+const handleChange = async (e) => {
+  const { name, value } = e.target;
+
+  // Update form data
+  setFormData((prevData) => ({
+    ...prevData,
+    [name]: value,
+  }));
+
+  // Check if this is a date change
+  if (name === "arrivalDate" || name === "departureDate") {
+    setShowPriceDetails(false);
+    
+    // Check if both dates are set
+    const updatedFormData = {
+      ...formData,
+      [name]: value
+    };
+
+    if (updatedFormData.arrivalDate && updatedFormData.departureDate) {
+      console.log("Both dates set, checking availability automatically");
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await api.get("/rates", {
+          params: {
+            apartments: updatedFormData.apartmentId || ["1644643", "1946282", "1946279", "1946276", "1946270"],
+            start_date: updatedFormData.arrivalDate,
+            end_date: updatedFormData.departureDate,
+            adults: updatedFormData.adults,
+            children: updatedFormData.children,
+          },
+        });
+
+        if (response.data.priceDetails) {
+          setPriceDetails(response.data.priceDetails);
+          setShowPriceDetails(true);
+          setIsAvailable(true);
+
+          // If a room is already selected, update its price
+          if (updatedFormData.apartmentId && response.data.priceDetails[updatedFormData.apartmentId]) {
+            setFormData(prev => ({
+              ...prev,
+              price: response.data.priceDetails[updatedFormData.apartmentId].finalPrice
+            }));
+          }
+        } else {
+          setError("No rates available for selected dates");
+          setShowPriceDetails(false);
+          setIsAvailable(false);
+        }
+      } catch (error) {
+        console.error("Error checking availability:", error);
+        setError(error.response?.data?.error || "Unable to fetch rates");
+        setShowPriceDetails(false);
+        setIsAvailable(false);
+      } finally {
+        setLoading(false);
+      }
     }
-
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
+  }
+};
 
   const handleExtraChange = (extraId, quantity) => {
     if (quantity < 0) return;
