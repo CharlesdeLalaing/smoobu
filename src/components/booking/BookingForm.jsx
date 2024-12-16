@@ -514,12 +514,12 @@ const BookingForm = () => {
     
           try {
             const availabilityData = await checkAvailability(updatedStartDate, updatedEndDate);
-        
+            
             if (availabilityData?.priceDetails) {
               setPriceDetails(availabilityData.priceDetails);
               setShowPriceDetails(true);
               setIsAvailable(true);
-              setDateError(""); // Clear any existing date error
+    
               // Update price if a room is already selected
               if (formData.apartmentId && availabilityData.priceDetails[formData.apartmentId]) {
                 setFormData(prev => ({
@@ -528,17 +528,18 @@ const BookingForm = () => {
                 }));
               }
             } else {
-              // Show unavailability message but keep UI visible
-              setDateError("La période sélectionnée n'est plus disponible. Veuillez choisir d'autres dates.");
+              // Keep showing the UI with unavailability message
+              setDateError("No rates available for selected dates");
               setIsAvailable(false);
               setPriceDetails(null);
-              setShowPriceDetails(true);
+              setShowPriceDetails(true); // Keep the container visible
             }
           } catch (err) {
             console.error("Error checking availability:", err);
-            setError("Erreur lors de la vérification de la disponibilité");
+            setError("Error checking availability");
             setIsAvailable(false);
             setPriceDetails(null);
+            // Keep the container visible
             setShowPriceDetails(true);
           }
         } else {
@@ -547,7 +548,8 @@ const BookingForm = () => {
         }
       } catch (error) {
         console.error("Error in handleDateSelect:", error);
-        setError("Une erreur s'est produite lors de la sélection de la date");
+        setError("An error occurred while processing the date selection");
+        // Maintain UI visibility even on error
         setShowPriceDetails(true);
       }
     };
@@ -621,49 +623,34 @@ const BookingForm = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#fbfdfb]">
-    <HeaderSection />
-    <div className="mx-auto h-[100vh] w-full">
-      {error && <ErrorMessage message={error} />}
-      {availabilityError && <ErrorMessage message={availabilityError} />}
-      {successMessage && (
-        <div className="mb-4 text-green-500">{successMessage}</div>
-      )}
-      {(loading || availabilityLoading) && <LoadingSpinner />}
+      <HeaderSection />
+      <div className=" mx-auto h-[100vh] w-full">
+        {error && <ErrorMessage message={error} />}
+        {availabilityError && <ErrorMessage message={availabilityError} />}
+        {successMessage && (
+          <div className="mb-4 text-green-500">{successMessage}</div>
+        )}
+        {(loading || availabilityLoading) && <LoadingSpinner />}
 
-      {!showPayment ? (
-        <form onSubmit={handleSubmit} className="mx-auto space-y-4">
-          <div style={{ backgroundColor: "#668E73" }}>
-            <SearchSection {...searchSectionProps} />
-            <RoomNavigation {...roomNavigationProps} />
-          </div>
+        {!showPayment ? (
+          <form onSubmit={handleSubmit} className="mx-auto space-y-4">
+            <div style={{ backgroundColor: "#668E73" }}>
+              <SearchSection {...searchSectionProps} />
+              <RoomNavigation {...roomNavigationProps} />
+            </div>
 
-          <div className="space-y-8 px-[2%] md:px-[5%] py-[1%]">
-            {formData.apartmentId && (
-              <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
-                <div className="w-full h-full lg:w-1/2">
-                  <div className="h-full overflow-auto">
-                    {!isAvailable && dateError ? (
-                      <div className="border border-[#668E73] p-4 rounded">
-                        <div className="text-center py-8">
-                          <h3 className="text-xl font-semibold text-[#668E73] mb-4">
-                            Changement de disponibilité
-                          </h3>
-                          <p className="text-gray-600 mb-4">
-                            {dateError}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Vous pouvez continuer à modifier vos extras, mais veuillez sélectionner de nouvelles dates disponibles pour finaliser votre réservation.
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
+            <div className="space-y-8 px-[2%] md:px-[5%] py-[1%]">
+              {formData.apartmentId && (
+                <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
+                  <div className="w-full h-full lg:w-1/2">
+                    <div className="h-full overflow-auto">
                       <PropertyDetails
                         {...propertyDetailsProps}
-                        showOnlyUnselected={true}
+                        showOnlySelected={true}
+                        selectedRoomId={formData.apartmentId}
                       />
-                    )}
+                    </div>
                   </div>
-                </div>
 
                   <div className="w-full h-full lg:w-1/2">
                     <div className="border border-[#668E73] p-4 rounded h-full flex flex-col">
