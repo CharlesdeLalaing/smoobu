@@ -131,6 +131,10 @@ export const PropertyDetails = ({
   };
 
   const RoomCard = ({ room, isAvailable }) => {
+    // const roomPriceDetails = priceDetails && priceDetails[room.id];
+    // const [sliderRef, setSliderRef] = useState(null);
+    // const [activeTab, setActiveTab] = useState("priceDetails");
+
     const roomPriceDetails = priceDetails && priceDetails[room.id];
     const [sliderRef, setSliderRef] = useState(null);
     const [activeTab, setActiveTab] = useState("priceDetails");
@@ -165,7 +169,19 @@ export const PropertyDetails = ({
             : 'h-fit'
         }`}
       >
-        {!isAvailable && getUnavailableDatesMessage(room.id)}
+        {/* {!isAvailable && getUnavailableDatesMessage(room.id)} */}
+
+        {/* Always show unavailability message if dates are selected and room is not available */}
+        {startDate && endDate && !isAvailable && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+            <p className="text-red-600 font-medium">
+              Ce logement n'est pas disponible pour les dates sélectionnées
+            </p>
+            <p className="text-sm text-gray-600 mt-2">
+              Veuillez sélectionner d'autres dates pour ce logement ou consulter nos autres options
+            </p>
+          </div>
+        )}
   
         {formData.apartmentId === room.id ? (
           <div className="flex flex-col h-full">
@@ -394,24 +410,20 @@ export const PropertyDetails = ({
                     scrollTo(10);
                   }
                 }}
-                disabled={!hasSearched}
+                disabled={!hasSearched || !isAvailable}
                 className={`w-fit mt-5 py-2 px-5 rounded-full font-medium transition-colors ${
                   !hasSearched 
                     ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                     : isAvailable
-                      ? formData.apartmentId === room.id
-                        ? "bg-[#445E54] text-white"
-                        : "bg-[#668E73] text-white hover:bg-opacity-90"
+                      ? "bg-[#668E73] text-white hover:bg-opacity-90"
                       : "bg-gray-300 text-gray-600 cursor-not-allowed"
                 }`}
               >
                 {!hasSearched
                   ? "Veuillez sélectionner une date"
-                  : formData.apartmentId === room.id
-                    ? "Sélectionnée"
-                    : isAvailable
-                      ? "Sélectionner cette chambre"
-                      : "Chambre non disponible"}
+                  : isAvailable
+                    ? "Sélectionner cette chambre"
+                    : "Non disponible pour ces dates"}
               </button>
             </div>
           </div>

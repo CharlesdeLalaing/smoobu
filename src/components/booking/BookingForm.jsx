@@ -361,6 +361,97 @@ const BookingForm = () => {
     //   }
     // };
 
+    // const handleDateSelect = async (date, isStart) => {
+    //   try {
+    //     // Handle date clearing
+    //     if (!date) {
+    //       if (isStart) {
+    //         setStartDate(null);
+    //         setEndDate(null);
+    //         handleChange({ target: { name: "arrivalDate", value: "" } });
+    //         handleChange({ target: { name: "departureDate", value: "" } });
+    //         resetAvailability();
+    //       } else {
+    //         setEndDate(null);
+    //         handleChange({ target: { name: "departureDate", value: "" } });
+    //       }
+    //       setDateError("");
+    //       return;
+    //     }
+    
+    //     // Set the selected date
+    //     const selectedDate = new Date(date.setHours(12, 0, 0, 0));
+    
+    //     if (isStart) {
+    //       // Setting start date
+    //       setStartDate(selectedDate);
+    //       setEndDate(null);
+    //       handleChange({
+    //         target: {
+    //           name: "arrivalDate",
+    //           value: selectedDate.toISOString().split("T")[0],
+    //         },
+    //       });
+    //       handleChange({ target: { name: "departureDate", value: "" } });
+          
+    //       // Keep showing existing data but reset availability
+    //       resetAvailability();
+    //     } else {
+    //       // Setting end date
+    //       setEndDate(selectedDate);
+    //       handleChange({
+    //         target: {
+    //           name: "departureDate",
+    //           value: selectedDate.toISOString().split("T")[0],
+    //         },
+    //       });
+    //     }
+    
+    //     // Get updated dates for availability check
+    //     const updatedStartDate = isStart ? selectedDate : startDate;
+    //     const updatedEndDate = isStart ? null : selectedDate;
+    
+    //     // Only check availability if both dates are set
+    //     if (updatedStartDate && updatedEndDate) {
+    //       console.log('Both dates set, checking availability:', {
+    //         start: updatedStartDate,
+    //         end: updatedEndDate
+    //       });
+    
+    //       try {
+    //         const availabilityData = await checkAvailability(updatedStartDate, updatedEndDate);
+            
+    //         if (availabilityData?.priceDetails) {
+    //           setPriceDetails(availabilityData.priceDetails);
+    //           setShowPriceDetails(true);
+    //           setIsAvailable(true);
+    
+    //           // Update price if a room is already selected
+    //           if (formData.apartmentId && availabilityData.priceDetails[formData.apartmentId]) {
+    //             setFormData(prev => ({
+    //               ...prev,
+    //               price: availabilityData.priceDetails[formData.apartmentId].finalPrice
+    //             }));
+    //           }
+    //         } else {
+    //           // Even if no availability, keep showing the existing data
+    //           setDateError("No rates available for selected dates");
+    //         }
+    //       } catch (err) {
+    //         console.error("Error checking availability:", err);
+    //         setError("Error checking availability");
+    //         // Don't hide price details on error
+    //       }
+    //     } else {
+    //       // Keep showing price details while user selects second date
+    //       setShowPriceDetails(true);
+    //     }
+    //   } catch (error) {
+    //     console.error("Error in handleDateSelect:", error);
+    //     setError("An error occurred while processing the date selection");
+    //   }
+    // };
+
     const handleDateSelect = async (date, isStart) => {
       try {
         // Handle date clearing
@@ -376,6 +467,8 @@ const BookingForm = () => {
             handleChange({ target: { name: "departureDate", value: "" } });
           }
           setDateError("");
+          // Keep showing price details even when clearing
+          setShowPriceDetails(true);
           return;
         }
     
@@ -394,8 +487,9 @@ const BookingForm = () => {
           });
           handleChange({ target: { name: "departureDate", value: "" } });
           
-          // Keep showing existing data but reset availability
+          // Reset availability but keep UI visible
           resetAvailability();
+          setShowPriceDetails(true);
         } else {
           // Setting end date
           setEndDate(selectedDate);
@@ -434,13 +528,19 @@ const BookingForm = () => {
                 }));
               }
             } else {
-              // Even if no availability, keep showing the existing data
+              // Keep showing the UI with unavailability message
               setDateError("No rates available for selected dates");
+              setIsAvailable(false);
+              setPriceDetails(null);
+              setShowPriceDetails(true); // Keep the container visible
             }
           } catch (err) {
             console.error("Error checking availability:", err);
             setError("Error checking availability");
-            // Don't hide price details on error
+            setIsAvailable(false);
+            setPriceDetails(null);
+            // Keep the container visible
+            setShowPriceDetails(true);
           }
         } else {
           // Keep showing price details while user selects second date
@@ -449,6 +549,8 @@ const BookingForm = () => {
       } catch (error) {
         console.error("Error in handleDateSelect:", error);
         setError("An error occurred while processing the date selection");
+        // Maintain UI visibility even on error
+        setShowPriceDetails(true);
       }
     };
 
