@@ -66,35 +66,82 @@ const BookingForm = () => {
     resetAvailability,
   } = useAvailabilityCheck(formData);
 
-  const handleRoomSelect = async (roomId) => {
-    setFormData((prev) => ({
-      ...prev,
-      apartmentId: roomId,
-    }));
+  // const handleRoomSelect = async (roomId) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     apartmentId: roomId,
+  //   }));
 
-    if (startDate && endDate) {
-      try {
+  //   if (startDate && endDate) {
+  //     try {
+  //       if (priceDetails && priceDetails[roomId]) {
+  //         const roomPriceDetails = priceDetails[roomId];
+  //         setFormData((prev) => ({
+  //           ...prev,
+  //           price: roomPriceDetails.finalPrice,
+  //         }));
+  //         setShowPriceDetails(true);
+  //       } else {
+  //         await handleAvailabilityCheck();
+  //       }
+  //     } catch (err) {
+  //       console.error("Error updating prices:", err);
+  //       setError("Failed to update prices for the selected room");
+  //     }
+  //   }
+
+  //   if (!formData.apartmentId) {
+  //     setCurrentStep(1);
+  //   }
+  // };
+
+  const handleRoomSelect = async (roomId) => {
+    try {
+      setFormData(prev => ({
+        ...prev,
+        apartmentId: roomId,
+      }));
+
+      if (startDate && endDate) {
         if (priceDetails && priceDetails[roomId]) {
-          const roomPriceDetails = priceDetails[roomId];
-          setFormData((prev) => ({
+          setFormData(prev => ({
             ...prev,
-            price: roomPriceDetails.finalPrice,
+            price: priceDetails[roomId].finalPrice,
           }));
           setShowPriceDetails(true);
-        } else {
-          await handleAvailabilityCheck();
+          setIsAvailable(true);
         }
-      } catch (err) {
-        console.error("Error updating prices:", err);
-        setError("Failed to update prices for the selected room");
+      } else {
+        setDateError("Please select both arrival and departure dates");
       }
-    }
 
-    if (!formData.apartmentId) {
-      setCurrentStep(1);
+      setError("");
+
+      if (!formData.apartmentId) {
+        setCurrentStep(1);
+      }
+
+      // Scroll to room
+      const roomElement = document.getElementById(`room-${roomId}`);
+      if (roomElement) {
+        const offset = 100;
+        const elementPosition = roomElement.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - offset;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth"
+        });
+      }
+
+    } catch (err) {
+      console.error("Error in handleRoomSelect:", err);
+      setError("Failed to update room selection. Please try again.");
+      setIsAvailable(false);
+      setShowPriceDetails(false);
     }
   };
-
+  
   const handleAvailabilityCheck = async () => {
     console.log('handleAvailabilityCheck called with:', {
       startDate,
@@ -151,65 +198,120 @@ const BookingForm = () => {
     }
   };
 
-  const handleDateSelect = (date, isStart) => {
-    // Reset handling
-    if (!date) {
+  // const handleDateSelect = (date, isStart) => {
+  //   // Reset handling
+  //   if (!date) {
+  //     if (isStart) {
+  //       setStartDate(null);
+  //       setEndDate(null);
+  //       handleChange({ target: { name: "arrivalDate", value: "" } });
+  //       handleChange({ target: { name: "departureDate", value: "" } });
+  //     } else {
+  //       setEndDate(null);
+  //       handleChange({ target: { name: "departureDate", value: "" } });
+  //     }
+  //     setDateError("");
+  //     resetAvailability(); // Add this to ensure state is reset
+  //     return;
+  //   }
+  
+  //   // Set the selected date
+  //   const selectedDate = new Date(date.setHours(12, 0, 0, 0));
+  
+  //   if (isStart) {
+  //     // Setting start date
+  //     setStartDate(selectedDate);
+  //     setEndDate(null); // Clear end date when start date changes
+  //     handleChange({
+  //       target: {
+  //         name: "arrivalDate",
+  //         value: selectedDate.toISOString().split("T")[0],
+  //       },
+  //     });
+  //     handleChange({ target: { name: "departureDate", value: "" } });
+      
+  //     // Reset states
+  //     setIsAvailable(false);
+  //     setShowPriceDetails(false);
+  //     resetAvailability();
+  //   } else {
+  //     // Setting end date
+  //     setEndDate(selectedDate);
+  //     handleChange({
+  //       target: {
+  //         name: "departureDate",
+  //         value: selectedDate.toISOString().split("T")[0],
+  //       },
+  //     });
+  //   }
+  
+  //   // Check availability if both dates are set (moved outside the if/else)
+  //   const updatedStartDate = isStart ? selectedDate : startDate;
+  //   const updatedEndDate = isStart ? null : selectedDate;
+  
+  //   if (updatedStartDate && updatedEndDate) {
+  //     console.log('Both dates set, checking availability:', {
+  //       start: updatedStartDate,
+  //       end: updatedEndDate
+  //     });
+  //     handleAvailabilityCheck();
+  //   }
+  // };
+
+
+   // Replace your existing handleDateSelect with this version
+    const handleDateSelect = (date, isStart) => {
+      // Handle date clearing
+      if (!date) {
+        if (isStart) {
+          setStartDate(null);
+          setEndDate(null);
+          handleChange({ target: { name: "arrivalDate", value: "" } });
+          handleChange({ target: { name: "departureDate", value: "" } });
+        } else {
+          setEndDate(null);
+          handleChange({ target: { name: "departureDate", value: "" } });
+        }
+        setDateError("");
+        resetAvailability();
+        setPriceDetails({});
+        setShowPriceDetails(false);
+        setIsAvailable(false);
+        return;
+      }
+
+      // Set the selected date
+      const selectedDate = new Date(date.setHours(12, 0, 0, 0));
+
       if (isStart) {
-        setStartDate(null);
+        setStartDate(selectedDate);
         setEndDate(null);
-        handleChange({ target: { name: "arrivalDate", value: "" } });
+        handleChange({
+          target: {
+            name: "arrivalDate",
+            value: selectedDate.toISOString().split("T")[0],
+          },
+        });
         handleChange({ target: { name: "departureDate", value: "" } });
       } else {
-        setEndDate(null);
-        handleChange({ target: { name: "departureDate", value: "" } });
+        setEndDate(selectedDate);
+        handleChange({
+          target: {
+            name: "departureDate",
+            value: selectedDate.toISOString().split("T")[0],
+          },
+        });
       }
-      setDateError("");
-      resetAvailability(); // Add this to ensure state is reset
-      return;
-    }
-  
-    // Set the selected date
-    const selectedDate = new Date(date.setHours(12, 0, 0, 0));
-  
-    if (isStart) {
-      // Setting start date
-      setStartDate(selectedDate);
-      setEndDate(null); // Clear end date when start date changes
-      handleChange({
-        target: {
-          name: "arrivalDate",
-          value: selectedDate.toISOString().split("T")[0],
-        },
-      });
-      handleChange({ target: { name: "departureDate", value: "" } });
-      
-      // Reset states
-      setIsAvailable(false);
-      setShowPriceDetails(false);
-      resetAvailability();
-    } else {
-      // Setting end date
-      setEndDate(selectedDate);
-      handleChange({
-        target: {
-          name: "departureDate",
-          value: selectedDate.toISOString().split("T")[0],
-        },
-      });
-    }
-  
-    // Check availability if both dates are set (moved outside the if/else)
-    const updatedStartDate = isStart ? selectedDate : startDate;
-    const updatedEndDate = isStart ? null : selectedDate;
-  
-    if (updatedStartDate && updatedEndDate) {
-      console.log('Both dates set, checking availability:', {
-        start: updatedStartDate,
-        end: updatedEndDate
-      });
-      handleAvailabilityCheck();
-    }
-  };
+
+      // Get the updated dates
+      const updatedStartDate = isStart ? selectedDate : startDate;
+      const updatedEndDate = isStart ? null : selectedDate;
+
+      // Check availability if both dates are set
+      if (updatedStartDate && updatedEndDate) {
+        handleAvailabilityCheck();
+      }
+    };
 
   const searchSectionProps = {
     formData,
