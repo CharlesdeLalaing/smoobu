@@ -654,6 +654,14 @@ const BookingForm = () => {
 
                   <div className="w-full h-full lg:w-1/2">
                     <div className="border border-[#668E73] p-4 rounded h-full flex flex-col">
+
+                    {!isAvailable && (
+                      <div className="text-red-500 mb-4">
+                        The room you've selected is not available for the new selected dates. 
+                        Please select new dates to continue.
+                      </div>
+                    )}
+
                       <h2 className="text-xl font-semibold text-[#668E73] mb-6" id="extra_top">
                         Choix des extras
                       </h2>
@@ -670,13 +678,17 @@ const BookingForm = () => {
                         )}
                       </div>
                       <div className="pt-4 mt-4 border-t border-gray-200">
-                        <NavigationButtons {...navigationButtonsProps} />
+                        {/* Add disabled={!isAvailable} to your NavigationButtons */}
+                        <NavigationButtons 
+                          {...navigationButtonsProps} 
+                          disabled={!isAvailable}
+                          className={!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}
+                        />
                       </div>
                     </div>
                   </div>
                 </div>
               )}
-
               <div className="w-full">
                 <PropertyDetails
                   {...propertyDetailsProps}
