@@ -112,15 +112,41 @@ export const PropertyDetails = ({
   groupedRooms.available = sortRooms(groupedRooms.available);
   groupedRooms.unavailable = sortRooms(groupedRooms.unavailable);
 
-  const filteredAvailableRooms = groupedRooms.available.filter(room => {
-    if (showOnlySelected) {
-      return room.id === formData.apartmentId;
+  // const filteredAvailableRooms = groupedRooms.available.filter(room => {
+  //   if (showOnlySelected) {
+  //     return room.id === formData.apartmentId;
+  //   }
+  //   if (showOnlyUnselected) {
+  //     return room.id !== formData.apartmentId;
+  //   }
+  //   return true;
+  // });
+
+  // Modified filtering logic to keep selected room visible
+  const filteredAvailableRooms = (() => {
+    if (showOnlySelected && formData.apartmentId) {
+      // Find the selected room in either available or unavailable groups
+      const selectedRoom = [...groupedRooms.available, ...groupedRooms.unavailable]
+        .find(room => room.id === formData.apartmentId);
+      return selectedRoom ? [selectedRoom] : [];
     }
+
     if (showOnlyUnselected) {
-      return room.id !== formData.apartmentId;
+      return groupedRooms.available.filter(room => room.id !== formData.apartmentId);
     }
-    return true;
-  });
+
+    // For normal view, show all available rooms plus selected room if it became unavailable
+    const rooms = [...groupedRooms.available];
+    if (formData.apartmentId) {
+      const selectedUnavailableRoom = groupedRooms.unavailable
+        .find(room => room.id === formData.apartmentId);
+      if (selectedUnavailableRoom && !rooms.some(room => room.id === formData.apartmentId)) {
+        rooms.unshift(selectedUnavailableRoom);
+      }
+    }
+    return rooms;
+  })();
+  
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -161,12 +187,12 @@ export const PropertyDetails = ({
         id={`room-${room.id}`}
         className={`py-8 ${
           formData.apartmentId === room.id 
-            ? 'border border-[#668E73] p-4 rounded w-1/3' 
-            : 'w-1/3'
+            ? 'border border-[#668E73] p-4 rounded ' 
+            : ''
         } ${
           formData.apartmentId === room.id && showOnlySelected 
-            ? 'h-fit sm:h-[calc(100vh-200px)] overflow-hidden w-1/3' 
-            : 'h-fit w-1/3'
+            ? 'h-fit sm:h-[calc(100vh-200px)] overflow-hidden ' 
+            : 'h-fit '
         }`}
       >
         {/* {!isAvailable && getUnavailableDatesMessage(room.id)} */}
@@ -447,13 +473,6 @@ export const PropertyDetails = ({
               <div key={room.id} className="space-y-4">
                 {formData.apartmentId !== room.id && (
                   <div className="text-left mb-4">
-                  {/* <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[60px] xl:left-[680px]">
-                        <img 
-                          src={Squirell}
-                          alt="Squirrel"
-                          className="w-14 md:w-14 lg:w-24 h-auto"
-                        />
-                  </div> */}
                     <h4 className="font-montserrat text-xl md:text-1xl lg:text-2xl mb-4 text-[#D3B574]">
                       {room.type}
                     </h4>
@@ -462,7 +481,11 @@ export const PropertyDetails = ({
                     </h3>
                   </div>
                 )}
-                <RoomCard key={room.id} room={room} isAvailable={true} />
+                <RoomCard 
+                  key={room.id} 
+                  room={room} 
+                  isAvailable={isRoomAvailable(room.id, startDate, endDate, availableDates, hasSearched)} 
+                />
               </div>
             ))}
           </div>
