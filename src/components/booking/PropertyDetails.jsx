@@ -184,7 +184,7 @@ export const PropertyDetails = ({
         )}
   
         {formData.apartmentId === room.id ? (
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full w-1/2">
             <div className="flex justify-around border-b border-grey-300 mb-4 ">
               <button
                 type="button"
