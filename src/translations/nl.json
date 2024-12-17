@@ -74,6 +74,45 @@
       "notes": "2. Notitie toevoegen",
       "contact": "3. Contactgegevens"
     }
+  },
+  "contact": {
+    "fields": {
+      "firstName": {
+        "label": "Voornaam*",
+        "placeholder": "Voornaam"
+      },
+      "lastName": {
+        "label": "Achternaam*",
+        "placeholder": "Achternaam"
+      },
+      "email": {
+        "label": "E-mail*",
+        "placeholder": "E-mail"
+      },
+      "phone": {
+        "label": "Telefoon",
+        "placeholder": "Telefoon"
+      },
+      "street": {
+        "label": "Straat/nummer",
+        "placeholder": "Straat/nummer"
+      },
+      "postalCode": {
+        "label": "Postcode",
+        "placeholder": "Postcode"
+      },
+      "city": {
+        "label": "Stad",
+        "placeholder": "Stad"
+      },
+      "country": {
+        "label": "Land",
+        "placeholder": "Land"
+      },
+      "checkIn": {
+        "label": "Check-in*"
+      }
+    }
   }
     }
   }

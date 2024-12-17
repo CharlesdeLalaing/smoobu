@@ -76,6 +76,45 @@
       "notes": "2. Ajout note",
       "contact": "3. Info contact"
     }
+  },
+  "contact": {
+    "fields": {
+      "firstName": {
+        "label": "Prénom*",
+        "placeholder": "Prénom"
+      },
+      "lastName": {
+        "label": "Nom*",
+        "placeholder": "Nom"
+      },
+      "email": {
+        "label": "Email*",
+        "placeholder": "Email"
+      },
+      "phone": {
+        "label": "Téléphone",
+        "placeholder": "Téléphone"
+      },
+      "street": {
+        "label": "Rue/numéro",
+        "placeholder": "Rue/Numéro"
+      },
+      "postalCode": {
+        "label": "Code postal",
+        "placeholder": "Code postal"
+      },
+      "city": {
+        "label": "Ville",
+        "placeholder": "Ville"
+      },
+      "country": {
+        "label": "Pays",
+        "placeholder": "Pays"
+      },
+      "checkIn": {
+        "label": "Check-in*"
+      }
+    }
   }
 
 

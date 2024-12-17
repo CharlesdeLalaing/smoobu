@@ -1,78 +1,117 @@
 {
     "translation": {
-        "header": {
-            "contact": {
-            "phone": "+32 475 20 16 19",
-            "email": "fermedebasseilies@gmail.com",
-            "address": "Rue de Basseilles 1 - 5340 MOZET"
-            },
-            "nav": {
-            "home": "Home",
-            "accommodations": {
-                "title": "Our Accommodations",
-                "unusual": "Unusual Accommodations",
-                "guesthouse": "Guesthouse & B&B"
-            },
-            "extras": "Extras",
-            "activities": "Activities & Partners",
-            "aboutUs": "About Us",
-            "info": "Info & Press"
-            },
-            "buttons": {
-            "giftCard": "Gift Card"
-            }
+      "header": {
+        "contact": {
+          "phone": "+32 475 20 16 19",
+          "email": "fermedebasseilies@gmail.com",
+          "address": "Rue de Basseilles 1 - 5340 MOZET"
         },
-        "search": {
-            "title": "Select your dates",
-            "arrival": "Arrival",
-            "departure": "Departure",
-            "adults": "Adults",
-            "children": "Children",
-            "search": "Search",
-            "selectDate": "Select a date"
+        "nav": {
+          "home": "Home",
+          "accommodations": {
+            "title": "Our Accommodations",
+            "unusual": "Unusual Accommodations",
+            "guesthouse": "Guesthouse & B&B"
+          },
+          "extras": "Extras",
+          "activities": "Activities & Partners",
+          "aboutUs": "About Us",
+          "info": "Info & Press"
         },
-        "rooms": {
-            "types": {
-                "unusual": "Unusual Accommodations",
-                "guesthouse": "Guesthouse & B&B"
-            },
-            "names": {
-                "bulle": "The Stream Bubble",
-                "dome": "The Dragonfly Dome",
-                "moulin": "The Mill",
-                "ble": "The Wheat Room",
-                "logis": "The Lodge"
-            },
-            "descriptions": {
-                "bulle": "Immerse yourself in the soothing intimacy of the Stream Bubble - an unusual cocoon nestled between earth and water, lulled by the song of the stream and the whispers of nature. With its Crusoe armchair and king-size bed, this space offers refined comfort in the heart of nature. Also enjoy the brazier for convivial evenings under the stars, perfect for roasting marshmallows and sharing unforgettable moments. Book now and let yourself be enchanted by the magical serenity of the Stream Bubble.",
-                "dome": "Immerse yourself in the magical intimacy of the Dragonfly Dome – an unusual refuge in the heart of nature, designed for a romantic getaway. Equipped with a heated king-size bed and private terrace, this space offers luxury and serenity. Nestled in a corner of the woods, the isolated site is perfect for a total disconnect. You'll spend an unforgettable night under the stars, lulled by the magic of nature. A bunk bed is available in the small cabin next door, ideal for accommodating children. Also enjoy the brazier-BBQ for convivial evenings. Book now and let yourself be carried away by the tranquility of the Dragonfly Dome.",
-                "moulin": "Immerse yourself in the enchanting atmosphere of the Mill - a romantic studio designed for two people where modern comfort and past charm intertwine. With its queen-size mezzanine bed, a cozy sofa bed that can accommodate children, this space offers you an intimate and comfortable escape. Add to that a fully equipped kitchen for convivial moments. Book now and let yourself be seduced by the irresistible charm of the Mill.",
-                "ble": "Immerse yourself in the intimacy of the Wheat Room - a cozy refuge in the heart of a carefully restored barn. Designed to accommodate two adults and up to two children, this rustic room harmoniously combines old-world charm with modern amenities. Ideal for a romantic getaway or family vacation, book now and let yourself be seduced by the warm atmosphere of the Wheat Room.",
-                "logis": "Immerse yourself in the warm intimacy of the Lodge – a rustic refuge that can accommodate up to 8 guests, perfect for family gatherings or friends' reunions. Nestled in a carefully restored barn, it's an invitation to an authentic escape, where modern comfort meets old-world charm. Book now and let yourself be enchanted by the unique atmosphere of the Lodge."
-            },
-            "features": {
-                "maxGuests": "Max {{value}} people",
-                "maxGuestsWithChildren": "Max {{value}} adults and {{value2}} children",
-                "bedKing": "King size bed and heated mattress",
-                "bedQueen": "1 queen size bed and 1 sofa bed",
-                "bedKingAndSingle": "1 king size bed and 2 single beds",
-                "bedDoubleKing": "2 king size beds and 4 single beds",
-                "pets": "No pets allowed",
-                "dryToilet": "Dry toilet",
-                "bathroom": "One bathroom",
-                "twoBathrooms": "2 bathrooms and 2 toilets",
-                "brazier": "Brazier",
-                "heater": "Electric heater",
-                "kitchen": "Equipped kitchen",
-                "wifi": "WiFi"
-            }
-        },
-        "booking": {
-            "steps": {
-            "extras": "1. Choose extras",
-            "notes": "2. Add notes",
-            "contact": "3. Contact info"
-            }
+        "buttons": {
+          "giftCard": "Gift Card"
         }
+      },
+      "search": {
+        "title": "Select your dates",
+        "arrival": "Arrival",
+        "departure": "Departure",
+        "adults": "Adults",
+        "children": "Children",
+        "search": "Search",
+        "selectDate": "Select a date"
+      },
+      "rooms": {
+        "types": {
+          "unusual": "Unusual Accommodations",
+          "guesthouse": "Guesthouse & B&B"
+        },
+        "names": {
+          "bulle": "The Stream Bubble",
+          "dome": "The Dragonfly Dome",
+          "moulin": "The Mill",
+          "ble": "The Wheat Room",
+          "logis": "The Lodge"
+        },
+        "descriptions": {
+          "bulle": "Immerse yourself in the soothing intimacy of the Stream Bubble - an unusual cocoon nestled between earth and water, lulled by the song of the stream and the whispers of nature. With its Crusoe armchair and king-size bed, this space offers refined comfort in the heart of nature. Also enjoy the brazier for convivial evenings under the stars, perfect for roasting marshmallows and sharing unforgettable moments. Book now and let yourself be enchanted by the magical serenity of the Stream Bubble.",
+          "dome": "Immerse yourself in the magical intimacy of the Dragonfly Dome – an unusual refuge in the heart of nature, designed for a romantic getaway. Equipped with a heated king-size bed and private terrace, this space offers luxury and serenity. Nestled in a corner of the woods, the isolated site is perfect for a total disconnect. You'll spend an unforgettable night under the stars, lulled by the magic of nature. A bunk bed is available in the small cabin next door, ideal for accommodating children. Also enjoy the brazier-BBQ for convivial evenings. Book now and let yourself be carried away by the tranquility of the Dragonfly Dome.",
+          "moulin": "Immerse yourself in the enchanting atmosphere of the Mill - a romantic studio designed for two people where modern comfort and past charm intertwine. With its queen-size mezzanine bed, a cozy sofa bed that can accommodate children, this space offers you an intimate and comfortable escape. Add to that a fully equipped kitchen for convivial moments. Book now and let yourself be seduced by the irresistible charm of the Mill.",
+          "ble": "Immerse yourself in the intimacy of the Wheat Room - a cozy refuge in the heart of a carefully restored barn. Designed to accommodate two adults and up to two children, this rustic room harmoniously combines old-world charm with modern amenities. Ideal for a romantic getaway or family vacation, book now and let yourself be seduced by the warm atmosphere of the Wheat Room.",
+          "logis": "Immerse yourself in the warm intimacy of the Lodge – a rustic refuge that can accommodate up to 8 guests, perfect for family gatherings or friends' reunions. Nestled in a carefully restored barn, it's an invitation to an authentic escape, where modern comfort meets old-world charm. Book now and let yourself be enchanted by the unique atmosphere of the Lodge."
+        },
+        "features": {
+          "maxGuests": "Max {{value}} people",
+          "maxGuestsWithChildren": "Max {{value}} adults and {{value2}} children",
+          "bedKing": "King size bed and heated mattress",
+          "bedQueen": "1 queen size bed and 1 sofa bed",
+          "bedKingAndSingle": "1 king size bed and 2 single beds",
+          "bedDoubleKing": "2 king size beds and 4 single beds",
+          "pets": "No pets allowed",
+          "dryToilet": "Dry toilet",
+          "bathroom": "One bathroom",
+          "twoBathrooms": "2 bathrooms and 2 toilets",
+          "brazier": "Brazier",
+          "heater": "Electric heater",
+          "kitchen": "Equipped kitchen",
+          "wifi": "WiFi"
         }
+      },
+      "booking": {
+        "steps": {
+          "extras": "1. Choose extras",
+          "notes": "2. Add notes",
+          "contact": "3. Contact info"
+        }
+      },
+      "contact": {
+        "fields": {
+          "firstName": {
+            "label": "First name*",
+            "placeholder": "First name"
+          },
+          "lastName": {
+            "label": "Last name*",
+            "placeholder": "Last name"
+          },
+          "email": {
+            "label": "Email*",
+            "placeholder": "Email"
+          },
+          "phone": {
+            "label": "Phone",
+            "placeholder": "Phone"
+          },
+          "street": {
+            "label": "Street/number",
+            "placeholder": "Street/number"
+          },
+          "postalCode": {
+            "label": "Postal code",
+            "placeholder": "Postal code"
+          },
+          "city": {
+            "label": "City",
+            "placeholder": "City"
+          },
+          "country": {
+            "label": "Country",
+            "placeholder": "Country"
+          },
+          "checkIn": {
+            "label": "Check-in*"
+          }
+        }
+      }
     }
+  }
