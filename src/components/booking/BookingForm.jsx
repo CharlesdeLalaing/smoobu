@@ -621,16 +621,10 @@ const BookingForm = () => {
     },
   };
 
-    // Add this function to check if the selected room is available
-    const isSelectedRoomAvailable = () => {
-      if (!formData.apartmentId || !priceDetails) return false;
-      return Boolean(priceDetails[formData.apartmentId]);
-    };
-
   return (
     <div className="flex flex-col min-h-screen bg-[#fbfdfb]">
       <HeaderSection />
-      <div className="mx-auto h-[100vh] w-full">
+      <div className=" mx-auto h-[100vh] w-full">
         {error && <ErrorMessage message={error} />}
         {availabilityError && <ErrorMessage message={availabilityError} />}
         {successMessage && (
@@ -646,8 +640,7 @@ const BookingForm = () => {
             </div>
 
             <div className="space-y-8 px-[2%] md:px-[5%] py-[1%]">
-              {/* Selected room section - only show if room is selected AND available */}
-              {formData.apartmentId && isSelectedRoomAvailable() && (
+              {formData.apartmentId && (
                 <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
                   <div className="w-full h-full lg:w-1/2">
                     <div className="h-full overflow-auto">
@@ -683,18 +676,10 @@ const BookingForm = () => {
                   </div>
                 </div>
               )}
-              {/* <div className="w-full">
-                <PropertyDetails
-                  {...propertyDetailsProps}
-                  showOnlyUnselected={true}
-                />
-              </div> */}
-              {/* Show this view when either no room is selected or the selected room is unavailable */}
               <div className="w-full">
                 <PropertyDetails
                   {...propertyDetailsProps}
-                  showOnlySelected={false}
-                  showOnlyUnselected={false}
+                  showOnlyUnselected={true}
                 />
               </div>
             </div>
