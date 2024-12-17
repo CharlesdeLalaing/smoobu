@@ -161,12 +161,12 @@ export const PropertyDetails = ({
         id={`room-${room.id}`}
         className={`py-8 ${
           formData.apartmentId === room.id 
-            ? 'border border-[#668E73] p-4 rounded w-1/2' 
-            : 'w-1/2'
+            ? 'border border-[#668E73] p-4 rounded w-1/3' 
+            : 'w-1/3'
         } ${
           formData.apartmentId === room.id && showOnlySelected 
-            ? 'h-fit sm:h-[calc(100vh-200px)] overflow-hidden w-1/2' 
-            : 'h-fit w-1/2'
+            ? 'h-fit sm:h-[calc(100vh-200px)] overflow-hidden w-1/3' 
+            : 'h-fit w-1/3'
         }`}
       >
         {/* {!isAvailable && getUnavailableDatesMessage(room.id)} */}
