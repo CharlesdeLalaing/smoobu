@@ -1,0 +1,79 @@
+{
+    "translation": {
+      "header": {
+        "contact": {
+          "phone": "+32 475 20 16 19",
+          "email": "fermedebasseilies@gmail.com",
+          "address": "Rue de Basseilles 1 - 5340 MOZET"
+        },
+        "nav": {
+          "home": "Home",
+          "accommodations": {
+            "title": "Onze Accommodaties",
+            "unusual": "Unieke Accommodaties",
+            "guesthouse": "Vakantiehuis & B&B"
+          },
+          "extras": "Extra's",
+          "activities": "Activiteiten & Partners",
+          "aboutUs": "Over Ons",
+          "info": "Info & Pers"
+        },
+        "buttons": {
+          "giftCard": "Cadeaubon"
+        }
+      },
+      "search": {
+        "title": "Selecteer uw data",
+        "arrival": "Aankomst",
+        "departure": "Vertrek",
+        "adults": "Volwassenen",
+        "children": "Kinderen",
+        "search": "Zoeken",
+        "selectDate": "Selecteer een datum",
+        "selectNumber": "Selecteer een nummer"
+        },
+    "rooms": {
+      "types": {
+        "unusual": "Unieke Accommodaties",
+        "guesthouse": "Vakantiehuis & B&B"
+      },
+      "names": {
+        "bulle": "De Streambubbel",
+        "dome": "De Libellendome",
+        "moulin": "De Molen",
+        "ble": "De Tarwekamer",
+        "logis": "Het Verblijf"
+      },
+      "descriptions": {
+        "bulle": "Dompel jezelf onder in de rustgevende intimiteit van de Streambubbel - een unieke cocon genesteld tussen aarde en water, gewiegd door het gezang van de beek en de fluisteringen van de natuur. Met zijn Crusoe-fauteuil en kingsize bed biedt deze ruimte verfijnd comfort in het hart van de natuur. Geniet ook van de vuurkorf voor gezellige avonden onder de sterren, perfect voor het roosteren van marshmallows en het delen van onvergetelijke momenten. Boek nu en laat je betoveren door de magische sereniteit van de Streambubbel.",
+        "dome": "Dompel jezelf onder in de magische intimiteit van de Libellendome – een uniek toevluchtsoord in het hart van de natuur, ontworpen voor een romantisch uitje. Uitgerust met een verwarmd kingsize bed en privéterras biedt deze ruimte luxe en sereniteit. Genesteld in een hoekje van het bos is deze geïsoleerde plek perfect voor een totale ontkoppeling. Je brengt een onvergetelijke nacht door onder de sterren, gewiegd door de magie van de natuur. Er is een stapelbed beschikbaar in het kleine huisje ernaast, ideaal voor kinderen. Geniet ook van de vuurkorf-BBQ voor gezellige avonden. Boek nu en laat je meevoeren door de rust van de Libellendome.",
+        "moulin": "Dompel jezelf onder in de betoverende sfeer van de Molen - een romantische studio ontworpen voor twee personen waar modern comfort en charme uit het verleden zich vermengen. Met zijn queensize bed op de mezzanine, een gezellige slaapbank die plaats biedt aan kinderen, biedt deze ruimte je een intieme en comfortabele ontsnapping. Voeg daar een volledig uitgeruste keuken aan toe voor gezellige momenten. Boek nu en laat je verleiden door de onweerstaanbare charme van de Molen.",
+        "ble": "Dompel jezelf onder in de intimiteit van de Tarwekamer - een gezellig toevluchtsoord in het hart van een zorgvuldig gerestaureerde schuur. Ontworpen om plaats te bieden aan twee volwassenen en maximaal twee kinderen, combineert deze rustieke kamer op harmonieuze wijze de charme van vroeger met moderne voorzieningen. Ideaal voor een romantisch uitje of familievakantie, boek nu en laat je verleiden door de warme sfeer van de Tarwekamer.",
+        "logis": "Dompel jezelf onder in de warme intimiteit van het Verblijf – een rustiek toevluchtsoord dat plaats biedt aan maximaal 8 gasten, perfect voor familiebijeenkomsten of reünies met vrienden. Genesteld in een zorgvuldig gerestaureerde schuur, is het een uitnodiging voor een authentieke ontsnapping, waar modern comfort en charme uit het verleden samenkomen. Boek nu en laat je betoveren door de unieke sfeer van het Verblijf."
+      },
+      "features": {
+        "maxGuests": "Max {{value}} personen",
+        "maxGuestsWithChildren": "Max {{value}} volwassenen en {{value2}} kinderen",
+        "bedKing": "Kingsize bed en verwarmde matras",
+        "bedQueen": "1 queensize bed en 1 slaapbank",
+        "bedKingAndSingle": "1 kingsize bed en 2 enkele bedden",
+        "bedDoubleKing": "2 kingsize bedden en 4 enkele bedden",
+        "pets": "Geen huisdieren toegestaan",
+        "dryToilet": "Droog toilet",
+        "bathroom": "Een badkamer",
+        "twoBathrooms": "2 badkamers en 2 toiletten",
+        "brazier": "Vuurkorf",
+        "heater": "Elektrische verwarming",
+        "kitchen": "Uitgeruste keuken",
+        "wifi": "WiFi"
+      }
+    },
+    "booking": {
+    "steps": {
+      "extras": "1. Extra's kiezen",
+      "notes": "2. Notitie toevoegen",
+      "contact": "3. Contactgegevens"
+    }
+  }
+    }
+  }

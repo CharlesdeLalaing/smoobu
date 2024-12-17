@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Slider from "react-slick";
+import { useTranslation } from 'react-i18next';
 import { roomsData } from "../hooks/roomsData";
 import { isRoomAvailable } from "../hooks/roomUtils";
 import { PriceDetails } from "./PriceDetails";
@@ -31,6 +32,7 @@ export const PropertyDetails = ({
   hasSearched,
 }) => {
 
+  const { t } = useTranslation(); // Add this hook
 
   console.log("PropertyDetails render:", { 
     startDate, 
@@ -181,6 +183,7 @@ export const PropertyDetails = ({
     // const roomPriceDetails = priceDetails && priceDetails[room.id];
     // const [sliderRef, setSliderRef] = useState(null);
     // const [activeTab, setActiveTab] = useState("priceDetails");
+    const { t } = useTranslation(); // Add translation hook here too
 
     const roomPriceDetails = priceDetails && priceDetails[room.id];
     const [sliderRef, setSliderRef] = useState(null);
@@ -318,7 +321,7 @@ export const PropertyDetails = ({
       
                   <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
                     <div className="features-list flex">
-                      {room.features.map((feature, index) => (
+                      {/* {room.features.map((feature, index) => (
                         <div
                           key={index}
                           className="feature-item flex flex-col items-center text-center p-2 bg-[#668E73]"
@@ -326,16 +329,46 @@ export const PropertyDetails = ({
                         >
                           <img
                             src={feature.icon}
-                            alt={feature.title}
+                            alt={t(feature.title)}
                             style={{
                               height: "30px",
                               width: "30px",
                               filter: "invert(100%)",
                             }}
                           />
-                          <span className="text-sm mt-2 text-white">{feature.title}</span>
+                          <span className="text-sm mt-2 text-white">{feature.value ? 
+                              t(feature.title, { value: feature.value }) : 
+                              t(feature.title)
+                            }</span>
                         </div>
-                      ))}
+                      ))} */}
+                      {room.features.map((feature, index) => {
+                        // Handle dynamic values for features like maxGuests
+                        let translatedTitle = feature.value ? 
+                        Array.isArray(feature.value) ?
+                          t(feature.title, { value: feature.value[0], value2: feature.value[1] }) :
+                          t(feature.title, { value: feature.value }) :
+                        t(feature.title);
+
+                        return (
+                          <div
+                            key={index}
+                            className="feature-item flex flex-col items-center justify-center text-center p-3 bg-[#668E73] min-w-auto"
+                          >
+                            <img
+                              src={feature.icon}
+                              alt={translatedTitle}
+                              className="w-6 h-6"
+                              style={{
+                                filter: "invert(100%)"
+                              }}
+                            />
+                            <span className="text-sm mt-2 text-white whitespace-nowrap">
+                              {translatedTitle}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -352,8 +385,8 @@ export const PropertyDetails = ({
                       />
                   </div>
                   <div className="my-5">
-                  <p className="text-lg sm:text-base md:text-lg font-montserrat text-[#D3B574]">{room.type}</p>
-                  <h2 className="text-lg sm:text-base md:text-[25px] font-medium uppercase sm:mb-2 md:mb-10 sm:my-3 md:my-4 font-cormorant">{room.name}</h2>
+                  <p className="text-lg sm:text-base md:text-lg font-montserrat text-[#D3B574]">{t(room.type)}</p>
+                  <h2 className="text-lg sm:text-base md:text-[25px] font-medium uppercase sm:mb-2 md:mb-10 sm:my-3 md:my-4 font-cormorant">{t(room.nameKey)}</h2>
                   </div>
                   <div className="flex items-center justify-left sm:mb-2 md:mb-4 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
                     <img src={Group} alt="Profile Icon" className="w-6 h-6 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-4" />
@@ -415,7 +448,7 @@ export const PropertyDetails = ({
   
               <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
                 <div className="features-list flex">
-                  {room.features.map((feature, index) => (
+                  {/* {room.features.map((feature, index) => (
                     <div
                       key={index}
                       className="feature-item flex flex-col items-center text-center p-2 bg-[#668E73]"
@@ -432,7 +465,34 @@ export const PropertyDetails = ({
                       />
                       <span className="text-sm mt-2 text-white">{feature.title}</span>
                     </div>
-                  ))}
+                  ))} */}
+                  {room.features.map((feature, index) => {
+                    // Handle dynamic values for features like maxGuests
+                    let translatedTitle = feature.value ? 
+                    Array.isArray(feature.value) ?
+                          t(feature.title, { value: feature.value[0], value2: feature.value[1] }) :
+                          t(feature.title, { value: feature.value }) :
+                        t(feature.title);
+
+                    return (
+                      <div
+                        key={index}
+                        className="feature-item flex flex-col items-center justify-center text-center p-3 bg-[#668E73] min-w-[auto]"
+                      >
+                        <img
+                          src={feature.icon}
+                          alt={translatedTitle}
+                          className="w-6 h-6"
+                          style={{
+                            filter: "invert(100%)"
+                          }}
+                        />
+                        <span className="text-sm mt-2 text-white whitespace-nowrap">
+                          {translatedTitle}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -448,7 +508,7 @@ export const PropertyDetails = ({
                 selectedEndDate={endDate}
               /> */}
               <CalendarRoom roomId={room.id} />
-              <p className="text-gray-600 my-4 font-cormorant">{room.description}</p>
+              <p className="text-gray-600 my-4 font-cormorant">{t(room.description)}</p>
               <button
                 type="button"
                 onClick={() => {
@@ -485,7 +545,7 @@ export const PropertyDetails = ({
         <div>
           {!showOnlySelected && !showOnlyUnselected && (
             <h2 className="text-xl font-semibold text-[#668E73] mb-6">
-              Chambres disponibles
+              {t('rooms.availableRooms')}
             </h2>
           )}
           <div className="grid grid-cols-1 gap-20 w-[100%] mx-auto relative">
@@ -494,10 +554,10 @@ export const PropertyDetails = ({
                 {formData.apartmentId !== room.id && (
                   <div className="text-left mb-4">
                     <h4 className="font-montserrat text-xl md:text-1xl lg:text-2xl mb-4 text-[#D3B574]">
-                      {room.type}
+                    {t(room.type)}
                     </h4>
                     <h3 className="font-cormorant text-3xl text-gray-800 mb-2 md:text-2xl lg:text-[40px] font-light">
-                      {room.name}
+                    {t(room.nameKey)}
                     </h3>
                   </div>
                 )}
