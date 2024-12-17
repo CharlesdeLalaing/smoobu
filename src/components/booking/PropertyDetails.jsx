@@ -501,6 +501,17 @@ export const PropertyDetails = ({
         </div>
       )}
 
+      {startDate && endDate && !isAvailable && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+            <p className="text-red-600 font-medium">
+              Ce logement n'est pas disponible pour les dates sélectionnées
+            </p>
+            <p className="text-sm text-gray-600 mt-2">
+              Veuillez sélectionner d'autres dates pour ce logement ou consulter nos autres options
+            </p>
+          </div>
+      )}
+
       {loading && (
         <div className="flex justify-center">
           <div className="text-[#668E73]">Chargement...</div>
