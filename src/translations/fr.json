@@ -271,6 +271,13 @@
         "error": "Code promo invalide"
       }
     }
+  },
+  "navigation": {
+    "buttons": {
+      "previous": "Précédent",
+      "next": "Suivant",
+      "confirm": "Confirmer"
+    }
   }
 
 

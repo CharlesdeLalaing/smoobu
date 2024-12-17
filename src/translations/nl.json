@@ -269,6 +269,13 @@
         "error": "Ongeldige promocode"
       }
     }
+  },
+  "navigation": {
+    "buttons": {
+      "previous": "Vorige",
+      "next": "Volgende",
+      "confirm": "Bevestigen"
+    }
   }
     }
   }
