@@ -309,6 +309,15 @@
     "selectRoom": "Selecteer deze kamer",
     "unavailableForDates": "Niet beschikbaar voor deze data",
     "loading": "Laden..."
+  },
+  "terms": {
+    "accept": "Ik accepteer de ",
+    "generalConditions": "algemene voorwaarden",
+    "required": "U moet de algemene voorwaarden accepteren om door te gaan."
+  },
+  "timeSelect": {
+    "arrivalTime": "Aankomsttijd",
+    "placeholder": "Selecteer aankomsttijd"
   }
     }
   }

@@ -311,6 +311,15 @@
     "selectRoom": "Sélectionner cette chambre",
     "unavailableForDates": "Non disponible pour ces dates",
     "loading": "Chargement..."
+  },
+  "terms": {
+    "accept": "J'accepte les ",
+    "generalConditions": "conditions générales",
+    "required": "Vous devez accepter les conditions générales pour continuer."
+  },
+  "timeSelect": {
+    "arrivalTime": "Heure d'arrivée",
+    "placeholder": "Sélectionnez l'heure d'arrivée"
   }
 
 

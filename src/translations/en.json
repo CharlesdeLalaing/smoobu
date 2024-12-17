@@ -308,6 +308,15 @@
             "selectRoom": "Select this room",
             "unavailableForDates": "Not available for these dates",
             "loading": "Loading..."
+        },
+        "terms": {
+            "accept": "I accept the ",
+            "generalConditions": "general conditions",
+            "required": "You must accept the general conditions to continue."
+        },
+        "timeSelect": {
+            "arrivalTime": "Arrival time",
+            "placeholder": "Select arrival time"
         }
     }
 }
