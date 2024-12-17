@@ -621,6 +621,12 @@ const BookingForm = () => {
     },
   };
 
+    // Add this function to check if the selected room is available
+    const isSelectedRoomAvailable = () => {
+      if (!formData.apartmentId || !priceDetails) return false;
+      return Boolean(priceDetails[formData.apartmentId]);
+    };
+
   return (
     <div className="flex flex-col min-h-screen bg-[#fbfdfb]">
       <HeaderSection />
@@ -640,7 +646,43 @@ const BookingForm = () => {
             </div>
 
             <div className="space-y-8 px-[2%] md:px-[5%] py-[1%]">
-              {formData.apartmentId && (
+              {/* {formData.apartmentId && (
+                <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
+                  <div className="w-full h-full lg:w-1/2">
+                    <div className="h-full overflow-auto">
+                      <PropertyDetails
+                        {...propertyDetailsProps}
+                        showOnlySelected={true}
+                        selectedRoomId={formData.apartmentId}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="w-full h-full lg:w-1/2">
+                    <div className="border border-[#668E73] p-4 rounded h-full flex flex-col">
+                      <h2 className="text-xl font-semibold text-[#668E73] mb-6" id="extra_top">
+                        Choix des extras
+                      </h2>
+                      <BookingSteps currentStep={currentStep} />
+                      <div className="flex-1 mt-4 overflow-y-auto">
+                        {currentStep === 1 && (
+                          <ExtrasSection {...extrasSectionProps} />
+                        )}
+                        {currentStep === 2 && (
+                          <InfoSupSection {...infoSupSectionProps} />
+                        )}
+                        {currentStep === 3 && (
+                          <ContactSection {...contactSectionProps} />
+                        )}
+                      </div>
+                      <div className="pt-4 mt-4 border-t border-gray-200">
+                        <NavigationButtons {...navigationButtonsProps} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )} */}
+              {formData.apartmentId && isSelectedRoomAvailable() && (
                 <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
                   <div className="w-full h-full lg:w-1/2">
                     <div className="h-full overflow-auto">
@@ -676,12 +718,21 @@ const BookingForm = () => {
                   </div>
                 </div>
               )}
-              <div className="w-full">
+              {/* <div className="w-full">
                 <PropertyDetails
                   {...propertyDetailsProps}
                   showOnlyUnselected={true}
                 />
-              </div>
+              </div> */}
+              {/* Show this view when either no room is selected or the selected room is unavailable */}
+              {(!formData.apartmentId || !isSelectedRoomAvailable()) && (
+                <div className="w-full">
+                  <PropertyDetails
+                    {...propertyDetailsProps}
+                    showOnlyUnselected={true}
+                  />
+                </div>
+              )}
             </div>
           </form>
         ) : (
