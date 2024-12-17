@@ -255,7 +255,20 @@
         "description": "Vier je verjaardag met onze speciale formule."
       }
     },
-    "additionalPerson": "Extra persoon (+{{price}}€/pers)"
+    "additionalPerson": "Extra persoon (+{{price}}€/pers)",
+    "infoSup": {
+      "ownerMessage": {
+        "label": "Laat een bericht achter voor de eigenaar",
+        "placeholder": "Laat een bericht achter voor de eigenaar"
+      },
+      "promoCode": {
+        "label": "Promocode",
+        "placeholder": "Voer uw promocode in",
+        "button": "Toepassen",
+        "applied": "Promocode {{code}} toegepast: -{{discount}}€",
+        "error": "Ongeldige promocode"
+      }
+    }
   }
     }
   }

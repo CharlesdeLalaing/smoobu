@@ -257,7 +257,20 @@
         "description": "Célébrez votre anniversaire avec notre formule spéciale."
       }
     },
-    "additionalPerson": "Personne supplémentaire (+{{price}}€/pers)"
+    "additionalPerson": "Personne supplémentaire (+{{price}}€/pers)",
+    "infoSup": {
+      "ownerMessage": {
+        "label": "Laissez un message pour le propriétaire",
+        "placeholder": "Laissez un message pour le propriétaire"
+      },
+      "promoCode": {
+        "label": "Code promo",
+        "placeholder": "Entrez votre code promo",
+        "button": "Appliquer",
+        "applied": "Code promo {{code}} appliqué : -{{discount}}€",
+        "error": "Code promo invalide"
+      }
+    }
   }
 
 

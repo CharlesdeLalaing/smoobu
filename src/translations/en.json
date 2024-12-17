@@ -254,7 +254,20 @@
                 "description": "Celebrate your birthday with our special formula."
             }
             },
-            "additionalPerson": "Additional person (+{{price}}€/pers)"
+            "additionalPerson": "Additional person (+{{price}}€/pers)",
+            "infoSup": {
+                "ownerMessage": {
+                    "label": "Leave a message for the owner",
+                    "placeholder": "Leave a message for the owner"
+                },
+                "promoCode": {
+                    "label": "Promo code",
+                    "placeholder": "Enter your promo code",
+                    "button": "Apply",
+                    "applied": "Promo code {{code}} applied: -{{discount}}€",
+                    "error": "Invalid promo code"
+                }
+            }
         }
     }
 }
