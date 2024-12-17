@@ -681,6 +681,8 @@ const BookingForm = () => {
               {formData.apartmentId && (
                 <>
                   {showPayment ? (
+                    null
+                  ) : (
                     <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
                       <div className="w-full h-full lg:w-1/2">
                         <div className="h-full overflow-auto">
@@ -715,7 +717,7 @@ const BookingForm = () => {
                         </div>
                       </div>
                     </div>
-                  ) : null}
+                  )}
                 </>
               )}
               <div className="w-full">
