@@ -123,9 +123,33 @@ export const PropertyDetails = ({
   // });
 
   // Modified filtering logic to keep selected room visible
-  const filteredAvailableRooms = (() => {
+  // const filteredAvailableRooms = (() => {
+  //   if (showOnlySelected && formData.apartmentId) {
+  //     // Find the selected room in either available or unavailable groups
+  //     const selectedRoom = [...groupedRooms.available, ...groupedRooms.unavailable]
+  //       .find(room => room.id === formData.apartmentId);
+  //     return selectedRoom ? [selectedRoom] : [];
+  //   }
+
+  //   if (showOnlyUnselected) {
+  //     return groupedRooms.available.filter(room => room.id !== formData.apartmentId);
+  //   }
+
+  //   // For normal view, show all available rooms plus selected room if it became unavailable
+  //   const rooms = [...groupedRooms.available];
+  //   if (formData.apartmentId) {
+  //     const selectedUnavailableRoom = groupedRooms.unavailable
+  //       .find(room => room.id === formData.apartmentId);
+  //     if (selectedUnavailableRoom && !rooms.some(room => room.id === formData.apartmentId)) {
+  //       rooms.unshift(selectedUnavailableRoom);
+  //     }
+  //   }
+  //   return rooms;
+  // })();
+
+   // Modified filtering logic to prevent duplicate display
+   const filteredAvailableRooms = (() => {
     if (showOnlySelected && formData.apartmentId) {
-      // Find the selected room in either available or unavailable groups
       const selectedRoom = [...groupedRooms.available, ...groupedRooms.unavailable]
         .find(room => room.id === formData.apartmentId);
       return selectedRoom ? [selectedRoom] : [];
@@ -135,17 +159,14 @@ export const PropertyDetails = ({
       return groupedRooms.available.filter(room => room.id !== formData.apartmentId);
     }
 
-    // For normal view, show all available rooms plus selected room if it became unavailable
-    const rooms = [...groupedRooms.available];
-    if (formData.apartmentId) {
-      const selectedUnavailableRoom = groupedRooms.unavailable
-        .find(room => room.id === formData.apartmentId);
-      if (selectedUnavailableRoom && !rooms.some(room => room.id === formData.apartmentId)) {
-        rooms.unshift(selectedUnavailableRoom);
-      }
-    }
-    return rooms;
+    // For normal view, show only available rooms that are not selected
+    return groupedRooms.available.filter(room => room.id !== formData.apartmentId);
   })();
+
+  // Filter unavailable rooms to exclude selected room
+  const filteredUnavailableRooms = groupedRooms.unavailable.filter(
+    room => room.id !== formData.apartmentId
+  );
   
 
   const formatDate = (dateString) => {
@@ -460,7 +481,6 @@ export const PropertyDetails = ({
 
   return (
     <div className="space-y-8 bg-[#fbfdfb]">
-
       {filteredAvailableRooms.length > 0 && (
         <div>
           {!showOnlySelected && !showOnlyUnselected && (
@@ -492,27 +512,15 @@ export const PropertyDetails = ({
         </div>
       )}
 
-      {!showOnlySelected && groupedRooms.unavailable.length > 0 && (
+      {!showOnlySelected && filteredUnavailableRooms.length > 0 && (
         <div className="mt-0 py-10">
-          {/* <h2 className="mb-6 text-xl font-semibold text-gray-500">
-            Chambres non disponibles
-          </h2> */}
           <div className="grid grid-cols-1 gap-20 w-[100%] mx-auto relative">
-            {groupedRooms.unavailable.map((room) => (
+            {filteredUnavailableRooms.map((room) => (
               <div key={room.id} className="space-y-4">
-                {/* <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[60px] xl:left-[680px]">
-                        <img 
-                          src={Squirell}
-                          alt="Squirrel"
-                          className="w-14 md:w-14 lg:w-24 h-auto"
-                        />
-                  </div> */}
                 <div className="text-left mb-4">
-                  {/* Room Type - Larger text that becomes smaller on mobile */}
                   <h4 className="font-montserrat text-xl text-[#D3B574] md:text-xl lg:text-2xl mb-4">
                     {room.type}
                   </h4>
-                  {/* Room Name - Medium text that becomes smaller on mobile */}
                   <h3 className="font-cormorant text-3xl text-gray-800 mb-2 md:text-2xl lg:text-[40px] font-light">
                     {room.name}
                   </h3>
