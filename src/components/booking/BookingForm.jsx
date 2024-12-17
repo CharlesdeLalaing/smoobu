@@ -554,6 +554,14 @@ const BookingForm = () => {
       }
     };
 
+     // Add this function to check if the currently selected room is available
+  const isSelectedRoomAvailable = () => {
+    if (!formData.apartmentId || !startDate || !endDate) return false;
+
+    // Use the existing isRoomAvailable function from your roomUtils
+    return isRoomAvailable(formData.apartmentId, startDate, endDate, availableDates, hasSearched);
+  };
+
   const searchSectionProps = {
     formData,
     handleChange,
@@ -679,40 +687,52 @@ const BookingForm = () => {
                 </div>
               )} */}
               {formData.apartmentId && (
-                    <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
-                      <div className="w-full h-full lg:w-1/2">
-                        <div className="h-full overflow-auto">
-                          <PropertyDetails
-                            {...propertyDetailsProps}
-                            showOnlySelected={true}
-                            selectedRoomId={formData.apartmentId}
-                          />
-                        </div>
-                      </div>
+                <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
+                  <div className="w-full h-full lg:w-1/2">
+                    <div className="h-full overflow-auto">
+                      <PropertyDetails
+                        {...propertyDetailsProps}
+                        showOnlySelected={true}
+                        selectedRoomId={formData.apartmentId}
+                      />
+                    </div>
+                  </div>
 
-                      <div className="w-full h-full lg:w-1/2">
-                        <div className="border border-[#668E73] p-4 rounded h-full flex flex-col">
-                          <h2 className="text-xl font-semibold text-[#668E73] mb-6" id="extra_top">
-                            Choix des extras
-                          </h2>
-                          <BookingSteps currentStep={currentStep} />
-                          <div className="flex-1 mt-4 overflow-y-auto">
-                            {currentStep === 1 && (
-                              <ExtrasSection {...extrasSectionProps} />
-                            )}
-                            {currentStep === 2 && (
-                              <InfoSupSection {...infoSupSectionProps} />
-                            )}
-                            {currentStep === 3 && (
-                              <ContactSection {...contactSectionProps} />
-                            )}
+                  <div className="w-full h-full lg:w-1/2">
+                    <div className="border border-[#668E73] p-4 rounded h-full flex flex-col">
+                      <h2 className="text-xl font-semibold text-[#668E73] mb-6" id="extra_top">
+                        Choix des extras
+                      </h2>
+                      <BookingSteps currentStep={currentStep} />
+                      <div className="flex-1 mt-4 overflow-y-auto">
+                        {!isSelectedRoomAvailable() ? (
+                          <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                            <div className="bg-red-50 border border-red-200 rounded-md p-6 w-full max-w-md">
+                              <p className="text-red-600 font-medium mb-2">
+                                Ce logement n'est pas disponible pour les dates sélectionnées
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                Veuillez sélectionner d'autres dates pour continuer votre réservation
+                              </p>
+                            </div>
                           </div>
-                          <div className="pt-4 mt-4 border-t border-gray-200">
-                            <NavigationButtons {...navigationButtonsProps} />
-                          </div>
-                        </div>
+                        ) : (
+                          <>
+                            {currentStep === 1 && <ExtrasSection {...extrasSectionProps} />}
+                            {currentStep === 2 && <InfoSupSection {...infoSupSectionProps} />}
+                            {currentStep === 3 && <ContactSection {...contactSectionProps} />}
+                          </>
+                        )}
+                      </div>
+                      <div className="pt-4 mt-4 border-t border-gray-200">
+                        <NavigationButtons 
+                          {...navigationButtonsProps} 
+                          disabled={!isSelectedRoomAvailable()}
+                        />
                       </div>
                     </div>
+                  </div>
+                </div>
               )}
               <div className="w-full">
                 <PropertyDetails
