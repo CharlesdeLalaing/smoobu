@@ -41,62 +41,13 @@ export const PropertyDetails = ({
   
   const scrollTo = () => {
     setTimeout(() => {
-      const element = document.getElementById('main-container');
+      const element = document.getElementById('main-container'); // Add this ID to your main container
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 100);
   };
 
-  const checkRoomAvailability = (roomId) => {
-    if (!availableDates || !availableDates[roomId] || !startDate || !endDate) return true;
-
-    let currentDate = new Date(startDate);
-    const endDateTime = new Date(endDate);
-
-    while (currentDate <= endDateTime) {
-      const dateStr = currentDate.toISOString().split("T")[0];
-      const dayData = availableDates[roomId][dateStr];
-
-      if (!dayData || dayData.available === 0) {
-        return false;
-      }
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    return true;
-  };
-
-
-  // const getUnavailableDatesMessage = (roomId) => {
-  //   if (!availableDates || !availableDates[roomId] || !startDate || !endDate) return null;
-
-  //   const unavailableDates = [];
-  //   let currentDate = new Date(startDate);
-  //   const endDateTime = new Date(endDate);
-
-  //   while (currentDate <= endDateTime) {
-  //     const dateStr = currentDate.toISOString().split("T")[0];
-  //     const dayData = availableDates[roomId][dateStr];
-
-  //     if (!dayData || dayData.available === 0) {
-  //       unavailableDates.push(new Date(dateStr));
-  //     }
-  //     currentDate.setDate(currentDate.getDate() + 1);
-  //   }
-
-  //   if (unavailableDates.length > 0) {
-  //     const formatDate = (date) =>
-  //       date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-
-  //     return (
-  //       <div className="p-3 mb-4 text-sm text-red-600 rounded-md bg-red-50">
-  //         <span className="font-medium">Dates non disponibles : </span>
-  //         {unavailableDates.map(formatDate).join(", ")}
-  //       </div>
-  //     );
-  //   }
-  //   return null;
-  // };
 
   const getUnavailableDatesMessage = (roomId) => {
     if (!availableDates || !availableDates[roomId] || !startDate || !endDate) return null;
@@ -120,14 +71,9 @@ export const PropertyDetails = ({
         date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 
       return (
-        <div className="p-4 mb-4 text-red-600 rounded-md bg-red-50 border border-red-200">
-          <p className="font-medium">Ce logement n'est plus disponible pour les dates sélectionnées</p>
-          <p className="text-sm text-gray-600 mt-2">
-            Dates non disponibles : {unavailableDates.map(formatDate).join(", ")}
-          </p>
-          <p className="text-sm text-gray-600 mt-1">
-            Veuillez sélectionner d'autres dates ou consulter nos autres options disponibles
-          </p>
+        <div className="p-3 mb-4 text-sm text-red-600 rounded-md bg-red-50">
+          <span className="font-medium">Dates non disponibles : </span>
+          {unavailableDates.map(formatDate).join(", ")}
         </div>
       );
     }
@@ -192,10 +138,7 @@ export const PropertyDetails = ({
     const roomPriceDetails = priceDetails && priceDetails[room.id];
     const [sliderRef, setSliderRef] = useState(null);
     const [activeTab, setActiveTab] = useState("priceDetails");
-
-    const isSelectedButUnavailable = formData.apartmentId === room.id && !checkRoomAvailability(room.id);
-
-
+  
     const sliderSettings = {
       dots: false,
       infinite: true,
@@ -227,10 +170,9 @@ export const PropertyDetails = ({
         }`}
       >
         {/* {!isAvailable && getUnavailableDatesMessage(room.id)} */}
-        {isSelectedButUnavailable && getUnavailableDatesMessage(room.id)}
 
         {/* Always show unavailability message if dates are selected and room is not available */}
-        {startDate && endDate && !isAvailable && !isSelectedButUnavailable && (
+        {startDate && endDate && !isAvailable && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
             <p className="text-red-600 font-medium">
               Ce logement n'est pas disponible pour les dates sélectionnées

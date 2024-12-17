@@ -85,82 +85,67 @@ const calculateNumberOfNights = (startDate, endDate) => {
   // };
 
   // Replace your current handleChange function with this one
-// const handleChange = async (e) => {
-//   const { name, value } = e.target;
-
-//   // Update form data
-//   setFormData((prevData) => ({
-//     ...prevData,
-//     [name]: value,
-//   }));
-
-//   // Check if this is a date change
-//   if (name === "arrivalDate" || name === "departureDate") {
-//     setShowPriceDetails(false);
-    
-//     // Check if both dates are set
-//     const updatedFormData = {
-//       ...formData,
-//       [name]: value
-//     };
-
-//     if (updatedFormData.arrivalDate && updatedFormData.departureDate) {
-//       console.log("Both dates set, checking availability automatically");
-//       try {
-//         setLoading(true);
-//         setError(null);
-        
-//         const response = await api.get("/rates", {
-//           params: {
-//             apartments: updatedFormData.apartmentId || ["1644643", "1946282", "1946279", "1946276", "1946270"],
-//             start_date: updatedFormData.arrivalDate,
-//             end_date: updatedFormData.departureDate,
-//             adults: updatedFormData.adults,
-//             children: updatedFormData.children,
-//           },
-//         });
-
-//         if (response.data.priceDetails) {
-//           setPriceDetails(response.data.priceDetails);
-//           setShowPriceDetails(true);
-//           setIsAvailable(true);
-
-//           // If a room is already selected, update its price
-//           if (updatedFormData.apartmentId && response.data.priceDetails[updatedFormData.apartmentId]) {
-//             setFormData(prev => ({
-//               ...prev,
-//               price: response.data.priceDetails[updatedFormData.apartmentId].finalPrice
-//             }));
-//           }
-//         } else {
-//           setError("No rates available for selected dates");
-//           setShowPriceDetails(false);
-//           setIsAvailable(false);
-//         }
-//       } catch (error) {
-//         console.error("Error checking availability:", error);
-//         setError(error.response?.data?.error || "Unable to fetch rates");
-//         setShowPriceDetails(false);
-//         setIsAvailable(false);
-//       } finally {
-//         setLoading(false);
-//       }
-//     }
-//   }
-// };
-
-const handleChange = (e) => {
+const handleChange = async (e) => {
   const { name, value } = e.target;
 
-  // Simply update form data
+  // Update form data
   setFormData((prevData) => ({
     ...prevData,
     [name]: value,
   }));
 
-  // Only clear date error when modifying dates
+  // Check if this is a date change
   if (name === "arrivalDate" || name === "departureDate") {
-    setDateError("");
+    setShowPriceDetails(false);
+    
+    // Check if both dates are set
+    const updatedFormData = {
+      ...formData,
+      [name]: value
+    };
+
+    if (updatedFormData.arrivalDate && updatedFormData.departureDate) {
+      console.log("Both dates set, checking availability automatically");
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await api.get("/rates", {
+          params: {
+            apartments: updatedFormData.apartmentId || ["1644643", "1946282", "1946279", "1946276", "1946270"],
+            start_date: updatedFormData.arrivalDate,
+            end_date: updatedFormData.departureDate,
+            adults: updatedFormData.adults,
+            children: updatedFormData.children,
+          },
+        });
+
+        if (response.data.priceDetails) {
+          setPriceDetails(response.data.priceDetails);
+          setShowPriceDetails(true);
+          setIsAvailable(true);
+
+          // If a room is already selected, update its price
+          if (updatedFormData.apartmentId && response.data.priceDetails[updatedFormData.apartmentId]) {
+            setFormData(prev => ({
+              ...prev,
+              price: response.data.priceDetails[updatedFormData.apartmentId].finalPrice
+            }));
+          }
+        } else {
+          setError("No rates available for selected dates");
+          setShowPriceDetails(false);
+          setIsAvailable(false);
+        }
+      } catch (error) {
+        console.error("Error checking availability:", error);
+        setError(error.response?.data?.error || "Unable to fetch rates");
+        setShowPriceDetails(false);
+        setIsAvailable(false);
+      } finally {
+        setLoading(false);
+      }
+    }
   }
 };
 
@@ -215,219 +200,67 @@ const handleChange = (e) => {
     return Array.from(extrasMap.values());
   };
 
-  // const handleCheckAvailability = async () => {
-  //   if (!formData.arrivalDate || !formData.departureDate) {
-  //     setDateError("Please select both dates");
-  //     setIsAvailable(false);  // Add this
-  //     setShowPriceDetails(false);  // Add this
-  //     setPriceDetails(null);  // Add this
-  //     return;
-  //   }
-  
-  //   const numberOfNights = calculateNumberOfNights(startDate, endDate);
-  //   console.log("Debugging dates:", {
-  //     formDataArrival: formData.arrivalDate,
-  //     formDataDeparture: formData.departureDate,
-  //     startDate: startDate,
-  //     endDate: endDate,
-  //     calculatedNights: numberOfNights,
-  //   });
-  //   setLoading(true);
-  //   setError(null);
-  
-  //   try {
-  //     console.log("Checking rates for:", {
-  //       dates: {
-  //         arrival: formData.arrivalDate,
-  //         departure: formData.departureDate,
-  //       },
-  //       guests: {
-  //         adults: formData.adults,
-  //         children: formData.children,
-  //       },
-  //       apartmentId: formData.apartmentId
-  //     });
-  
-  //     const response = await api.get("/rates", {
-  //       params: {
-  //         apartments: formData.apartmentId || ["1644643", "1946282", "1946279", "1946276", "1946270"],
-  //         start_date: formData.arrivalDate,
-  //         end_date: formData.departureDate,
-  //         adults: formData.adults,
-  //         children: formData.children,
-  //       },
-  //     });
-  
-  //     // Detailed logging of the response
-  //     console.log("Full rates response:", response.data);
-  //     console.log("Price details for selected apartment:", 
-  //       response.data.priceDetails?.[formData.apartmentId]);
-  //     console.log("Original price:", 
-  //       response.data.priceDetails?.[formData.apartmentId]?.originalPrice);
-  
-  //     if (response.data.priceDetails) {
-  //       setPriceDetails(response.data.priceDetails);
-  //       setShowPriceDetails(true);
-  //       setIsAvailable(true);
-  //     } else {
-  //       setError("No rates available for selected dates");
-  //       setShowPriceDetails(false);
-  //       setIsAvailable(false);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching rates:", error);
-  //     setError(error.response?.data?.error || "Unable to fetch rates");
-  //     setShowPriceDetails(false);
-  //     setIsAvailable(false);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // const handleCheckAvailability = async () => {
-  //   console.log('handleCheckAvailability called with:', {
-  //     startDate,
-  //     endDate,
-  //     formDataDates: {
-  //       arrival: formData.arrivalDate,
-  //       departure: formData.departureDate
-  //     }
-  //   });
-  
-  //   if (!startDate || !endDate) {
-  //     setDateError("Please select both dates");
-  //     setIsAvailable(false);
-  //     setShowPriceDetails(false);
-  //     setPriceDetails(null);
-  //     return;
-  //   }
-  
-  //   const numberOfNights = calculateNumberOfNights(startDate, endDate);
-  //   console.log("Debugging dates:", {
-  //     formDataArrival: formData.arrivalDate,
-  //     formDataDeparture: formData.departureDate,
-  //     startDate: startDate,
-  //     endDate: endDate,
-  //     calculatedNights: numberOfNights,
-  //   });
-  
-  //   // Reset all states before checking
-  //   setError("");
-  //   setDateError("");
-  //   setIsAvailable(false);
-  //   setShowPriceDetails(false);
-  //   setPriceDetails(null);
-  //   setLoading(true);
-  
-  //   try {
-  //     console.log("Checking rates for:", {
-  //       dates: {
-  //         arrival: formData.arrivalDate,
-  //         departure: formData.departureDate,
-  //       },
-  //       guests: {
-  //         adults: formData.adults,
-  //         children: formData.children,
-  //       },
-  //       apartmentId: formData.apartmentId
-  //     });
-  
-  //     const response = await api.get("/rates", {
-  //       params: {
-  //         apartments: formData.apartmentId || ["1644643", "1946282", "1946279", "1946276", "1946270"],
-  //         start_date: formData.arrivalDate,
-  //         end_date: formData.departureDate,
-  //         adults: formData.adults,
-  //         children: formData.children,
-  //       },
-  //     });
-  
-  //     // Detailed logging of the response
-  //     console.log("Full rates response:", response.data);
-  //     console.log("Price details for selected apartment:", 
-  //       response.data.priceDetails?.[formData.apartmentId]);
-  //     console.log("Original price:", 
-  //       response.data.priceDetails?.[formData.apartmentId]?.originalPrice);
-  
-  //     if (response.data.priceDetails) {
-  //       setPriceDetails(response.data.priceDetails);
-  //       setShowPriceDetails(true);
-  //       setIsAvailable(true);
-  
-  //       if (formData.apartmentId && response.data.priceDetails[formData.apartmentId]) {
-  //         setFormData((prev) => ({
-  //           ...prev,
-  //           price: response.data.priceDetails[formData.apartmentId].finalPrice,
-  //         }));
-  //       }
-  //     } else {
-  //       setDateError("No rates available for selected dates");
-  //       setShowPriceDetails(false);
-  //       setIsAvailable(false);
-  //       setPriceDetails(null);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching rates:", error);
-  //     setError(error.response?.data?.error || "Unable to fetch rates");
-  //     setShowPriceDetails(false);
-  //     setIsAvailable(false);
-  //     setPriceDetails(null);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const handleCheckAvailability = async () => {
-    if (!startDate || !endDate) {
+    if (!formData.arrivalDate || !formData.departureDate) {
       setDateError("Please select both dates");
-      setIsAvailable(false);
-      setShowPriceDetails(false);
-      setPriceDetails(null);
       return;
     }
   
-    // Reset all states before checking
-    setError("");
-    setDateError("");
-    setIsAvailable(false);
-    setShowPriceDetails(false);
-    setPriceDetails(null);
+    const numberOfNights = calculateNumberOfNights(startDate, endDate);
+    console.log("Debugging dates:", {
+      formDataArrival: formData.arrivalDate,
+      formDataDeparture: formData.departureDate,
+      startDate: startDate,
+      endDate: endDate,
+      calculatedNights: numberOfNights,
+    });
     setLoading(true);
+    setError(null);
   
     try {
+      console.log("Checking rates for:", {
+        dates: {
+          arrival: formData.arrivalDate,
+          departure: formData.departureDate,
+        },
+        guests: {
+          adults: formData.adults,
+          children: formData.children,
+        },
+        apartmentId: formData.apartmentId
+      });
+  
       const response = await api.get("/rates", {
         params: {
           apartments: formData.apartmentId || ["1644643", "1946282", "1946279", "1946276", "1946270"],
-          start_date: startDate.toISOString().split("T")[0],
-          end_date: endDate.toISOString().split("T")[0],
+          start_date: formData.arrivalDate,
+          end_date: formData.departureDate,
           adults: formData.adults,
           children: formData.children,
         },
       });
   
+      // Detailed logging of the response
+      console.log("Full rates response:", response.data);
+      console.log("Price details for selected apartment:", 
+        response.data.priceDetails?.[formData.apartmentId]);
+      console.log("Original price:", 
+        response.data.priceDetails?.[formData.apartmentId]?.originalPrice);
+  
       if (response.data.priceDetails) {
         setPriceDetails(response.data.priceDetails);
         setShowPriceDetails(true);
         setIsAvailable(true);
-  
-        if (formData.apartmentId && response.data.priceDetails[formData.apartmentId]) {
-          setFormData((prev) => ({
-            ...prev,
-            price: response.data.priceDetails[formData.apartmentId].finalPrice,
-          }));
-        }
       } else {
-        setDateError("No rates available for selected dates");
+        setError("No rates available for selected dates");
         setShowPriceDetails(false);
         setIsAvailable(false);
-        setPriceDetails(null);
       }
     } catch (error) {
       console.error("Error fetching rates:", error);
       setError(error.response?.data?.error || "Unable to fetch rates");
       setShowPriceDetails(false);
       setIsAvailable(false);
-      setPriceDetails(null);
     } finally {
       setLoading(false);
     }

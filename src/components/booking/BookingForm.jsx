@@ -452,272 +452,8 @@ const BookingForm = () => {
     //   }
     // };
 
-    // const handleDateSelect = async (date, isStart) => {
-    //   try {
-    //     // Handle date clearing
-    //     if (!date) {
-    //       if (isStart) {
-    //         setStartDate(null);
-    //         setEndDate(null);
-    //         handleChange({ target: { name: "arrivalDate", value: "" } });
-    //         handleChange({ target: { name: "departureDate", value: "" } });
-    //         resetAvailability();
-    //       } else {
-    //         setEndDate(null);
-    //         handleChange({ target: { name: "departureDate", value: "" } });
-    //       }
-    //       setDateError("");
-    //       // Keep showing price details even when clearing
-    //       setShowPriceDetails(true);
-    //       setIsAvailable(false);  // Add this
-    //       return;
-    //     }
-    
-    //     // Set the selected date
-    //     const selectedDate = new Date(date.setHours(12, 0, 0, 0));
-    
-    //     if (isStart) {
-    //       // Setting start date
-    //       setStartDate(selectedDate);
-    //       setEndDate(null);
-    //       handleChange({
-    //         target: {
-    //           name: "arrivalDate",
-    //           value: selectedDate.toISOString().split("T")[0],
-    //         },
-    //       });
-    //       handleChange({ target: { name: "departureDate", value: "" } });
-          
-    //       // Reset availability but keep UI visible
-    //       setIsAvailable(false);  // Add this
-    //       resetAvailability();
-    //       setShowPriceDetails(true);
-    //     } else {
-    //       // Setting end date
-    //       setEndDate(selectedDate);
-    //       handleChange({
-    //         target: {
-    //           name: "departureDate",
-    //           value: selectedDate.toISOString().split("T")[0],
-    //         },
-    //       });
-    //       setIsAvailable(false);  // Add this
-    //     }
-    
-    //     // Get updated dates for availability check
-    //     const updatedStartDate = isStart ? selectedDate : startDate;
-    //     const updatedEndDate = isStart ? null : selectedDate;
-    
-    //     // Only check availability if both dates are set
-    //     if (updatedStartDate && updatedEndDate) {
-    //       console.log('Both dates set, checking availability:', {
-    //         start: updatedStartDate,
-    //         end: updatedEndDate
-    //       });
-    
-    //       try {
-    //         const availabilityData = await checkAvailability(updatedStartDate, updatedEndDate);
-            
-    //         if (availabilityData?.priceDetails) {
-    //           setPriceDetails(availabilityData.priceDetails);
-    //           setShowPriceDetails(true);
-    //           setIsAvailable(true);
-    
-    //           // Update price if a room is already selected
-    //           if (formData.apartmentId && availabilityData.priceDetails[formData.apartmentId]) {
-    //             setFormData(prev => ({
-    //               ...prev,
-    //               price: availabilityData.priceDetails[formData.apartmentId].finalPrice
-    //             }));
-    //           }
-    //         } else {
-    //           // Keep showing the UI with unavailability message
-    //           setDateError("No rates available for selected dates");
-    //           setIsAvailable(false);
-    //           setPriceDetails(null);
-    //           setShowPriceDetails(true); // Keep the container visible
-    //         }
-    //       } catch (err) {
-    //         console.error("Error checking availability:", err);
-    //         setError("Error checking availability");
-    //         setIsAvailable(false);
-    //         setPriceDetails(null);
-    //         // Keep the container visible
-    //         setShowPriceDetails(true);
-    //       }
-    //     } else {
-    //       // Keep showing price details while user selects second date
-    //       setShowPriceDetails(true);
-    //     }
-    //   } catch (error) {
-    //     console.error("Error in handleDateSelect:", error);
-    //     setError("An error occurred while processing the date selection");
-    //     // Maintain UI visibility even on error
-    //     setShowPriceDetails(true);
-    //     setIsAvailable(false);  // Add this for error case
-    //   }
-    // };
-
-    // const handleDateSelect = async (date, isStart) => {
-    //   try {
-    //     // Handle date clearing
-    //     if (!date) {
-    //       if (isStart) {
-    //         setStartDate(null);
-    //         setEndDate(null);
-    //         handleChange({ target: { name: "arrivalDate", value: "" } });
-    //         handleChange({ target: { name: "departureDate", value: "" } });
-    //         resetAvailability();
-    //       } else {
-    //         setEndDate(null);
-    //         handleChange({ target: { name: "departureDate", value: "" } });
-    //       }
-    //       setDateError("");
-    //       setIsAvailable(false);
-    //       setShowPriceDetails(false); // Change this to false
-    //       return;
-    //     }
-    
-    //     // Set the selected date
-    //     const selectedDate = new Date(date.setHours(12, 0, 0, 0));
-    
-    //     if (isStart) {
-    //       setStartDate(selectedDate);
-    //       setEndDate(null);
-    //       handleChange({
-    //         target: {
-    //           name: "arrivalDate",
-    //           value: selectedDate.toISOString().split("T")[0],
-    //         },
-    //       });
-    //       handleChange({ target: { name: "departureDate", value: "" } });
-          
-    //       setIsAvailable(false);
-    //       setShowPriceDetails(false); // Change this to false
-    //       resetAvailability();
-    //     } else {
-    //       setEndDate(selectedDate);
-    //       handleChange({
-    //         target: {
-    //           name: "departureDate",
-    //           value: selectedDate.toISOString().split("T")[0],
-    //         },
-    //       });
-    //       setIsAvailable(false);
-    //       setShowPriceDetails(false); // Change this to false
-    //     }
-    
-    //     // Get updated dates for availability check
-    //     const updatedStartDate = isStart ? selectedDate : startDate;
-    //     const updatedEndDate = isStart ? null : selectedDate;
-    
-    //     if (updatedStartDate && updatedEndDate) {
-    //       try {
-    //         const availabilityData = await checkAvailability(updatedStartDate, updatedEndDate);
-            
-    //         if (availabilityData?.priceDetails) {
-    //           setPriceDetails(availabilityData.priceDetails);
-    //           setShowPriceDetails(true); // Only show price details when we have valid data
-    //           setIsAvailable(true);
-    
-    //           if (formData.apartmentId && availabilityData.priceDetails[formData.apartmentId]) {
-    //             setFormData(prev => ({
-    //               ...prev,
-    //               price: availabilityData.priceDetails[formData.apartmentId].finalPrice
-    //             }));
-    //           }
-    //         } else {
-    //           setDateError("No rates available for selected dates");
-    //           setIsAvailable(false);
-    //           setPriceDetails(null);
-    //           setShowPriceDetails(false); // Change this to false
-    //         }
-    //       } catch (err) {
-    //         console.error("Error checking availability:", err);
-    //         setError("Error checking availability");
-    //         setIsAvailable(false);
-    //         setPriceDetails(null);
-    //         setShowPriceDetails(false); // Change this to false
-    //       }
-    //     }
-    //   } catch (error) {
-    //     console.error("Error in handleDateSelect:", error);
-    //     setError("An error occurred while processing the date selection");
-    //     setIsAvailable(false);
-    //     setShowPriceDetails(false); // Change this to false
-    //   }
-    // };
-
-    // const handleDateSelect = async (date, isStart) => {
-    //   try {
-    //     // Immediately reset all visibility states
-    //     setIsAvailable(false);
-    //     setShowPriceDetails(false);
-    //     setPriceDetails(null);
-    
-    //     // Handle date clearing
-    //     if (!date) {
-    //       if (isStart) {
-    //         setStartDate(null);
-    //         setEndDate(null);
-    //         handleChange({ target: { name: "arrivalDate", value: "" } });
-    //         handleChange({ target: { name: "departureDate", value: "" } });
-    //         resetAvailability();
-    //       } else {
-    //         setEndDate(null);
-    //         handleChange({ target: { name: "departureDate", value: "" } });
-    //       }
-    //       setDateError("");
-    //       return;
-    //     }
-    
-    //     // Set the selected date
-    //     const selectedDate = new Date(date.setHours(12, 0, 0, 0));
-    
-    //     if (isStart) {
-    //       setStartDate(selectedDate);
-    //       setEndDate(null);
-    //       handleChange({
-    //         target: {
-    //           name: "arrivalDate",
-    //           value: selectedDate.toISOString().split("T")[0],
-    //         },
-    //       });
-    //       handleChange({ target: { name: "departureTime", value: "" } });
-    //       resetAvailability();
-    //     } else {
-    //       setEndDate(selectedDate);
-    //       handleChange({
-    //         target: {
-    //           name: "departureDate",
-    //           value: selectedDate.toISOString().split("T")[0],
-    //         },
-    //       });
-    //     }
-    
-    //     // Only check availability if we have both dates
-    //     const updatedStartDate = isStart ? selectedDate : startDate;
-    //     const updatedEndDate = isStart ? null : selectedDate;
-    
-    //     if (updatedStartDate && updatedEndDate) {
-    //       await handleCheckAvailability();
-    //     }
-    //   } catch (error) {
-    //     console.error("Error in handleDateSelect:", error);
-    //     setError("An error occurred while processing the date selection");
-    //     setIsAvailable(false);
-    //     setPriceDetails(null);
-    //     setShowPriceDetails(false);
-    //   }
-    // };
-
     const handleDateSelect = async (date, isStart) => {
       try {
-        // Reset states immediately
-        setIsAvailable(false);
-        setShowPriceDetails(false);
-        setPriceDetails(null);
-    
         // Handle date clearing
         if (!date) {
           if (isStart) {
@@ -731,12 +467,16 @@ const BookingForm = () => {
             handleChange({ target: { name: "departureDate", value: "" } });
           }
           setDateError("");
+          // Keep showing price details even when clearing
+          setShowPriceDetails(true);
           return;
         }
     
+        // Set the selected date
         const selectedDate = new Date(date.setHours(12, 0, 0, 0));
     
         if (isStart) {
+          // Setting start date
           setStartDate(selectedDate);
           setEndDate(null);
           handleChange({
@@ -746,8 +486,12 @@ const BookingForm = () => {
             },
           });
           handleChange({ target: { name: "departureDate", value: "" } });
+          
+          // Reset availability but keep UI visible
           resetAvailability();
+          setShowPriceDetails(true);
         } else {
+          // Setting end date
           setEndDate(selectedDate);
           handleChange({
             target: {
@@ -757,18 +501,56 @@ const BookingForm = () => {
           });
         }
     
+        // Get updated dates for availability check
         const updatedStartDate = isStart ? selectedDate : startDate;
         const updatedEndDate = isStart ? null : selectedDate;
     
+        // Only check availability if both dates are set
         if (updatedStartDate && updatedEndDate) {
-          await handleCheckAvailability();
+          console.log('Both dates set, checking availability:', {
+            start: updatedStartDate,
+            end: updatedEndDate
+          });
+    
+          try {
+            const availabilityData = await checkAvailability(updatedStartDate, updatedEndDate);
+            
+            if (availabilityData?.priceDetails) {
+              setPriceDetails(availabilityData.priceDetails);
+              setShowPriceDetails(true);
+              setIsAvailable(true);
+    
+              // Update price if a room is already selected
+              if (formData.apartmentId && availabilityData.priceDetails[formData.apartmentId]) {
+                setFormData(prev => ({
+                  ...prev,
+                  price: availabilityData.priceDetails[formData.apartmentId].finalPrice
+                }));
+              }
+            } else {
+              // Keep showing the UI with unavailability message
+              setDateError("No rates available for selected dates");
+              setIsAvailable(false);
+              setPriceDetails(null);
+              setShowPriceDetails(true); // Keep the container visible
+            }
+          } catch (err) {
+            console.error("Error checking availability:", err);
+            setError("Error checking availability");
+            setIsAvailable(false);
+            setPriceDetails(null);
+            // Keep the container visible
+            setShowPriceDetails(true);
+          }
+        } else {
+          // Keep showing price details while user selects second date
+          setShowPriceDetails(true);
         }
       } catch (error) {
         console.error("Error in handleDateSelect:", error);
         setError("An error occurred while processing the date selection");
-        setIsAvailable(false);
-        setPriceDetails(null);
-        setShowPriceDetails(false);
+        // Maintain UI visibility even on error
+        setShowPriceDetails(true);
       }
     };
 
@@ -858,7 +640,7 @@ const BookingForm = () => {
             </div>
 
             <div className="space-y-8 px-[2%] md:px-[5%] py-[1%]">
-              {/* {formData.apartmentId && (
+              {formData.apartmentId && (
                 <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
                   <div className="w-full h-full lg:w-1/2">
                     <div className="h-full overflow-auto">
@@ -893,80 +675,7 @@ const BookingForm = () => {
                     </div>
                   </div>
                 </div>
-              )} */}
-              {/* {formData.apartmentId && isAvailable && (
-                  <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
-                    <div className="w-full h-full lg:w-1/2">
-                      <div className="h-full overflow-auto">
-                        <PropertyDetails
-                          {...propertyDetailsProps}
-                          showOnlySelected={true}
-                          selectedRoomId={formData.apartmentId}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="w-full h-full lg:w-1/2">
-                      <div className="border border-[#668E73] p-4 rounded h-full flex flex-col">
-                        <h2 className="text-xl font-semibold text-[#668E73] mb-6" id="extra_top">
-                          Choix des extras
-                        </h2>
-                        <BookingSteps currentStep={currentStep} />
-                        <div className="flex-1 mt-4 overflow-y-auto">
-                          {currentStep === 1 && (
-                            <ExtrasSection {...extrasSectionProps} />
-                          )}
-                          {currentStep === 2 && (
-                            <InfoSupSection {...infoSupSectionProps} />
-                          )}
-                          {currentStep === 3 && (
-                            <ContactSection {...contactSectionProps} />
-                          )}
-                        </div>
-                        <div className="pt-4 mt-4 border-t border-gray-200">
-                          <NavigationButtons {...navigationButtonsProps} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )} */}
-
-                {formData.apartmentId && isAvailable && priceDetails && priceDetails[formData.apartmentId] && (
-                  <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
-                    <div className="w-full h-full lg:w-1/2">
-                      <div className="h-full overflow-auto">
-                        <PropertyDetails
-                          {...propertyDetailsProps}
-                          showOnlySelected={true}
-                          selectedRoomId={formData.apartmentId}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="w-full h-full lg:w-1/2">
-                      <div className="border border-[#668E73] p-4 rounded h-full flex flex-col">
-                        <h2 className="text-xl font-semibold text-[#668E73] mb-6" id="extra_top">
-                          Choix des extras
-                        </h2>
-                        <BookingSteps currentStep={currentStep} />
-                        <div className="flex-1 mt-4 overflow-y-auto">
-                          {currentStep === 1 && (
-                            <ExtrasSection {...extrasSectionProps} />
-                          )}
-                          {currentStep === 2 && (
-                            <InfoSupSection {...infoSupSectionProps} />
-                          )}
-                          {currentStep === 3 && (
-                            <ContactSection {...contactSectionProps} />
-                          )}
-                        </div>
-                        <div className="pt-4 mt-4 border-t border-gray-200">
-                          <NavigationButtons {...navigationButtonsProps} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+              )}
               <div className="w-full">
                 <PropertyDetails
                   {...propertyDetailsProps}
