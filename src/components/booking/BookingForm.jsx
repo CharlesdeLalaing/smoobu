@@ -558,8 +558,166 @@ const BookingForm = () => {
     //   }
     // };
 
+    // const handleDateSelect = async (date, isStart) => {
+    //   try {
+    //     // Handle date clearing
+    //     if (!date) {
+    //       if (isStart) {
+    //         setStartDate(null);
+    //         setEndDate(null);
+    //         handleChange({ target: { name: "arrivalDate", value: "" } });
+    //         handleChange({ target: { name: "departureDate", value: "" } });
+    //         resetAvailability();
+    //       } else {
+    //         setEndDate(null);
+    //         handleChange({ target: { name: "departureDate", value: "" } });
+    //       }
+    //       setDateError("");
+    //       setIsAvailable(false);
+    //       setShowPriceDetails(false); // Change this to false
+    //       return;
+    //     }
+    
+    //     // Set the selected date
+    //     const selectedDate = new Date(date.setHours(12, 0, 0, 0));
+    
+    //     if (isStart) {
+    //       setStartDate(selectedDate);
+    //       setEndDate(null);
+    //       handleChange({
+    //         target: {
+    //           name: "arrivalDate",
+    //           value: selectedDate.toISOString().split("T")[0],
+    //         },
+    //       });
+    //       handleChange({ target: { name: "departureDate", value: "" } });
+          
+    //       setIsAvailable(false);
+    //       setShowPriceDetails(false); // Change this to false
+    //       resetAvailability();
+    //     } else {
+    //       setEndDate(selectedDate);
+    //       handleChange({
+    //         target: {
+    //           name: "departureDate",
+    //           value: selectedDate.toISOString().split("T")[0],
+    //         },
+    //       });
+    //       setIsAvailable(false);
+    //       setShowPriceDetails(false); // Change this to false
+    //     }
+    
+    //     // Get updated dates for availability check
+    //     const updatedStartDate = isStart ? selectedDate : startDate;
+    //     const updatedEndDate = isStart ? null : selectedDate;
+    
+    //     if (updatedStartDate && updatedEndDate) {
+    //       try {
+    //         const availabilityData = await checkAvailability(updatedStartDate, updatedEndDate);
+            
+    //         if (availabilityData?.priceDetails) {
+    //           setPriceDetails(availabilityData.priceDetails);
+    //           setShowPriceDetails(true); // Only show price details when we have valid data
+    //           setIsAvailable(true);
+    
+    //           if (formData.apartmentId && availabilityData.priceDetails[formData.apartmentId]) {
+    //             setFormData(prev => ({
+    //               ...prev,
+    //               price: availabilityData.priceDetails[formData.apartmentId].finalPrice
+    //             }));
+    //           }
+    //         } else {
+    //           setDateError("No rates available for selected dates");
+    //           setIsAvailable(false);
+    //           setPriceDetails(null);
+    //           setShowPriceDetails(false); // Change this to false
+    //         }
+    //       } catch (err) {
+    //         console.error("Error checking availability:", err);
+    //         setError("Error checking availability");
+    //         setIsAvailable(false);
+    //         setPriceDetails(null);
+    //         setShowPriceDetails(false); // Change this to false
+    //       }
+    //     }
+    //   } catch (error) {
+    //     console.error("Error in handleDateSelect:", error);
+    //     setError("An error occurred while processing the date selection");
+    //     setIsAvailable(false);
+    //     setShowPriceDetails(false); // Change this to false
+    //   }
+    // };
+
+    // const handleDateSelect = async (date, isStart) => {
+    //   try {
+    //     // Immediately reset all visibility states
+    //     setIsAvailable(false);
+    //     setShowPriceDetails(false);
+    //     setPriceDetails(null);
+    
+    //     // Handle date clearing
+    //     if (!date) {
+    //       if (isStart) {
+    //         setStartDate(null);
+    //         setEndDate(null);
+    //         handleChange({ target: { name: "arrivalDate", value: "" } });
+    //         handleChange({ target: { name: "departureDate", value: "" } });
+    //         resetAvailability();
+    //       } else {
+    //         setEndDate(null);
+    //         handleChange({ target: { name: "departureDate", value: "" } });
+    //       }
+    //       setDateError("");
+    //       return;
+    //     }
+    
+    //     // Set the selected date
+    //     const selectedDate = new Date(date.setHours(12, 0, 0, 0));
+    
+    //     if (isStart) {
+    //       setStartDate(selectedDate);
+    //       setEndDate(null);
+    //       handleChange({
+    //         target: {
+    //           name: "arrivalDate",
+    //           value: selectedDate.toISOString().split("T")[0],
+    //         },
+    //       });
+    //       handleChange({ target: { name: "departureTime", value: "" } });
+    //       resetAvailability();
+    //     } else {
+    //       setEndDate(selectedDate);
+    //       handleChange({
+    //         target: {
+    //           name: "departureDate",
+    //           value: selectedDate.toISOString().split("T")[0],
+    //         },
+    //       });
+    //     }
+    
+    //     // Only check availability if we have both dates
+    //     const updatedStartDate = isStart ? selectedDate : startDate;
+    //     const updatedEndDate = isStart ? null : selectedDate;
+    
+    //     if (updatedStartDate && updatedEndDate) {
+    //       await handleCheckAvailability();
+    //     }
+    //   } catch (error) {
+    //     console.error("Error in handleDateSelect:", error);
+    //     setError("An error occurred while processing the date selection");
+    //     setIsAvailable(false);
+    //     setPriceDetails(null);
+    //     setShowPriceDetails(false);
+    //   }
+    // };
+
     const handleDateSelect = async (date, isStart) => {
       try {
+        // Reset states immediately
+        setIsAvailable(false);
+        setShowPriceDetails(false);
+        setPriceDetails(null);
+    
         // Handle date clearing
         if (!date) {
           if (isStart) {
@@ -573,12 +731,9 @@ const BookingForm = () => {
             handleChange({ target: { name: "departureDate", value: "" } });
           }
           setDateError("");
-          setIsAvailable(false);
-          setShowPriceDetails(false); // Change this to false
           return;
         }
     
-        // Set the selected date
         const selectedDate = new Date(date.setHours(12, 0, 0, 0));
     
         if (isStart) {
@@ -591,9 +746,6 @@ const BookingForm = () => {
             },
           });
           handleChange({ target: { name: "departureDate", value: "" } });
-          
-          setIsAvailable(false);
-          setShowPriceDetails(false); // Change this to false
           resetAvailability();
         } else {
           setEndDate(selectedDate);
@@ -603,48 +755,20 @@ const BookingForm = () => {
               value: selectedDate.toISOString().split("T")[0],
             },
           });
-          setIsAvailable(false);
-          setShowPriceDetails(false); // Change this to false
         }
     
-        // Get updated dates for availability check
         const updatedStartDate = isStart ? selectedDate : startDate;
         const updatedEndDate = isStart ? null : selectedDate;
     
         if (updatedStartDate && updatedEndDate) {
-          try {
-            const availabilityData = await checkAvailability(updatedStartDate, updatedEndDate);
-            
-            if (availabilityData?.priceDetails) {
-              setPriceDetails(availabilityData.priceDetails);
-              setShowPriceDetails(true); // Only show price details when we have valid data
-              setIsAvailable(true);
-    
-              if (formData.apartmentId && availabilityData.priceDetails[formData.apartmentId]) {
-                setFormData(prev => ({
-                  ...prev,
-                  price: availabilityData.priceDetails[formData.apartmentId].finalPrice
-                }));
-              }
-            } else {
-              setDateError("No rates available for selected dates");
-              setIsAvailable(false);
-              setPriceDetails(null);
-              setShowPriceDetails(false); // Change this to false
-            }
-          } catch (err) {
-            console.error("Error checking availability:", err);
-            setError("Error checking availability");
-            setIsAvailable(false);
-            setPriceDetails(null);
-            setShowPriceDetails(false); // Change this to false
-          }
+          await handleCheckAvailability();
         }
       } catch (error) {
         console.error("Error in handleDateSelect:", error);
         setError("An error occurred while processing the date selection");
         setIsAvailable(false);
-        setShowPriceDetails(false); // Change this to false
+        setPriceDetails(null);
+        setShowPriceDetails(false);
       }
     };
 
