@@ -14,6 +14,7 @@ import { ErrorMessage } from "./ErrorMessage";
 import { LoadingSpinner } from "./LoadingSpinner";
 import StripeWrapper from "../StripeWrapper";
 import { useNavigate } from "react-router-dom";
+import { isRoomAvailable } from "../hooks/roomUtils";  // Add this line
 import { roomsData } from "../hooks/roomsData";
 
 const BookingForm = () => {
