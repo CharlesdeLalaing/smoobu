@@ -75,6 +75,24 @@
       "extras": "1. Choix extras",
       "notes": "2. Ajout note",
       "contact": "3. Info contact"
+    },
+    "errors": {
+      "selectDates": "Veuillez sélectionner les deux dates",
+      "noRates": "Aucun tarif disponible pour les dates sélectionnées",
+      "fetchError": "Impossible de récupérer les tarifs",
+      "waitForPrice": "Veuillez attendre le calcul du prix avant de continuer.",
+      "paymentError": "Une erreur s'est produite lors de la création du paiement"
+    },
+    "coupon": {
+      "errors": {
+        "enterCode": "Veuillez entrer un code promo",
+        "invalid": "Code promo invalide"
+      },
+      "applied": "Code promo {{code}}"
+    },
+    "people": {
+      "singular": "personne",
+      "plural": "personnes"
     }
   },
   "contact": {

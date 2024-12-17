@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../utils/api";
 import { VALID_COUPONS } from "../utils/coupons";
 import { calculateExtrasTotal } from "../utils/booking";
@@ -7,9 +8,10 @@ import { useNavigate } from "react-router-dom";
 
 export const useBookingForm = () => {
   // Form State
-
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    language: i18n.language, // Set language based on i18n
     arrivalDate: "",
     departureDate: "",
     channelId: 2323525,
@@ -133,13 +135,13 @@ const handleChange = async (e) => {
             }));
           }
         } else {
-          setError("No rates available for selected dates");
+          setError(t('booking.errors.noRates'));
           setShowPriceDetails(false);
           setIsAvailable(false);
         }
       } catch (error) {
         console.error("Error checking availability:", error);
-        setError(error.response?.data?.error || "Unable to fetch rates");
+        setError(error.response?.data?.error || t('booking.errors.fetchError'));
         setShowPriceDetails(false);
         setIsAvailable(false);
       } finally {
@@ -202,7 +204,7 @@ const handleChange = async (e) => {
 
   const handleCheckAvailability = async () => {
     if (!formData.arrivalDate || !formData.departureDate) {
-      setDateError("Please select both dates");
+      setDateError(t('booking.errors.selectDates'));
       return;
     }
   
@@ -273,7 +275,7 @@ const handleChange = async (e) => {
     const selectedRoomPrice = priceDetails?.[formData.apartmentId];
 
     if (!selectedRoomPrice) {
-      setError("Veuillez attendre le calcul du prix avant de continuer.");
+      setError(t('booking.errors.waitForPrice'));
       return;
     }
 
@@ -370,10 +372,7 @@ const handleChange = async (e) => {
       setError(null);
     } catch (err) {
       console.error("Error creating payment:", err);
-      setError(
-        err.response?.data?.error ||
-          "Une erreur s'est produite lors de la création du paiement"
-      );
+      setError(err.response?.data?.error || t('booking.errors.paymentError'));
     } finally {
       setLoading(false);
     }
@@ -444,7 +443,7 @@ const handleApplyCoupon = (couponCode) => {
 
   if (!couponCode) {
     console.log('No coupon code provided');
-    setCouponError("Veuillez entrer un code promo");
+    setCouponError(t('booking.coupon.errors.enterCode'));
     return;
   }
 
@@ -453,7 +452,7 @@ const handleApplyCoupon = (couponCode) => {
 
   if (!couponInfo) {
     console.log('Invalid coupon code');
-    setCouponError("Code promo invalide");
+    setCouponError(t('booking.coupon.errors.invalid'));
     return;
   }
 
@@ -473,7 +472,7 @@ const handleApplyCoupon = (couponCode) => {
         ...(prev?.priceElements || []),
         {
           type: "coupon",
-          name: `Code promo ${couponCode.toUpperCase()}`,
+          name: t('booking.coupon.applied', { code: couponCode.toUpperCase() }),
           amount: -couponInfo.discount,
           currencyCode: couponInfo.currency,
         },

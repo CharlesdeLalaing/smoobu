@@ -73,6 +73,24 @@
       "extras": "1. Extra's kiezen",
       "notes": "2. Notitie toevoegen",
       "contact": "3. Contactgegevens"
+    },
+    "errors": {
+      "selectDates": "Selecteer beide data",
+      "noRates": "Geen tarieven beschikbaar voor de geselecteerde data",
+      "fetchError": "Kan tarieven niet ophalen",
+      "waitForPrice": "Wacht op de prijsberekening voordat u doorgaat.",
+      "paymentError": "Er is een fout opgetreden bij het maken van de betaling"
+    },
+    "coupon": {
+      "errors": {
+        "enterCode": "Voer een promocode in",
+        "invalid": "Ongeldige promocode"
+      },
+      "applied": "Promocode {{code}}"
+    },
+    "people": {
+      "singular": "persoon",
+      "plural": "personen"
     }
   },
   "contact": {

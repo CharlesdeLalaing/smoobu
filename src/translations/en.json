@@ -72,6 +72,24 @@
             "extras": "1. Choose extras",
             "notes": "2. Add notes",
             "contact": "3. Contact info"
+            },
+            "errors": {
+            "selectDates": "Please select both dates",
+            "noRates": "No rates available for selected dates",
+            "fetchError": "Unable to fetch rates",
+            "waitForPrice": "Please wait for the price calculation before continuing.",
+            "paymentError": "An error occurred while creating the payment"
+            },
+            "coupon": {
+            "errors": {
+                "enterCode": "Please enter a promo code",
+                "invalid": "Invalid promo code"
+            },
+            "applied": "Promo code {{code}}"
+            },
+            "people": {
+            "singular": "person",
+            "plural": "people"
             }
         },
         "contact": {
