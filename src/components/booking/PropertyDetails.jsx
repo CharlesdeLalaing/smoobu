@@ -161,12 +161,12 @@ export const PropertyDetails = ({
         id={`room-${room.id}`}
         className={`py-8 ${
           formData.apartmentId === room.id 
-            ? 'border border-[#668E73] p-4 rounded' 
-            : ''
+            ? 'border border-[#668E73] p-4 rounded w-1/2' 
+            : 'w-1/2'
         } ${
           formData.apartmentId === room.id && showOnlySelected 
-            ? 'h-fit sm:h-[calc(100vh-200px)] overflow-hidden' 
-            : 'h-fit'
+            ? 'h-fit sm:h-[calc(100vh-200px)] overflow-hidden w-1/2' 
+            : 'h-fit w-1/2'
         }`}
       >
         {/* {!isAvailable && getUnavailableDatesMessage(room.id)} */}
@@ -184,7 +184,7 @@ export const PropertyDetails = ({
         )}
   
         {formData.apartmentId === room.id ? (
-          <div className="flex flex-col h-full w-1/2">
+          <div className="flex flex-col h-full">
             <div className="flex justify-around border-b border-grey-300 mb-4 ">
               <button
                 type="button"
