@@ -1,8 +1,23 @@
 import React, { useEffect } from "react";
-import { roomsData } from "../hooks/roomsData"; // Adjust the import path as needed
+import { useTranslation } from 'react-i18next';
+import { roomsData } from "../hooks/roomsData";
 
 export const CalendarRoom = ({ roomId }) => {
+  const { i18n } = useTranslation(); // Get current language
   const room = roomsData[roomId];
+  
+  // Get calendar ID based on current language
+  const getCalendarId = () => {
+    const baseId = room?.calendarData?.id?.replace(/[a-z]+$/, ''); // Remove language suffix if present
+    return `${baseId}${i18n.language}`; // Append current language code
+  };
+
+  // Get calendar URL based on current language
+  const getCalendarUrl = () => {
+    const baseUrl = "https://login.smoobu.com";
+    const calendarId = room?.calendarData?.id?.replace(/[a-z]+$/, ''); // Remove language suffix
+    return `${baseUrl}/${i18n.language}/cockpit/widget/single-calendar/${calendarId}`;
+  };
   
   useEffect(() => {
     if (!room?.calendarData) return;
@@ -20,7 +35,7 @@ export const CalendarRoom = ({ roomId }) => {
     return () => {
       document.body.removeChild(script);
     };
-  }, [room]);
+  }, [room, i18n.language]); // Add language dependency
 
   if (!room?.calendarData) {
     return null;
@@ -28,12 +43,12 @@ export const CalendarRoom = ({ roomId }) => {
 
   return (
     <div
-      id={`smoobuApartment${room.calendarData.id}`}
+      id={`smoobuApartment${getCalendarId()}`}
       className="calendarWidget overflow-scroll xl:overflow-hidden h-auto relative"
     >
       <div
         className="calendarContent"
-        data-load-calendar-url={room.calendarData.url}
+        data-load-calendar-url={getCalendarUrl()}
         data-verification={room.calendarData.verification}
         data-baseurl="https://login.smoobu.com"
         data-disable-css="false"
@@ -75,7 +90,7 @@ export const CalendarRoom = ({ roomId }) => {
             justify-content: space-evenly;
           }
 
-          #smoobuApartment${room.calendarData.id} {
+          #smoobuApartment${getCalendarId()} {
             max-height: auto !important;
           }
         `}
