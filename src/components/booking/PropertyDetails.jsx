@@ -74,7 +74,7 @@ export const PropertyDetails = ({
 
       return (
         <div className="p-3 mb-4 text-sm text-red-600 rounded-md bg-red-50">
-          <span className="font-medium">Dates non disponibles : </span>
+          <span className="font-medium">{t('propertyDetails.unavailableDates')}</span>
           {unavailableDates.map(formatDate).join(", ")}
         </div>
       );
@@ -225,10 +225,10 @@ export const PropertyDetails = ({
         {startDate && endDate && !isAvailable && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
             <p className="text-red-600 font-medium">
-              Ce logement n'est pas disponible pour les dates sélectionnées
+              {t('propertyDetails.roomUnavailable.title')}
             </p>
             <p className="text-sm text-gray-600 mt-2">
-              Veuillez sélectionner d'autres dates pour ce logement ou consulter nos autres options
+              {t('propertyDetails.roomUnavailable.message')}
             </p>
           </div>
         )}
@@ -236,24 +236,24 @@ export const PropertyDetails = ({
         {formData.apartmentId === room.id ? (
           <div className="flex flex-col h-full">
             <div className="flex justify-around border-b border-grey-300 mb-4 ">
-              <button
-                type="button"
-                className={`py-2 px-4 ${
-                  activeTab === "priceDetails" ? "text-[#668E73] border-b-2 border-[#668E73]" : ""
-                }`}
-                onClick={() => setActiveTab("priceDetails")}
-              >
-                Détails de la réservation
-              </button>
-              <button
-                type="button"
-                className={`py-2 px-4 ${
-                  activeTab === "roomInfo" ? "text-[#668E73] border-b-2 border-[#668E73]" : ""
-                }`}
-                onClick={() => setActiveTab("roomInfo")}
-              >
-                Informations sur la chambre
-              </button>
+            <button
+              type="button"
+              className={`py-2 px-4 ${
+                activeTab === "priceDetails" ? "text-[#668E73] border-b-2 border-[#668E73]" : ""
+              }`}
+              onClick={() => setActiveTab("priceDetails")}
+            >
+              {t('propertyDetails.tabs.bookingDetails')}
+            </button>
+            <button
+              type="button"
+              className={`py-2 px-4 ${
+                activeTab === "roomInfo" ? "text-[#668E73] border-b-2 border-[#668E73]" : ""
+              }`}
+              onClick={() => setActiveTab("roomInfo")}
+            >
+              {t('propertyDetails.tabs.roomInfo')}
+            </button>
             </div>
   
             <div className="flex-1 overflow-y-none">
@@ -392,7 +392,9 @@ export const PropertyDetails = ({
                     <img src={Group} alt="Profile Icon" className="w-6 h-6 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-4" />
                     <span className="text-[18px] sm:text-sm md:text-base font-light text-black">
                       {Number(formData.adults) + Number(formData.children)}{" "}
-                      {Number(formData.adults) + Number(formData.children) > 1 ? "personnes" : "personne"}
+                      {Number(formData.adults) + Number(formData.children) > 1 
+                        ? t('propertyDetails.guests.plural') 
+                        : t('propertyDetails.guests.singular')}
                     </span>
                   </div>
 
@@ -527,10 +529,10 @@ export const PropertyDetails = ({
                 }`}
               >
                 {!hasSearched
-                  ? "Veuillez sélectionner une date"
-                  : isAvailable
-                    ? "Sélectionner cette chambre"
-                    : "Non disponible pour ces dates"}
+                ? t('propertyDetails.selectDatePrompt')
+                : isAvailable
+                  ? t('propertyDetails.selectRoom')
+                  : t('propertyDetails.unavailableForDates')}
               </button>
             </div>
           </div>
@@ -594,7 +596,7 @@ export const PropertyDetails = ({
 
       {loading && (
         <div className="flex justify-center">
-          <div className="text-[#668E73]">Chargement...</div>
+          <div className="text-[#668E73]">{t('propertyDetails.loading')}</div>
         </div>
       )}
     </div>

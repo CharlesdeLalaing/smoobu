@@ -290,6 +290,25 @@
     "total": "Totaal",
     "taxesIncluded": "* Totaalprijs inclusief alle belastingen en kosten",
     "depositRequired": "** Vereiste aanbetaling: {{percentage}}% ({{amount}} EUR)"
+  },
+  "propertyDetails": {
+    "unavailableDates": "Niet beschikbare data: ",
+    "roomUnavailable": {
+      "title": "Deze accommodatie is niet beschikbaar voor de geselecteerde data",
+      "message": "Selecteer andere data voor deze accommodatie of bekijk onze andere opties"
+    },
+    "tabs": {
+      "bookingDetails": "Reserveringsdetails",
+      "roomInfo": "Kamerinformatie"
+    },
+    "guests": {
+      "singular": "persoon",
+      "plural": "personen"
+    },
+    "selectDatePrompt": "Selecteer een datum",
+    "selectRoom": "Selecteer deze kamer",
+    "unavailableForDates": "Niet beschikbaar voor deze data",
+    "loading": "Laden..."
   }
     }
   }

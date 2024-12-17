@@ -292,6 +292,25 @@
     "total": "Total",
     "taxesIncluded": "* Prix total incluant toutes les taxes et frais",
     "depositRequired": "** Acompte requis : {{percentage}}% ({{amount}} EUR)"
+  },
+  "propertyDetails": {
+    "unavailableDates": "Dates non disponibles : ",
+    "roomUnavailable": {
+      "title": "Ce logement n'est pas disponible pour les dates sélectionnées",
+      "message": "Veuillez sélectionner d'autres dates pour ce logement ou consulter nos autres options"
+    },
+    "tabs": {
+      "bookingDetails": "Détails de la réservation",
+      "roomInfo": "Informations sur la chambre"
+    },
+    "guests": {
+      "singular": "personne",
+      "plural": "personnes"
+    },
+    "selectDatePrompt": "Veuillez sélectionner une date",
+    "selectRoom": "Sélectionner cette chambre",
+    "unavailableForDates": "Non disponible pour ces dates",
+    "loading": "Chargement..."
   }
 
 

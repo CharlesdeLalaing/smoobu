@@ -289,6 +289,25 @@
             "total": "Total",
             "taxesIncluded": "* Total price including all taxes and fees",
             "depositRequired": "** Deposit required: {{percentage}}% ({{amount}} EUR)"
+        },
+        "propertyDetails": {
+            "unavailableDates": "Unavailable dates: ",
+            "roomUnavailable": {
+            "title": "This accommodation is not available for the selected dates",
+            "message": "Please select other dates for this accommodation or check our other options"
+            },
+            "tabs": {
+            "bookingDetails": "Booking details",
+            "roomInfo": "Room information"
+            },
+            "guests": {
+            "singular": "person",
+            "plural": "people"
+            },
+            "selectDatePrompt": "Please select a date",
+            "selectRoom": "Select this room",
+            "unavailableForDates": "Not available for these dates",
+            "loading": "Loading..."
         }
     }
 }
