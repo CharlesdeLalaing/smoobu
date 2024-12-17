@@ -278,6 +278,20 @@
       "next": "Suivant",
       "confirm": "Confirmer"
     }
+  },
+  "priceDetails": {
+    "notAvailable": "Non disponible",
+    "roomNotAvailable": "Cette chambre n'est malheureusement pas disponible pour les dates sélectionnées.",
+    "additionalPerson": "Personne supplémentaire",
+    "title": "Détail des prix:",
+    "basePrice": "Prix de base",
+    "longStayDiscount": "Réduction long séjour",
+    "promoCode": "Code promo",
+    "subtotal": "Sous-total",
+    "totalDiscounts": "Total des réductions",
+    "total": "Total",
+    "taxesIncluded": "* Prix total incluant toutes les taxes et frais",
+    "depositRequired": "** Acompte requis : {{percentage}}% ({{amount}} EUR)"
   }
 
 

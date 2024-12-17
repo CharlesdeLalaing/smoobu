@@ -276,6 +276,20 @@
       "next": "Volgende",
       "confirm": "Bevestigen"
     }
+  },
+  "priceDetails": {
+    "notAvailable": "Niet beschikbaar",
+    "roomNotAvailable": "Deze kamer is helaas niet beschikbaar voor de geselecteerde data.",
+    "additionalPerson": "Extra persoon",
+    "title": "Prijsdetails:",
+    "basePrice": "Basisprijs",
+    "longStayDiscount": "Korting voor lang verblijf",
+    "promoCode": "Promocode",
+    "subtotal": "Subtotaal",
+    "totalDiscounts": "Totale kortingen",
+    "total": "Totaal",
+    "taxesIncluded": "* Totaalprijs inclusief alle belastingen en kosten",
+    "depositRequired": "** Vereiste aanbetaling: {{percentage}}% ({{amount}} EUR)"
   }
     }
   }
