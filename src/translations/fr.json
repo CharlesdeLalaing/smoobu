@@ -115,6 +115,149 @@
         "label": "Check-in*"
       }
     }
+  },
+  "extras": {
+    "categories": {
+      "packs": "Les packs",
+      "spa": "Spa",
+      "meals": "Les repas de Bossimé",
+      "formulesRepas": "Les formules repas",
+      "formulesDecouverte": "Les formules découverte",
+      "boissons": "Les boissons"
+    },
+    "drinkTypes": {
+      "wine": "Vins",
+      "beer": "Bières",
+      "soft": "Boissons non alcoolisées",
+      "bulles": "Bulles"
+    },
+    "packs": {
+      "essential": {
+        "name": "L'essentiel (pour 2)",
+        "description": "Ce pack inclut un petit-déjeuner avec, accompagnements sucrés/salés, jus, café et lait ainsi qu'un accès au spa."
+      },
+      "relaxGourmet": {
+        "name": "Le détente gourmet (pour 2)",
+        "description": "Ce pack inclut un plateau de charcuterie et fromage, une bouteille de vin, un petit-déjeuner complet avec accès au spa."
+      },
+      "racletteRelax": {
+        "name": "La raclette en détente (pour 2)",
+        "description": "Ce pack inclut un assortiment de fromages à raclette et de charcuteries fines, une bouteille de vin, et un accès au spa."
+      },
+      "romanticGourmet": {
+        "name": "Le romantique gourmet (pour 2)",
+        "description": "Ce pack inclut un plateau de charcuterie et fromage, une bouteille de crémant, un flacon d'huile de massage et un accès au spa."
+      },
+      "racletteRomantic": {
+        "name": "La raclette romantique (pour 2)",
+        "description": "Ce pack inclut un assortiment de viandes grillées et d'accompagnements frais, une bouteille de crémant, et un accès au spa."
+      }
+    },
+    "spa": {
+      "basic": {
+        "name": "Formule SPA (2 pers)",
+        "description": "Profitez d'un moment de détente au spa."
+      },
+      "withBottle": {
+        "name": "Formule SPA + bouteille (2 pers)",
+        "description": "Spa et bouteille de vin pour une expérience complète."
+      }
+    },
+    "meals": {
+      "meatballsLiege": {
+        "name": "Boulettes de viande sauce liégeoise",
+        "description": "Dégustez nos délicieuses boulettes de viande sauce liégeoise accompagnées d'une purée de pommes de terre maison."
+      },
+      "meatballsTomato": {
+        "name": "Boulette de viande sauce tomate",
+        "description": "Dégustez nos délicieuses boulettes de viande mijotées dans une sauce tomate maison."
+      },
+      "waterzooi": {
+        "name": "Waterzooi de volaille",
+        "description": "Savourez notre waterzooi de volaille, une spécialité originaire de la région flamande."
+      },
+      "chiliVeg": {
+        "name": "Chili végétarien",
+        "description": "Une délicieuse création végétarienne préparée avec soin."
+      },
+      "carrotSoup": {
+        "name": "Velouté de carotte et cumin",
+        "description": "Un velouté onctueux aux carottes parfumé au cumin."
+      }
+    },
+    "drinks": {
+      "brutBioul": {
+        "description": "Un vin effervescent local de qualité exceptionnelle."
+      },
+      "cortilBarco": {
+        "description": "Un vin rouge élégant aux notes fruitées."
+      },
+      "terreCharlot": {
+        "description": "Un vin blanc raffiné aux arômes subtils."
+      },
+      "houblondeTriple": {
+        "description": "Une bière triple traditionnelle belge."
+      },
+      "houblondeBlonde": {
+        "description": "Une bière blonde rafraîchissante."
+      },
+      "houblondeWhite": {
+        "description": "Une IPA blanche aux notes agrumes."
+      },
+      "bruneCondroz": {
+        "description": "Une bière brune locale du Condroz."
+      },
+      "ambreeCondroz": {
+        "description": "Une bière ambrée aux malts caramélisés."
+      },
+      "blancheCondroz": {
+        "description": "Une bière blanche légère et rafraîchissante."
+      },
+      "appleJuice": {
+        "description": "Un jus de pomme naturel et rafraîchissant."
+      },
+      "ritchieLemonRasp": {
+        "description": "Une boisson pétillante aux saveurs de citron et framboise."
+      },
+      "ritchieOrangeVan": {
+        "description": "Un mélange rafraîchissant d'orange et de vanille."
+      },
+      "ritchieCola": {
+        "description": "Un cola artisanal unique."
+      },
+      "ritchieColaZero": {
+        "description": "La version sans sucre du cola artisanal."
+      }
+    },
+    "formulesRepas": {
+      "breakfast": {
+        "name": "Formule petit-déjeuner (2 pers)",
+        "description": "Un petit-déjeuner copieux pour bien commencer la journée."
+      },
+      "gourmet": {
+        "name": "Formule gourmet (2 pers)",
+        "description": "Une expérience gastronomique inoubliable."
+      },
+      "raclette": {
+        "name": "Formule raclette (2 pers)",
+        "description": "Une raclette conviviale avec produits locaux."
+      },
+      "apero": {
+        "name": "Formule planche apéro (2 pers)",
+        "description": "Une planche apéritive généreuse à partager."
+      }
+    },
+    "formulesDecouverte": {
+      "passion": {
+        "name": "Formule passion",
+        "description": "Une formule romantique pour les couples."
+      },
+      "birthday": {
+        "name": "Formule anniversaire (2 pers)",
+        "description": "Célébrez votre anniversaire avec notre formule spéciale."
+      }
+    },
+    "additionalPerson": "Personne supplémentaire (+{{price}}€/pers)"
   }
 
 

@@ -113,6 +113,149 @@
         "label": "Check-in*"
       }
     }
+  },
+  "extras": {
+    "categories": {
+      "packs": "Pakketten",
+      "spa": "Spa",
+      "meals": "Maaltijden van Bossimé",
+      "formulesRepas": "Maaltijdformules",
+      "formulesDecouverte": "Ontdekkingsformules",
+      "boissons": "Dranken"
+    },
+    "drinkTypes": {
+      "wine": "Wijnen",
+      "beer": "Bieren",
+      "soft": "Niet-alcoholische dranken",
+      "bulles": "Bubbels"
+    },
+    "packs": {
+      "essential": {
+        "name": "Het Essentiële (voor 2)",
+        "description": "Dit pakket bevat ontbijt met zoete/hartige bijgerechten, sap, koffie en melk en toegang tot de spa."
+      },
+      "relaxGourmet": {
+        "name": "De Gourmet Ontspanning (voor 2)",
+        "description": "Dit pakket bevat een plank met charcuterie en kaas, een fles wijn, een volledig ontbijt met toegang tot de spa."
+      },
+      "racletteRelax": {
+        "name": "De Ontspannende Raclette (voor 2)",
+        "description": "Dit pakket bevat een assortiment raclette kazen en fijne charcuterie, een fles wijn, en toegang tot de spa."
+      },
+      "romanticGourmet": {
+        "name": "De Romantische Gourmet (voor 2)",
+        "description": "Dit pakket bevat een plank met charcuterie en kaas, een fles crémant, een flesje massage-olie en toegang tot de spa."
+      },
+      "racletteRomantic": {
+        "name": "De Romantische Raclette (voor 2)",
+        "description": "Dit pakket bevat een assortiment gegrild vlees en verse bijgerechten, een fles crémant, en toegang tot de spa."
+      }
+    },
+    "spa": {
+      "basic": {
+        "name": "SPA Formule (2 pers)",
+        "description": "Geniet van een ontspannend moment in de spa."
+      },
+      "withBottle": {
+        "name": "SPA Formule + fles (2 pers)",
+        "description": "Spa en wijnfles voor een complete ervaring."
+      }
+    },
+    "meals": {
+      "meatballsLiege": {
+        "name": "Gehaktballen Luikse saus",
+        "description": "Geniet van onze heerlijke gehaktballen in Luikse saus geserveerd met huisgemaakte aardappelpuree."
+      },
+      "meatballsTomato": {
+        "name": "Gehaktballen in tomatensaus",
+        "description": "Geniet van onze heerlijke gehaktballen gestoofd in huisgemaakte tomatensaus."
+      },
+      "waterzooi": {
+        "name": "Waterzooi van gevogelte",
+        "description": "Proef onze waterzooi van gevogelte, een specialiteit uit de Vlaamse regio."
+      },
+      "chiliVeg": {
+        "name": "Vegetarische chili",
+        "description": "Een heerlijke vegetarische creatie met zorg bereid."
+      },
+      "carrotSoup": {
+        "name": "Wortel-komijnsoep",
+        "description": "Een romige wortelsoep op smaak gebracht met komijn."
+      }
+    },
+    "drinks": {
+      "brutBioul": {
+        "description": "Een lokale mousserende wijn van uitzonderlijke kwaliteit."
+      },
+      "cortilBarco": {
+        "description": "Een elegante rode wijn met fruitige tonen."
+      },
+      "terreCharlot": {
+        "description": "Een verfijnde witte wijn met subtiele aroma's."
+      },
+      "houblondeTriple": {
+        "description": "Een traditioneel Belgisch tripel bier."
+      },
+      "houblondeBlonde": {
+        "description": "Een verfrissend blond bier."
+      },
+      "houblondeWhite": {
+        "description": "Een witte IPA met citrustoetsen."
+      },
+      "bruneCondroz": {
+        "description": "Een lokaal bruin bier uit de Condroz streek."
+      },
+      "ambreeCondroz": {
+        "description": "Een amberkleurig bier met gekarameliseerde mouten."
+      },
+      "blancheCondroz": {
+        "description": "Een licht en verfrissend witbier."
+      },
+      "appleJuice": {
+        "description": "Een natuurlijk en verfrissend appelsap."
+      },
+      "ritchieLemonRasp": {
+        "description": "Een bruisende drank met citroen- en framboossmaak."
+      },
+      "ritchieOrangeVan": {
+        "description": "Een verfrissende mix van sinaasappel en vanille."
+      },
+      "ritchieCola": {
+        "description": "Een unieke ambachtelijke cola."
+      },
+      "ritchieColaZero": {
+        "description": "De suikervrije versie van de ambachtelijke cola."
+      }
+    },
+    "formulesRepas": {
+      "breakfast": {
+        "name": "Ontbijtformule (2 pers)",
+        "description": "Een uitgebreid ontbijt om de dag goed te beginnen."
+      },
+      "gourmet": {
+        "name": "Gourmetformule (2 pers)",
+        "description": "Een onvergetelijke gastronomische ervaring."
+      },
+      "raclette": {
+        "name": "Racletteformule (2 pers)",
+        "description": "Een gezellige raclette met lokale producten."
+      },
+      "apero": {
+        "name": "Aperitiefplank formule (2 pers)",
+        "description": "Een royale aperitiefplank om te delen."
+      }
+    },
+    "formulesDecouverte": {
+      "passion": {
+        "name": "Passieformule",
+        "description": "Een romantische formule voor koppels."
+      },
+      "birthday": {
+        "name": "Verjaardagsformule (2 pers)",
+        "description": "Vier je verjaardag met onze speciale formule."
+      }
+    },
+    "additionalPerson": "Extra persoon (+{{price}}€/pers)"
   }
     }
   }
