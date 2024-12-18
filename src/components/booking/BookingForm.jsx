@@ -726,9 +726,20 @@ const BookingForm = () => {
                         )}
                       </div>
                       <div className="pt-4 mt-4 border-t border-gray-200">
-                        <NavigationButtons 
+                        {/* <NavigationButtons 
                           {...navigationButtonsProps} 
                           disabled={!isSelectedRoomAvailable()}
+                        /> */}
+                        <NavigationButtons 
+                          {...navigationButtonsProps} 
+                          disabled={!isSelectedRoomAvailable() || !isStepValid()}
+                          nextStep={() => {
+                            if (currentStep === 3 && isStepValid()) {
+                              handleSubmit(); // This should trigger the payment
+                            } else {
+                              nextStep();
+                            }
+                          }}
                         />
                       </div>
                     </div>
