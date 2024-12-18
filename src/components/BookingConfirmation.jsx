@@ -4,7 +4,6 @@ import { useSearchParams } from "react-router-dom";
 import LocalStorageDebug from './LocalStorageDebug';
 
 import logoBaseilles from "../assets/logoBaseilles.webp"
-import { useTranslation } from "react-i18next";
 import "../assets/bookingConfirmation.css"
 
 const BookingConfirmation = () => {
@@ -12,7 +11,6 @@ const BookingConfirmation = () => {
   const [bookingDetails, setBookingDetails] = useState(null);
   const [searchParams] = useSearchParams();
   const paymentIntent = searchParams.get("payment_intent");
-  const { t } = useTranslation();
 
   useEffect(() => {
     console.log('Payment Intent:', paymentIntent);
@@ -92,25 +90,17 @@ const BookingConfirmation = () => {
 
   return (
     <div
-      style={{
-        minHeight: "100vh",
-        minWidth: "100vw",
-        display: "flex",
-        alignItems: "center",
-      }}
-      className="container"
-    >
+    style={{ minHeight: "100vh", minWidth: "100vw", display: "flex", alignItems: "center" }}
+     className="container">
       <div className="card">
         {/* Success Header */}
         <div className="header">
-          <div className="icon-container">
+        <div className="icon-container">
             <img src={logoBaseilles} alt="Logo Baseilles" className="icon" />
           </div>
           <div>
             <h1 className="title">Réservation Confirmée</h1>
-            <p className="subtitle">
-              Une confirmation vous a été envoyée à {bookingDetails?.email}
-            </p>
+            <p className="subtitle">Une confirmation vous a été envoyée à {bookingDetails?.email}</p>
           </div>
         </div>
 
@@ -122,77 +112,52 @@ const BookingConfirmation = () => {
             <p>Check-in: {formatDate(bookingDetails?.arrivalDate)}</p>
             <p>Heure d'arrivée: {bookingDetails?.arrivalTime}</p>
             <p>Check-out: {formatDate(bookingDetails?.departureDate)}</p>
-            <p>
-              Voyageurs: {bookingDetails?.adults} adultes
-              {bookingDetails?.children > 0 &&
-                `, ${bookingDetails?.children} enfants`}
-            </p>
+            <p>Voyageurs: {bookingDetails?.adults} adultes
+              {bookingDetails?.children > 0 && `, ${bookingDetails?.children} enfants`}</p>
           </div>
 
           {/* Guest Details */}
           <div className="details-card">
             <h2 className="titleConfirmation">Informations du client</h2>
-            <p>
-              Nom complet: {bookingDetails?.firstName}{" "}
-              {bookingDetails?.lastName}
-            </p>
+            <p>Nom complet: {bookingDetails?.firstName} {bookingDetails?.lastName}</p>
             <p>Email: {bookingDetails?.email}</p>
             <p>Téléphone: {bookingDetails?.phone || "-"}</p>
           </div>
+
 
           {/* Price Details */}
           {/* Price Details */}
           <div className="details-card">
             <h2 className="titleConfirmation">Détails du prix</h2>
-            <p>
-              Prix de base:{" "}
-              {(bookingDetails?.priceBreakdown?.basePrice || 0).toFixed(2)}€
-            </p>
-
+            <p>Prix de base: {(bookingDetails?.priceBreakdown?.basePrice || 0).toFixed(2)}€</p>
+            
             {/* Show extras */}
-            {bookingDetails?.extras?.map((extra, index) => {
-              const totalAmount =
-                (extra.amount || 0) + (extra.extraPersonAmount || 0);
-              return (
-                <div key={index}>
-                  <p>
-                    {extra.name} (x{extra.quantity}): {totalAmount.toFixed(2)}€
-                  </p>
-                  {extra.extraPersonQuantity > 0 && (
-                    <p className="ml-4">
-                      Personne supplémentaire (x{extra.extraPersonQuantity}):{" "}
-                      {extra.extraPersonAmount?.toFixed(2)}€
-                    </p>
-                  )}
-                </div>
-              );
-            })}
+            {bookingDetails?.extras?.map((extra, index) => (
+              <p key={index}>
+                {extra.nameKey} (x{extra.quantity}): {((extra.amount || 0) + (extra.extraPersonAmount || 0)).toFixed(2)}€
+                {extra.extraPersonQuantity > 0 && ` (dont ${extra.extraPersonQuantity} personne(s) supplémentaire(s))`}
+              </p>
+            ))}
 
             {/* Long stay discount if applicable */}
             {bookingDetails?.priceDetails?.discount > 0 && (
               <p className="discount-text">
-                Réduction long séjour (
-                {
-                  bookingDetails.priceDetails.settings.lengthOfStayDiscount
-                    .discountPercentage
-                }
-                %): -{bookingDetails.priceDetails.discount.toFixed(2)}€
+                Réduction long séjour ({bookingDetails.priceDetails.settings.lengthOfStayDiscount.discountPercentage}%): 
+                -{bookingDetails.priceDetails.discount.toFixed(2)}€
               </p>
             )}
 
             {/* Coupon discount if applicable */}
             {bookingDetails?.couponApplied && (
               <p className="discount-text">
-                Code promo ({bookingDetails.couponApplied.code}): -
-                {bookingDetails.couponApplied.discount.toFixed(2)}€
+                Code promo ({bookingDetails.couponApplied.code}): 
+                -{bookingDetails.couponApplied.discount.toFixed(2)}€
               </p>
             )}
 
             {/* Total */}
             <div className="total-section">
-              <p className="total-text">
-                Total: {(bookingDetails?.price || 0).toFixed(2)}€
-              </p>
+              <p className="total-text">Total: {(bookingDetails?.price || 0).toFixed(2)}€</p>
               <p>Conditions générales: Acceptée</p>
             </div>
           </div>
@@ -201,19 +166,14 @@ const BookingConfirmation = () => {
           <div className="details-card">
             <h2 className="titleConfirmation">Adresse</h2>
             <p>{bookingDetails?.street}</p>
-            <p>
-              {bookingDetails?.postalCode} {bookingDetails?.location}
-            </p>
+            <p>{bookingDetails?.postalCode} {bookingDetails?.location}</p>
             <p>{bookingDetails?.country}</p>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="actions">
-          <button
-            onClick={() => (window.location.href = "/")}
-            className="button-primary"
-          >
+          <button onClick={() => window.location.href = "/"} className="button-primary">
             Retour à l'accueil
           </button>
           <button onClick={() => window.print()} className="button-secondary">

@@ -753,17 +753,7 @@ app.get("/api/bookings/:paymentIntentId", async (req, res) => {
         bookingReference: bookingReference,
       });
     }
-
-    if (bookingData && bookingData.extras) {
-      // Make sure extras are properly formatted
-      bookingData.extras = bookingData.extras.map((extra) => ({
-        name: extra.name,
-        quantity: extra.quantity,
-        amount: Number(extra.amount || 0),
-        extraPersonQuantity: Number(extra.extraPersonQuantity || 0),
-        extraPersonAmount: Number(extra.extraPersonAmount || 0),
-      }));
-    }
+    
 
     // Récupérer les montants des réductions depuis les metadata
     const basePrice = parseFloat(paymentIntent.metadata.basePrice);
