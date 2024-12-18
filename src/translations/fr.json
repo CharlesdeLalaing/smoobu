@@ -304,11 +304,13 @@
           },
           "promoCode": {
             "label": "Code promo",
-            "placeholder": "Entrez votre code promo",
+            "placeholder": "Entrez votre code de promotion",
             "button": "Appliquer",
-            "applied": "Code promo {{code}} appliqué : -{{discount}}€",
+            "appliedStart": "Code promo  ",
+            "appliedEnd": "Appliqé ",
+            "appliedCurrency": "€",
             "error": "Code promo invalide"
-          }
+        }
         }
       },
       "navigation": {

@@ -301,12 +301,14 @@
             "placeholder": "Laat een bericht achter voor de eigenaar"
           },
           "promoCode": {
-            "label": "Promocode",
-            "placeholder": "Voer uw promocode in",
+            "label": "Kortingscode",
+            "placeholder": "Voer uw promotiecode in",
             "button": "Toepassen",
-            "applied": "Promocode {{code}} toegepast: -{{discount}}€",
-            "error": "Ongeldige promocode"
-          }
+            "appliedStart": "Kortingscode ",
+            "appliedEnd": "toegepast ",
+            "appliedCurrency": "€",
+            "error": "Invalid promo code"
+        }
         }
       },
       "navigation": {
