@@ -65,7 +65,11 @@
             "heater": "Electric heater",
             "kitchen": "Equipped kitchen",
             "wifi": "WiFi"
-            }
+            },
+            "errors": {
+            "fetchFailed": "Failed to fetch rooms"
+            },
+            "loading": "Loading rooms..."
         },
         "booking": {
             "steps": {

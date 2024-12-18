@@ -68,7 +68,11 @@
         "heater": "Chauffage électrique",
         "kitchen": "Cuisine équipée",
         "wifi": "WiFi"
-      }
+      },
+      "errors": {
+      "fetchFailed": "Impossible de récupérer les chambres"
+    },
+    "loading": "Chargement des chambres..."
     },
     "booking": {
     "steps": {

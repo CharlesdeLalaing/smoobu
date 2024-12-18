@@ -1,8 +1,9 @@
-// hooks/useRooms.js
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../utils/api';
 
 export const useRooms = () => {
+  const { t } = useTranslation();
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -14,14 +15,14 @@ export const useRooms = () => {
         const response = await api.get('/apartments');
         setRooms(response.data.apartments);
       } catch (err) {
-        setError('Failed to fetch rooms');
+        setError(t('rooms.errors.fetchFailed'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchRooms();
-  }, []);
+  }, [t]); // Add t to dependencies array
 
   return { rooms, loading, error };
 };
