@@ -1,6 +1,9 @@
 import React from "react";
 import DatePicker from "react-datepicker";
 import { Listbox } from "@headlessui/react";
+
+import { useTranslation } from "react-i18next";
+
 import "react-datepicker/dist/react-datepicker.css";
 import { GuestSelect } from "./GuestSelect";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
@@ -18,6 +21,8 @@ export const SearchSection = ({
   dateError,
   resetAvailability,
 }) => {
+  const { t, i18n } = useTranslation();
+
   const handleSearch = (e) => {
     e.preventDefault(); // Prevent form refresh
     handleCheckAvailability();
@@ -42,7 +47,7 @@ export const SearchSection = ({
       </div>
       {/* Title */}
       <h1 className="mb-8 text-[25px] sm:text-[30px] md:font-3xl font-light text-white font-cormorant">
-        Sélectionnez vos dates
+        {t("search.title")}
       </h1>
 
       {/* Search Form */}
@@ -51,7 +56,7 @@ export const SearchSection = ({
           {/* Arrival */}
           <div className="md:col-span-1 w-full">
             <label className="block mb-1 text-sm font-medium text-gray-600">
-              Arrivée
+              {t("search.arrival")}
             </label>
             <DatePicker
               selected={startDate}
@@ -62,7 +67,7 @@ export const SearchSection = ({
               minDate={new Date().setHours(24, 0, 0, 0)}
               locale="fr"
               dateFormat="dd/MM/yyyy"
-              placeholderText="Sélectionnez une date"
+              placeholderText={t("search.selectDate")}
               className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
               filterDate={(date) => {
                 const today = new Date();
@@ -76,7 +81,7 @@ export const SearchSection = ({
           {/* Departure */}
           <div className="md:col-span-1 w-full">
             <label className="block mb-1 text-sm font-medium text-gray-600">
-              Départ
+              {t("search.departure")}
             </label>
             <DatePicker
               selected={endDate}
@@ -86,7 +91,7 @@ export const SearchSection = ({
               endDate={endDate}
               minDate={startDate || new Date()}
               dateFormat="dd/MM/yyyy"
-              placeholderText="Sélectionnez une date"
+              placeholderText={t("search.selectDate")}
               className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
               isClearable={true}
               disabled={!startDate}
@@ -96,7 +101,7 @@ export const SearchSection = ({
           {/* Adults */}
           <div className="md:col-span-1">
             <label className="block mb-1 text-sm font-medium text-gray-600">
-              Adultes
+              {t("search.adults")}
             </label>
             {/* <select
               name="adults"
@@ -159,7 +164,7 @@ export const SearchSection = ({
           {/* Children */}
           <div className="md:col-span-1">
             <label className="block mb-1 text-sm font-medium text-gray-600">
-              Enfants
+              {t("search.children")}
             </label>
             {/* <select
               name="children"
@@ -226,7 +231,7 @@ export const SearchSection = ({
               type="button"
               className="w-full p-2 h-12 bg-[#668E73] text-white rounded hover:bg-[#557963] transition-colors"
             >
-              Rechercher
+              {t("search.search")}
             </button>
           </div>
         </div>
@@ -236,6 +241,10 @@ export const SearchSection = ({
 };
 
 export const RoomNavigation = ({ rooms, onRoomSelect }) => {
+
+  const { t } = useTranslation(); // Add this at the top
+
+
   return (
     <div
       className="flex flex-wrap justify-center gap-2 sm:gap-4 my-4 sm:my-8 pb-[40px] sm:pb-[60px] font-montserrat"
@@ -247,7 +256,7 @@ export const RoomNavigation = ({ rooms, onRoomSelect }) => {
           onClick={() => onRoomSelect(room.id)}
           className="px-3 sm:px-6 py-2 sm:py-4 mb-4 sm:mb-6 text-sm sm:text-base text-white transition-all rounded-full bg-[#ffffff30] hover:bg-white hover:text-[#668E73] border border-[#668E73]"
         >
-          {room.name}
+          {t(room.nameKey)} {/* Changed from room.name to room.nameKey */}
         </button>
       ))}
       <p id="main-container"></p>
