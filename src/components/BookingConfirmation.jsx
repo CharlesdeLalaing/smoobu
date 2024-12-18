@@ -150,23 +150,23 @@ const BookingConfirmation = () => {
             </p>
 
             {/* Show extras */}
-            {bookingDetails?.extras?.map((extra, index) => (
-              <p key={index}>
-                {extra.nameKey} (x{extra.quantity}):{" "}
-                {((extra.amount || 0) + (extra.extraPersonAmount || 0)).toFixed(
-                  2
-                )}
-                €
-                {extra.extraPersonQuantity > 0 &&
-                  t(
-                    "bookingConfirmation.success.sections.priceDetails.extraPerson",
-                    {
-                      quantity: extra.extraPersonQuantity,
-                      price: extra.extraPersonAmount.toFixed(2),
-                    }
+            {bookingDetails?.extras?.map((extra, index) => {
+              const totalAmount =
+                (extra.amount || 0) + (extra.extraPersonAmount || 0);
+              return (
+                <div key={index}>
+                  <p>
+                    {extra.name} (x{extra.quantity}): {totalAmount.toFixed(2)}€
+                  </p>
+                  {extra.extraPersonQuantity > 0 && (
+                    <p className="ml-4">
+                      Personne supplémentaire (x{extra.extraPersonQuantity}):{" "}
+                      {extra.extraPersonAmount?.toFixed(2)}€
+                    </p>
                   )}
-              </p>
-            ))}
+                </div>
+              );
+            })}
 
             {/* Long stay discount if applicable */}
             {bookingDetails?.priceDetails?.discount > 0 && (
