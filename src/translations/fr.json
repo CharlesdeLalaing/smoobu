@@ -84,6 +84,7 @@
           "fetchError": "Impossible de récupérer les tarifs",
           "waitForPrice": "Veuillez attendre le calcul du prix avant de continuer",
           "paymentError": "Une erreur s'est produite lors de la création du paiement",
+          "messageError": "Une erreur s'est produite",
           "roomUnavailable": {
             "title": "Ce logement n'est pas disponible pour les dates sélectionnées",
             "message": "Veuillez sélectionner d'autres dates pour continuer votre réservation"

@@ -83,6 +83,7 @@
             "fetchError": "Unable to fetch rates",
             "waitForPrice": "Please wait for the price calculation before continuing.",
             "paymentError": "An error occurred while creating the payment",
+            "messageError": "An error occurred",
             "roomUnavailable": {
                 "title": "This accommodation is not available for the selected dates",
                 "message": "Please select other dates to continue your booking"

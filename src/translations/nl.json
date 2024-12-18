@@ -84,6 +84,7 @@
           "fetchError": "Kan tarieven niet ophalen",
           "waitForPrice": "Wacht op de prijsberekening voordat u doorgaat",
           "paymentError": "Er is een fout opgetreden bij het maken van de betaling",
+          "messageError": "Er is een fout opgetreden",
           "roomUnavailable": {
             "title": "Deze accommodatie is niet beschikbaar voor de geselecteerde data",
             "message": "Selecteer andere data om uw boeking voort te zetten"
