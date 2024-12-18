@@ -188,7 +188,7 @@ const BookingForm = () => {
       }
 
     } catch (err) {
-      console.error("Error in handleRoomSelect:", err);
+      console.error("Errors in handleRoomSelect:", err);
       setError("Failed to update room selection. Please try again.");
       setIsAvailable(false);
       setShowPriceDetails(false);
