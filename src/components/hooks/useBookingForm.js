@@ -295,7 +295,7 @@ const handleChange = async (e) => {
           if (isExtraPerson) {
             return {
               type: "addon",
-              name: `${extra.name} - Personne supplémentaire`,
+              name: `${extra.name} - Personne supplémentairee`,
               amount: extra.extraPersonPrice * quantity,
               quantity: quantity,
               currencyCode: "EUR",
