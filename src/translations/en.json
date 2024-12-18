@@ -339,6 +339,52 @@
         "timeSelect": {
             "arrivalTime": "Arrival time",
             "placeholder": "Select arrival time"
+        },
+        "bookingConfirmation": {
+        "loading": {
+            "title": "Processing your booking...",
+            "message": "Please wait while we confirm your payment."
+        },
+        "error": {
+            "title": "An error occurred while retrieving your booking details.",
+            "message": "Please check your email for booking details or contact us."
+        },
+        "success": {
+            "title": "Booking Confirmed",
+            "subtitle": "A confirmation has been sent to {{email}}",
+            "sections": {
+            "stayDetails": {
+                "title": "Stay Details",
+                "checkIn": "Check-in: {{date}}",
+                "arrivalTime": "Arrival time: {{time}}",
+                "checkOut": "Check-out: {{date}}",
+                "travelers": "Travelers: {{adults}} adults",
+                "travelersWithChildren": "Travelers: {{adults}} adults, {{children}} children"
+            },
+            "guestDetails": {
+                "title": "Guest Information",
+                "fullName": "Full name: {{firstName}} {{lastName}}",
+                "email": "Email: {{email}}",
+                "phone": "Phone: {{phone}}"
+            },
+            "priceDetails": {
+                "title": "Price Details",
+                "basePrice": "Base price: {{price}}€",
+                "extraPerson": "Additional person (x{{quantity}}): {{price}}€",
+                "longStayDiscount": "Long stay discount ({{percentage}}%): -{{amount}}€",
+                "promoCode": "Promo code ({{code}}): -{{amount}}€",
+                "total": "Total: {{price}}€",
+                "termsAccepted": "General conditions: Accepted"
+            },
+            "address": {
+                "title": "Address"
+            }
+            },
+            "buttons": {
+            "backHome": "Back to Home",
+            "print": "Print"
+            }
+        }
         }
     }
 }

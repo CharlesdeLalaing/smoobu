@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 import LocalStorageDebug from './LocalStorageDebug';
 
@@ -7,6 +8,7 @@ import logoBaseilles from "../assets/logoBaseilles.webp"
 import "../assets/bookingConfirmation.css"
 
 const BookingConfirmation = () => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState("loading");
   const [bookingDetails, setBookingDetails] = useState(null);
   const [searchParams] = useSearchParams();
@@ -70,8 +72,8 @@ const BookingConfirmation = () => {
     return (
       <div className="container">
         <div className="card">
-          <h2>Traitement de votre réservation...</h2>
-          <p>Veuillez patienter pendant que nous confirmons votre paiement.</p>
+          <h2>{t('bookingConfirmation.loading.title')}</h2>
+          <p>{t('bookingConfirmation.loading.message')}</p>
         </div>
       </div>
     );
@@ -81,8 +83,8 @@ const BookingConfirmation = () => {
     return (
       <div className="container">
         <div className="card">
-          <h2>Une erreur s'est produite lors de la récupération de vos détails de réservation.</h2>
-          <p>Veuillez vérifier votre email pour les détails de la réservation ou nous contacter.</p>
+          <h2>{t('bookingConfirmation.error.title')}</h2>
+          <p>{t('bookingConfirmation.error.message')}</p>
         </div>
       </div>
     );
@@ -99,8 +101,10 @@ const BookingConfirmation = () => {
             <img src={logoBaseilles} alt="Logo Baseilles" className="icon" />
           </div>
           <div>
-            <h1 className="title">Réservation Confirmée</h1>
-            <p className="subtitle">Une confirmation vous a été envoyée à {bookingDetails?.email}</p>
+          <h1 className="title">{t('bookingConfirmation.success.title')}</h1>
+            <p className="subtitle">
+              {t('bookingConfirmation.success.subtitle', { email: bookingDetails?.email })}
+              </p>
           </div>
         </div>
 
@@ -108,63 +112,86 @@ const BookingConfirmation = () => {
         <div className="grid">
           {/* Stay Details */}
           <div className="details-card">
-            <h2 className="titleConfirmation">Détails du séjour</h2>
-            <p>Check-in: {formatDate(bookingDetails?.arrivalDate)}</p>
-            <p>Heure d'arrivée: {bookingDetails?.arrivalTime}</p>
-            <p>Check-out: {formatDate(bookingDetails?.departureDate)}</p>
-            <p>Voyageurs: {bookingDetails?.adults} adultes
-              {bookingDetails?.children > 0 && `, ${bookingDetails?.children} enfants`}</p>
+            <h2 className="titleConfirmation">{t('bookingConfirmation.success.sections.stayDetails.title')}</h2>
+            <p>{t('bookingConfirmation.success.sections.stayDetails.checkIn', { date: formatDate(bookingDetails?.arrivalDate) })}</p>
+            <p>{t('bookingConfirmation.success.sections.stayDetails.arrivalTime', { time: bookingDetails?.arrivalTime })}</p>
+            <p>{t('bookingConfirmation.success.sections.stayDetails.checkOut', { date: formatDate(bookingDetails?.departureDate) })}</p>
+            <p>
+              {bookingDetails?.children > 0
+                ? t('bookingConfirmation.success.sections.stayDetails.travelersWithChildren', {
+                    adults: bookingDetails?.adults,
+                    children: bookingDetails?.children
+                  })
+                : t('bookingConfirmation.success.sections.stayDetails.travelers', {
+                    adults: bookingDetails?.adults
+                  })}
+            </p>
           </div>
 
-          {/* Guest Details */}
-          <div className="details-card">
-            <h2 className="titleConfirmation">Informations du client</h2>
-            <p>Nom complet: {bookingDetails?.firstName} {bookingDetails?.lastName}</p>
-            <p>Email: {bookingDetails?.email}</p>
-            <p>Téléphone: {bookingDetails?.phone || "-"}</p>
+           {/* Guest Details */}
+           <div className="details-card">
+            <h2 className="titleConfirmation">{t('bookingConfirmation.success.sections.guestDetails.title')}</h2>
+            <p>{t('bookingConfirmation.success.sections.guestDetails.fullName', {
+              firstName: bookingDetails?.firstName,
+              lastName: bookingDetails?.lastName
+            })}</p>
+            <p>{t('bookingConfirmation.success.sections.guestDetails.email', { email: bookingDetails?.email })}</p>
+            <p>{t('bookingConfirmation.success.sections.guestDetails.phone', { phone: bookingDetails?.phone || "-" })}</p>
           </div>
 
 
-          {/* Price Details */}
-          {/* Price Details */}
-          <div className="details-card">
-            <h2 className="titleConfirmation">Détails du prix</h2>
-            <p>Prix de base: {(bookingDetails?.priceBreakdown?.basePrice || 0).toFixed(2)}€</p>
+           {/* Price Details */}
+           <div className="details-card">
+            <h2 className="titleConfirmation">{t('bookingConfirmation.success.sections.priceDetails.title')}</h2>
+            <p>{t('bookingConfirmation.success.sections.priceDetails.basePrice', {
+              price: (bookingDetails?.priceBreakdown?.basePrice || 0).toFixed(2)
+            })}</p>
             
             {/* Show extras */}
             {bookingDetails?.extras?.map((extra, index) => (
               <p key={index}>
                 {extra.name} (x{extra.quantity}): {((extra.amount || 0) + (extra.extraPersonAmount || 0)).toFixed(2)}€
-                {extra.extraPersonQuantity > 0 && ` (dont ${extra.extraPersonQuantity} personne(s) supplémentaire(s))`}
+                {extra.extraPersonQuantity > 0 && t('bookingConfirmation.success.sections.priceDetails.extraPerson', {
+                  quantity: extra.extraPersonQuantity,
+                  price: extra.extraPersonAmount.toFixed(2)
+                })}
               </p>
             ))}
 
             {/* Long stay discount if applicable */}
             {bookingDetails?.priceDetails?.discount > 0 && (
               <p className="discount-text">
-                Réduction long séjour ({bookingDetails.priceDetails.settings.lengthOfStayDiscount.discountPercentage}%): 
-                -{bookingDetails.priceDetails.discount.toFixed(2)}€
+                {t('bookingConfirmation.success.sections.priceDetails.longStayDiscount', {
+                  percentage: bookingDetails.priceDetails.settings.lengthOfStayDiscount.discountPercentage,
+                  amount: bookingDetails.priceDetails.discount.toFixed(2)
+                })}
               </p>
             )}
 
             {/* Coupon discount if applicable */}
             {bookingDetails?.couponApplied && (
               <p className="discount-text">
-                Code promo ({bookingDetails.couponApplied.code}): 
-                -{bookingDetails.couponApplied.discount.toFixed(2)}€
+                {t('bookingConfirmation.success.sections.priceDetails.promoCode', {
+                  code: bookingDetails.couponApplied.code,
+                  amount: bookingDetails.couponApplied.discount.toFixed(2)
+                })}
               </p>
             )}
 
             {/* Total */}
             <div className="total-section">
-              <p className="total-text">Total: {(bookingDetails?.price || 0).toFixed(2)}€</p>
-              <p>Conditions générales: Acceptée</p>
+              <p className="total-text">
+                {t('bookingConfirmation.success.sections.priceDetails.total', {
+                  price: (bookingDetails?.price || 0).toFixed(2)
+                })}
+              </p>
+              <p>{t('bookingConfirmation.success.sections.priceDetails.termsAccepted')}</p>
             </div>
           </div>
 
           {/* Address */}
           <div className="details-card">
-            <h2 className="titleConfirmation">Adresse</h2>
+            <h2 className="titleConfirmation">{t('bookingConfirmation.success.sections.address.title')}</h2>
             <p>{bookingDetails?.street}</p>
             <p>{bookingDetails?.postalCode} {bookingDetails?.location}</p>
             <p>{bookingDetails?.country}</p>
@@ -174,10 +201,10 @@ const BookingConfirmation = () => {
         {/* Action Buttons */}
         <div className="actions">
           <button onClick={() => window.location.href = "/"} className="button-primary">
-            Retour à l'accueil
+            {t('bookingConfirmation.success.buttons.backHome')}
           </button>
           <button onClick={() => window.print()} className="button-secondary">
-            Imprimer
+            {t('bookingConfirmation.success.buttons.print')}
           </button>
         </div>
       </div>

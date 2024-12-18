@@ -33,317 +33,361 @@
         "search": "Rechercher",
         "selectDate": "Sélectionnez une date",
         "selectNumber": "Sélectionnez un nombre"
-    },
-    "rooms": {
-      "types": {
-        "unusual": "Logements Insolites",
-        "guesthouse": "Gîte & Chambres d'Hôtes"
       },
-      "names": {
-        "bulle": "La Bulle du Ruisseau",
-        "dome": "Le Dôme des Libellules",
-        "moulin": "Le Moulin",
-        "ble": "La Chambre de Blé",
-        "logis": "Le Logis"
+      "rooms": {
+        "types": {
+          "unusual": "Logements Insolites",
+          "guesthouse": "Gîte & Chambres d'Hôtes"
+        },
+        "names": {
+          "bulle": "La Bulle du Ruisseau",
+          "dome": "Le Dôme des Libellules",
+          "moulin": "Le Moulin",
+          "ble": "La Chambre de Blé",
+          "logis": "Le Logis"
+        },
+        "descriptions": {
+          "bulle": "Plongez dans l'intimité apaisante de la Bulle du Ruisseau - un cocon insolite niché entre terre et eau, bercé par le chant du ruisseau et les murmures de la nature. Avec son fauteuil Crusoé et son lit king-size, cet espace vous offre un confort raffiné au cœur de la nature. Profitez également du braséro pour des soirées conviviales sous les étoiles, parfaites pour griller des guimauves et partager des moments inoubliables. Réservez dès maintenant et laissez-vous envoûter par la sérénité magique de la Bulle du Ruisseau.",
+          "dome": "Plongez dans l'intimité magique du Dôme des Libellules – un refuge insolite au cœur de la nature, conçu pour une escapade romantique. Doté d'un lit King size chauffant et d'une terrasse privée, cet espace offre luxe et sérénité. Niché au coin d'un bois, le site isolé est parfait pour une déconnexion totale. Vous passerez une nuit inoubliable sous les étoiles, bercés par la magie de la nature. Un lit superposé est disponible dans le petit cabanon à côté, idéal pour accueillir des enfants. Profitez également du braséro – BBQ pour des soirées conviviales. Réservez dès maintenant et laissez-vous emporter par la tranquillité du Dôme des Libellules.",
+          "moulin": "Immergez-vous dans l'atmosphère envoûtante du Moulin- un studio romantique conçu pour deux personnes où confort moderne et charme passé s'entremêlent. Avec son lit Queen size en mezzanine, un canapé-lit douillet pouvant accueillir des enfants, cet espace vous offre une escapade intime et confortable. Ajoutez à cela une cuisine équipée pour des moments conviviaux. Réservez dès maintenant et laissez-vous séduire par le charme irrésistible du Moulin.",
+          "ble": "Plongez-vous dans l'intimité de la Chambre de Blé - un refuge douillet au cœur d'une grange restaurée avec soin. Conçue pour accueillir deux adultes et jusqu'à deux enfants, cette chambre rustique allie harmonieusement le charme d'antan et les commodités modernes. Idéale pour une escapade en amoureux ou des vacances en famille, réservez dès maintenant et laissez-vous séduire par l'ambiance chaleureuse de la Chambre de Blé.",
+          "logis": "Plongez dans l'intimité chaleureuse du Logis – un refuge rustique pouvant accueillir jusqu'à 8 convives, parfait pour des retrouvailles en famille ou entre amis. Niché dans une grange restaurée avec soin, c'est l'invitation à une escapade authentique, où se mêlent confort moderne et charme d'antan. Réservez et laissez-vous envoûter par l'atmosphère unique du Logis."
+        },
+        "features": {
+          "maxGuests": "Max {{value}} personnes",
+        "maxGuestsWithChildren": "Max {{value}} adultes et {{value2}} enfants",
+          "bedKing": "Lit king size et matelas chauffant",
+          "bedQueen": "1 lit queen size et 1 canapé lit",
+          "bedKingAndSingle": "1 lit king size et 2 lits simples",
+          "bedDoubleKing": "2 lits king size et 4 lits simples",
+          "pets": "Animaux non admis",
+          "dryToilet": "Toilette sèche",
+          "bathroom": "Une salle de bain",
+          "twoBathrooms": "2 salles de bains et 2 toilettes",
+          "brazier": "Braséro",
+          "heater": "Chauffage électrique",
+          "kitchen": "Cuisine équipée",
+          "wifi": "WiFi"
+        },
+        "errors": {
+        "fetchFailed": "Impossible de récupérer les chambres"
       },
-      "descriptions": {
-        "bulle": "Plongez dans l'intimité apaisante de la Bulle du Ruisseau - un cocon insolite niché entre terre et eau, bercé par le chant du ruisseau et les murmures de la nature. Avec son fauteuil Crusoé et son lit king-size, cet espace vous offre un confort raffiné au cœur de la nature. Profitez également du braséro pour des soirées conviviales sous les étoiles, parfaites pour griller des guimauves et partager des moments inoubliables. Réservez dès maintenant et laissez-vous envoûter par la sérénité magique de la Bulle du Ruisseau.",
-        "dome": "Plongez dans l'intimité magique du Dôme des Libellules – un refuge insolite au cœur de la nature, conçu pour une escapade romantique. Doté d'un lit King size chauffant et d'une terrasse privée, cet espace offre luxe et sérénité. Niché au coin d'un bois, le site isolé est parfait pour une déconnexion totale. Vous passerez une nuit inoubliable sous les étoiles, bercés par la magie de la nature. Un lit superposé est disponible dans le petit cabanon à côté, idéal pour accueillir des enfants. Profitez également du braséro – BBQ pour des soirées conviviales. Réservez dès maintenant et laissez-vous emporter par la tranquillité du Dôme des Libellules.",
-        "moulin": "Immergez-vous dans l'atmosphère envoûtante du Moulin- un studio romantique conçu pour deux personnes où confort moderne et charme passé s'entremêlent. Avec son lit Queen size en mezzanine, un canapé-lit douillet pouvant accueillir des enfants, cet espace vous offre une escapade intime et confortable. Ajoutez à cela une cuisine équipée pour des moments conviviaux. Réservez dès maintenant et laissez-vous séduire par le charme irrésistible du Moulin.",
-        "ble": "Plongez-vous dans l'intimité de la Chambre de Blé - un refuge douillet au cœur d'une grange restaurée avec soin. Conçue pour accueillir deux adultes et jusqu'à deux enfants, cette chambre rustique allie harmonieusement le charme d'antan et les commodités modernes. Idéale pour une escapade en amoureux ou des vacances en famille, réservez dès maintenant et laissez-vous séduire par l'ambiance chaleureuse de la Chambre de Blé.",
-        "logis": "Plongez dans l'intimité chaleureuse du Logis – un refuge rustique pouvant accueillir jusqu'à 8 convives, parfait pour des retrouvailles en famille ou entre amis. Niché dans une grange restaurée avec soin, c'est l'invitation à une escapade authentique, où se mêlent confort moderne et charme d'antan. Réservez et laissez-vous envoûter par l'atmosphère unique du Logis."
+      "loading": "Chargement des chambres..."
       },
-      "features": {
-        "maxGuests": "Max {{value}} personnes",
-      "maxGuestsWithChildren": "Max {{value}} adultes et {{value2}} enfants",
-        "bedKing": "Lit king size et matelas chauffant",
-        "bedQueen": "1 lit queen size et 1 canapé lit",
-        "bedKingAndSingle": "1 lit king size et 2 lits simples",
-        "bedDoubleKing": "2 lits king size et 4 lits simples",
-        "pets": "Animaux non admis",
-        "dryToilet": "Toilette sèche",
-        "bathroom": "Une salle de bain",
-        "twoBathrooms": "2 salles de bains et 2 toilettes",
-        "brazier": "Braséro",
-        "heater": "Chauffage électrique",
-        "kitchen": "Cuisine équipée",
-        "wifi": "WiFi"
+      "booking": {
+      "steps": {
+        "extras": "1. Choix extras",
+        "notes": "2. Ajout note",
+        "contact": "3. Info contact"
       },
       "errors": {
-      "fetchFailed": "Impossible de récupérer les chambres"
-    },
-    "loading": "Chargement des chambres..."
-    },
-    "booking": {
-    "steps": {
-      "extras": "1. Choix extras",
-      "notes": "2. Ajout note",
-      "contact": "3. Info contact"
-    },
-    "errors": {
-      "selectDates": "Veuillez sélectionner les deux dates",
-      "noRates": "Aucun tarif disponible pour les dates sélectionnées",
-      "fetchError": "Impossible de récupérer les tarifs",
-      "waitForPrice": "Veuillez attendre le calcul du prix avant de continuer.",
-      "paymentError": "Une erreur s'est produite lors de la création du paiement"
-    },
-    "coupon": {
-      "errors": {
-        "enterCode": "Veuillez entrer un code promo",
-        "invalid": "Code promo invalide"
+        "selectDates": "Veuillez sélectionner les deux dates",
+        "noRates": "Aucun tarif disponible pour les dates sélectionnées",
+        "fetchError": "Impossible de récupérer les tarifs",
+        "waitForPrice": "Veuillez attendre le calcul du prix avant de continuer.",
+        "paymentError": "Une erreur s'est produite lors de la création du paiement"
       },
-      "applied": "Code promo {{code}}"
-    },
-    "people": {
-      "singular": "personne",
-      "plural": "personnes"
-    }
-  },
-  "contact": {
-    "fields": {
-      "firstName": {
-        "label": "Prénom*",
-        "placeholder": "Prénom"
+      "coupon": {
+        "errors": {
+          "enterCode": "Veuillez entrer un code promo",
+          "invalid": "Code promo invalide"
+        },
+        "applied": "Code promo {{code}}"
       },
-      "lastName": {
-        "label": "Nom*",
-        "placeholder": "Nom"
-      },
-      "email": {
-        "label": "Email*",
-        "placeholder": "Email"
-      },
-      "phone": {
-        "label": "Téléphone",
-        "placeholder": "Téléphone"
-      },
-      "street": {
-        "label": "Rue/numéro",
-        "placeholder": "Rue/Numéro"
-      },
-      "postalCode": {
-        "label": "Code postal",
-        "placeholder": "Code postal"
-      },
-      "city": {
-        "label": "Ville",
-        "placeholder": "Ville"
-      },
-      "country": {
-        "label": "Pays",
-        "placeholder": "Pays"
-      },
-      "checkIn": {
-        "label": "Check-in*"
+      "people": {
+        "singular": "personne",
+        "plural": "personnes"
       }
-    }
-  },
-  "extras": {
-    "categories": {
-      "packs": "Les packs",
-      "spa": "Spa",
-      "meals": "Les repas de Bossimé",
-      "formulesRepas": "Les formules repas",
-      "formulesDecouverte": "Les formules découverte",
-      "boissons": "Les boissons"
-    },
-    "drinkTypes": {
-      "wine": "Vins",
-      "beer": "Bières",
-      "soft": "Boissons non alcoolisées",
-      "bulles": "Bulles"
-    },
-    "packs": {
-      "essential": {
-        "name": "L'essentiel (pour 2)",
-        "description": "Ce pack inclut un petit-déjeuner avec, accompagnements sucrés/salés, jus, café et lait ainsi qu'un accès au spa."
       },
-      "relaxGourmet": {
-        "name": "Le détente gourmet (pour 2)",
-        "description": "Ce pack inclut un plateau de charcuterie et fromage, une bouteille de vin, un petit-déjeuner complet avec accès au spa."
+      "contact": {
+        "fields": {
+          "firstName": {
+            "label": "Prénom*",
+            "placeholder": "Prénom"
+          },
+          "lastName": {
+            "label": "Nom*",
+            "placeholder": "Nom"
+          },
+          "email": {
+            "label": "Email*",
+            "placeholder": "Email"
+          },
+          "phone": {
+            "label": "Téléphone",
+            "placeholder": "Téléphone"
+          },
+          "street": {
+            "label": "Rue/numéro",
+            "placeholder": "Rue/Numéro"
+          },
+          "postalCode": {
+            "label": "Code postal",
+            "placeholder": "Code postal"
+          },
+          "city": {
+            "label": "Ville",
+            "placeholder": "Ville"
+          },
+          "country": {
+            "label": "Pays",
+            "placeholder": "Pays"
+          },
+          "checkIn": {
+            "label": "Check-in*"
+          }
+        }
       },
-      "racletteRelax": {
-        "name": "La raclette en détente (pour 2)",
-        "description": "Ce pack inclut un assortiment de fromages à raclette et de charcuteries fines, une bouteille de vin, et un accès au spa."
+      "extras": {
+        "categories": {
+          "packs": "Les packs",
+          "spa": "Spa",
+          "meals": "Les repas de Bossimé",
+          "formulesRepas": "Les formules repas",
+          "formulesDecouverte": "Les formules découverte",
+          "boissons": "Les boissons"
+        },
+        "drinkTypes": {
+          "wine": "Vins",
+          "beer": "Bières",
+          "soft": "Boissons non alcoolisées",
+          "bulles": "Bulles"
+        },
+        "packs": {
+          "essential": {
+            "name": "L'essentiel (pour 2)",
+            "description": "Ce pack inclut un petit-déjeuner avec, accompagnements sucrés/salés, jus, café et lait ainsi qu'un accès au spa."
+          },
+          "relaxGourmet": {
+            "name": "Le détente gourmet (pour 2)",
+            "description": "Ce pack inclut un plateau de charcuterie et fromage, une bouteille de vin, un petit-déjeuner complet avec accès au spa."
+          },
+          "racletteRelax": {
+            "name": "La raclette en détente (pour 2)",
+            "description": "Ce pack inclut un assortiment de fromages à raclette et de charcuteries fines, une bouteille de vin, et un accès au spa."
+          },
+          "romanticGourmet": {
+            "name": "Le romantique gourmet (pour 2)",
+            "description": "Ce pack inclut un plateau de charcuterie et fromage, une bouteille de crémant, un flacon d'huile de massage et un accès au spa."
+          },
+          "racletteRomantic": {
+            "name": "La raclette romantique (pour 2)",
+            "description": "Ce pack inclut un assortiment de viandes grillées et d'accompagnements frais, une bouteille de crémant, et un accès au spa."
+          }
+        },
+        "spa": {
+          "basic": {
+            "name": "Formule SPA (2 pers)",
+            "description": "Profitez d'un moment de détente au spa."
+          },
+          "withBottle": {
+            "name": "Formule SPA + bouteille (2 pers)",
+            "description": "Spa et bouteille de vin pour une expérience complète."
+          }
+        },
+        "meals": {
+          "meatballsLiege": {
+            "name": "Boulettes de viande sauce liégeoise",
+            "description": "Dégustez nos délicieuses boulettes de viande sauce liégeoise accompagnées d'une purée de pommes de terre maison."
+          },
+          "meatballsTomato": {
+            "name": "Boulette de viande sauce tomate",
+            "description": "Dégustez nos délicieuses boulettes de viande mijotées dans une sauce tomate maison."
+          },
+          "waterzooi": {
+            "name": "Waterzooi de volaille",
+            "description": "Savourez notre waterzooi de volaille, une spécialité originaire de la région flamande."
+          },
+          "chiliVeg": {
+            "name": "Chili végétarien",
+            "description": "Une délicieuse création végétarienne préparée avec soin."
+          },
+          "carrotSoup": {
+            "name": "Velouté de carotte et cumin",
+            "description": "Un velouté onctueux aux carottes parfumé au cumin."
+          }
+        },
+        "drinks": {
+          "brutBioul": {
+            "description": "Un vin effervescent local de qualité exceptionnelle."
+          },
+          "cortilBarco": {
+            "description": "Un vin rouge élégant aux notes fruitées."
+          },
+          "terreCharlot": {
+            "description": "Un vin blanc raffiné aux arômes subtils."
+          },
+          "houblondeTriple": {
+            "description": "Une bière triple traditionnelle belge."
+          },
+          "houblondeBlonde": {
+            "description": "Une bière blonde rafraîchissante."
+          },
+          "houblondeWhite": {
+            "description": "Une IPA blanche aux notes agrumes."
+          },
+          "bruneCondroz": {
+            "description": "Une bière brune locale du Condroz."
+          },
+          "ambreeCondroz": {
+            "description": "Une bière ambrée aux malts caramélisés."
+          },
+          "blancheCondroz": {
+            "description": "Une bière blanche légère et rafraîchissante."
+          },
+          "appleJuice": {
+            "description": "Un jus de pomme naturel et rafraîchissant."
+          },
+          "ritchieLemonRasp": {
+            "description": "Une boisson pétillante aux saveurs de citron et framboise."
+          },
+          "ritchieOrangeVan": {
+            "description": "Un mélange rafraîchissant d'orange et de vanille."
+          },
+          "ritchieCola": {
+            "description": "Un cola artisanal unique."
+          },
+          "ritchieColaZero": {
+            "description": "La version sans sucre du cola artisanal."
+          }
+        },
+        "formulesRepas": {
+          "breakfast": {
+            "name": "Formule petit-déjeuner (2 pers)",
+            "description": "Un petit-déjeuner copieux pour bien commencer la journée."
+          },
+          "gourmet": {
+            "name": "Formule gourmet (2 pers)",
+            "description": "Une expérience gastronomique inoubliable."
+          },
+          "raclette": {
+            "name": "Formule raclette (2 pers)",
+            "description": "Une raclette conviviale avec produits locaux."
+          },
+          "apero": {
+            "name": "Formule planche apéro (2 pers)",
+            "description": "Une planche apéritive généreuse à partager."
+          }
+        },
+        "formulesDecouverte": {
+          "passion": {
+            "name": "Formule passion",
+            "description": "Une formule romantique pour les couples."
+          },
+          "birthday": {
+            "name": "Formule anniversaire (2 pers)",
+            "description": "Célébrez votre anniversaire avec notre formule spéciale."
+          }
+        },
+        "additionalPerson": "Personne supplémentaire (+{{price}}€/pers)",
+        "infoSup": {
+          "ownerMessage": {
+            "label": "Laissez un message pour le propriétaire",
+            "placeholder": "Laissez un message pour le propriétaire"
+          },
+          "promoCode": {
+            "label": "Code promo",
+            "placeholder": "Entrez votre code promo",
+            "button": "Appliquer",
+            "applied": "Code promo {{code}} appliqué : -{{discount}}€",
+            "error": "Code promo invalide"
+          }
+        }
       },
-      "romanticGourmet": {
-        "name": "Le romantique gourmet (pour 2)",
-        "description": "Ce pack inclut un plateau de charcuterie et fromage, une bouteille de crémant, un flacon d'huile de massage et un accès au spa."
+      "navigation": {
+        "buttons": {
+          "previous": "Précédent",
+          "next": "Suivant",
+          "confirm": "Confirmer"
+        }
       },
-      "racletteRomantic": {
-        "name": "La raclette romantique (pour 2)",
-        "description": "Ce pack inclut un assortiment de viandes grillées et d'accompagnements frais, une bouteille de crémant, et un accès au spa."
+      "priceDetails": {
+        "notAvailable": "Non disponible",
+        "roomNotAvailable": "Cette chambre n'est malheureusement pas disponible pour les dates sélectionnées.",
+        "additionalPerson": "Personne supplémentaire",
+        "title": "Détail des prix:",
+        "basePrice": "Prix de base",
+        "longStayDiscount": "Réduction long séjour",
+        "promoCode": "Code promo",
+        "subtotal": "Sous-total",
+        "totalDiscounts": "Total des réductions",
+        "total": "Total",
+        "taxesIncluded": "* Prix total incluant toutes les taxes et frais",
+        "depositRequired": "** Acompte requis : {{percentage}}% ({{amount}} EUR)"
+      },
+      "propertyDetails": {
+        "unavailableDates": "Dates non disponibles : ",
+        "roomUnavailable": {
+          "title": "Ce logement n'est pas disponible pour les dates sélectionnées",
+          "message": "Veuillez sélectionner d'autres dates pour ce logement ou consulter nos autres options"
+        },
+        "tabs": {
+          "bookingDetails": "Détails de la réservation",
+          "roomInfo": "Informations sur la chambre"
+        },
+        "guests": {
+          "singular": "personne",
+          "plural": "personnes"
+        },
+        "selectDatePrompt": "Veuillez sélectionner une date",
+        "selectRoom": "Sélectionner cette chambre",
+        "unavailableForDates": "Non disponible pour ces dates",
+        "loading": "Chargement..."
+      },
+      "terms": {
+        "accept": "J'accepte les ",
+        "generalConditions": "conditions générales",
+        "required": "Vous devez accepter les conditions générales pour continuer."
+      },
+      "timeSelect": {
+        "arrivalTime": "Heure d'arrivée",
+        "placeholder": "Sélectionnez l'heure d'arrivée"
+      },
+      "bookingConfirmation": {
+        "loading": {
+          "title": "Traitement de votre réservation...",
+          "message": "Veuillez patienter pendant que nous confirmons votre paiement."
+        },
+        "error": {
+          "title": "Une erreur s'est produite lors de la récupération de vos détails de réservation.",
+          "message": "Veuillez vérifier votre email pour les détails de la réservation ou nous contacter."
+        },
+        "success": {
+          "title": "Réservation Confirmée",
+          "subtitle": "Une confirmation vous a été envoyée à {{email}}",
+          "sections": {
+            "stayDetails": {
+              "title": "Détails du séjour",
+              "checkIn": "Check-in: {{date}}",
+              "arrivalTime": "Heure d'arrivée: {{time}}",
+              "checkOut": "Check-out: {{date}}",
+              "travelers": "Voyageurs: {{adults}} adultes",
+              "travelersWithChildren": "Voyageurs: {{adults}} adultes, {{children}} enfants"
+            },
+            "guestDetails": {
+              "title": "Informations du client",
+              "fullName": "Nom complet: {{firstName}} {{lastName}}",
+              "email": "Email: {{email}}",
+              "phone": "Téléphone: {{phone}}"
+            },
+            "priceDetails": {
+              "title": "Détails du prix",
+              "basePrice": "Prix de base: {{price}}€",
+              "extraPerson": "Personne supplémentaire (x{{quantity}}): {{price}}€",
+              "longStayDiscount": "Réduction long séjour ({{percentage}}%): -{{amount}}€",
+              "promoCode": "Code promo ({{code}}): -{{amount}}€",
+              "total": "Total: {{price}}€",
+              "termsAccepted": "Conditions générales: Acceptée"
+            },
+            "address": {
+              "title": "Adresse"
+            }
+          },
+          "buttons": {
+            "backHome": "Retour à l'accueil",
+            "print": "Imprimer"
+          }
+        }
       }
-    },
-    "spa": {
-      "basic": {
-        "name": "Formule SPA (2 pers)",
-        "description": "Profitez d'un moment de détente au spa."
-      },
-      "withBottle": {
-        "name": "Formule SPA + bouteille (2 pers)",
-        "description": "Spa et bouteille de vin pour une expérience complète."
-      }
-    },
-    "meals": {
-      "meatballsLiege": {
-        "name": "Boulettes de viande sauce liégeoise",
-        "description": "Dégustez nos délicieuses boulettes de viande sauce liégeoise accompagnées d'une purée de pommes de terre maison."
-      },
-      "meatballsTomato": {
-        "name": "Boulette de viande sauce tomate",
-        "description": "Dégustez nos délicieuses boulettes de viande mijotées dans une sauce tomate maison."
-      },
-      "waterzooi": {
-        "name": "Waterzooi de volaille",
-        "description": "Savourez notre waterzooi de volaille, une spécialité originaire de la région flamande."
-      },
-      "chiliVeg": {
-        "name": "Chili végétarien",
-        "description": "Une délicieuse création végétarienne préparée avec soin."
-      },
-      "carrotSoup": {
-        "name": "Velouté de carotte et cumin",
-        "description": "Un velouté onctueux aux carottes parfumé au cumin."
-      }
-    },
-    "drinks": {
-      "brutBioul": {
-        "description": "Un vin effervescent local de qualité exceptionnelle."
-      },
-      "cortilBarco": {
-        "description": "Un vin rouge élégant aux notes fruitées."
-      },
-      "terreCharlot": {
-        "description": "Un vin blanc raffiné aux arômes subtils."
-      },
-      "houblondeTriple": {
-        "description": "Une bière triple traditionnelle belge."
-      },
-      "houblondeBlonde": {
-        "description": "Une bière blonde rafraîchissante."
-      },
-      "houblondeWhite": {
-        "description": "Une IPA blanche aux notes agrumes."
-      },
-      "bruneCondroz": {
-        "description": "Une bière brune locale du Condroz."
-      },
-      "ambreeCondroz": {
-        "description": "Une bière ambrée aux malts caramélisés."
-      },
-      "blancheCondroz": {
-        "description": "Une bière blanche légère et rafraîchissante."
-      },
-      "appleJuice": {
-        "description": "Un jus de pomme naturel et rafraîchissant."
-      },
-      "ritchieLemonRasp": {
-        "description": "Une boisson pétillante aux saveurs de citron et framboise."
-      },
-      "ritchieOrangeVan": {
-        "description": "Un mélange rafraîchissant d'orange et de vanille."
-      },
-      "ritchieCola": {
-        "description": "Un cola artisanal unique."
-      },
-      "ritchieColaZero": {
-        "description": "La version sans sucre du cola artisanal."
-      }
-    },
-    "formulesRepas": {
-      "breakfast": {
-        "name": "Formule petit-déjeuner (2 pers)",
-        "description": "Un petit-déjeuner copieux pour bien commencer la journée."
-      },
-      "gourmet": {
-        "name": "Formule gourmet (2 pers)",
-        "description": "Une expérience gastronomique inoubliable."
-      },
-      "raclette": {
-        "name": "Formule raclette (2 pers)",
-        "description": "Une raclette conviviale avec produits locaux."
-      },
-      "apero": {
-        "name": "Formule planche apéro (2 pers)",
-        "description": "Une planche apéritive généreuse à partager."
-      }
-    },
-    "formulesDecouverte": {
-      "passion": {
-        "name": "Formule passion",
-        "description": "Une formule romantique pour les couples."
-      },
-      "birthday": {
-        "name": "Formule anniversaire (2 pers)",
-        "description": "Célébrez votre anniversaire avec notre formule spéciale."
-      }
-    },
-    "additionalPerson": "Personne supplémentaire (+{{price}}€/pers)",
-    "infoSup": {
-      "ownerMessage": {
-        "label": "Laissez un message pour le propriétaire",
-        "placeholder": "Laissez un message pour le propriétaire"
-      },
-      "promoCode": {
-        "label": "Code promo",
-        "placeholder": "Entrez votre code promo",
-        "button": "Appliquer",
-        "applied": "Code promo {{code}} appliqué : -{{discount}}€",
-        "error": "Code promo invalide"
-      }
-    }
-  },
-  "navigation": {
-    "buttons": {
-      "previous": "Précédent",
-      "next": "Suivant",
-      "confirm": "Confirmer"
-    }
-  },
-  "priceDetails": {
-    "notAvailable": "Non disponible",
-    "roomNotAvailable": "Cette chambre n'est malheureusement pas disponible pour les dates sélectionnées.",
-    "additionalPerson": "Personne supplémentaire",
-    "title": "Détail des prix:",
-    "basePrice": "Prix de base",
-    "longStayDiscount": "Réduction long séjour",
-    "promoCode": "Code promo",
-    "subtotal": "Sous-total",
-    "totalDiscounts": "Total des réductions",
-    "total": "Total",
-    "taxesIncluded": "* Prix total incluant toutes les taxes et frais",
-    "depositRequired": "** Acompte requis : {{percentage}}% ({{amount}} EUR)"
-  },
-  "propertyDetails": {
-    "unavailableDates": "Dates non disponibles : ",
-    "roomUnavailable": {
-      "title": "Ce logement n'est pas disponible pour les dates sélectionnées",
-      "message": "Veuillez sélectionner d'autres dates pour ce logement ou consulter nos autres options"
-    },
-    "tabs": {
-      "bookingDetails": "Détails de la réservation",
-      "roomInfo": "Informations sur la chambre"
-    },
-    "guests": {
-      "singular": "personne",
-      "plural": "personnes"
-    },
-    "selectDatePrompt": "Veuillez sélectionner une date",
-    "selectRoom": "Sélectionner cette chambre",
-    "unavailableForDates": "Non disponible pour ces dates",
-    "loading": "Chargement..."
-  },
-  "terms": {
-    "accept": "J'accepte les ",
-    "generalConditions": "conditions générales",
-    "required": "Vous devez accepter les conditions générales pour continuer."
-  },
-  "timeSelect": {
-    "arrivalTime": "Heure d'arrivée",
-    "placeholder": "Sélectionnez l'heure d'arrivée"
-  }
-
-
     }
   }
