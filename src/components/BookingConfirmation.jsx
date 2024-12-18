@@ -1,29 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-
-import LocalStorageDebug from './LocalStorageDebug';
-
-import logoBaseilles from "../assets/logoBaseilles.webp"
-import "../assets/bookingConfirmation.css"
+import { useTranslation } from "react-i18next";
+import logoBaseilles from "../assets/logoBaseilles.webp";
+import "../assets/bookingConfirmation.css";
 
 const BookingConfirmation = () => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState("loading");
   const [bookingDetails, setBookingDetails] = useState(null);
   const [searchParams] = useSearchParams();
   const paymentIntent = searchParams.get("payment_intent");
 
   useEffect(() => {
-    console.log('Payment Intent:', paymentIntent);
+    console.log("Payment Intent:", paymentIntent);
     const storedBookingData = localStorage.getItem("bookingData");
-    console.log('Initial stored data:', storedBookingData);
-    
+    console.log("Initial stored data:", storedBookingData);
+
     if (storedBookingData) {
       try {
         const parsedData = JSON.parse(storedBookingData);
-        console.log('Parsed booking data:', parsedData);
+        console.log("Parsed booking data:", parsedData);
         setBookingDetails(parsedData);
         setStatus("success");
-        // Only remove after confirming the data is displayed
         if (parsedData) {
           localStorage.removeItem("bookingData");
         }
@@ -33,16 +31,14 @@ const BookingConfirmation = () => {
       }
     } else {
       if (paymentIntent) {
-        console.log('No stored data, fetching from API...');
         fetchBookingDetails(paymentIntent);
       }
     }
   }, [paymentIntent]);
 
-  const API_URL = "https://booking-9u8u.onrender.com/"
+  const API_URL = "https://booking-9u8u.onrender.com/";
 
   const fetchBookingDetails = async (paymentIntentId) => {
-
     try {
       const response = await fetch(
         `${API_URL}/api/bookings/${paymentIntentId}`
@@ -66,12 +62,25 @@ const BookingConfirmation = () => {
     }).format(date);
   };
 
+  const renderExtraName = (extra) => {
+    // Handle translation keys that start with 'extras.'
+    if (extra.name && extra.name.startsWith("extras.")) {
+      return t(extra.name);
+    }
+    // Handle direct names (like drinks)
+    return extra.name;
+  };
+
+  const formatPrice = (price) => {
+    return typeof price === "number" ? price.toFixed(2) : "0.00";
+  };
+
   if (status === "loading") {
     return (
       <div className="container">
         <div className="card">
-          <h2>Traitement de votre réservation...</h2>
-          <p>Veuillez patienter pendant que nous confirmons votre paiement.</p>
+          <h2>{t("bookingConfirmation.loading.title")}</h2>
+          <p>{t("bookingConfirmation.loading.message")}</p>
         </div>
       </div>
     );
@@ -81,8 +90,8 @@ const BookingConfirmation = () => {
     return (
       <div className="container">
         <div className="card">
-          <h2>Une erreur s'est produite lors de la récupération de vos détails de réservation.</h2>
-          <p>Veuillez vérifier votre email pour les détails de la réservation ou nous contacter.</p>
+          <h2>{t("bookingConfirmation.error.title")}</h2>
+          <p>{t("bookingConfirmation.error.message")}</p>
         </div>
       </div>
     );
@@ -90,17 +99,27 @@ const BookingConfirmation = () => {
 
   return (
     <div
-    style={{ minHeight: "100vh", minWidth: "100vw", display: "flex", alignItems: "center" }}
-     className="container">
+      style={{
+        minHeight: "100vh",
+        minWidth: "100vw",
+        display: "flex",
+        alignItems: "center",
+      }}
+      className="container"
+    >
       <div className="card">
         {/* Success Header */}
         <div className="header">
-        <div className="icon-container">
+          <div className="icon-container">
             <img src={logoBaseilles} alt="Logo Baseilles" className="icon" />
           </div>
           <div>
-            <h1 className="title">Réservation Confirmée</h1>
-            <p className="subtitle">Une confirmation vous a été envoyée à {bookingDetails?.email}</p>
+            <h1 className="title">{t("bookingConfirmation.success.title")}</h1>
+            <p className="subtitle">
+              {t("bookingConfirmation.success.subtitle", {
+                email: bookingDetails?.email,
+              })}
+            </p>
           </div>
         </div>
 
@@ -108,76 +127,152 @@ const BookingConfirmation = () => {
         <div className="grid">
           {/* Stay Details */}
           <div className="details-card">
-            <h2 className="titleConfirmation">Détails du séjour</h2>
-            <p>Check-in: {formatDate(bookingDetails?.arrivalDate)}</p>
-            <p>Heure d'arrivée: {bookingDetails?.arrivalTime}</p>
-            <p>Check-out: {formatDate(bookingDetails?.departureDate)}</p>
-            <p>Voyageurs: {bookingDetails?.adults} adultes
-              {bookingDetails?.children > 0 && `, ${bookingDetails?.children} enfants`}</p>
+            <h2 className="titleConfirmation">
+              {t("bookingConfirmation.sections.stayDetails.title")}
+            </h2>
+            <p>
+              {t("bookingConfirmation.sections.stayDetails.checkIn", {
+                date: formatDate(bookingDetails?.arrivalDate),
+              })}
+            </p>
+            <p>
+              {t("bookingConfirmation.sections.stayDetails.arrivalTime", {
+                time: bookingDetails?.arrivalTime,
+              })}
+            </p>
+            <p>
+              {t("bookingConfirmation.sections.stayDetails.checkOut", {
+                date: formatDate(bookingDetails?.departureDate),
+              })}
+            </p>
+            <p>
+              {bookingDetails?.children > 0
+                ? t(
+                    "bookingConfirmation.sections.stayDetails.travelersWithChildren",
+                    {
+                      adults: bookingDetails.adults,
+                      children: bookingDetails.children,
+                    }
+                  )
+                : t("bookingConfirmation.sections.stayDetails.travelers", {
+                    adults: bookingDetails.adults,
+                  })}
+            </p>
           </div>
 
           {/* Guest Details */}
           <div className="details-card">
-            <h2 className="titleConfirmation">Informations du client</h2>
-            <p>Nom complet: {bookingDetails?.firstName} {bookingDetails?.lastName}</p>
-            <p>Email: {bookingDetails?.email}</p>
-            <p>Téléphone: {bookingDetails?.phone || "-"}</p>
+            <h2 className="titleConfirmation">
+              {t("bookingConfirmation.sections.guestDetails.title")}
+            </h2>
+            <p>
+              {t("bookingConfirmation.sections.guestDetails.fullName", {
+                firstName: bookingDetails?.firstName,
+                lastName: bookingDetails?.lastName,
+              })}
+            </p>
+            <p>
+              {t("bookingConfirmation.sections.guestDetails.email", {
+                email: bookingDetails?.email,
+              })}
+            </p>
+            <p>
+              {t("bookingConfirmation.sections.guestDetails.phone", {
+                phone: bookingDetails?.phone || "-",
+              })}
+            </p>
           </div>
 
-
-          {/* Price Details */}
           {/* Price Details */}
           <div className="details-card">
-            <h2 className="titleConfirmation">Détails du prix</h2>
-            <p>Prix de base: {(bookingDetails?.priceBreakdown?.basePrice || 0).toFixed(2)}€</p>
-            
+            <h2 className="titleConfirmation">
+              {t("bookingConfirmation.sections.priceDetails.title")}
+            </h2>
+            <p>
+              {t("bookingConfirmation.sections.priceDetails.basePrice", {
+                price: formatPrice(bookingDetails?.priceBreakdown?.basePrice),
+              })}
+            </p>
+
             {/* Show extras */}
             {bookingDetails?.extras?.map((extra, index) => (
               <p key={index}>
-                {extra.nameKey} (x{extra.quantity}): {((extra.amount || 0) + (extra.extraPersonAmount || 0)).toFixed(2)}€
-                {extra.extraPersonQuantity > 0 && ` (dont ${extra.extraPersonQuantity} personne(s) supplémentaire(s))`}
+                {renderExtraName(extra)} (x{extra.quantity}):{" "}
+                {formatPrice(
+                  (extra.amount || 0) + (extra.extraPersonAmount || 0)
+                )}
+                €
+                {extra.extraPersonQuantity > 0 && (
+                  <span className="text-sm text-gray-600">
+                    {` (${t("extras.additionalPerson")}: ${
+                      extra.extraPersonQuantity
+                    })`}
+                  </span>
+                )}
               </p>
             ))}
 
             {/* Long stay discount if applicable */}
             {bookingDetails?.priceDetails?.discount > 0 && (
               <p className="discount-text">
-                Réduction long séjour ({bookingDetails.priceDetails.settings.lengthOfStayDiscount.discountPercentage}%): 
-                -{bookingDetails.priceDetails.discount.toFixed(2)}€
+                {t(
+                  "bookingConfirmation.sections.priceDetails.longStayDiscount",
+                  {
+                    percentage:
+                      bookingDetails.priceDetails.settings.lengthOfStayDiscount
+                        .discountPercentage,
+                    amount: formatPrice(bookingDetails.priceDetails.discount),
+                  }
+                )}
               </p>
             )}
 
             {/* Coupon discount if applicable */}
             {bookingDetails?.couponApplied && (
               <p className="discount-text">
-                Code promo ({bookingDetails.couponApplied.code}): 
-                -{bookingDetails.couponApplied.discount.toFixed(2)}€
+                {t("bookingConfirmation.sections.priceDetails.promoCode", {
+                  code: bookingDetails.couponApplied.code,
+                  amount: formatPrice(bookingDetails.couponApplied.discount),
+                })}
               </p>
             )}
 
             {/* Total */}
             <div className="total-section">
-              <p className="total-text">Total: {(bookingDetails?.price || 0).toFixed(2)}€</p>
-              <p>Conditions générales: Acceptée</p>
+              <p className="total-text">
+                {t("bookingConfirmation.sections.priceDetails.total", {
+                  price: formatPrice(bookingDetails?.price),
+                })}
+              </p>
+              <p>
+                {t("terms.generalConditions")}: {t("terms.accept")}
+              </p>
             </div>
           </div>
 
           {/* Address */}
           <div className="details-card">
-            <h2 className="titleConfirmation">Adresse</h2>
+            <h2 className="titleConfirmation">
+              {t("bookingConfirmation.sections.address.title")}
+            </h2>
             <p>{bookingDetails?.street}</p>
-            <p>{bookingDetails?.postalCode} {bookingDetails?.location}</p>
+            <p>
+              {bookingDetails?.postalCode} {bookingDetails?.location}
+            </p>
             <p>{bookingDetails?.country}</p>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="actions">
-          <button onClick={() => window.location.href = "/"} className="button-primary">
-            Retour à l'accueil
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="button-primary"
+          >
+            {t("bookingConfirmation.success.buttons.backHome")}
           </button>
           <button onClick={() => window.print()} className="button-secondary">
-            Imprimer
+            {t("bookingConfirmation.success.buttons.print")}
           </button>
         </div>
       </div>

@@ -86,6 +86,21 @@ const discountSettings = {
   },
 };
 
+const processExtraName = (extra) => {
+  // If the name is a translation key (starts with "extras.")
+  if (extra.name && extra.name.startsWith("extras.")) {
+    return {
+      nameKey: extra.name, // Store the original translation key
+      name: extra.name, // Keep the key as the name for Smoobu
+    };
+  }
+  // For direct names (like your drinks)
+  return {
+    name: extra.name,
+    nameKey: null,
+  };
+};
+
 // Calculate price with settings
 const calculatePriceWithSettings = (
   rates,
@@ -345,76 +360,87 @@ app.post(
           await wait(2000);
 
           // Process extras if they exist
-          if (bookingData.extras && bookingData.extras.length > 0) {
-            console.log("Creating extras as price elements...");
+if (bookingData.extras && bookingData.extras.length > 0) {
+  console.log("Creating extras as price elements...");
 
-            for (const extra of bookingData.extras) {
-              let retryCount = 0;
-              const maxRetries = 3;
+  for (const extra of bookingData.extras) {
+    let retryCount = 0;
+    const maxRetries = 3;
 
-              while (retryCount < maxRetries) {
-                try {
-                  // Add base extra
-                  if (!extra.name.includes('Personne supplémentaire')) {
-                    const extraResponse = await axios.post(
-                      `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-                      {
-                        type: "addon",
-                        name: extra.name,
-                        amount: extra.amount,
-                        quantity: extra.quantity,
-                        currencyCode: "EUR",
-                      },
-                      {
-                        headers: {
-                          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-                          "Content-Type": "application/json",
-                        },
-                      }
-                    );
-                    console.log(`Added base extra: ${extra.name}`, extraResponse.data);
-                  }
+    while (retryCount < maxRetries) {
+      try {
+        // Process the name
+        const processedName = processExtraName(extra);
 
-                  // If there are extra persons, add them as a separate price element
-                  if (extra.extraPersonQuantity > 0 && extra.extraPersonPrice) {
-                    await wait(1000); // Wait between requests
-                    const extraPersonResponse = await axios.post(
-                      `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-                      {
-                        type: "addon",
-                        name: `${extra.name} - Personne supplémentaire`,
-                        amount: extra.extraPersonPrice * extra.extraPersonQuantity,
-                        quantity: extra.extraPersonQuantity,
-                        currencyCode: "EUR",
-                      },
-                      {
-                        headers: {
-                          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-                          "Content-Type": "application/json",
-                        },
-                      }
-                    );
-                    console.log(`Added extra person charges for: ${extra.name}`, extraPersonResponse.data);
-                  }
-
-                  break; // Success - exit retry loop
-                } catch (extraError) {
-                  retryCount++;
-                  console.log(`Retry ${retryCount} for extra ${extra.name}`);
-                  
-                  if (retryCount === maxRetries) {
-                    console.error(
-                      `Failed to add extra ${extra.name} after ${maxRetries} attempts:`,
-                      extraError.response?.data || extraError.message
-                    );
-                  } else {
-                    await wait(2000 * retryCount); // Exponential backoff
-                    continue;
-                  }
-                }
-              }
+        // Add base extra
+        if (!processedName.name.includes("Personne supplémentaire")) {
+          const extraResponse = await axios.post(
+            `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+            {
+              type: "addon",
+              name: processedName.name,
+              nameKey: processedName.nameKey, // Store the translation key
+              amount: extra.amount,
+              quantity: extra.quantity,
+              currencyCode: "EUR",
+            },
+            {
+              headers: {
+                "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                "Content-Type": "application/json",
+              },
             }
-          }
+          );
+          console.log(
+            `Added base extra: ${processedName.name}`,
+            extraResponse.data
+          );
+        }
+
+        // If there are extra persons, add them with translation support
+        if (extra.extraPersonQuantity > 0 && extra.extraPersonPrice) {
+          await wait(1000);
+          const extraPersonResponse = await axios.post(
+            `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+            {
+              type: "addon",
+              name: `${processedName.name} - extras.additionalPerson`,
+              nameKey: "extras.additionalPerson",
+              amount: extra.extraPersonPrice * extra.extraPersonQuantity,
+              quantity: extra.extraPersonQuantity,
+              currencyCode: "EUR",
+            },
+            {
+              headers: {
+                "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          console.log(
+            `Added extra person charges for: ${processedName.name}`,
+            extraPersonResponse.data
+          );
+        }
+
+        break;
+      } catch (extraError) {
+        retryCount++;
+        console.log(`Retry ${retryCount} for extra ${extra.name}`);
+
+        if (retryCount === maxRetries) {
+          console.error(
+            `Failed to add extra ${extra.name} after ${maxRetries} attempts:`,
+            extraError.response?.data || extraError.message
+          );
+        } else {
+          await wait(2000 * retryCount); // Exponential backoff
+          continue;
+        }
+      }
+    }
+  }
+}
 
           // Clean up the pending booking after successful processing
           pendingBookings.delete(bookingReference);
