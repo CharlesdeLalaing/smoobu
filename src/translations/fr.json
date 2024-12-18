@@ -1,6 +1,5 @@
 {
     "translation": {
-
       "header": {
         "contact": {
           "phone": "+32 475 20 16 19",
@@ -23,7 +22,6 @@
           "giftCard": "Bon cadeau"
         }
       },
-
       "search": {
         "title": "Sélectionnez vos dates",
         "arrival": "Arrivée",

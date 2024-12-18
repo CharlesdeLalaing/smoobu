@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from 'react-i18next';
 import { Listbox } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 
@@ -17,6 +18,10 @@ const timeSlots = [
 ];
 
 export const TimeSelect = ({ label, name, value, onChange }) => {
+
+    const { t } = useTranslation();
+  
+
   return (
     <div>
       <label
@@ -36,7 +41,7 @@ export const TimeSelect = ({ label, name, value, onChange }) => {
           >
             <span className="flex items-center">
               <span className="block ml-3 truncate">
-                {value || "Heure d'arrivée"}
+                {value || t('timeSelect.arrivalTime')}
               </span>
             </span>
             <span className="absolute inset-y-0 right-0 flex items-center pr-2 ml-3 pointer-events-none">
