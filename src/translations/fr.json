@@ -75,29 +75,46 @@
       "loading": "Chargement des chambres..."
       },
       "booking": {
-      "steps": {
-        "extras": "1. Choix extras",
-        "notes": "2. Ajout note",
-        "contact": "3. Info contact"
-      },
-      "errors": {
-        "selectDates": "Veuillez sélectionner les deux dates",
-        "noRates": "Aucun tarif disponible pour les dates sélectionnées",
-        "fetchError": "Impossible de récupérer les tarifs",
-        "waitForPrice": "Veuillez attendre le calcul du prix avant de continuer.",
-        "paymentError": "Une erreur s'est produite lors de la création du paiement"
-      },
-      "coupon": {
-        "errors": {
-          "enterCode": "Veuillez entrer un code promo",
-          "invalid": "Code promo invalide"
+        "steps": {
+          "extras": "1. Choix extras",
+          "notes": "2. Ajout note",
+          "contact": "3. Info contact"
         },
-        "applied": "Code promo {{code}}"
-      },
-      "people": {
-        "singular": "personne",
-        "plural": "personnes"
-      }
+        "errors": {
+          "selectDates": "Veuillez sélectionner les deux dates",
+          "noRates": "Aucun tarif disponible pour les dates sélectionnées",
+          "fetchError": "Impossible de récupérer les tarifs",
+          "waitForPrice": "Veuillez attendre le calcul du prix avant de continuer",
+          "paymentError": "Une erreur s'est produite lors de la création du paiement",
+          "roomUnavailable": {
+            "title": "Ce logement n'est pas disponible pour les dates sélectionnées",
+            "message": "Veuillez sélectionner d'autres dates pour continuer votre réservation"
+          }
+        },
+        "coupon": {
+          "errors": {
+            "enterCode": "Veuillez entrer un code promo",
+            "invalid": "Code promo invalide"
+          },
+          "applied": "Code promo {{code}}"
+        },
+        "people": {
+          "singular": "personne",
+          "plural": "personnes"
+        },
+        "sections": {
+          "extras": {
+            "title": "Choix des extras",
+            "top": "Sélection des extras"
+          }
+        },
+        "messages": {
+          "error": "Erreur",
+          "success": "Succès"
+        },
+        "payment": {
+          "title": "Finaliser votre paiement"
+        }
       },
       "contact": {
         "fields": {

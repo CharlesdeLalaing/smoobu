@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from 'react-i18next';
 import { HeaderSection } from "./HeaderSection";
 import { SearchSection, RoomNavigation } from "./SearchSection";
 import { PropertyDetails } from "./PropertyDetails";
@@ -57,6 +58,9 @@ const BookingForm = () => {
   //   setFormData,
   //   handleApplyCoupon,
   // } = useBookingForm();
+
+  const { t } = useTranslation();
+
 
   const {
     formData,
@@ -459,7 +463,7 @@ const BookingForm = () => {
                   <div className="w-full h-full lg:w-1/2">
                     <div className="border border-[#668E73] p-4 rounded h-full flex flex-col">
                       <h2 className="text-xl font-semibold text-[#668E73] mb-6" id="extra_top">
-                        Choix des extras
+                      {t('booking.sections.extras.title')}
                       </h2>
                       <BookingSteps currentStep={currentStep} />
                       <div className="flex-1 mt-4 overflow-y-auto">
@@ -467,10 +471,10 @@ const BookingForm = () => {
                           <div className="flex flex-col items-center justify-center h-full text-center p-6">
                             <div className="bg-red-50 border border-red-200 rounded-md p-6 w-full max-w-md">
                               <p className="text-red-600 font-medium mb-2">
-                                Ce logement n'est pas disponible pour les dates sélectionnées
+                              {t('booking.errors.roomUnavailable.title')}
                               </p>
                               <p className="text-sm text-gray-600">
-                                Veuillez sélectionner d'autres dates pour continuer votre réservation
+                              {t('booking.errors.roomUnavailable.message')}
                               </p>
                             </div>
                           </div>
@@ -504,7 +508,7 @@ const BookingForm = () => {
           <div className="fixed inset-0 flex items-center justify-center">
             <div className="w-full p-5 mx-auto md:w-1/2">
               <h3 className="mb-4 text-lg font-medium">
-                Finaliser votre paiement
+              {t('booking.payment.title')}
               </h3>
               {clientSecret && (
                 <StripeWrapper

@@ -35,7 +35,6 @@ export const NavigationButtons = ({
           className={`px-4 py-2 text-[#668E73] border border-[#668E73] rounded-full
             ${(loading || disabled) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#668E73] hover:text-white'}`}
         >
-          Précédent
           {t('navigation.buttons.previous')}
         </button>
       )}
@@ -45,7 +44,6 @@ export const NavigationButtons = ({
           onClick={handleNext}
           className="px-4 py-2 bg-[#668E73] text-white rounded hover:bg-opacity-90"
         >
-          Suivant
           {t('navigation.buttons.next')}
         </button>
       )}
