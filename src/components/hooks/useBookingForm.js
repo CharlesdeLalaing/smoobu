@@ -451,7 +451,7 @@ const handleApplyCoupon = (couponCode) => {
   console.log('Found coupon info:', couponInfo);
 
   if (!couponInfo) {
-    console.log('Invalid coupon code');
+    console.log('Invalid coupon codee');
     setCouponError(t('booking.coupon.errors.invalid'));
     return;
   }
