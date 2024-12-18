@@ -128,35 +128,41 @@ const BookingConfirmation = () => {
           {/* Stay Details */}
           <div className="details-card">
             <h2 className="titleConfirmation">
-              {t("bookingConfirmation.sections.stayDetails.title")}
+              {t("bookingConfirmation.success.sections.stayDetails.title")}
             </h2>
             <p>
-              {t("bookingConfirmation.sections.stayDetails.checkIn", {
+              {t("bookingConfirmation.success.sections.stayDetails.checkIn", {
                 date: formatDate(bookingDetails?.arrivalDate),
               })}
             </p>
             <p>
-              {t("bookingConfirmation.sections.stayDetails.arrivalTime", {
-                time: bookingDetails?.arrivalTime,
-              })}
+              {t(
+                "bookingConfirmation.success.sections.stayDetails.arrivalTime",
+                {
+                  time: bookingDetails?.arrivalTime,
+                }
+              )}
             </p>
             <p>
-              {t("bookingConfirmation.sections.stayDetails.checkOut", {
+              {t("bookingConfirmation.success.sections.stayDetails.checkOut", {
                 date: formatDate(bookingDetails?.departureDate),
               })}
             </p>
             <p>
               {bookingDetails?.children > 0
                 ? t(
-                    "bookingConfirmation.sections.stayDetails.travelersWithChildren",
+                    "bookingConfirmation.success.sections.stayDetails.travelersWithChildren",
                     {
                       adults: bookingDetails.adults,
                       children: bookingDetails.children,
                     }
                   )
-                : t("bookingConfirmation.sections.stayDetails.travelers", {
-                    adults: bookingDetails.adults,
-                  })}
+                : t(
+                    "bookingConfirmation.success.sections.stayDetails.travelers",
+                    {
+                      adults: bookingDetails.adults,
+                    }
+                  )}
             </p>
           </div>
 
