@@ -32,7 +32,6 @@ const onApplyCoupon = () => {
       {/* Notes Section */}
       <div className="col-span-full">
         <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
-          Laissez un message pour le propriétaire
           {t('extras.infoSup.ownerMessage.label')}
           <textarea
             name="notice"
@@ -50,7 +49,6 @@ const onApplyCoupon = () => {
         <div className="flex items-end gap-4">
           <div className="flex-grow">
             <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
-              Code promo
               {t('extras.infoSup.promoCode.label')}
               <input
                 type="text"
@@ -69,7 +67,6 @@ const onApplyCoupon = () => {
             onClick={onApplyCoupon}
             className="h-12 px-6 rounded shadow-sm text-[16px] font-medium text-white bg-[#668E73] hover:bg-opacity-90 focus:outline-none"
           >
-            Appliquer
             {t('extras.infoSup.promoCode.button')}
           </button>
         </div>
@@ -77,7 +74,7 @@ const onApplyCoupon = () => {
           <div className="mt-2 text-sm text-green-600">
             Code promo {appliedCoupon.code} appliqué : -{appliedCoupon.discount}
             €
-            {t('extras.infoSup.promoCode.applied')}
+            {t('extras.infoSup.promoCode.appliedStart')} {appliedCoupon.code} {t('extras.infoSup.promoCode.appliedEnd')} {appliedCoupon.discount} {t('extras.infoSup.promoCode.appliedCurrency')}
           </div>
         )}
       </div>

@@ -303,7 +303,9 @@
                     "label": "Promo code",
                     "placeholder": "Enter your promo code",
                     "button": "Apply",
-                    "applied": "Promo code {{code}} applied: -{{discount}}€",
+                    "appliedStart": "Promo code ",
+                    "appliedEnd": "applied ",
+                    "appliedCurrency": "€",
                     "error": "Invalid promo code"
                 }
             }
