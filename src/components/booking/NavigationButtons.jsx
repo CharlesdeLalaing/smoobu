@@ -4,6 +4,7 @@ export const NavigationButtons = ({
   nextStep,
   isStepValid,
   loading,
+  disabled
 }) => {
 
   const handleNext = () => {
