@@ -581,10 +581,10 @@ export const PropertyDetails = ({
               <div key={room.id} className="space-y-4">
                 <div className="text-left mb-4">
                   <h4 className="font-montserrat text-xl text-[#D3B574] md:text-xl lg:text-2xl mb-4">
-                  {t(room.type)}
+                    {room.type}
                   </h4>
                   <h3 className="font-cormorant text-3xl text-gray-800 mb-2 md:text-2xl lg:text-[40px] font-light">
-                  {t(room.nameKey)}
+                    {room.name}
                   </h3>
                 </div>
                 <RoomCard room={room} isAvailable={false} />
