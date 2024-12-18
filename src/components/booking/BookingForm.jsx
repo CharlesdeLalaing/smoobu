@@ -337,6 +337,8 @@ const BookingForm = () => {
     nextStep,
     isStepValid,
     loading,
+     // Add this prop
+    isSelectedRoomAvailable: isSelectedRoomAvailable
   };
 
   const roomNavigationProps = {
