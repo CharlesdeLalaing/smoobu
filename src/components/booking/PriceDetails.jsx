@@ -182,8 +182,8 @@ export const PriceDetails = ({
 
       return {
         name: isExtraPerson
-          ? `${t(extra.nameKey)} - ${t('priceDetails.additionalPerson')}`
-          : t(extra.nameKey),
+          ? `${t(extra.name)} - ${t('priceDetails.additionalPerson')}`
+          : t(extra.name),
         quantity: quantity,
         price: isExtraPerson ? extra.extraPersonPrice : extra.price,
         total: (isExtraPerson ? extra.extraPersonPrice : extra.price) * quantity,
