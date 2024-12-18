@@ -274,6 +274,11 @@ const handleChange = async (e) => {
     // Check if we have a selected room and price details
     const selectedRoomPrice = priceDetails?.[formData.apartmentId];
 
+    if (!isSelectedRoomAvailable()) {
+      setError("Room is not available for selected dates");
+      return;
+    }
+
     if (!selectedRoomPrice) {
       setError(t('booking.errors.waitForPrice'));
       return;
