@@ -46,7 +46,7 @@ export const NavigationButtons = ({
               : "bg-gray-300 cursor-not-allowed"
           } text-white rounded`}
         >
-          {loading ? "En cours..." : "Passer au paiement"}
+          {loading ? "En cours..." : "Passer au paiemen"}
         </button>
       )}
     </div>
