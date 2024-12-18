@@ -385,6 +385,14 @@
             "print": "Print"
             }
         }
+        },
+        "paymentForm": {
+        "notLoaded": "Stripe not loaded yet",
+        "processing": "Processing...",
+        "payNow": "Pay now",
+        "errors": {
+            "generic": "An error occurred during payment"
+        }
         }
     }
 }

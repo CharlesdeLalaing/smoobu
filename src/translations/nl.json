@@ -386,6 +386,14 @@
             "print": "Afdrukken"
           }
         }
+      },
+      "paymentForm": {
+      "notLoaded": "Stripe is nog niet geladen",
+      "processing": "Verwerking...",
+      "payNow": "Nu betalen",
+      "errors": {
+        "generic": "Er is een fout opgetreden bij de betaling"
       }
+    }
     }
   }

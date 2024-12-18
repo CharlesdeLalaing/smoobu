@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { useTranslation } from 'react-i18next';
 
 const PaymentForm = ({ onSuccess, onError }) => {
+  const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -11,7 +13,7 @@ const PaymentForm = ({ onSuccess, onError }) => {
     event.preventDefault();
 
     if (!stripe || !elements) {
-      console.log("Stripe not loaded yet");
+      console.log(t('paymentForm.notLoaded'));
       return;
     }
 
@@ -29,7 +31,7 @@ const PaymentForm = ({ onSuccess, onError }) => {
 
       if (error) {
         console.error("Payment error:", error);
-        setErrorMessage(error.message);
+        setErrorMessage(error.message || t('paymentForm.errors.generic'));
         if (onError) onError(error.message);
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
         const bookingData = {
@@ -41,7 +43,7 @@ const PaymentForm = ({ onSuccess, onError }) => {
       }
     } catch (err) {
       console.error("Payment error:", err);
-      setErrorMessage(err.message);
+      setErrorMessage(err.message || t('paymentForm.errors.generic'));
       if (onError) onError(err.message);
     } finally {
       setLoading(false);
@@ -61,7 +63,7 @@ const PaymentForm = ({ onSuccess, onError }) => {
         disabled={loading || !stripe || !elements}
         className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-[16px] font-medium text-white bg-[#668E73] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#668E73] disabled:bg-gray-300 disabled:cursor-not-allowed"
       >
-        {loading ? "Traitement en cours..." : "Payer maintenant"}
+        {loading ? t('paymentForm.processing') : t('paymentForm.payNow')}
       </button>
     </form>
   );

@@ -388,6 +388,14 @@
             "print": "Imprimer"
           }
         }
+      },
+      "paymentForm": {
+      "notLoaded": "Stripe n'est pas encore chargé",
+      "processing": "Traitement en cours...",
+      "payNow": "Payer maintenant",
+      "errors": {
+        "generic": "Une erreur est survenue lors du paiement"
       }
+    }
     }
   }
