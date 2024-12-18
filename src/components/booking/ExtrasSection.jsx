@@ -266,7 +266,7 @@ export const ExtrasSection = ({
   }
 
   function renderExtraItem(item) {
-    const itemName = item.nameKey ? t(item.nameKey) : item.name;
+    const itemName = item.name ? t(item.name) : item.name;
     const itemDescription = item.descriptionKey ? t(item.descriptionKey) : item.description;
 
     return (
