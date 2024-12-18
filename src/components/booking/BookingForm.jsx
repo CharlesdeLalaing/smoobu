@@ -618,6 +618,7 @@ const BookingForm = () => {
     nextStep,
     isStepValid,
     loading,
+    handleSubmit, // Add this
   };
 
   const roomNavigationProps = {

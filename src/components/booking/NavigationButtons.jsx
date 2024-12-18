@@ -23,18 +23,9 @@ export const NavigationButtons = ({
           {t('navigation.buttons.previous')}
         </button>
       )}
-      {/* <button
-        type="button"
-        onClick={nextStep}
-        disabled={!isStepValid || loading || disabled}
-        className={`px-4 py-2 text-white bg-[#668E73] rounded-full ml-auto
-          ${(!isStepValid || loading || disabled) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-opacity-90'}`}
-      >
-        {currentStep === 3 ? t('navigation.buttons.confirm') : t('navigation.buttons.next')}
-      </button> */}
       <button
         type="button"
-        onClick={currentStep === 3 ? handleSubmit : nextStep}
+        onClick={nextStep}
         disabled={!isStepValid || loading || disabled}
         className={`px-4 py-2 text-white bg-[#668E73] rounded-full ml-auto
           ${(!isStepValid || loading || disabled) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-opacity-90'}`}
