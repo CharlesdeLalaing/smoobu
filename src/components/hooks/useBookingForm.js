@@ -268,120 +268,120 @@ const handleChange = async (e) => {
     }
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  //   // Check if we have a selected room and price details
-  //   const selectedRoomPrice = priceDetails?.[formData.apartmentId];
+    // Check if we have a selected room and price details
+    const selectedRoomPrice = priceDetails?.[formData.apartmentId];
 
-  //   if (!selectedRoomPrice) {
-  //     setError(t('booking.errors.waitForPrice'));
-  //     return;
-  //   }
+    if (!selectedRoomPrice) {
+      setError(t('booking.errors.waitForPrice'));
+      return;
+    }
 
-  //   if (!isStepValid()) {
-  //     setError("Please fill in all required fields");
-  //     return;
-  //   }
+    if (!isStepValid()) {
+      setError("Please fill in all required fields");
+      return;
+    }
 
-  //   setLoading(true);
-  //   try {
-  //     const selectedExtrasArray = Object.entries(selectedExtras)
-  //       .filter(([_, quantity]) => quantity > 0)
-  //       .map(([extraId, quantity]) => {
-  //         const isExtraPerson = extraId.endsWith("-extra");
-  //         const baseExtraId = isExtraPerson
-  //           ? extraId.replace("-extra", "")
-  //           : extraId;
-  //         const extra = Object.values(extraCategories)
-  //           .flatMap((category) => category.items)
-  //           .find((item) => item.id === baseExtraId);
+    setLoading(true);
+    try {
+      const selectedExtrasArray = Object.entries(selectedExtras)
+        .filter(([_, quantity]) => quantity > 0)
+        .map(([extraId, quantity]) => {
+          const isExtraPerson = extraId.endsWith("-extra");
+          const baseExtraId = isExtraPerson
+            ? extraId.replace("-extra", "")
+            : extraId;
+          const extra = Object.values(extraCategories)
+            .flatMap((category) => category.items)
+            .find((item) => item.id === baseExtraId);
 
-  //         if (!extra) return null;
+          if (!extra) return null;
 
-  //         if (isExtraPerson) {
-  //           return {
-  //             type: "addon",
-  //             name: `${extra.name} - Personne supplémentaire`,
-  //             amount: extra.extraPersonPrice * quantity,
-  //             quantity: quantity,
-  //             currencyCode: "EUR",
-  //           };
-  //         }
+          if (isExtraPerson) {
+            return {
+              type: "addon",
+              name: `${extra.name} - Personne supplémentaire`,
+              amount: extra.extraPersonPrice * quantity,
+              quantity: quantity,
+              currencyCode: "EUR",
+            };
+          }
 
-  //         return {
-  //           type: "addon",
-  //           name: extra.name,
-  //           amount: extra.price * quantity,
-  //           quantity: quantity,
-  //           currencyCode: "EUR",
-  //           extraPersonPrice: extra.extraPersonPrice,
-  //           extraPersonQuantity: selectedExtras[`${extraId}-extra`] || 0,
-  //         };
-  //       })
-  //       .filter(Boolean);
+          return {
+            type: "addon",
+            name: extra.name,
+            amount: extra.price * quantity,
+            quantity: quantity,
+            currencyCode: "EUR",
+            extraPersonPrice: extra.extraPersonPrice,
+            extraPersonQuantity: selectedExtras[`${extraId}-extra`] || 0,
+          };
+        })
+        .filter(Boolean);
 
-  //     // Calculate extras total
-  //     const extrasTotal = selectedExtrasArray.reduce(
-  //       (sum, extra) => sum + extra.amount,
-  //       0
-  //     );
+      // Calculate extras total
+      const extrasTotal = selectedExtrasArray.reduce(
+        (sum, extra) => sum + extra.amount,
+        0
+      );
 
-  //     // Get the base price from price details
-  //     const basePrice = selectedRoomPrice.originalPrice;
-  //     const subtotalBeforeDiscounts = basePrice + extrasTotal;
+      // Get the base price from price details
+      const basePrice = selectedRoomPrice.originalPrice;
+      const subtotalBeforeDiscounts = basePrice + extrasTotal;
 
-  //     // Get discounts
-  //     const longStayDiscount = selectedRoomPrice.discount || 0;
-  //     const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
+      // Get discounts
+      const longStayDiscount = selectedRoomPrice.discount || 0;
+      const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
 
-  //     // Calculate final total
-  //     const finalTotal =
-  //       subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
+      // Calculate final total
+      const finalTotal =
+        subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
 
-  //     console.log("Payment calculation:", {
-  //       basePrice,
-  //       extrasTotal,
-  //       subtotalBeforeDiscounts,
-  //       longStayDiscount,
-  //       couponDiscount,
-  //       finalTotal,
-  //     });
+      console.log("Payment calculation:", {
+        basePrice,
+        extrasTotal,
+        subtotalBeforeDiscounts,
+        longStayDiscount,
+        couponDiscount,
+        finalTotal,
+      });
 
-  //     const response = await api.post("/create-payment-intent", {
-  //       price: finalTotal,
-  //       bookingData: {
-  //         ...formData,
-  //         price: finalTotal,
-  //         basePrice: basePrice,
-  //         extras: selectedExtrasArray,
-  //         couponApplied: appliedCoupon
-  //           ? {
-  //               code: appliedCoupon.code,
-  //               discount: couponDiscount,
-  //             }
-  //           : null,
-  //         priceDetails: {
-  //           ...selectedRoomPrice,
-  //           finalPrice: finalTotal,
-  //           calculatedDiscounts: {
-  //             longStay: longStayDiscount,
-  //             coupon: couponDiscount,
-  //           },
-  //         },
-  //       },
-  //     });
+      const response = await api.post("/create-payment-intent", {
+        price: finalTotal,
+        bookingData: {
+          ...formData,
+          price: finalTotal,
+          basePrice: basePrice,
+          extras: selectedExtrasArray,
+          couponApplied: appliedCoupon
+            ? {
+                code: appliedCoupon.code,
+                discount: couponDiscount,
+              }
+            : null,
+          priceDetails: {
+            ...selectedRoomPrice,
+            finalPrice: finalTotal,
+            calculatedDiscounts: {
+              longStay: longStayDiscount,
+              coupon: couponDiscount,
+            },
+          },
+        },
+      });
 
-  //     setClientSecret(response.data.clientSecret);
-  //     setShowPayment(true);
-  //     setError(null);
-  //   } catch (err) {
-  //     console.error("Error creating payment:", err);
-  //     setError(err.response?.data?.error || t('booking.errors.paymentError'));
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+      setClientSecret(response.data.clientSecret);
+      setShowPayment(true);
+      setError(null);
+    } catch (err) {
+      console.error("Error creating payment:", err);
+      setError(err.response?.data?.error || t('booking.errors.paymentError'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // const handleSubmit = async (e) => {
   //   if (e) {
@@ -497,119 +497,119 @@ const handleChange = async (e) => {
   // };
 
 
-  const handleSubmit = async (e) => {
-    if (e && e.preventDefault) {
-      e.preventDefault();
-    }
+  // const handleSubmit = async (e) => {
+  //   if (e && e.preventDefault) {
+  //     e.preventDefault();
+  //   }
 
-    // Check if we have a selected room and price details
-    const selectedRoomPrice = priceDetails?.[formData.apartmentId];
+  //   // Check if we have a selected room and price details
+  //   const selectedRoomPrice = priceDetails?.[formData.apartmentId];
 
-    if (!selectedRoomPrice) {
-      setError(t('booking.errors.waitForPrice'));
-      return;
-    }
+  //   if (!selectedRoomPrice) {
+  //     setError(t('booking.errors.waitForPrice'));
+  //     return;
+  //   }
 
-    setLoading(true);
-    try {
-      const selectedExtrasArray = Object.entries(selectedExtras)
-        .filter(([_, quantity]) => quantity > 0)
-        .map(([extraId, quantity]) => {
-          const isExtraPerson = extraId.endsWith("-extra");
-          const baseExtraId = isExtraPerson
-            ? extraId.replace("-extra", "")
-            : extraId;
-          const extra = Object.values(extraCategories)
-            .flatMap((category) => category.items)
-            .find((item) => item.id === baseExtraId);
+  //   setLoading(true);
+  //   try {
+  //     const selectedExtrasArray = Object.entries(selectedExtras)
+  //       .filter(([_, quantity]) => quantity > 0)
+  //       .map(([extraId, quantity]) => {
+  //         const isExtraPerson = extraId.endsWith("-extra");
+  //         const baseExtraId = isExtraPerson
+  //           ? extraId.replace("-extra", "")
+  //           : extraId;
+  //         const extra = Object.values(extraCategories)
+  //           .flatMap((category) => category.items)
+  //           .find((item) => item.id === baseExtraId);
 
-          if (!extra) return null;
+  //         if (!extra) return null;
 
-          if (isExtraPerson) {
-            return {
-              type: "addon",
-              name: `${extra.nameKey ? t(extra.nameKey) : extra.name} - ${t('extras.additionalPerson')}`,
-              amount: extra.extraPersonPrice * quantity,
-              quantity: quantity,
-              currencyCode: "EUR",
-            };
-          }
+  //         if (isExtraPerson) {
+  //           return {
+  //             type: "addon",
+  //             name: `${extra.nameKey ? t(extra.nameKey) : extra.name} - ${t('extras.additionalPerson')}`,
+  //             amount: extra.extraPersonPrice * quantity,
+  //             quantity: quantity,
+  //             currencyCode: "EUR",
+  //           };
+  //         }
 
-          return {
-            type: "addon",
-            name: extra.nameKey ? t(extra.nameKey) : extra.name,
-            amount: extra.price * quantity,
-            quantity: quantity,
-            currencyCode: "EUR",
-            extraPersonPrice: extra.extraPersonPrice,
-            extraPersonQuantity: selectedExtras[`${extraId}-extra`] || 0,
-          };
-        })
-        .filter(Boolean);
+  //         return {
+  //           type: "addon",
+  //           name: extra.nameKey ? t(extra.nameKey) : extra.name,
+  //           amount: extra.price * quantity,
+  //           quantity: quantity,
+  //           currencyCode: "EUR",
+  //           extraPersonPrice: extra.extraPersonPrice,
+  //           extraPersonQuantity: selectedExtras[`${extraId}-extra`] || 0,
+  //         };
+  //       })
+  //       .filter(Boolean);
 
-      // Calculate extras total
-      const extrasTotal = selectedExtrasArray.reduce(
-        (sum, extra) => sum + extra.amount,
-        0
-      );
+  //     // Calculate extras total
+  //     const extrasTotal = selectedExtrasArray.reduce(
+  //       (sum, extra) => sum + extra.amount,
+  //       0
+  //     );
 
-      // Get the base price from price details
-      const basePrice = selectedRoomPrice.originalPrice;
-      const subtotalBeforeDiscounts = basePrice + extrasTotal;
+  //     // Get the base price from price details
+  //     const basePrice = selectedRoomPrice.originalPrice;
+  //     const subtotalBeforeDiscounts = basePrice + extrasTotal;
 
-      // Get discounts
-      const longStayDiscount = selectedRoomPrice.discount || 0;
-      const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
+  //     // Get discounts
+  //     const longStayDiscount = selectedRoomPrice.discount || 0;
+  //     const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
 
-      // Calculate final total
-      const finalTotal =
-        subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
+  //     // Calculate final total
+  //     const finalTotal =
+  //       subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
 
-      console.log("Payment calculation:", {
-        basePrice,
-        extrasTotal,
-        subtotalBeforeDiscounts,
-        longStayDiscount,
-        couponDiscount,
-        finalTotal,
-      });
+  //     console.log("Payment calculation:", {
+  //       basePrice,
+  //       extrasTotal,
+  //       subtotalBeforeDiscounts,
+  //       longStayDiscount,
+  //       couponDiscount,
+  //       finalTotal,
+  //     });
 
-      const response = await api.post("/create-payment-intent", {
-        price: finalTotal,
-        bookingData: {
-          ...formData,
-          price: finalTotal,
-          basePrice: basePrice,
-          extras: selectedExtrasArray,
-          couponApplied: appliedCoupon
-            ? {
-                code: appliedCoupon.code,
-                discount: couponDiscount,
-              }
-            : null,
-          priceDetails: {
-            ...selectedRoomPrice,
-            finalPrice: finalTotal,
-            calculatedDiscounts: {
-              longStay: longStayDiscount,
-              coupon: couponDiscount,
-            },
-          },
-        },
-      });
+  //     const response = await api.post("/create-payment-intent", {
+  //       price: finalTotal,
+  //       bookingData: {
+  //         ...formData,
+  //         price: finalTotal,
+  //         basePrice: basePrice,
+  //         extras: selectedExtrasArray,
+  //         couponApplied: appliedCoupon
+  //           ? {
+  //               code: appliedCoupon.code,
+  //               discount: couponDiscount,
+  //             }
+  //           : null,
+  //         priceDetails: {
+  //           ...selectedRoomPrice,
+  //           finalPrice: finalTotal,
+  //           calculatedDiscounts: {
+  //             longStay: longStayDiscount,
+  //             coupon: couponDiscount,
+  //           },
+  //         },
+  //       },
+  //     });
 
-      setClientSecret(response.data.clientSecret);
-      setShowPayment(true);
-      setError(null);
-    } catch (err) {
-      console.error("Error creating payment:", err);
-      setError(
-        err.response?.data?.error || t('booking.errors.paymentError')
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     setClientSecret(response.data.clientSecret);
+  //     setShowPayment(true);
+  //     setError(null);
+  //   } catch (err) {
+  //     console.error("Error creating payment:", err);
+  //     setError(
+  //       err.response?.data?.error || t('booking.errors.paymentError')
+  //     );
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   
   
   const handlePaymentSuccess = () => {
