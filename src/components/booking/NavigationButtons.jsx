@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 export const NavigationButtons = ({
   currentStep,
   prevStep,
@@ -31,6 +33,7 @@ export const NavigationButtons = ({
             ${(loading || disabled) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#668E73] hover:text-white'}`}
         >
           Précédent
+          {t('navigation.buttons.previous')}
         </button>
       )}
       {currentStep < 3 && (
@@ -40,6 +43,7 @@ export const NavigationButtons = ({
           className="px-4 py-2 bg-[#668E73] text-white rounded hover:bg-opacity-90"
         >
           Suivant
+          {t('navigation.buttons.next')}
         </button>
       )}
       {currentStep === 3 && (
@@ -52,7 +56,7 @@ export const NavigationButtons = ({
               : "bg-gray-300 cursor-not-allowed"
           } text-white rounded`}
         >
-          {loading ? "En cours..." : "Passer au paiement"}
+          {loading ? t('paymentForm.processing') : t('navigation.buttons.confirm')}
         </button>
       )}
     </div>
