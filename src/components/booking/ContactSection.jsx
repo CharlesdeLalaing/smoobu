@@ -1,6 +1,5 @@
 import React from "react";
 import { useTranslation } from 'react-i18next';
-import { useTranslation } from 'react-i18next';
 import { InputField } from "./InputField";
 import { TimeSelect } from "./TimeSelect";
 import { TermsCheckbox } from "./TermsCheckbox";
