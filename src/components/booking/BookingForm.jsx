@@ -57,6 +57,7 @@ const BookingForm = () => {
     setShowPayment,
     setFormData,
     handleApplyCoupon,
+    isSelectedRoomAvailable,
   } = useBookingForm();
 
 
@@ -274,13 +275,6 @@ const BookingForm = () => {
       }
     };
 
-     // Add this function to check if the currently selected room is available
-  const isSelectedRoomAvailable = () => {
-    if (!formData.apartmentId || !startDate || !endDate) return false;
-
-    // Use the existing isRoomAvailable function from your roomUtils
-    return isRoomAvailable(formData.apartmentId, startDate, endDate, availableDates, hasSearched);
-  };
 
   const searchSectionProps = {
     formData,
@@ -338,8 +332,8 @@ const BookingForm = () => {
     isStepValid,
     loading,
      // Add this prop
-    isSelectedRoomAvailable: isSelectedRoomAvailable
-  };
+     isSelectedRoomAvailable  // Pass the function directly, not as an object property
+    };
 
   const roomNavigationProps = {
     rooms: Object.values(roomsData),

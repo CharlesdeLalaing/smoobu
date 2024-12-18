@@ -5,6 +5,9 @@ import { VALID_COUPONS } from "../utils/coupons";
 import { calculateExtrasTotal } from "../utils/booking";
 import { extraCategories } from "../extraCategories"
 import { useNavigate } from "react-router-dom";
+import { useAvailabilityCheck } from "../hooks/useAvailabiltyCheck";
+import { isRoomAvailable } from "../hooks/roomUtils";  // Add this import
+
 
 export const useBookingForm = () => {
   // Form State
@@ -65,6 +68,40 @@ const calculateNumberOfNights = (startDate, endDate) => {
   return Math.floor((end - start) / (1000 * 60 * 60 * 24));
 };
 
+// Add this new function inside useBookingForm
+const isSelectedRoomAvailable = () => {
+  if (!formData.apartmentId || !formData.arrivalDate || !formData.departureDate) {
+    return false;
+  }
+
+  return isRoomAvailable(
+    formData.apartmentId,
+    formData.arrivalDate,
+    formData.departureDate,
+    availableDates,
+    hasSearched
+  );
+};
+
+
+const {
+  availableDates,
+  hasSearched
+} = useAvailabilityCheck(formData);
+
+const checkRoomAvailability = () => {
+  if (!formData.apartmentId || !formData.arrivalDate || !formData.departureDate) {
+    return false;
+  }
+
+  return isRoomAvailable(
+    formData.apartmentId, 
+    formData.arrivalDate, 
+    formData.departureDate, 
+    availableDates,
+    hasSearched
+  );
+};
   
   // Coupon State
   const [coupon, setCoupon] = useState("");
@@ -553,5 +590,6 @@ const handleApplyCoupon = (couponCode) => {
     setCurrentStep,
     setShowPriceDetails,
     setShowPayment,
+    isSelectedRoomAvailable: checkRoomAvailability  // Export the function with the correct name
   };
 };
