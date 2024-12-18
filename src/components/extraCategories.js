@@ -45,7 +45,7 @@ export const extraCategories = {
     items: [
       {
         id: "packEssentiel",
-        nameKey: "extras.packs.essential.name",
+        name: "extras.packs.essential.name",
         descriptionKey: "extras.packs.essential.description",
         price: 85,
         extraPersonPrice: 20,
@@ -54,7 +54,7 @@ export const extraCategories = {
       },
       {
         id: "packDetenteGourmet",
-        nameKey: "extras.packs.relaxGourmet.name",
+        name: "extras.packs.relaxGourmet.name",
         descriptionKey: "extras.packs.relaxGourmet.description",
         price: 150,
         extraPersonPrice: 40,
@@ -63,7 +63,7 @@ export const extraCategories = {
       },
       {
         id: "packRacletteDetente",
-        nameKey: "extras.packs.racletteRelax.name",
+        name: "extras.packs.racletteRelax.name",
         descriptionKey: "extras.packs.racletteRelax.description",
         price: 150,
         extraPersonPrice: 40,
@@ -72,7 +72,7 @@ export const extraCategories = {
       },
       {
         id: "packRomantiqueGourmet",
-        nameKey: "extras.packs.romanticGourmet.name",
+        name: "extras.packs.romanticGourmet.name",
         descriptionKey: "extras.packs.romanticGourmet.description",
         price: 170,
         extraPersonPrice: 40,
@@ -81,7 +81,7 @@ export const extraCategories = {
       },
       {
         id: "packRacletteRomantique",
-        nameKey: "extras.packs.racletteRomantic.name",
+        name: "extras.packs.racletteRomantic.name",
         descriptionKey: "extras.packs.racletteRomantic.description",
         price: 170,
         extraPersonPrice: 40,
@@ -95,7 +95,7 @@ export const extraCategories = {
     items: [
       {
         id: "formuleSpa",
-        nameKey: "extras.spa.basic.name",
+        name: "extras.spa.basic.name",
         descriptionKey: "extras.spa.basic.description",
         price: 50,
         extraPersonPrice: 10,
@@ -104,7 +104,7 @@ export const extraCategories = {
       },
       {
         id: "formuleSpaBottle",
-        nameKey: "extras.spa.withBottle.name",
+        name: "extras.spa.withBottle.name",
         descriptionKey: "extras.spa.withBottle.description",
         price: 90,
         image: spabouteille,
@@ -117,7 +117,7 @@ export const extraCategories = {
     items: [
       {
         id: "meatballsLiege",
-        nameKey: "extras.meals.meatballsLiege.name",
+        name: "extras.meals.meatballsLiege.name",
         descriptionKey: "extras.meals.meatballsLiege.description",
         price: 15,
         image: bouletteLiege,
@@ -125,7 +125,7 @@ export const extraCategories = {
       },
       {
         id: "meatballsTomato",
-        nameKey: "extras.meals.meatballsTomato.name",
+        name: "extras.meals.meatballsTomato.name",
         descriptionKey: "extras.meals.meatballsTomato.description",
         price: 15,
         image: bouletteTomate,
@@ -133,7 +133,7 @@ export const extraCategories = {
       },
       {
         id: "waterzooi",
-        nameKey: "extras.meals.waterzooi.name",
+        name: "extras.meals.waterzooi.name",
         descriptionKey: "extras.meals.waterzooi.description",
         price: 15,
         image: waterzooi,
@@ -141,7 +141,7 @@ export const extraCategories = {
       },
       {
         id: "chiliVeg",
-        nameKey: "extras.meals.chiliVeg.name",
+        name: "extras.meals.chiliVeg.name",
         descriptionKey: "extras.meals.chiliVeg.description",
         price: 15,
         image: chiliVeg,
@@ -149,7 +149,7 @@ export const extraCategories = {
       },
       {
         id: "carrotSoup",
-        nameKey: "extras.meals.carrotSoup.name",
+        name: "extras.meals.carrotSoup.name",
         descriptionKey: "extras.meals.carrotSoup.description",
         price: 5,
         image: veloute,
@@ -162,7 +162,7 @@ export const extraCategories = {
     items: [
       {
         id: "formulePetitDej",
-        nameKey: "extras.formulesRepas.breakfast.name",
+        name: "extras.formulesRepas.breakfast.name",
         descriptionKey: "extras.formulesRepas.breakfast.description",
         price: 35,
         extraPersonPrice: 10,
@@ -171,7 +171,7 @@ export const extraCategories = {
       },
       {
         id: "formuleGourmet",
-        nameKey: "extras.formulesRepas.gourmet.name",
+        name: "extras.formulesRepas.gourmet.name",
         descriptionKey: "extras.formulesRepas.gourmet.description",
         price: 85,
         extraPersonPrice: 20,
@@ -180,7 +180,7 @@ export const extraCategories = {
       },
       {
         id: "formuleRaclette",
-        nameKey: "extras.formulesRepas.raclette.name",
+        name: "extras.formulesRepas.raclette.name",
         descriptionKey: "extras.formulesRepas.raclette.description",
         price: 85,
         extraPersonPrice: 20,
@@ -189,7 +189,7 @@ export const extraCategories = {
       },
       {
         id: "formulePancheApero",
-        nameKey: "extras.formulesRepas.apero.name",
+        name: "extras.formulesRepas.apero.name",
         descriptionKey: "extras.formulesRepas.apero.description",
         price: 30,
         image: plancheapero,
