@@ -169,21 +169,21 @@ const BookingConfirmation = () => {
           {/* Guest Details */}
           <div className="details-card">
             <h2 className="titleConfirmation">
-              {t("bookingConfirmation.sections.guestDetails.title")}
+              {t("bookingConfirmation.success.sections.guestDetails.title")}
             </h2>
             <p>
-              {t("bookingConfirmation.sections.guestDetails.fullName", {
+              {t("bookingConfirmation.success.sections.guestDetails.fullName", {
                 firstName: bookingDetails?.firstName,
                 lastName: bookingDetails?.lastName,
               })}
             </p>
             <p>
-              {t("bookingConfirmation.sections.guestDetails.email", {
+              {t("bookingConfirmation.success.sections.guestDetails.email", {
                 email: bookingDetails?.email,
               })}
             </p>
             <p>
-              {t("bookingConfirmation.sections.guestDetails.phone", {
+              {t("bookingConfirmation.success.sections.guestDetails.phone", {
                 phone: bookingDetails?.phone || "-",
               })}
             </p>
@@ -192,15 +192,18 @@ const BookingConfirmation = () => {
           {/* Price Details */}
           <div className="details-card">
             <h2 className="titleConfirmation">
-              {t("bookingConfirmation.sections.priceDetails.title")}
+              {t("bookingConfirmation.success.sections.priceDetails.title")}
             </h2>
             <p>
-              {t("bookingConfirmation.sections.priceDetails.basePrice", {
-                price: formatPrice(bookingDetails?.priceBreakdown?.basePrice),
-              })}
+              {t(
+                "bookingConfirmation.success.sections.priceDetails.basePrice",
+                {
+                  price: formatPrice(bookingDetails?.priceBreakdown?.basePrice),
+                }
+              )}
             </p>
 
-            {/* Show extras */}
+            {/* For the extras, we use the translation keys from extras section */}
             {bookingDetails?.extras?.map((extra, index) => (
               <p key={index}>
                 {renderExtraName(extra)} (x{extra.quantity}):{" "}
@@ -218,11 +221,11 @@ const BookingConfirmation = () => {
               </p>
             ))}
 
-            {/* Long stay discount if applicable */}
+            {/* Long stay discount */}
             {bookingDetails?.priceDetails?.discount > 0 && (
               <p className="discount-text">
                 {t(
-                  "bookingConfirmation.sections.priceDetails.longStayDiscount",
+                  "bookingConfirmation.success.sections.priceDetails.longStayDiscount",
                   {
                     percentage:
                       bookingDetails.priceDetails.settings.lengthOfStayDiscount
@@ -233,20 +236,23 @@ const BookingConfirmation = () => {
               </p>
             )}
 
-            {/* Coupon discount if applicable */}
+            {/* Promo code */}
             {bookingDetails?.couponApplied && (
               <p className="discount-text">
-                {t("bookingConfirmation.sections.priceDetails.promoCode", {
-                  code: bookingDetails.couponApplied.code,
-                  amount: formatPrice(bookingDetails.couponApplied.discount),
-                })}
+                {t(
+                  "bookingConfirmation.success.sections.priceDetails.promoCode",
+                  {
+                    code: bookingDetails.couponApplied.code,
+                    amount: formatPrice(bookingDetails.couponApplied.discount),
+                  }
+                )}
               </p>
             )}
 
             {/* Total */}
             <div className="total-section">
               <p className="total-text">
-                {t("bookingConfirmation.sections.priceDetails.total", {
+                {t("bookingConfirmation.success.sections.priceDetails.total", {
                   price: formatPrice(bookingDetails?.price),
                 })}
               </p>
@@ -259,7 +265,7 @@ const BookingConfirmation = () => {
           {/* Address */}
           <div className="details-card">
             <h2 className="titleConfirmation">
-              {t("bookingConfirmation.sections.address.title")}
+              {t("bookingConfirmation.success.sections.address.title")}
             </h2>
             <p>{bookingDetails?.street}</p>
             <p>
