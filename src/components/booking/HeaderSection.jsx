@@ -56,7 +56,7 @@ export const HeaderSection = () => {
           {/* Contact Information */}
           <div className="flex w-full md:flex-row md:items-center md:space-x-6 md:w-auto">
             {/* Mobile: Icon only with click action */}
-            <div className="flex justify-center w-full md:hidden gap-7 md:gap-0 md:justify-between">
+            {/* <div className="flex justify-center w-full md:hidden gap-7 md:gap-0 md:justify-between">
               <a href="tel:+32475201619" className="flex items-center">
                 <img src={Phone} alt="phone" className="h-[18px] w-[18px]" />
               </a>
@@ -73,7 +73,7 @@ export const HeaderSection = () => {
               >
                 <img src={Pin} alt="location" className="h-[18px] w-[18px]" />
               </a>
-            </div>
+            </div> */}
 
             {/* Desktop only content */}
             <div className="hidden md:flex items-center gap-2 text-[12px]">
