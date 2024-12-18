@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Phone from "../../assets/icons8-phone-50 white.png";
 import Mail from "../../assets/icons8-mail-48 (2 white.png";
@@ -17,6 +17,29 @@ export const HeaderSection = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState("fr");
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [showAccommodationsSubmenu, setShowAccommodationsSubmenu] = useState(false);
+
+   // Add useEffect to handle body scroll
+   useEffect(() => {
+    if (isMenuOpen) {
+      // When menu opens, prevent scrolling
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      // When menu closes, restore scrolling
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+
+    // Cleanup function to ensure we restore scrolling when component unmounts
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [isMenuOpen]);
 
   const languages = [
     { code: "fr", name: "FR", flag: French },
@@ -47,34 +70,15 @@ export const HeaderSection = () => {
     setCurrentLanguage(langCode);
     i18n.changeLanguage(langCode);
   };
+  
 
   return (
-    <header className="z-50 w-full bg-white">
+    <header className="z-40 w-full bg-white">
       {/* Top Bar */}
       <div className="bg-[#668E73] text-white h-auto md:h-[44px] font-montserrat">
         <div className="mx-auto flex flex-col md:flex-row justify-between items-center text-xs h-full px-4 py-2 md:py-0 md:px-[5%]">
           {/* Contact Information */}
           <div className="flex w-full md:flex-row md:items-center md:space-x-6 md:w-auto">
-            {/* Mobile: Icon only with click action */}
-            {/* <div className="flex justify-center w-full md:hidden gap-7 md:gap-0 md:justify-between">
-              <a href="tel:+32475201619" className="flex items-center">
-                <img src={Phone} alt="phone" className="h-[18px] w-[18px]" />
-              </a>
-              <a
-                href="mailto:fermedebasseilies@gmail.com"
-                className="flex items-center"
-              >
-                <img src={Mail} alt="mail" className="h-[18px] w-[18px]" />
-              </a>
-              <a
-                href="https://maps.google.com/?q=Rue de Basseilles 1 - 5340 MOZET"
-                target="_blank"
-                className="flex items-center"
-              >
-                <img src={Pin} alt="location" className="h-[18px] w-[18px]" />
-              </a>
-            </div> */}
-
             {/* Desktop only content */}
             <div className="hidden md:flex items-center gap-2 text-[12px]">
               <img src={Phone} alt="phone" className="h-[18px] w-[18px]" />
@@ -90,7 +94,6 @@ export const HeaderSection = () => {
             </div>
           </div>
 
-          {/* Social and Language */}
           {/* Social and Language */}
           <div className="flex items-center mt-2 space-x-4 md:mt-0">
             {/* Language Buttons - Simplified */}
@@ -222,56 +225,96 @@ export const HeaderSection = () => {
               </div>
             </div>
 
-            {/* Mobile Menu */}
-            {isMenuOpen && (
-              <div className="fixed inset-0 z-50 overflow-y-auto bg-white lg:hidden">
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-6">
-                    <img src={Logo} alt="Logo" className="w-[80px] h-[80px]" />
-                    <button
-                      onClick={() => setIsMenuOpen(false)}
-                      className="p-2"
+            {/* Slide-in Mobile Menu */}
+            <div 
+              className={`fixed top-[144px] right-0 bottom-0 w-full max-w-sm bg-[#668E73] transform transition-transform duration-300 ease-in-out lg:hidden ${
+                isMenuOpen ? 'translate-x-0' : 'translate-x-full'
+              } z-50`}
+            >
+              <div className="flex flex-col h-full">
+                {/* Header with close button */}
+                <div className="flex justify-end p-4">
+                  <button
+                    onClick={() => setIsMenuOpen(false)}
+                    className="text-white"
+                  >
+                    <svg
+                      className="w-8 h-8"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Menu Items */}
+                <div className="px-4 pt-2 pb-8 overflow-y-auto">
                   {menuItems.map((item, index) => (
-                    <div key={index} className="py-3 border-b border-gray-100">
-                      <a
-                        href={item.url}
-                        className="block text-lg font-light text-gray-700"
-                      >
-                        {item.label}
-                      </a>
-                      {item.submenu && (
-                        <div className="pl-4 mt-2">
-                          {item.submenu.map((subItem, subIndex) => (
-                            <a
-                              key={subIndex}
-                              href={subItem.url}
-                              className="block py-2 text-base font-light text-gray-600"
+                    <div key={index} className="py-3">
+                      {item.submenu ? (
+                        <div>
+                          <button
+                            onClick={() => setShowAccommodationsSubmenu(!showAccommodationsSubmenu)}
+                            className="flex items-center justify-between w-full text-white text-lg"
+                          >
+                            {item.label}
+                            <svg
+                              className={`w-5 h-5 transition-transform ${
+                                showAccommodationsSubmenu ? 'rotate-180' : ''
+                              }`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
-                              {subItem.label}
-                            </a>
-                          ))}
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 9l-7 7-7-7"
+                              />
+                            </svg>
+                          </button>
+                          {showAccommodationsSubmenu && (
+                            <div className="pl-4 mt-2">
+                              {item.submenu.map((subItem, subIndex) => (
+                                <a
+                                  key={subIndex}
+                                  href={subItem.url}
+                                  className="block py-2 text-white text-lg"
+                                >
+                                  {subItem.label}
+                                </a>
+                              ))}
+                            </div>
+                          )}
                         </div>
+                      ) : (
+                        <a
+                          href={item.url}
+                          className="block text-white text-lg"
+                        >
+                          {item.label}
+                        </a>
                       )}
                     </div>
                   ))}
                 </div>
               </div>
+            </div>
+
+            {/* Overlay when menu is open */}
+            {isMenuOpen && (
+              <div 
+                className="fixed inset-0 bg-black bg-opacity-50 lg:hidden z-40"
+                onClick={() => setIsMenuOpen(false)}
+              />
             )}
           </div>
         </nav>
