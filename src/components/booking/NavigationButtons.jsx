@@ -9,6 +9,9 @@ export const NavigationButtons = ({
   disabled
 }) => {
 
+  const { t } = useTranslation();
+
+
   const handleNext = () => {
     nextStep();
     // Only scroll on mobile devices (screen width less than 640px - Tailwind's sm breakpoint)
