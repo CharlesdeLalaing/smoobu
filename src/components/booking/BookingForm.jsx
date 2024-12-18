@@ -381,11 +381,11 @@ const BookingForm = () => {
     //     }
     
     //     // Set the selected date
-    //     const selectedDate = new Date(date.setHours(12, 0, 0, 0));
+    //     const selectedDate = new Date(date.setHccours(12, 0, 0, 0));
     
     //     if (isStart) {
     //       // Setting start date
-    //       setStartDate(selectedDate);
+    //       setStartDate(selectedDate);ff
     //       setEndDate(null);
     //       handleChange({
     //         target: {
