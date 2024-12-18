@@ -498,7 +498,9 @@ const handleChange = async (e) => {
 
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
 
     // Check if we have a selected room and price details
     const selectedRoomPrice = priceDetails?.[formData.apartmentId];
