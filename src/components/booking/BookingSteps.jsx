@@ -1,7 +1,14 @@
+import { useTranslation } from 'react-i18next';
+
 export const BookingSteps = ({ currentStep }) => {
-  // Determine the step label
-  const stepLabel =
-    currentStep === 1 ? "1. Choix extras" : currentStep === 2 ? "2. Ajout note" : "3. Info contact";
+  const { t } = useTranslation();
+
+  // Determine the step label using translations
+  const stepLabel = currentStep === 1 
+    ? t('booking.steps.extras')
+    : currentStep === 2 
+      ? t('booking.steps.notes')
+      : t('booking.steps.contact');
 
   return (
     <div className="flex items-center justify-between mb-4 text-center">
