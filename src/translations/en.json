@@ -276,7 +276,7 @@
                 "description": "Celebrate your birthday with our special formula."
             }
             },
-            "additionalPerson": "Additional person (+{{price}}€/pers)",
+            "additionalPerson": "Additional person",
             "infoSup": {
                 "ownerMessage": {
                     "label": "Leave a message for the owner",

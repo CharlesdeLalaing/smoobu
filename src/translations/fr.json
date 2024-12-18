@@ -279,7 +279,7 @@
             "description": "Célébrez votre anniversaire avec notre formule spéciale."
           }
         },
-        "additionalPerson": "Personne supplémentaire (+{{price}}€/pers)",
+        "additionalPerson": "Personne supplémentaire",
         "infoSup": {
           "ownerMessage": {
             "label": "Laissez un message pour le propriétaire",

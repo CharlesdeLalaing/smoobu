@@ -277,7 +277,7 @@
             "description": "Vier je verjaardag met onze speciale formule."
           }
         },
-        "additionalPerson": "Extra persoon (+{{price}}€/pers)",
+        "additionalPerson": "Extra persoon",
         "infoSup": {
           "ownerMessage": {
             "label": "Laat een bericht achter voor de eigenaar",
