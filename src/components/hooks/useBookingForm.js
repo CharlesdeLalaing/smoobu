@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 import { api } from "../utils/api";
 import { VALID_COUPONS } from "../utils/coupons";
 import { calculateExtrasTotal } from "../utils/booking";
@@ -8,10 +7,9 @@ import { useNavigate } from "react-router-dom";
 
 export const useBookingForm = () => {
   // Form State
-  const { t, i18n } = useTranslation();
+
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    language: i18n.language, // Set language based on i18n
     arrivalDate: "",
     departureDate: "",
     channelId: 2323525,
@@ -135,13 +133,13 @@ const handleChange = async (e) => {
             }));
           }
         } else {
-          setError(t('booking.errors.noRates'));
+          setError("No rates available for selected dates");
           setShowPriceDetails(false);
           setIsAvailable(false);
         }
       } catch (error) {
         console.error("Error checking availability:", error);
-        setError(error.response?.data?.error || t('booking.errors.fetchError'));
+        setError(error.response?.data?.error || "Unable to fetch rates");
         setShowPriceDetails(false);
         setIsAvailable(false);
       } finally {
@@ -204,7 +202,7 @@ const handleChange = async (e) => {
 
   const handleCheckAvailability = async () => {
     if (!formData.arrivalDate || !formData.departureDate) {
-      setDateError(t('booking.errors.selectDates'));
+      setDateError("Please select both dates");
       return;
     }
   
@@ -269,20 +267,13 @@ const handleChange = async (e) => {
   };
 
   const handleSubmit = async (e) => {
-    if (e) {
-          e.preventDefault();
-        }
+    e.preventDefault();
 
     // Check if we have a selected room and price details
     const selectedRoomPrice = priceDetails?.[formData.apartmentId];
 
     if (!selectedRoomPrice) {
-      setError(t('booking.errors.waitForPrice'));
-      return;
-    }
-
-    if (!isStepValid()) {
-      setError("Please fill in all required fields");
+      setError("Veuillez attendre le calcul du prix avant de continuer.");
       return;
     }
 
@@ -379,241 +370,15 @@ const handleChange = async (e) => {
       setError(null);
     } catch (err) {
       console.error("Error creating payment:", err);
-      setError(err.response?.data?.error || t('booking.errors.paymentError'));
+      setError(
+        err.response?.data?.error ||
+          "Une erreur s'est produite lors de la création du paiement"
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // const handleSubmit = async (e) => {
-  //   if (e) {
-  //     e.preventDefault();
-  //   }
-  
-  //   // Check if we have a selected room and price details
-  //   const selectedRoomPrice = priceDetails?.[formData.apartmentId];
-    
-  //   if (!selectedRoomPrice) {
-  //     setError(t("booking.errors.waitForPrice"));
-  //     return;
-  //   }
-  
-  //   // Validate all required fields
-  //   if (!formData.firstName || !formData.lastName || !formData.email || !formData.arrivalTime || !formData.conditions) {
-  //     setError(t("booking.errors.requiredFields"));
-  //     return;
-  //   }
-  
-  //   setLoading(true);
-  //   try {
-  //     // Calculate extras total
-  //     const selectedExtrasArray = Object.entries(selectedExtras)
-  //       .filter(([_, quantity]) => quantity > 0)
-  //       .map(([extraId, quantity]) => {
-  //         const isExtraPerson = extraId.endsWith("-extra");
-  //         const baseExtraId = isExtraPerson ? extraId.replace("-extra", "") : extraId;
-  //         const extra = Object.values(extraCategories)
-  //           .flatMap((category) => category.items)
-  //           .find((item) => item.id === baseExtraId);
-  
-  //         if (!extra) return null;
-  
-  //         if (isExtraPerson) {
-  //           return {
-  //             type: "addon",
-  //             name: `${t(extra.nameKey)} - ${t("extras.additionalPerson")}`,
-  //             amount: extra.extraPersonPrice * quantity,
-  //             quantity: quantity,
-  //             currencyCode: "EUR",
-  //           };
-  //         }
-  
-  //         return {
-  //           type: "addon",
-  //           name: t(extra.nameKey), // Use translation key instead of direct name
-  //           amount: extra.price * quantity,
-  //           quantity: quantity,
-  //           currencyCode: "EUR",
-  //           extraPersonPrice: extra.extraPersonPrice,
-  //           extraPersonQuantity: selectedExtras[`${extraId}-extra`] || 0,
-  //         };
-  //       })
-  //       .filter(Boolean);
-  
-  //     // Calculate totals
-  //     const extrasTotal = selectedExtrasArray.reduce(
-  //       (sum, extra) => sum + extra.amount,
-  //       0
-  //     );
-  //     const basePrice = selectedRoomPrice.originalPrice;
-  //     const subtotalBeforeDiscounts = basePrice + extrasTotal;
-  //     const longStayDiscount = selectedRoomPrice.discount || 0;
-  //     const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-  //     const finalTotal = subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
-  
-  //     console.log("Payment calculation:", {
-  //       basePrice,
-  //       extrasTotal,
-  //       subtotalBeforeDiscounts,
-  //       longStayDiscount,
-  //       couponDiscount,
-  //       finalTotal,
-  //     });
-  
-  //     // Create payment intent
-  //     const response = await api.post("/create-payment-intent", {
-  //       price: finalTotal,
-  //       bookingData: {
-  //         ...formData,
-  //         price: finalTotal,
-  //         basePrice: basePrice,
-  //         extras: selectedExtrasArray,
-  //         couponApplied: appliedCoupon
-  //           ? {
-  //               code: appliedCoupon.code,
-  //               discount: couponDiscount,
-  //             }
-  //           : null,
-  //         priceDetails: {
-  //           ...selectedRoomPrice,
-  //           finalPrice: finalTotal,
-  //           calculatedDiscounts: {
-  //             longStay: longStayDiscount,
-  //             coupon: couponDiscount,
-  //           },
-  //         },
-  //       },
-  //     });
-  
-  //     setClientSecret(response.data.clientSecret);
-  //     setShowPayment(true);
-  //     setError(null);
-  //   } catch (err) {
-  //     console.error("Error creating payment:", err);
-  //     setError(
-  //       err.response?.data?.error || t("booking.errors.paymentCreation")
-  //     );
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-
-  // const handleSubmit = async (e) => {
-  //   if (e && e.preventDefault) {
-  //     e.preventDefault();
-  //   }
-
-  //   // Check if we have a selected room and price details
-  //   const selectedRoomPrice = priceDetails?.[formData.apartmentId];
-
-  //   if (!selectedRoomPrice) {
-  //     setError(t('booking.errors.waitForPrice'));
-  //     return;
-  //   }
-
-  //   setLoading(true);
-  //   try {
-  //     const selectedExtrasArray = Object.entries(selectedExtras)
-  //       .filter(([_, quantity]) => quantity > 0)
-  //       .map(([extraId, quantity]) => {
-  //         const isExtraPerson = extraId.endsWith("-extra");
-  //         const baseExtraId = isExtraPerson
-  //           ? extraId.replace("-extra", "")
-  //           : extraId;
-  //         const extra = Object.values(extraCategories)
-  //           .flatMap((category) => category.items)
-  //           .find((item) => item.id === baseExtraId);
-
-  //         if (!extra) return null;
-
-  //         if (isExtraPerson) {
-  //           return {
-  //             type: "addon",
-  //             name: `${extra.nameKey ? t(extra.nameKey) : extra.name} - ${t('extras.additionalPerson')}`,
-  //             amount: extra.extraPersonPrice * quantity,
-  //             quantity: quantity,
-  //             currencyCode: "EUR",
-  //           };
-  //         }
-
-  //         return {
-  //           type: "addon",
-  //           name: extra.nameKey ? t(extra.nameKey) : extra.name,
-  //           amount: extra.price * quantity,
-  //           quantity: quantity,
-  //           currencyCode: "EUR",
-  //           extraPersonPrice: extra.extraPersonPrice,
-  //           extraPersonQuantity: selectedExtras[`${extraId}-extra`] || 0,
-  //         };
-  //       })
-  //       .filter(Boolean);
-
-  //     // Calculate extras total
-  //     const extrasTotal = selectedExtrasArray.reduce(
-  //       (sum, extra) => sum + extra.amount,
-  //       0
-  //     );
-
-  //     // Get the base price from price details
-  //     const basePrice = selectedRoomPrice.originalPrice;
-  //     const subtotalBeforeDiscounts = basePrice + extrasTotal;
-
-  //     // Get discounts
-  //     const longStayDiscount = selectedRoomPrice.discount || 0;
-  //     const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-
-  //     // Calculate final total
-  //     const finalTotal =
-  //       subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
-
-  //     console.log("Payment calculation:", {
-  //       basePrice,
-  //       extrasTotal,
-  //       subtotalBeforeDiscounts,
-  //       longStayDiscount,
-  //       couponDiscount,
-  //       finalTotal,
-  //     });
-
-  //     const response = await api.post("/create-payment-intent", {
-  //       price: finalTotal,
-  //       bookingData: {
-  //         ...formData,
-  //         price: finalTotal,
-  //         basePrice: basePrice,
-  //         extras: selectedExtrasArray,
-  //         couponApplied: appliedCoupon
-  //           ? {
-  //               code: appliedCoupon.code,
-  //               discount: couponDiscount,
-  //             }
-  //           : null,
-  //         priceDetails: {
-  //           ...selectedRoomPrice,
-  //           finalPrice: finalTotal,
-  //           calculatedDiscounts: {
-  //             longStay: longStayDiscount,
-  //             coupon: couponDiscount,
-  //           },
-  //         },
-  //       },
-  //     });
-
-  //     setClientSecret(response.data.clientSecret);
-  //     setShowPayment(true);
-  //     setError(null);
-  //   } catch (err) {
-  //     console.error("Error creating payment:", err);
-  //     setError(
-  //       err.response?.data?.error || t('booking.errors.paymentError')
-  //     );
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-  
-  
   const handlePaymentSuccess = () => {
   const selectedExtrasArray = createSelectedExtrasArray();
   
@@ -679,7 +444,7 @@ const handleApplyCoupon = (couponCode) => {
 
   if (!couponCode) {
     console.log('No coupon code provided');
-    setCouponError(t('booking.coupon.errors.enterCode'));
+    setCouponError("Veuillez entrer un code promo");
     return;
   }
 
@@ -688,7 +453,7 @@ const handleApplyCoupon = (couponCode) => {
 
   if (!couponInfo) {
     console.log('Invalid coupon code');
-    setCouponError(t('booking.coupon.errors.invalid'));
+    setCouponError("Code promo invalide");
     return;
   }
 
@@ -708,7 +473,7 @@ const handleApplyCoupon = (couponCode) => {
         ...(prev?.priceElements || []),
         {
           type: "coupon",
-          name: t('booking.coupon.applied', { code: couponCode.toUpperCase() }),
+          name: `Code promo ${couponCode.toUpperCase()}`,
           amount: -couponInfo.discount,
           currencyCode: couponInfo.currency,
         },
@@ -723,48 +488,16 @@ const handleApplyCoupon = (couponCode) => {
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
-  // const isStepValid = () => {
-  //   switch (currentStep) {
-  //     case 3:
-  //       return (
-  //         formData.firstName &&
-  //         formData.lastName &&
-  //         formData.email &&
-  //         formData.arrivalTime &&
-  //         formData.conditions
-  //       );
-  //     case 2:
-  //       return true;
-  //     case 1:
-  //       return true;
-  //     default:
-  //       return false;
-  //   }
-  // };
-
   const isStepValid = () => {
-    console.log('Checking step validation:', {
-      currentStep,
-      formData: {
-        firstName: !!formData.firstName,
-        lastName: !!formData.lastName,
-        email: !!formData.email,
-        arrivalTime: !!formData.arrivalTime,
-        conditions: !!formData.conditions
-      }
-    });
-  
     switch (currentStep) {
       case 3:
-        const step3Valid = !!(
+        return (
           formData.firstName &&
           formData.lastName &&
           formData.email &&
           formData.arrivalTime &&
           formData.conditions
         );
-        console.log('Step 3 validation result:', step3Valid);
-        return step3Valid;
       case 2:
         return true;
       case 1:
