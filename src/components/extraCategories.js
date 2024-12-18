@@ -203,7 +203,7 @@ export const extraCategories = {
       // Wines
       {
         id: "brutBioul",
-        nameKey: "Brut de Bioul",
+        name: "Brut de Bioul",
         descriptionKey: "extras.drinks.brutBioul.description",
         price: 50,
         image: brutBioul,
@@ -211,7 +211,7 @@ export const extraCategories = {
       },
       {
         id: "cortilBarco",
-        nameKey: "Cortil Barco",
+        name: "Cortil Barco",
         descriptionKey: "extras.drinks.cortilBarco.description",
         price: 30,
         image: cortilBarco,
@@ -219,7 +219,7 @@ export const extraCategories = {
       },
       {
         id: "terreCharlot",
-        nameKey: "Terre Charlot",
+        name: "Terre Charlot",
         descriptionKey: "extras.drinks.terreCharlot.description",
         price: 30,
         image: terreCharlot,
@@ -228,7 +228,7 @@ export const extraCategories = {
       // Beers
       {
         id: "houblondeTriple",
-        nameKey: "Houblonde Triple",
+        name: "Houblonde Triple",
         descriptionKey: "extras.drinks.houblondeTriple.description",
         price: 4,
         image: houblondeTriple,
@@ -236,7 +236,7 @@ export const extraCategories = {
       },
       {
         id: "houblondeBlonde",
-        nameKey: "Houblonde Blonde",
+        name: "Houblonde Blonde",
         descriptionKey: "extras.drinks.houblondeBlonde.description",
         price: 4,
         image: houblondeBlonde,
@@ -244,7 +244,7 @@ export const extraCategories = {
       },
       {
         id: "houblondeWhite",
-        nameKey: "Houblonde White IPA",
+        name: "Houblonde White IPA",
         descriptionKey: "extras.drinks.houblondeWhite.description",
         price: 4,
         image: houblondeWhite,
@@ -252,7 +252,7 @@ export const extraCategories = {
       },
       {
         id: "bruneCondroz",
-        nameKey: "Brune du Condroz",
+        name: "Brune du Condroz",
         descriptionKey: "extras.drinks.bruneCondroz.description",
         price: 4,
         image: bruneCondroz,
@@ -260,7 +260,7 @@ export const extraCategories = {
       },
       {
         id: "ambreeCondroz",
-        nameKey: "Ambrée du Condroz",
+        name: "Ambrée du Condroz",
         descriptionKey: "extras.drinks.ambreeCondroz.description",
         price: 4,
         image: ambreeCondroz,
@@ -268,7 +268,7 @@ export const extraCategories = {
       },
       {
         id: "blancheCondroz",
-        nameKey: "Blanche du Condroz",
+        name: "Blanche du Condroz",
         descriptionKey: "extras.drinks.blancheCondroz.description",
         price: 4,
         image: blancheCondroz,
@@ -277,7 +277,7 @@ export const extraCategories = {
       // Softs
       {
         id: "appleJuice",
-        nameKey: 'Jus de pomme « Pom d"Happy »',
+        name: 'Jus de pomme « Pom d"Happy »',
         descriptionKey: "extras.drinks.appleJuice.description",
         price: 3,
         image: pomHappy,
@@ -285,7 +285,7 @@ export const extraCategories = {
       },
       {
         id: "ritchieLemonRasp",
-        nameKey: "Ritchie Citron/Framboise",
+        name: "Ritchie Citron/Framboise",
         descriptionKey: "extras.drinks.ritchieLemonRasp.description",
         price: 3,
         image: ritchieCitronFramboise,
@@ -293,7 +293,7 @@ export const extraCategories = {
       },
       {
         id: "ritchieOrangeVan",
-        nameKey: "Ritchie Orange/Vanille",
+        name: "Ritchie Orange/Vanille",
         descriptionKey: "extras.drinks.ritchieOrangeVan.description",
         price: 3,
         image: ritchieOrange,
@@ -301,7 +301,7 @@ export const extraCategories = {
       },
       {
         id: "ritchieCola",
-        nameKey: "Ritchie Cola",
+        name: "Ritchie Cola",
         descriptionKey: "extras.drinks.ritchieCola.description",
         price: 3,
         image: ritchieCola,
@@ -309,7 +309,7 @@ export const extraCategories = {
       },
       {
         id: "ritchieColaZero",
-        nameKey: "Ritchie Cola Zéro",
+        name: "Ritchie Cola Zéro",
         descriptionKey: "extras.drinks.ritchieColaZero.description",
         price: 3,
         image: ritchieColaZero,
