@@ -333,6 +333,7 @@
         },
         "terms": {
             "accept": "I accept the ",
+            "accepted": "Accepted",
             "generalConditions": "general conditions",
             "required": "You must accept the general conditions to continue."
         },

@@ -257,7 +257,7 @@ const BookingConfirmation = () => {
                 })}
               </p>
               <p>
-                {t("terms.generalConditions")}: {t("terms.accept")}
+                {t("terms.generalConditions")}: {t("terms.accepted")}
               </p>
             </div>
           </div>
