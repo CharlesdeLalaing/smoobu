@@ -373,7 +373,7 @@
             "priceDetails": {
               "title": "Détails du prix",
               "basePrice": "Prix de base: {{price}}€",
-              "extraPerson": "Personne supplémentaire (x{{quantity}}): {{price}}€",
+              "extraPerson": "Personne supplémentaire ({{quantity}}x): {{price}}€",
               "longStayDiscount": "Réduction long séjour ({{percentage}}%): -{{amount}}€",
               "promoCode": "Code promo ({{code}}): -{{amount}}€",
               "total": "Total: {{price}}€",

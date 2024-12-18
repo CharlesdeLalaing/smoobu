@@ -371,7 +371,7 @@
             "priceDetails": {
               "title": "Prijsdetails",
               "basePrice": "Basisprijs: {{price}}€",
-              "extraPerson": "Extra persoon (x{{quantity}}): {{price}}€",
+              "extraPerson": "Extra persoon ({{quantity}}x): {{price}}€",
               "longStayDiscount": "Korting lang verblijf ({{percentage}}%): -{{amount}}€",
               "promoCode": "Promocode ({{code}}): -{{amount}}€",
               "total": "Totaal: {{price}}€",

@@ -419,7 +419,7 @@ const handleChange = async (e) => {
           if (isExtraPerson) {
             return {
               type: "addon",
-              name: `${extra.name} - ${t("extras.additionalPerson")}`,
+              name: `${t(extra.nameKey)} - ${t("extras.additionalPerson")}`,
               amount: extra.extraPersonPrice * quantity,
               quantity: quantity,
               currencyCode: "EUR",
@@ -428,7 +428,7 @@ const handleChange = async (e) => {
   
           return {
             type: "addon",
-            name: extra.name,
+            name: t(extra.nameKey), // Use translation key instead of direct name
             amount: extra.price * quantity,
             quantity: quantity,
             currencyCode: "EUR",
