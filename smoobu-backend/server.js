@@ -718,9 +718,29 @@ app.post("/api/create-payment-intent", async (req, res) => {
   try {
     const { price, bookingData } = req.body;
 
+    // Process extras to preserve translation information
+    if (bookingData.extras) {
+      bookingData.extras = bookingData.extras.map((extra) => {
+        const baseExtra = {
+          ...extra,
+          nameKey: extra.name.startsWith("extras.") ? extra.name : null,
+        };
+
+        // If there are extra persons, ensure their translation is preserved too
+        if (extra.extraPersonQuantity > 0) {
+          return {
+            ...baseExtra,
+            extraPersonNameKey: "extras.additionalPerson",
+          };
+        }
+
+        return baseExtra;
+      });
+    }
+
     const bookingReference = `BOOKING-${Date.now()}-${Math.random()
-    .toString(36)
-    .substr(2, 9)}`;
+      .toString(36)
+      .substr(2, 9)}`;
     console.log("Generated booking reference:", bookingReference);
 
     // Store booking data for webhook
@@ -751,10 +771,12 @@ app.post("/api/create-payment-intent", async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating payment intent:", error);
-    res.status(500).json({ error: "Failed to create payment intent" });
+    res.status(500).json({
+      error: "Failed to create payment intent",
+      details: error.message,
+    });
   }
 });
-
 
 app.get("/api/bookings/:paymentIntentId", async (req, res) => {
   try {
