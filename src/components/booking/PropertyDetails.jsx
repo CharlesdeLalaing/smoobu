@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Slider from "react-slick";
+import { useTranslation } from 'react-i18next';
 import { roomsData } from "../hooks/roomsData";
 import { isRoomAvailable } from "../hooks/roomUtils";
 import { PriceDetails } from "./PriceDetails";
@@ -31,6 +32,7 @@ export const PropertyDetails = ({
   hasSearched,
 }) => {
 
+  const { t } = useTranslation(); // Add this hook
 
   console.log("PropertyDetails render:", { 
     startDate, 
@@ -72,7 +74,7 @@ export const PropertyDetails = ({
 
       return (
         <div className="p-3 mb-4 text-sm text-red-600 rounded-md bg-red-50">
-          <span className="font-medium">Dates non disponibles : </span>
+          <span className="font-medium">{t('propertyDetails.unavailableDates')}</span>
           {unavailableDates.map(formatDate).join(", ")}
         </div>
       );
@@ -112,41 +114,6 @@ export const PropertyDetails = ({
   groupedRooms.available = sortRooms(groupedRooms.available);
   groupedRooms.unavailable = sortRooms(groupedRooms.unavailable);
 
-  // const filteredAvailableRooms = groupedRooms.available.filter(room => {
-  //   if (showOnlySelected) {
-  //     return room.id === formData.apartmentId;
-  //   }
-  //   if (showOnlyUnselected) {
-  //     return room.id !== formData.apartmentId;
-  //   }
-  //   return true;
-  // });
-
-  // Modified filtering logic to keep selected room visible
-  // const filteredAvailableRooms = (() => {
-  //   if (showOnlySelected && formData.apartmentId) {
-  //     // Find the selected room in either available or unavailable groups
-  //     const selectedRoom = [...groupedRooms.available, ...groupedRooms.unavailable]
-  //       .find(room => room.id === formData.apartmentId);
-  //     return selectedRoom ? [selectedRoom] : [];
-  //   }
-
-  //   if (showOnlyUnselected) {
-  //     return groupedRooms.available.filter(room => room.id !== formData.apartmentId);
-  //   }
-
-  //   // For normal view, show all available rooms plus selected room if it became unavailable
-  //   const rooms = [...groupedRooms.available];
-  //   if (formData.apartmentId) {
-  //     const selectedUnavailableRoom = groupedRooms.unavailable
-  //       .find(room => room.id === formData.apartmentId);
-  //     if (selectedUnavailableRoom && !rooms.some(room => room.id === formData.apartmentId)) {
-  //       rooms.unshift(selectedUnavailableRoom);
-  //     }
-  //   }
-  //   return rooms;
-  // })();
-
    // Modified filtering logic to prevent duplicate display
    const filteredAvailableRooms = (() => {
     if (showOnlySelected && formData.apartmentId) {
@@ -178,9 +145,8 @@ export const PropertyDetails = ({
   };
 
   const RoomCard = ({ room, isAvailable }) => {
-    // const roomPriceDetails = priceDetails && priceDetails[room.id];
-    // const [sliderRef, setSliderRef] = useState(null);
-    // const [activeTab, setActiveTab] = useState("priceDetails");
+
+    const { t } = useTranslation(); // Add translation hook here too
 
     const roomPriceDetails = priceDetails && priceDetails[room.id];
     const [sliderRef, setSliderRef] = useState(null);
@@ -222,10 +188,10 @@ export const PropertyDetails = ({
         {startDate && endDate && !isAvailable && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
             <p className="text-red-600 font-medium">
-              Ce logement n'est pas disponible pour les dates sélectionnées
+              {t('propertyDetails.roomUnavailable.title')}
             </p>
             <p className="text-sm text-gray-600 mt-2">
-              Veuillez sélectionner d'autres dates pour ce logement ou consulter nos autres options
+              {t('propertyDetails.roomUnavailable.message')}
             </p>
           </div>
         )}
@@ -233,64 +199,29 @@ export const PropertyDetails = ({
         {formData.apartmentId === room.id ? (
           <div className="flex flex-col h-full">
             <div className="flex justify-around border-b border-grey-300 mb-4 ">
-              <button
-                type="button"
-                className={`py-2 px-4 ${
-                  activeTab === "priceDetails" ? "text-[#668E73] border-b-2 border-[#668E73]" : ""
-                }`}
-                onClick={() => setActiveTab("priceDetails")}
-              >
-                Détails de la réservation
-              </button>
-              <button
-                type="button"
-                className={`py-2 px-4 ${
-                  activeTab === "roomInfo" ? "text-[#668E73] border-b-2 border-[#668E73]" : ""
-                }`}
-                onClick={() => setActiveTab("roomInfo")}
-              >
-                Informations sur la chambre
-              </button>
+            <button
+              type="button"
+              className={`py-2 px-4 ${
+                activeTab === "priceDetails" ? "text-[#668E73] border-b-2 border-[#668E73]" : ""
+              }`}
+              onClick={() => setActiveTab("priceDetails")}
+            >
+              {t('propertyDetails.tabs.bookingDetails')}
+            </button>
+            <button
+              type="button"
+              className={`py-2 px-4 ${
+                activeTab === "roomInfo" ? "text-[#668E73] border-b-2 border-[#668E73]" : ""
+              }`}
+              onClick={() => setActiveTab("roomInfo")}
+            >
+              {t('propertyDetails.tabs.roomInfo')}
+            </button>
             </div>
   
             <div className="flex-1 overflow-y-none">
               {activeTab === "roomInfo" && (
                 <div className="h-full">
-                  {/* <div className="h-[40vh] sm:h-auto md:h-[50vh]">
-                    <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
-                      {Object.values(room.images).map((image, index) => (
-                        <img
-                          key={index}
-                          src={image}
-                          alt={`${room.name} ${index + 1}`}
-                          className="w-full h-[270px] sm:h-[270px] md:h-[300px] lg:h-[300px] xl:h-[400px] object-cover"
-                        />
-                      ))}
-                    </Slider>
-                  </div>
-                  <div className="features-container overflow-x-auto w-full mt-4 sm:mt-2 md:mt-3 font-cormorant">
-                    <div className="features-list flex sm:flex-wrap md:flex-nowrap">
-                      {room.features.map((feature, index) => (
-                        <div
-                          key={index}
-                          className="feature-item flex flex-col items-center text-center p-4 sm:p-2 md:p-3 bg-[#668E73] "
-                          style={{ minWidth: "100px", flex: "0 0 auto" }}
-                        >
-                          <img
-                            src={feature.icon}
-                            alt={feature.title}
-                            style={{
-                              height: "30px",
-                              width: "30px",
-                              filter: "invert(100%)",
-                            }}
-                            className="sm:h-5 sm:w-5 md:h-6 md:w-6"
-                          />
-                          <span className="text-sm mt-2 text-white sm:text-xs md:text-sm sm:mt-1 md:mt-1.5">{feature.title}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div> */}
                   <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
                     {Object.values(room.images).map((image, index) => (
                       <img
@@ -318,24 +249,33 @@ export const PropertyDetails = ({
       
                   <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
                     <div className="features-list flex">
-                      {room.features.map((feature, index) => (
-                        <div
-                          key={index}
-                          className="feature-item flex flex-col items-center text-center p-2 bg-[#668E73]"
-                          style={{ minWidth: "100px", flex: "0 0 auto" }}
-                        >
-                          <img
-                            src={feature.icon}
-                            alt={feature.title}
-                            style={{
-                              height: "30px",
-                              width: "30px",
-                              filter: "invert(100%)",
-                            }}
-                          />
-                          <span className="text-sm mt-2 text-white">{feature.title}</span>
-                        </div>
-                      ))}
+                      {room.features.map((feature, index) => {
+                        // Handle dynamic values for features like maxGuests
+                        let translatedTitle = feature.value ? 
+                        Array.isArray(feature.value) ?
+                          t(feature.title, { value: feature.value[0], value2: feature.value[1] }) :
+                          t(feature.title, { value: feature.value }) :
+                        t(feature.title);
+
+                        return (
+                          <div
+                            key={index}
+                            className="feature-item flex flex-col items-center justify-center text-center p-3 bg-[#668E73] min-w-auto"
+                          >
+                            <img
+                              src={feature.icon}
+                              alt={translatedTitle}
+                              className="w-6 h-6"
+                              style={{
+                                filter: "invert(100%)"
+                              }}
+                            />
+                            <span className="text-sm mt-2 text-white whitespace-nowrap">
+                              {translatedTitle}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -352,14 +292,16 @@ export const PropertyDetails = ({
                       />
                   </div>
                   <div className="my-5">
-                  <p className="text-lg sm:text-base md:text-lg font-montserrat text-[#D3B574]">{room.type}</p>
-                  <h2 className="text-lg sm:text-base md:text-[25px] font-medium uppercase sm:mb-2 md:mb-10 sm:my-3 md:my-4 font-cormorant">{room.name}</h2>
+                  <p className="text-lg sm:text-base md:text-lg font-montserrat text-[#D3B574]">{t(room.type)}</p>
+                  <h2 className="text-lg sm:text-base md:text-[25px] font-medium uppercase sm:mb-2 md:mb-10 sm:my-3 md:my-4 font-cormorant">{t(room.nameKey)}</h2>
                   </div>
                   <div className="flex items-center justify-left sm:mb-2 md:mb-4 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
                     <img src={Group} alt="Profile Icon" className="w-6 h-6 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-4" />
                     <span className="text-[18px] sm:text-sm md:text-base font-light text-black">
                       {Number(formData.adults) + Number(formData.children)}{" "}
-                      {Number(formData.adults) + Number(formData.children) > 1 ? "personnes" : "personne"}
+                      {Number(formData.adults) + Number(formData.children) > 1 
+                        ? t('propertyDetails.guests.plural') 
+                        : t('propertyDetails.guests.singular')}
                     </span>
                   </div>
 
@@ -384,9 +326,6 @@ export const PropertyDetails = ({
         ) : (
           <div className="flex flex-col xl:flex-row gap-10 w-[90%] mx-auto">
             <div className="w-full xl:w-2/5">
-              {/* <h2 className="text-[18px] md:text-[23px] font-normal text-black mb-2">
-                {room.name}
-              </h2> */}
   
               <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
                 {Object.values(room.images).map((image, index) => (
@@ -415,40 +354,40 @@ export const PropertyDetails = ({
   
               <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
                 <div className="features-list flex">
-                  {room.features.map((feature, index) => (
-                    <div
-                      key={index}
-                      className="feature-item flex flex-col items-center text-center p-2 bg-[#668E73]"
-                      style={{ minWidth: "100px", flex: "0 0 auto" }}
-                    >
-                      <img
-                        src={feature.icon}
-                        alt={feature.title}
-                        style={{
-                          height: "30px",
-                          width: "30px",
-                          filter: "invert(100%)",
-                        }}
-                      />
-                      <span className="text-sm mt-2 text-white">{feature.title}</span>
-                    </div>
-                  ))}
+                  {room.features.map((feature, index) => {
+                    // Handle dynamic values for features like maxGuests
+                    let translatedTitle = feature.value ? 
+                    Array.isArray(feature.value) ?
+                          t(feature.title, { value: feature.value[0], value2: feature.value[1] }) :
+                          t(feature.title, { value: feature.value }) :
+                        t(feature.title);
+
+                    return (
+                      <div
+                        key={index}
+                        className="feature-item flex flex-col items-center justify-center text-center p-3 bg-[#668E73] min-w-[auto]"
+                      >
+                        <img
+                          src={feature.icon}
+                          alt={translatedTitle}
+                          className="w-6 h-6"
+                          style={{
+                            filter: "invert(100%)"
+                          }}
+                        />
+                        <span className="text-sm mt-2 text-white whitespace-nowrap">
+                          {translatedTitle}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
   
             <div className="w-full xl:w-3/5">  
-              {/* <h2 className="text-[18px] md:text-[23px] font-normal text-black mb-2">
-                Disponibilités
-              </h2> */}
-              {/* <CalendarRoom 
-                roomId={room.id}
-                availableDates={availableDates}
-                selectedStartDate={startDate}
-                selectedEndDate={endDate}
-              /> */}
               <CalendarRoom roomId={room.id} />
-              <p className="text-gray-600 my-4 font-cormorant">{room.description}</p>
+              <p className="text-gray-600 my-4 font-cormorant">{t(room.description)}</p>
               <button
                 type="button"
                 onClick={() => {
@@ -467,10 +406,10 @@ export const PropertyDetails = ({
                 }`}
               >
                 {!hasSearched
-                  ? "Veuillez sélectionner une date"
-                  : isAvailable
-                    ? "Sélectionner cette chambre"
-                    : "Non disponible pour ces dates"}
+                ? t('propertyDetails.selectDatePrompt')
+                : isAvailable
+                  ? t('propertyDetails.selectRoom')
+                  : t('propertyDetails.unavailableForDates')}
               </button>
             </div>
           </div>
@@ -485,7 +424,7 @@ export const PropertyDetails = ({
         <div>
           {!showOnlySelected && !showOnlyUnselected && (
             <h2 className="text-xl font-semibold text-[#668E73] mb-6">
-              Chambres disponibles
+              {t('rooms.availableRooms')}
             </h2>
           )}
           <div className="grid grid-cols-1 gap-20 w-[100%] mx-auto relative">
@@ -494,10 +433,10 @@ export const PropertyDetails = ({
                 {formData.apartmentId !== room.id && (
                   <div className="text-left mb-4">
                     <h4 className="font-montserrat text-xl md:text-1xl lg:text-2xl mb-4 text-[#D3B574]">
-                      {room.type}
+                    {t(room.type)}
                     </h4>
                     <h3 className="font-cormorant text-3xl text-gray-800 mb-2 md:text-2xl lg:text-[40px] font-light">
-                      {room.name}
+                    {t(room.nameKey)}
                     </h3>
                   </div>
                 )}
@@ -534,7 +473,7 @@ export const PropertyDetails = ({
 
       {loading && (
         <div className="flex justify-center">
-          <div className="text-[#668E73]">Chargement...</div>
+          <div className="text-[#668E73]">{t('propertyDetails.loading')}</div>
         </div>
       )}
     </div>
