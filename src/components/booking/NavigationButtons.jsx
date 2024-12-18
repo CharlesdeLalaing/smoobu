@@ -26,7 +26,7 @@ export const NavigationButtons = ({
         className={`px-4 py-2 text-white bg-[#668E73] rounded-full ml-auto
           ${(!isStepValid || loading || disabled) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-opacity-90'}`}
       >
-        {currentStep === 3 ? "Confirmer" : "Suivant"}
+        {currentStep === 3 ? "Confirmer" : "Suivan"}
       </button>
     </div>
   );
