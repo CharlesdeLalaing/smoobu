@@ -12,14 +12,14 @@ const BookingConfirmation = () => {
   const paymentIntent = searchParams.get("payment_intent");
 
   useEffect(() => {
-    console.log("Payment Intent:", paymentIntent);
+    // console.log("Payment Intent:", paymentIntent);
     const storedBookingData = localStorage.getItem("bookingData");
-    console.log("Initial stored data:", storedBookingData);
+    // console.log("Initial stored data:", storedBookingData);
 
     if (storedBookingData) {
       try {
         const parsedData = JSON.parse(storedBookingData);
-        console.log("Parsed booking data:", parsedData);
+        // console.log("Parsed booking data:", parsedData);
         setBookingDetails(parsedData);
         setStatus("success");
         if (parsedData) {

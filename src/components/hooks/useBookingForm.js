@@ -105,7 +105,7 @@ const handleChange = async (e) => {
     };
 
     if (updatedFormData.arrivalDate && updatedFormData.departureDate) {
-      console.log("Both dates set, checking availability automatically");
+      // console.log("Both dates set, checking availability automatically");
       try {
         setLoading(true);
         setError(null);
@@ -207,28 +207,28 @@ const handleChange = async (e) => {
     }
   
     const numberOfNights = calculateNumberOfNights(startDate, endDate);
-    console.log("Debugging dates:", {
-      formDataArrival: formData.arrivalDate,
-      formDataDeparture: formData.departureDate,
-      startDate: startDate,
-      endDate: endDate,
-      calculatedNights: numberOfNights,
-    });
+    // console.log("Debugging dates:", {
+    //   formDataArrival: formData.arrivalDate,
+    //   formDataDeparture: formData.departureDate,
+    //   startDate: startDate,
+    //   endDate: endDate,
+    //   calculatedNights: numberOfNights,
+    // });
     setLoading(true);
     setError(null);
   
     try {
-      console.log("Checking rates for:", {
-        dates: {
-          arrival: formData.arrivalDate,
-          departure: formData.departureDate,
-        },
-        guests: {
-          adults: formData.adults,
-          children: formData.children,
-        },
-        apartmentId: formData.apartmentId
-      });
+      // console.log("Checking rates for:", {
+      //   dates: {
+      //     arrival: formData.arrivalDate,
+      //     departure: formData.departureDate,
+      //   },
+      //   guests: {
+      //     adults: formData.adults,
+      //     children: formData.children,
+      //   },
+      //   apartmentId: formData.apartmentId
+      // });
   
       const response = await api.get("/rates", {
         params: {
@@ -332,14 +332,14 @@ const handleChange = async (e) => {
       const finalTotal =
         subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
 
-      console.log("Payment calculation:", {
-        basePrice,
-        extrasTotal,
-        subtotalBeforeDiscounts,
-        longStayDiscount,
-        couponDiscount,
-        finalTotal,
-      });
+      // console.log("Payment calculation:", {
+      //   basePrice,
+      //   extrasTotal,
+      //   subtotalBeforeDiscounts,
+      //   longStayDiscount,
+      //   couponDiscount,
+      //   finalTotal,
+      // });
 
       const response = await api.post("/create-payment-intent", {
         price: finalTotal,
@@ -384,16 +384,16 @@ const handleChange = async (e) => {
   
   // Get the base room price from priceDetails
   const selectedApartmentPriceDetails = priceDetails?.[formData.apartmentId];
-  console.log("Selected apartment price details:", selectedApartmentPriceDetails);
+  // console.log("Selected apartment price details:", selectedApartmentPriceDetails);
   
   const roomBasePrice = selectedApartmentPriceDetails?.originalPrice || 0;
-  console.log("Room base price:", roomBasePrice);
+  // console.log("Room base price:", roomBasePrice);
   
   // Calculate extras total
   const extrasTotal = selectedExtrasArray.reduce((sum, extra) => 
     sum + extra.amount + (extra.extraPersonAmount || 0), 0
   );
-  console.log("Extras total:", extrasTotal);
+  // console.log("Extras total:", extrasTotal);
   
   // Calculate total before discounts
   const subtotalBeforeDiscounts = roomBasePrice + extrasTotal;
@@ -429,7 +429,7 @@ const handleChange = async (e) => {
     } : null
   };
 
-  console.log('Final booking data:', bookingData);
+  // console.log('Final booking data:', bookingData);
 
   localStorage.setItem("bookingData", JSON.stringify(bookingData));
 
@@ -439,11 +439,11 @@ const handleChange = async (e) => {
 
  // useBookingForm.js
 const handleApplyCoupon = (couponCode) => {
-  console.log('handleApplyCoupon called with:', couponCode);
+  // console.log('handleApplyCoupon called with:', couponCode);
   setCouponError(null);
 
   if (!couponCode) {
-    console.log('No coupon code provided');
+    // console.log('No coupon code provided');
     setCouponError("Veuillez entrer un code promo");
     return;
   }
@@ -452,7 +452,7 @@ const handleApplyCoupon = (couponCode) => {
   console.log('Found coupon info:', couponInfo);
 
   if (!couponInfo) {
-    console.log('Invalid coupon code');
+    // console.log('Invalid coupon code');
     setCouponError("Code promo invalide");
     return;
   }
@@ -479,7 +479,7 @@ const handleApplyCoupon = (couponCode) => {
         },
       ],
     };
-    console.log('Updated price details:', newPriceDetails);
+    // console.log('Updated price details:', newPriceDetails);
     return newPriceDetails;
   });
 

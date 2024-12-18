@@ -34,12 +34,12 @@ export const PropertyDetails = ({
 
   const { t } = useTranslation(); // Add this hook
 
-  console.log("PropertyDetails render:", { 
-    startDate, 
-    endDate, 
-    hasSearched, 
-    hasAvailableDates: !!availableDates 
-  });
+  // console.log("PropertyDetails render:", { 
+  //   startDate, 
+  //   endDate, 
+  //   hasSearched, 
+  //   hasAvailableDates: !!availableDates 
+  // });
   
   const scrollTo = () => {
     setTimeout(() => {

@@ -19,9 +19,9 @@ export const InfoSupSection = ({
   const [couponError, setCouponError] = useState(null);
 
 const onApplyCoupon = () => {
-  console.log("Button clicked");
-  console.log("Coupon value:", coupon);
-  console.log("handleApplyCoupon exists:", !!handleApplyCoupon);
+  // console.log("Button clicked");
+  // console.log("Coupon value:", coupon);
+  // console.log("handleApplyCoupon exists:", !!handleApplyCoupon);
   if (handleApplyCoupon) {
     handleApplyCoupon(coupon);
     setCouponError(null);

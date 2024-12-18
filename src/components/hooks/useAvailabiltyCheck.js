@@ -3,13 +3,13 @@ import { api } from "../utils/api";
 
 // Helper function for checking room availability
 export const isRoomAvailable = (roomId, startDate, endDate, availableDates, hasSearched = false) => {
-  console.log("isRoomAvailable check:", {
-    roomId,
-    startDate,
-    endDate,
-    hasAvailableDates: !!availableDates,
-    hasSearched
-  });
+  // console.log("isRoomAvailable check:", {
+  //   roomId,
+  //   startDate,
+  //   endDate,
+  //   hasAvailableDates: !!availableDates,
+  //   hasSearched
+  // });
 
   if (!availableDates || !startDate || !endDate) {
     return false;
@@ -60,12 +60,12 @@ export const useAvailabilityCheck = (formData) => {
     try {
       const apartmentIds = ["1644643", "1946282", "1946279", "1946276", "1946270"];
       
-      console.log("Checking availability for:", {
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
-        adults: formData.adults,
-        children: formData.children
-      });
+      // console.log("Checking availability for:", {
+      //   startDate: startDate.toISOString().split('T')[0],
+      //   endDate: endDate.toISOString().split('T')[0],
+      //   adults: formData.adults,
+      //   children: formData.children
+      // });
 
       const response = await api.get("/rates", {
         params: {
@@ -77,7 +77,7 @@ export const useAvailabilityCheck = (formData) => {
         },
       });
 
-      console.log("API Response:", response.data);
+      // console.log("API Response:", response.data);
       
       if (response.data && response.data.data) {
         setAvailableDates(response.data.data);

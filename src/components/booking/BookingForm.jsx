@@ -196,14 +196,14 @@ const BookingForm = () => {
   };
   
   const handleAvailabilityCheck = async () => {
-    console.log('handleAvailabilityCheck called with:', {
-      startDate,
-      endDate,
-      formDataDates: {
-        arrival: formData.arrivalDate,
-        departure: formData.departureDate
-      }
-    });
+    // console.log('handleAvailabilityCheck called with:', {
+    //   startDate,
+    //   endDate,
+    //   formDataDates: {
+    //     arrival: formData.arrivalDate,
+    //     departure: formData.departureDate
+    //   }
+    // });
   
     if (!startDate || !endDate) {
       setDateError("Please select both arrival and departure dates");
@@ -215,7 +215,7 @@ const BookingForm = () => {
   
     try {
       const availabilityData = await checkAvailability(startDate, endDate);
-      console.log('Availability data received:', availabilityData);
+      // console.log('Availability data received:', availabilityData);
 
       if (availabilityData) {
         if (availabilityData.priceDetails) {

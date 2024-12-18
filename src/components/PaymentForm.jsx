@@ -11,7 +11,7 @@ const PaymentForm = ({ onSuccess, onError }) => {
     event.preventDefault();
 
     if (!stripe || !elements) {
-      console.log("Stripe not loaded yet");
+      // console.log("Stripe not loaded yet");
       return;
     }
 

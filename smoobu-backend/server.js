@@ -158,12 +158,12 @@ const calculatePriceWithSettings = (
     rates[startDateStr] &&
     rates[startDateStr].available === 1;
 
-  console.log("Calculating price for dates:", {
-    startDate: startDateStr,
-    endDate: endDateTime.toISOString().split("T")[0],
-    numberOfGuests,
-    numberOfChildren,
-  });
+  // console.log("Calculating price for dates:", {
+  //   startDate: startDateStr,
+  //   endDate: endDateTime.toISOString().split("T")[0],
+  //   numberOfGuests,
+  //   numberOfChildren,
+  // });
 
   // while (currentDate < endDateTime) {
   //   const dateStr = currentDate.toISOString().split("T")[0];
