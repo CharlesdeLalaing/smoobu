@@ -114,41 +114,6 @@ export const PropertyDetails = ({
   groupedRooms.available = sortRooms(groupedRooms.available);
   groupedRooms.unavailable = sortRooms(groupedRooms.unavailable);
 
-  // const filteredAvailableRooms = groupedRooms.available.filter(room => {
-  //   if (showOnlySelected) {
-  //     return room.id === formData.apartmentId;
-  //   }
-  //   if (showOnlyUnselected) {
-  //     return room.id !== formData.apartmentId;
-  //   }
-  //   return true;
-  // });
-
-  // Modified filtering logic to keep selected room visible
-  // const filteredAvailableRooms = (() => {
-  //   if (showOnlySelected && formData.apartmentId) {
-  //     // Find the selected room in either available or unavailable groups
-  //     const selectedRoom = [...groupedRooms.available, ...groupedRooms.unavailable]
-  //       .find(room => room.id === formData.apartmentId);
-  //     return selectedRoom ? [selectedRoom] : [];
-  //   }
-
-  //   if (showOnlyUnselected) {
-  //     return groupedRooms.available.filter(room => room.id !== formData.apartmentId);
-  //   }
-
-  //   // For normal view, show all available rooms plus selected room if it became unavailable
-  //   const rooms = [...groupedRooms.available];
-  //   if (formData.apartmentId) {
-  //     const selectedUnavailableRoom = groupedRooms.unavailable
-  //       .find(room => room.id === formData.apartmentId);
-  //     if (selectedUnavailableRoom && !rooms.some(room => room.id === formData.apartmentId)) {
-  //       rooms.unshift(selectedUnavailableRoom);
-  //     }
-  //   }
-  //   return rooms;
-  // })();
-
    // Modified filtering logic to prevent duplicate display
    const filteredAvailableRooms = (() => {
     if (showOnlySelected && formData.apartmentId) {
@@ -180,9 +145,7 @@ export const PropertyDetails = ({
   };
 
   const RoomCard = ({ room, isAvailable }) => {
-    // const roomPriceDetails = priceDetails && priceDetails[room.id];
-    // const [sliderRef, setSliderRef] = useState(null);
-    // const [activeTab, setActiveTab] = useState("priceDetails");
+
     const { t } = useTranslation(); // Add translation hook here too
 
     const roomPriceDetails = priceDetails && priceDetails[room.id];
@@ -259,41 +222,6 @@ export const PropertyDetails = ({
             <div className="flex-1 overflow-y-none">
               {activeTab === "roomInfo" && (
                 <div className="h-full">
-                  {/* <div className="h-[40vh] sm:h-auto md:h-[50vh]">
-                    <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
-                      {Object.values(room.images).map((image, index) => (
-                        <img
-                          key={index}
-                          src={image}
-                          alt={`${room.name} ${index + 1}`}
-                          className="w-full h-[270px] sm:h-[270px] md:h-[300px] lg:h-[300px] xl:h-[400px] object-cover"
-                        />
-                      ))}
-                    </Slider>
-                  </div>
-                  <div className="features-container overflow-x-auto w-full mt-4 sm:mt-2 md:mt-3 font-cormorant">
-                    <div className="features-list flex sm:flex-wrap md:flex-nowrap">
-                      {room.features.map((feature, index) => (
-                        <div
-                          key={index}
-                          className="feature-item flex flex-col items-center text-center p-4 sm:p-2 md:p-3 bg-[#668E73] "
-                          style={{ minWidth: "100px", flex: "0 0 auto" }}
-                        >
-                          <img
-                            src={feature.icon}
-                            alt={feature.title}
-                            style={{
-                              height: "30px",
-                              width: "30px",
-                              filter: "invert(100%)",
-                            }}
-                            className="sm:h-5 sm:w-5 md:h-6 md:w-6"
-                          />
-                          <span className="text-sm mt-2 text-white sm:text-xs md:text-sm sm:mt-1 md:mt-1.5">{feature.title}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div> */}
                   <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
                     {Object.values(room.images).map((image, index) => (
                       <img
@@ -321,27 +249,6 @@ export const PropertyDetails = ({
       
                   <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
                     <div className="features-list flex">
-                      {/* {room.features.map((feature, index) => (
-                        <div
-                          key={index}
-                          className="feature-item flex flex-col items-center text-center p-2 bg-[#668E73]"
-                          style={{ minWidth: "100px", flex: "0 0 auto" }}
-                        >
-                          <img
-                            src={feature.icon}
-                            alt={t(feature.title)}
-                            style={{
-                              height: "30px",
-                              width: "30px",
-                              filter: "invert(100%)",
-                            }}
-                          />
-                          <span className="text-sm mt-2 text-white">{feature.value ? 
-                              t(feature.title, { value: feature.value }) : 
-                              t(feature.title)
-                            }</span>
-                        </div>
-                      ))} */}
                       {room.features.map((feature, index) => {
                         // Handle dynamic values for features like maxGuests
                         let translatedTitle = feature.value ? 
@@ -419,9 +326,6 @@ export const PropertyDetails = ({
         ) : (
           <div className="flex flex-col xl:flex-row gap-10 w-[90%] mx-auto">
             <div className="w-full xl:w-2/5">
-              {/* <h2 className="text-[18px] md:text-[23px] font-normal text-black mb-2">
-                {room.name}
-              </h2> */}
   
               <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
                 {Object.values(room.images).map((image, index) => (
@@ -450,24 +354,6 @@ export const PropertyDetails = ({
   
               <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
                 <div className="features-list flex">
-                  {/* {room.features.map((feature, index) => (
-                    <div
-                      key={index}
-                      className="feature-item flex flex-col items-center text-center p-2 bg-[#668E73]"
-                      style={{ minWidth: "100px", flex: "0 0 auto" }}
-                    >
-                      <img
-                        src={feature.icon}
-                        alt={feature.title}
-                        style={{
-                          height: "30px",
-                          width: "30px",
-                          filter: "invert(100%)",
-                        }}
-                      />
-                      <span className="text-sm mt-2 text-white">{feature.title}</span>
-                    </div>
-                  ))} */}
                   {room.features.map((feature, index) => {
                     // Handle dynamic values for features like maxGuests
                     let translatedTitle = feature.value ? 
@@ -500,15 +386,6 @@ export const PropertyDetails = ({
             </div>
   
             <div className="w-full xl:w-3/5">  
-              {/* <h2 className="text-[18px] md:text-[23px] font-normal text-black mb-2">
-                Disponibilités
-              </h2> */}
-              {/* <CalendarRoom 
-                roomId={room.id}
-                availableDates={availableDates}
-                selectedStartDate={startDate}
-                selectedEndDate={endDate}
-              /> */}
               <CalendarRoom roomId={room.id} />
               <p className="text-gray-600 my-4 font-cormorant">{t(room.description)}</p>
               <button
