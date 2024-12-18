@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Phone from "../../assets/icons8-phone-50 white.png";
 import Mail from "../../assets/icons8-mail-48 (2 white.png";
 import Pin from "../../assets/icons8-location-50 white.png";
@@ -12,6 +13,7 @@ import GreatBritain from "../../assets/icons8-great-britain-48.png";
 import Netherland from "../../assets/icons8-netherlands-48.png";
 
 export const HeaderSection = () => {
+  const { t, i18n } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState("fr");
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
@@ -23,23 +25,28 @@ export const HeaderSection = () => {
   ];
 
   const menuItems = [
-    { label: "Accueil", url: "#" },
+    { label: t("header.nav.home"), url: "#" },
     {
-      label: "Nos Logements",
+      label: t("header.nav.accommodations.title"),
       url: "#",
       submenu: [
-        { label: "Logements Insolites", url: "#" },
-        { label: "Gîte & Chambres d'Hôtes", url: "#" },
+        { label: t("header.nav.accommodations.unusual"), url: "#" },
+        { label: t("header.nav.accommodations.guesthouse"), url: "#" },
       ],
     },
-    { label: "Extras", url: "#" },
-    { label: "Activités & Partenaires", url: "#" },
-    { label: "Qui Sommes-Nous ?", url: "#" },
-    { label: "Info & Presse", url: "#" },
+    { label: t("header.nav.extras"), url: "#" },
+    { label: t("header.nav.activities"), url: "#" },
+    { label: t("header.nav.aboutUs"), url: "#" },
+    { label: t("header.nav.info"), url: "#" },
   ];
 
   const currentLang =
     languages.find((lang) => lang.code === currentLanguage) || languages[0];
+
+  const handleLanguageChange = (langCode) => {
+    setCurrentLanguage(langCode);
+    i18n.changeLanguage(langCode);
+  };
 
   return (
     <header className="z-50 w-full bg-white">
@@ -48,8 +55,8 @@ export const HeaderSection = () => {
         <div className="mx-auto flex flex-col md:flex-row justify-between items-center text-xs h-full px-4 py-2 md:py-0 md:px-[5%]">
           {/* Contact Information */}
           <div className="flex w-full md:flex-row md:items-center md:space-x-6 md:w-auto">
-            {/* Mobile: Icon only with click action, Desktop: Full content */}
-            <div className="justify-center w-full hidden gap-7 md:gap-0 md:justify-between">
+            {/* Mobile: Icon only with click action */}
+            <div className="flex justify-center w-full md:hidden gap-7 md:gap-0 md:justify-between">
               <a href="tel:+32475201619" className="flex items-center">
                 <img src={Phone} alt="phone" className="h-[18px] w-[18px]" />
               </a>
@@ -71,62 +78,40 @@ export const HeaderSection = () => {
             {/* Desktop only content */}
             <div className="hidden md:flex items-center gap-2 text-[12px]">
               <img src={Phone} alt="phone" className="h-[18px] w-[18px]" />
-              <span className="font-light">+32 475 20 16 19</span>
+              <span className="font-light">{t("header.contact.phone")}</span>
             </div>
             <div className="hidden md:flex items-center gap-2 text-[12px]">
               <img src={Mail} alt="mail" className="h-[18px] w-[18px]" />
-              <span className="font-light">fermedebasseilies@gmail.com</span>
+              <span className="font-light">{t("header.contact.email")}</span>
             </div>
             <div className="hidden md:flex items-center gap-2 text-[12px]">
               <img src={Pin} alt="location" className="h-[18px] w-[18px]" />
-              <span className="font-light">
-                Rue de Basseilles 1 - 5340 MOZET
-              </span>
+              <span className="font-light">{t("header.contact.address")}</span>
             </div>
           </div>
 
-          {/* Social and Language - Remains unchanged */}
+          {/* Social and Language */}
+          {/* Social and Language */}
           <div className="flex items-center mt-2 space-x-4 md:mt-0">
-            <div className="group">
-              <button className="flex items-center gap-2 hover:text-gray-200">
-                <img
-                  src={currentLang.flag}
-                  alt="Selected language"
-                  className="h-[20px] w-[20px] rounded-sm"
-                />
-                <svg
-                  className="w-4 h-4 transition-transform group-hover:rotate-180"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            {/* Language Buttons - Simplified */}
+            <div className="flex items-center gap-2 px-2 py-1 bg-white rounded bg-opacity-10">
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => handleLanguageChange(lang.code)}
+                  className={`flex items-center justify-center ${
+                    currentLanguage === lang.code
+                      ? "bg-white bg-opacity-20 rounded p-1"
+                      : "p-1"
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
+                  <img
+                    src={lang.flag}
+                    alt={`Switch to ${lang.name}`}
+                    className="h-[20px] w-[20px] rounded-sm"
                   />
-                </svg>
-              </button>
-              <div className="absolute invisible mt-2 transition-all duration-300 opacity-0 group-hover:visible group-hover:opacity-100">
-                <div className="flex flex-col gap-2 p-2 bg-white rounded shadow">
-                  {languages
-                    .filter((lang) => lang.code !== currentLanguage)
-                    .map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => setCurrentLanguage(lang.code)}
-                        className="hover:text-gray-200"
-                      >
-                        <img
-                          src={lang.flag}
-                          alt={`Switch to ${lang.code}`}
-                          className="h-[20px] w-[20px] rounded-sm"
-                        />
-                      </button>
-                    ))}
-                </div>
-              </div>
+                </button>
+              ))}
             </div>
 
             <div className="flex items-center space-x-4">
@@ -150,7 +135,7 @@ export const HeaderSection = () => {
             </div>
 
             <button className="bg-[#d3b574] text-black p-[10px] font-light text-[12px] whitespace-nowrap">
-              Bon cadeau
+              {t("header.buttons.giftCard")}
             </button>
           </div>
         </div>
@@ -183,14 +168,14 @@ export const HeaderSection = () => {
             <div className="items-center justify-between hidden w-full lg:flex">
               <div className="flex justify-center w-1/3 gap-5 space-x-10">
                 <a href="#" className="text-gray-700 text-[16px] font-light">
-                  Accueil
+                  {t("header.nav.home")}
                 </a>
                 <div className="relative group">
                   <a
                     href="#"
                     className="text-gray-700 text-[16px] font-light flex items-center gap-2"
                   >
-                    Nos Logements
+                    {t("header.nav.accommodations.title")}
                     <svg
                       className="w-4 h-4 transition-transform group-hover:rotate-180"
                       fill="none"
@@ -210,29 +195,29 @@ export const HeaderSection = () => {
                       href="#"
                       className="block px-4 py-2 text-[16px] text-gray-700 hover:bg-gray-100 font-light"
                     >
-                      Logements Insolites
+                      {t("header.nav.accommodations.unusual")}
                     </a>
                     <a
                       href="#"
                       className="block px-4 py-2 text-[16px] text-gray-700 hover:bg-gray-100 font-light"
                     >
-                      Gîte & Chambres d'Hôtes
+                      {t("header.nav.accommodations.guesthouse")}
                     </a>
                   </div>
                 </div>
                 <a href="#" className="text-gray-700 text-[16px] font-light">
-                  Extras
+                  {t("header.nav.extras")}
                 </a>
               </div>
               <div className="flex justify-start w-1/3 space-x-6">
                 <a href="#" className="text-gray-700 text-[16px] font-light">
-                  Activités & Partenaires
+                  {t("header.nav.activities")}
                 </a>
                 <a href="#" className="text-gray-700 text-[16px] font-light">
-                  Qui Sommes-Nous ?
+                  {t("header.nav.aboutUs")}
                 </a>
                 <a href="#" className="text-gray-700 text-[16px] font-light">
-                  Info & Presse
+                  {t("header.nav.info")}
                 </a>
               </div>
             </div>
