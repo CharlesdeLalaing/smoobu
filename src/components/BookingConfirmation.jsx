@@ -150,7 +150,7 @@ const BookingConfirmation = () => {
             {/* Show extras */}
             {bookingDetails?.extras?.map((extra, index) => (
               <p key={index}>
-                {extra.name} (x{extra.quantity}): {((extra.amount || 0) + (extra.extraPersonAmount || 0)).toFixed(2)}€
+                {extra.nameKey} (x{extra.quantity}): {((extra.amount || 0) + (extra.extraPersonAmount || 0)).toFixed(2)}€
                 {extra.extraPersonQuantity > 0 && t('bookingConfirmation.success.sections.priceDetails.extraPerson', {
                   quantity: extra.extraPersonQuantity,
                   price: extra.extraPersonAmount.toFixed(2)
