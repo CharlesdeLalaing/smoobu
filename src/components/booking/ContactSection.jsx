@@ -1,84 +1,90 @@
 import React from "react";
+import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { InputField } from "./InputField";
 import { TimeSelect } from "./TimeSelect";
 import { TermsCheckbox } from "./TermsCheckbox";
 
 export const ContactSection = ({ formData, handleChange, setFormData }) => {
+
+  const { t } = useTranslation();
+  
+
   return (
     <div className="w-full mt-6 space-y-8">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <InputField
-          label="Prénom*"
+          label={t('contact.fields.firstName.label')}
           name="firstName"
           value={formData.firstName}
           onChange={handleChange}
-          placeholder="Prénom"
+          placeholder={t('contact.fields.firstName.placeholder')}
           required
         />
 
         <InputField
-          label="Nom*"
+          label={t('contact.fields.lastName.label')}
           name="lastName"
           value={formData.lastName}
           onChange={handleChange}
-          placeholder="Nom"
+          placeholder={t('contact.fields.lastName.placeholder')}
           required
         />
 
         <InputField
-          label="Email*"
+          label={t('contact.fields.email.label')}
           name="email"
           type="email"
           value={formData.email}
           onChange={handleChange}
-          placeholder="Email"
+          placeholder={t('contact.fields.email.placeholder')}
           required
         />
 
         <InputField
-          label="Téléphone"
+          label={t('contact.fields.phone.label')}
           name="phone"
           type="tel"
           value={formData.phone}
           onChange={handleChange}
-          placeholder="Téléphone"
+          placeholder={t('contact.fields.phone.placeholder')}
         />
 
         <InputField
-          label="Rue/numéro"
+          label={t('contact.fields.street.label')}
           name="street"
           value={formData.street}
           onChange={handleChange}
-          placeholder="Rue/Numéro"
+          placeholder={t('contact.fields.street.placeholder')}
         />
 
         <InputField
-          label="Code postal"
+          label={t('contact.fields.postalCode.label')}
           name="postalCode"
           type="number"
           value={formData.postalCode}
           onChange={handleChange}
-          placeholder="Code postal"
+          placeholder={t('contact.fields.postalCode.placeholder')}
         />
 
         <InputField
-          label="Ville"
+          label={t('contact.fields.city.label')}
           name="location"
           value={formData.location}
           onChange={handleChange}
-          placeholder="Ville"
+          placeholder={t('contact.fields.city.placeholder')}
         />
 
         <InputField
-          label="Pays"
+          label={t('contact.fields.country.label')}
           name="country"
           value={formData.country}
           onChange={handleChange}
-          placeholder="Pays"
+          placeholder={t('contact.fields.country.placeholder')}
         />
 
         <TimeSelect
-          label="Check-in*"
+          label={t('contact.fields.checkIn.label')}
           name="arrivalTime"
           value={formData.arrivalTime}
           onChange={handleChange}

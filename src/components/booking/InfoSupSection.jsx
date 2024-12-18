@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { InputField } from "./InputField";
 
 import LongBird from '../../assets/GlobalImg/long_bird.webp';
@@ -10,6 +11,10 @@ export const InfoSupSection = ({
   appliedCoupon,
   handleApplyCoupon,
 }) => {
+
+  const { t } = useTranslation();
+  
+
   const [coupon, setCoupon] = useState("");
   const [couponError, setCouponError] = useState(null);
 
@@ -28,12 +33,13 @@ const onApplyCoupon = () => {
       <div className="col-span-full">
         <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
           Laissez un message pour le propriétaire
+          {t('extras.infoSup.ownerMessage.label')}
           <textarea
             name="notice"
             value={formData.notice}
             onChange={handleChange}
             rows="3"
-            placeholder="Laissez un message pour le propriétaire"
+            placeholder={t('extras.infoSup.ownerMessage.placeholder')}
             className="mt-1 block w-full rounded border-[#668E73] border text-[16px] placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white p-2"
           />
         </label>
@@ -45,11 +51,12 @@ const onApplyCoupon = () => {
           <div className="flex-grow">
             <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
               Code promo
+              {t('extras.infoSup.promoCode.label')}
               <input
                 type="text"
                 value={coupon}
                 onChange={(e) => setCoupon(e.target.value)}
-                placeholder="Entrez votre code promo"
+                placeholder={t('extras.infoSup.promoCode.placeholder')}
                 className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
               />
             </label>
@@ -63,12 +70,14 @@ const onApplyCoupon = () => {
             className="h-12 px-6 rounded shadow-sm text-[16px] font-medium text-white bg-[#668E73] hover:bg-opacity-90 focus:outline-none"
           >
             Appliquer
+            {t('extras.infoSup.promoCode.button')}
           </button>
         </div>
         {appliedCoupon && (
           <div className="mt-2 text-sm text-green-600">
             Code promo {appliedCoupon.code} appliqué : -{appliedCoupon.discount}
             €
+            {t('extras.infoSup.promoCode.applied')}
           </div>
         )}
       </div>
