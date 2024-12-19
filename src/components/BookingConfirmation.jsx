@@ -36,7 +36,7 @@ const BookingConfirmation = () => {
     }
   }, [paymentIntent]);
 
-  const API_URL = "https://booking-9u8u.onrender.com/";
+  const API_URL = "https://booking-9u8u.onrender.com";
 
   const fetchBookingDetails = async (paymentIntentId) => {
     try {
