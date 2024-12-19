@@ -4,7 +4,6 @@ import axios from "axios";
 import Stripe from "stripe";
 
 import admin from 'firebase-admin';
-import serviceAccount from './serviceAccountKey.json' assert { type: "json" };
 
 
 import * as dotenv from "dotenv";
