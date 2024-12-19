@@ -379,12 +379,19 @@ app.post(
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             // Translate extras if they exist
-            extras: bookingData.extras ? bookingData.extras.map(extra => ({
-              ...extra,
-              name: extra.name.startsWith('extras.') ? extrasFrenchNames[extra.name] || extra.name : extra.name,
-              // Handle additional person names in French
-              extraPersonName: extra.extraPersonQuantity > 0 ? extrasFrenchNames['extras.additionalPerson'] : undefined
-            })) : []
+            extras: bookingData.extras ? bookingData.extras.map(extra => {
+              const translatedExtra = {
+                ...extra,
+                name: extra.name.startsWith('extras.') ? extrasFrenchNames[extra.name] || extra.name : extra.name,
+              };
+              
+              // Only add extraPersonName if there's an extraPersonQuantity
+              if (extra.extraPersonQuantity > 0) {
+                translatedExtra.extraPersonName = extrasFrenchNames['extras.additionalPerson'];
+              }
+              
+              return translatedExtra;
+            }) : []
           };
 
           try {
