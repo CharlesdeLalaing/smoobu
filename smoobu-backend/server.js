@@ -588,7 +588,10 @@ app.post(
 app.use(express.json());
 app.use(
   cors({
-    origin: "https://booking-rho-plum.vercel.app", 
+    origin: [
+      "https://reservation.fermedebasseilles.be", 
+      "https://booking-rho-plum.vercel.app"  
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
