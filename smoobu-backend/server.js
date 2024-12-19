@@ -373,11 +373,18 @@ app.post(
           // Store booking in Firebase
           const bookingDoc = {
             ...bookingData,
-              smoobuReservationId: smoobuResponse.data.id,
-              paymentIntentId: paymentIntent.id,
-              stripePaymentStatus: paymentIntent.status,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
+            smoobuReservationId: smoobuResponse.data.id,
+            paymentIntentId: paymentIntent.id,
+            stripePaymentStatus: paymentIntent.status,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            // Translate extras if they exist
+            extras: bookingData.extras ? bookingData.extras.map(extra => ({
+              ...extra,
+              name: extra.name.startsWith('extras.') ? extrasFrenchNames[extra.name] || extra.name : extra.name,
+              // Handle additional person names in French
+              extraPersonName: extra.extraPersonQuantity > 0 ? extrasFrenchNames['extras.additionalPerson'] : undefined
+            })) : []
           };
 
           try {
