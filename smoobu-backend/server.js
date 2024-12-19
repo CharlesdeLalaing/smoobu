@@ -12,6 +12,12 @@ const __dirname = dirname(__filename);
 dotenv.config();
 
 const app = express();
+
+app.use((req, res, next) => {
+  console.log("Incoming Origin:", req.headers.origin);
+  next();
+});
+
 const stripe = new Stripe(
   "sk_test_51QHmafIhkftuEy3nihoW4ZunaXVY1D85r176d91x9BAhGfvW92zG7r7A5rVeGuL1ysHVMOzflF0jwoCpyKJl760n00GC9ZYSJ4"
 );
