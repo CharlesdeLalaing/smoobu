@@ -4,6 +4,13 @@ import axios from "axios";
 import Stripe from "stripe";
 
 import admin from 'firebase-admin';
+import serviceAccount from './serviceAccountKey.json' assert { type: "json" };
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+const db = admin.firestore();
 
 
 import * as dotenv from "dotenv";
@@ -22,11 +29,6 @@ app.use((req, res, next) => {
   next();
 });
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-
-const db = admin.firestore();
 
 const stripe = new Stripe(
   "sk_test_51QHmafIhkftuEy3nihoW4ZunaXVY1D85r176d91x9BAhGfvW92zG7r7A5rVeGuL1ysHVMOzflF0jwoCpyKJl760n00GC9ZYSJ4"
