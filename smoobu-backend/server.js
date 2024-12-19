@@ -164,31 +164,6 @@ const calculatePriceWithSettings = (
     rates[startDateStr] &&
     rates[startDateStr].available === 1;
 
-  // console.log("Calculating price for dates:", {
-  //   startDate: startDateStr,
-  //   endDate: endDateTime.toISOString().split("T")[0],
-  //   numberOfGuests,
-  //   numberOfChildren,
-  // });
-
-  // while (currentDate < endDateTime) {
-  //   const dateStr = currentDate.toISOString().split("T")[0];
-  //   const dayRate = rates[dateStr];
-
-  //   if (dayRate) {
-  //     // Allow booking if it's either available or it's a departure-arrival day
-  //     if (
-  //       dayRate.available === 1 ||
-  //       (dateStr === startDateStr && isDepartureDay)
-  //     ) {
-  //       totalPrice += dayRate.price;
-  //       numberOfNights++;
-  //       console.log(`Adding price for ${dateStr}:`, dayRate.price);
-  //     }
-  //   }
-
-  //   currentDate.setDate(currentDate.getDate() + 1);
-  // }
 
   while (currentDate <= endDateTime) {
     const dateStr = currentDate.toISOString().split("T")[0];
@@ -397,87 +372,7 @@ app.post(
           await wait(2000);
 
           // Process extras if they exist
-        // if (bookingData.extras && bookingData.extras.length > 0) {
-        //   console.log("Creating extras as price elements...");
 
-        //   for (const extra of bookingData.extras) {
-        //     let retryCount = 0;
-        //     const maxRetries = 3;
-
-        //     while (retryCount < maxRetries) {
-        //       try {
-        //         // Process the name
-        //         const processedName = processExtraName(extra);
-
-        //         // Add base extra
-        //         if (!processedName.name.includes("Personne supplémentaire")) {
-        //           const extraResponse = await axios.post(
-        //             `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-        //             {
-        //               type: "addon",
-        //               name: processedName.name,
-        //               nameKey: processedName.nameKey, // Store the translation key
-        //               amount: extra.amount,
-        //               quantity: extra.quantity,
-        //               currencyCode: "EUR",
-        //             },
-        //             {
-        //               headers: {
-        //                 "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-        //                 "Content-Type": "application/json",
-        //               },
-        //             }
-        //           );
-        //           console.log(
-        //             `Added base extra: ${processedName.name}`,
-        //             extraResponse.data
-        //           );
-        //         }
-
-        //         // If there are extra persons, add them with translation support
-        //         if (extra.extraPersonQuantity > 0 && extra.extraPersonPrice) {
-        //           await wait(1000);
-        //           const extraPersonResponse = await axios.post(
-        //             `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-        //             {
-        //               type: "addon",
-        //               name: `${processedName.name} - extras.additionalPerson`,
-        //               nameKey: "extras.additionalPerson",
-        //               amount: extra.extraPersonPrice * extra.extraPersonQuantity,
-        //               quantity: extra.extraPersonQuantity,
-        //               currencyCode: "EUR",
-        //             },
-        //             {
-        //               headers: {
-        //                 "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-        //                 "Content-Type": "application/json",
-        //               },
-        //             }
-        //           );
-        //           console.log(
-        //             `Added extra person charges for: ${processedName.name}`,
-        //             extraPersonResponse.data
-        //           );
-        //         }
-
-        //         break;
-        //       } catch (extraError) {
-        //         retryCount++;
-        //         console.log(`Retry ${retryCount} for extra ${extra.name}`);
-
-        //         if (retryCount === maxRetries) {
-        //           console.error(
-        //             `Failed to add extra ${extra.name} after ${maxRetries} attempts:`,
-        //             extraError.response?.data || extraError.message
-        //           );
-        //         } else {
-        //           await wait(2000 * retryCount); // Exponential backoff
-        //           continue;
-        //         }
-        //       }
-        //     }
-        //   }
-        // }
 
         // Modified webhook handler
         if (bookingData.extras && bookingData.extras.length > 0) {
@@ -640,79 +535,6 @@ app.get('/api/apartments/:id', async (req, res) => {
   }
 });
 
-// Get rates endpoint
-  // In your server file where you handle /api/rates endpoint
-  // app.get("/api/rates", async (req, res) => {
-  //   try {
-  //     const { apartments, start_date, end_date, adults, children } = req.query;
-
-  //     console.log("Processing rates request:", {
-  //       apartments,
-  //       start_date,
-  //       end_date,
-  //       adults,
-  //       children
-  //     });
-
-  //     const response = await axios.get("https://login.smoobu.com/api/rates", {
-  //       headers: {
-  //         "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-  //         "Content-Type": "application/json",
-  //       },
-  //       params: {
-  //         apartments: Array.isArray(apartments) ? apartments : [apartments],
-  //         start_date,
-  //         end_date,
-  //       },
-  //     });
-
-  //     if (!response.data || !response.data.data) {
-  //       return res.status(404).json({ error: "No rates found" });
-  //     }
-
-  //     const formattedData = {};
-  //     const priceDetailsByApartment = {};
-
-  //     // Process each apartment
-  //     (Array.isArray(apartments) ? apartments : [apartments]).forEach(apartmentId => {
-  //       const apartmentData = response.data.data[apartmentId];
-  //       formattedData[apartmentId] = apartmentData;
-
-  //       const settings = discountSettings[apartmentId];
-  //       if (!settings) return;
-
-  //       // Use the centralized price calculation function
-  //       const priceCalculation = calculatePriceWithSettings(
-  //         apartmentData,
-  //         start_date,
-  //         end_date,
-  //         parseInt(adults),
-  //         parseInt(children),
-  //         settings
-  //       );
-
-  //       // Store price details for this apartment
-  //       priceDetailsByApartment[apartmentId] = priceCalculation;
-  //     });
-
-  //     console.log("Sending response with price details:", {
-  //       apartmentCount: Object.keys(priceDetailsByApartment).length,
-  //       priceDetails: priceDetailsByApartment
-  //     });
-
-  //     res.json({
-  //       data: formattedData,
-  //       priceDetails: priceDetailsByApartment
-  //     });
-
-  //   } catch (error) {
-  //     console.error("Error fetching rates:", error);
-  //     res.status(500).json({
-  //       error: "Failed to fetch rates",
-  //       details: error.message
-  //     });
-  //   }
-  // });
 
   // Replace your current /api/rates endpoint with this one
 app.get("/api/rates", async (req, res) => {
