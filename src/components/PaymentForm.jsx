@@ -1,7 +1,12 @@
 import React, { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
 const PaymentForm = ({ onSuccess, onError }) => {
+
+  const { t } = useTranslation();
+  
+
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -61,7 +66,8 @@ const PaymentForm = ({ onSuccess, onError }) => {
         disabled={loading || !stripe || !elements}
         className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-[16px] font-medium text-white bg-[#668E73] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#668E73] disabled:bg-gray-300 disabled:cursor-not-allowed"
       >
-        {loading ? "Traitement en cours..." : "Payer maintenant"}
+        {loading ? t('paymentForm.processing') : t('paymentForm.payNow')}
+
       </button>
     </form>
   );
