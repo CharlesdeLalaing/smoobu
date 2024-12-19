@@ -4,8 +4,9 @@ import axios from "axios";
 import Stripe from "stripe";
 
 import admin from 'firebase-admin';
-import serviceAccount from './serviceAccountKey.json' assert { type: "json" };
-
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const serviceAccount = require('./serviceAccountKey.json');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
