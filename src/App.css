@@ -19,3 +19,7 @@
   font-style: normal;
 }
 
+.react-datepicker__header {
+  background-color: red; 
+}
+
