@@ -20,6 +20,6 @@
 }
 
 .react-datepicker__header {
-  background-color: red; 
+  background-color: red !important; 
 }
 
