@@ -69,6 +69,9 @@ export const SearchSection = ({
               dateFormat="dd/MM/yyyy"
               placeholderText={t("search.selectDate")}
               className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
+              style={{
+                backgroundColor: "red",
+              }}
               filterDate={(date) => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
