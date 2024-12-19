@@ -2,6 +2,11 @@ import express from "express";
 import cors from "cors";
 import axios from "axios";
 import Stripe from "stripe";
+
+import admin from 'firebase-admin';
+import serviceAccount from './serviceAccountKey.json' assert { type: "json" };
+
+
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
@@ -17,6 +22,12 @@ app.use((req, res, next) => {
   console.log("Incoming Origin:", req.headers.origin);
   next();
 });
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+const db = admin.firestore();
 
 const stripe = new Stripe(
   "sk_test_51QHmafIhkftuEy3nihoW4ZunaXVY1D85r176d91x9BAhGfvW92zG7r7A5rVeGuL1ysHVMOzflF0jwoCpyKJl760n00GC9ZYSJ4"
@@ -121,6 +132,8 @@ const extrasFrenchNames = {
   // Additional Person translation
   'extras.additionalPerson': "Personne supplémentaire"
 };
+
+
 
 // Modified processExtraName function
 const processExtraName = (extra) => {
@@ -366,6 +379,26 @@ app.post(
           );
 
           console.log("Smoobu booking created:", smoobuResponse.data);
+
+          // Store booking in Firebase
+          const bookingDoc = {
+            ...bookingData,
+              smoobuReservationId: smoobuResponse.data.id,
+              paymentIntentId: paymentIntent.id,
+              stripePaymentStatus: paymentIntent.status,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+          };
+
+          try {
+            const docRef = await db.collection('bookings').add(bookingDoc);
+            console.log("Booking stored in Firebase with ID:", docRef.id);
+            } catch (firebaseError) {
+            console.error("Error storing in Firebase:", firebaseError);
+            // Continue with the rest of the booking process even if Firebase storage fails
+          }
+
+
           const reservationId = smoobuResponse.data.id;
 
           // Add initial delay after booking creation
@@ -806,4 +839,28 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log("Webhook endpoint ready at /webhook");
+});
+
+
+app.get("/api/bookings-history/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+    const snapshot = await db.collection('bookings')
+      .where('email', '==', email)
+      .orderBy('createdAt', 'desc')
+      .get();
+    
+    const bookings = [];
+    snapshot.forEach(doc => {
+      bookings.push({ id: doc.id, ...doc.data() });
+    });
+    
+    res.json(bookings);
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    res.status(500).json({
+      error: "Failed to fetch bookings",
+      message: error.message
+    });
+  }
 });
