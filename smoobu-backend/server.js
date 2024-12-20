@@ -20,7 +20,7 @@ app.use((req, res, next) => {
 });
 
 const stripe = new Stripe(
-  process.env.STRIPE_API_KEY
+  "sk_test_51QHmafIhkftuEy3nihoW4ZunaXVY1D85r176d91x9BAhGfvW92zG7r7A5rVeGuL1ysHVMOzflF0jwoCpyKJl760n00GC9ZYSJ4"
 );
 const pendingBookings = new Map();
 
@@ -317,7 +317,7 @@ app.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        process.env.STRIPE_SIG_KEY
+        "whsec_uzumVmrKDrksQlTpgo5gEUPk1HIxZwBv"
       );
 
       console.log("Webhook event verified:", event.type);
