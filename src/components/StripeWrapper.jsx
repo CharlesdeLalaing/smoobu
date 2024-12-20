@@ -2,9 +2,8 @@ import React from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PK_KEY
-);
+
+const stripePromise = loadStripe(String(process.env.NEXT_PUBLIC_STRIPE_PK_KEY));
 
 const StripeWrapper = ({ clientSecret, children, onSuccess, onError }) => {
   const options = {
