@@ -48,19 +48,19 @@ export const HeaderSection = () => {
   ];
 
   const menuItems = [
-    { label: t("header.nav.home"), url: "#" },
+    { label: t("header.nav.home"), url: t("header.links.home") },
     {
       label: t("header.nav.accommodations.title"),
       url: "#",
       submenu: [
-        { label: t("header.nav.accommodations.unusual"), url: "#" },
-        { label: t("header.nav.accommodations.guesthouse"), url: "#" },
+        { label: t("header.nav.accommodations.unusual"), url: t("header.links.tinyHouse") },
+        { label: t("header.nav.accommodations.guesthouse"), url: t("header.links.bnb") },
       ],
     },
-    { label: t("header.nav.extras"), url: "#" },
-    { label: t("header.nav.activities"), url: "#" },
-    { label: t("header.nav.aboutUs"), url: "#" },
-    { label: t("header.nav.info"), url: "#" },
+    { label: t("header.nav.extras"), url: t("header.links.extras") },
+    { label: t("header.nav.activities"), url: t("header.links.activity") },
+    { label: t("header.nav.aboutUs"), url: t("header.links.whoAreWe") },
+    { label: t("header.nav.info"), url: t("header.links.news") },
   ];
 
   const currentLang =

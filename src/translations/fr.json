@@ -20,6 +20,15 @@
         },
         "buttons": {
           "giftCard": "Bon cadeau"
+        },
+        "links" : {
+          "home": "https://fermedebasseilles.be/",
+          "tinyHouse": "https://fermedebasseilles.be/decouvrez-nos-logements-insolites/",
+          "bnb": "https://fermedebasseilles.be/decouvrez-nos-gites-amp-chambres-dhotes/",
+          "extras": "https://fermedebasseilles.be/extras/",
+          "activity": "https://fermedebasseilles.be/activites-partenaires/",
+          "whoAreWe": "https://fermedebasseilles.be/qui-sommes-nous/",
+          "news": "https://fermedebasseilles.be/info-presse/"
         }
       },
       "search": {
