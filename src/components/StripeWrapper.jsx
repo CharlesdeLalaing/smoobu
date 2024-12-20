@@ -3,7 +3,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
 // Use import.meta.env for Vite or process.env for Create React App
-const publishableKey = import.meta.env.VITE_STRIPE_PK_KEY || process.env.REACT_APP_STRIPE_PK_KEY;
+const publishableKey = "pk_live_51PMSZgHkTpmdfEQCSR3cuwrc3Xs9XfsS8b08KuRFuJhnQu6T0rKrUqWM5Iv71vvGXttyegtEvn2cqQzIvX342bzJ000DVG0SfF";
 
 if (!publishableKey) {
   console.error('Stripe publishable key is not defined in environment variables');
