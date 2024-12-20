@@ -20,15 +20,6 @@
         },
         "buttons": {
           "giftCard": "Cadeaubon"
-        },
-        "links" : {
-          "home": "https://fermedebasseilles.be/nl/thuis/",
-          "tinyHouse": "https://fermedebasseilles.be/nl/ontdek-onze-ongewone-accommodaties/",
-          "bnb": "https://fermedebasseilles.be/nl/ontdek-onze-gites-gastenkamers/",
-          "extras": "https://fermedebasseilles.be/nl/aanvullingen/",
-          "activity": "https://fermedebasseilles.be/nl/activiteiten-partners/",
-          "whoAreWe": "https://fermedebasseilles.be/nl/wie-zijn-wij/",
-          "news": "https://fermedebasseilles.be/nl/info-pers/"
         }
       },
       "search": {

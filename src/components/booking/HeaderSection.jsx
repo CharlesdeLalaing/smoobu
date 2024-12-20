@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { ROUTES } from "../../config/routes";
 import Phone from "../../assets/icons8-phone-50 white.png";
 import Mail from "../../assets/icons8-mail-48 (2 white.png";
 import Pin from "../../assets/icons8-location-50 white.png";
@@ -7,7 +8,6 @@ import Insta from "../../assets/icons8-instagram-52 white.png";
 import Facebook from "../../assets/icons8-facebook-50 white.png";
 import Tiktok from "../../assets/icons8-tik-tok-48 white.png";
 import Logo from "../../assets/logoBaseilles.webp";
-
 import French from "../../assets/icons8-french-flag-48.png";
 import GreatBritain from "../../assets/icons8-great-britain-48.png";
 import Netherland from "../../assets/icons8-netherlands-48.png";
@@ -16,24 +16,20 @@ export const HeaderSection = () => {
   const { t, i18n } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState("fr");
-  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [showAccommodationsSubmenu, setShowAccommodationsSubmenu] = useState(false);
 
-   // Add useEffect to handle body scroll
-   useEffect(() => {
+  // Handle body scroll when mobile menu is open
+  useEffect(() => {
     if (isMenuOpen) {
-      // When menu opens, prevent scrolling
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
     } else {
-      // When menu closes, restore scrolling
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
     }
 
-    // Cleanup function to ensure we restore scrolling when component unmounts
     return () => {
       document.body.style.overflow = '';
       document.body.style.position = '';
@@ -47,30 +43,48 @@ export const HeaderSection = () => {
     { code: "nl", name: "NL", flag: Netherland },
   ];
 
+  // Create menu items using routes
   const menuItems = [
-    { label: t("header.nav.home"), url: t("header.links.home") },
+    { 
+      label: t("header.nav.home"), 
+      url: ROUTES.home[currentLanguage] 
+    },
     {
       label: t("header.nav.accommodations.title"),
       url: "#",
       submenu: [
-        { label: t("header.nav.accommodations.unusual"), url: t("header.links.tinyHouse") },
-        { label: t("header.nav.accommodations.guesthouse"), url: t("header.links.bnb") },
+        { 
+          label: t("header.nav.accommodations.unusual"), 
+          url: ROUTES.tinyHouse[currentLanguage] 
+        },
+        { 
+          label: t("header.nav.accommodations.guesthouse"), 
+          url: ROUTES.bnb[currentLanguage] 
+        },
       ],
     },
-    { label: t("header.nav.extras"), url: t("header.links.extras") },
-    { label: t("header.nav.activities"), url: t("header.links.activity") },
-    { label: t("header.nav.aboutUs"), url: t("header.links.whoAreWe") },
-    { label: t("header.nav.info"), url: t("header.links.news") },
+    { 
+      label: t("header.nav.extras"), 
+      url: ROUTES.extras[currentLanguage] 
+    },
+    { 
+      label: t("header.nav.activities"), 
+      url: ROUTES.activity[currentLanguage] 
+    },
+    { 
+      label: t("header.nav.aboutUs"), 
+      url: ROUTES.whoAreWe[currentLanguage] 
+    },
+    { 
+      label: t("header.nav.info"), 
+      url: ROUTES.news[currentLanguage] 
+    },
   ];
-
-  const currentLang =
-    languages.find((lang) => lang.code === currentLanguage) || languages[0];
 
   const handleLanguageChange = (langCode) => {
     setCurrentLanguage(langCode);
     i18n.changeLanguage(langCode);
   };
-  
 
   return (
     <header className="z-40 w-full bg-white">
@@ -79,7 +93,6 @@ export const HeaderSection = () => {
         <div className="mx-auto flex flex-col md:flex-row justify-between items-center text-xs h-full px-4 py-2 md:py-0 md:px-[5%]">
           {/* Contact Information */}
           <div className="flex w-full md:flex-row md:items-center md:space-x-6 md:w-auto">
-            {/* Desktop only content */}
             <div className="hidden md:flex items-center gap-2 text-[12px]">
               <img src={Phone} alt="phone" className="h-[18px] w-[18px]" />
               <span className="font-light">{t("header.contact.phone")}</span>
@@ -96,7 +109,7 @@ export const HeaderSection = () => {
 
           {/* Social and Language */}
           <div className="flex items-center mt-2 space-x-4 md:mt-0">
-            {/* Language Buttons - Simplified */}
+            {/* Language Buttons */}
             <div className="flex items-center gap-2 px-2 py-1 bg-white rounded bg-opacity-10">
               {languages.map((lang) => (
                 <button
@@ -119,18 +132,10 @@ export const HeaderSection = () => {
 
             <div className="flex items-center space-x-4">
               <a href="#" className="hover:text-gray-200">
-                <img
-                  src={Facebook}
-                  alt="facebook"
-                  className="h-[18px] w-[18px]"
-                />
+                <img src={Facebook} alt="facebook" className="h-[18px] w-[18px]" />
               </a>
               <a href="#" className="hover:text-gray-200">
-                <img
-                  src={Insta}
-                  alt="instagram"
-                  className="h-[18px] w-[18px]"
-                />
+                <img src={Insta} alt="instagram" className="h-[18px] w-[18px]" />
               </a>
               <a href="#" className="hover:text-gray-200">
                 <img src={Tiktok} alt="tiktok" className="h-[18px] w-[18px]" />
@@ -170,15 +175,18 @@ export const HeaderSection = () => {
             {/* Desktop Navigation */}
             <div className="items-center justify-between hidden w-full lg:flex">
               <div className="flex justify-center w-1/3 gap-5 space-x-10">
-                <a href="#" className="text-gray-700 text-[16px] font-light">
-                  {t("header.nav.home")}
+                <a 
+                  href={menuItems[0].url} 
+                  className="text-gray-700 text-[16px] font-light"
+                >
+                  {menuItems[0].label}
                 </a>
                 <div className="relative group">
                   <a
-                    href="#"
+                    href={menuItems[1].url}
                     className="text-gray-700 text-[16px] font-light flex items-center gap-2"
                   >
-                    {t("header.nav.accommodations.title")}
+                    {menuItems[1].label}
                     <svg
                       className="w-4 h-4 transition-transform group-hover:rotate-180"
                       fill="none"
@@ -194,45 +202,44 @@ export const HeaderSection = () => {
                     </svg>
                   </a>
                   <div className="absolute left-0 invisible w-48 py-1 mt-2 transition-all duration-300 bg-white rounded-md shadow-lg opacity-0 group-hover:opacity-100 group-hover:visible">
-                    <a
-                      href="#"
-                      className="block px-4 py-2 text-[16px] text-gray-700 hover:bg-gray-100 font-light"
-                    >
-                      {t("header.nav.accommodations.unusual")}
-                    </a>
-                    <a
-                      href="#"
-                      className="block px-4 py-2 text-[16px] text-gray-700 hover:bg-gray-100 font-light"
-                    >
-                      {t("header.nav.accommodations.guesthouse")}
-                    </a>
+                    {menuItems[1].submenu.map((subItem, index) => (
+                      <a
+                        key={index}
+                        href={subItem.url}
+                        className="block px-4 py-2 text-[16px] text-gray-700 hover:bg-gray-100 font-light"
+                      >
+                        {subItem.label}
+                      </a>
+                    ))}
                   </div>
                 </div>
-                <a href="#" className="text-gray-700 text-[16px] font-light">
-                  {t("header.nav.extras")}
+                <a 
+                  href={menuItems[2].url} 
+                  className="text-gray-700 text-[16px] font-light"
+                >
+                  {menuItems[2].label}
                 </a>
               </div>
               <div className="flex justify-start w-1/3 space-x-6">
-                <a href="#" className="text-gray-700 text-[16px] font-light">
-                  {t("header.nav.activities")}
-                </a>
-                <a href="#" className="text-gray-700 text-[16px] font-light">
-                  {t("header.nav.aboutUs")}
-                </a>
-                <a href="#" className="text-gray-700 text-[16px] font-light">
-                  {t("header.nav.info")}
-                </a>
+                {menuItems.slice(3).map((item, index) => (
+                  <a 
+                    key={index}
+                    href={item.url} 
+                    className="text-gray-700 text-[16px] font-light"
+                  >
+                    {item.label}
+                  </a>
+                ))}
               </div>
             </div>
 
-            {/* Slide-in Mobile Menu */}
+            {/* Mobile Menu */}
             <div 
               className={`fixed top-[144px] right-0 bottom-0 w-full max-w-sm bg-[#668E73] transform transition-transform duration-300 ease-in-out lg:hidden ${
                 isMenuOpen ? 'translate-x-0' : 'translate-x-full'
               } z-50`}
             >
               <div className="flex flex-col h-full">
-                {/* Header with close button */}
                 <div className="flex justify-end p-4">
                   <button
                     onClick={() => setIsMenuOpen(false)}
