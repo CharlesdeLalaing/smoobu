@@ -20,7 +20,7 @@ app.use((req, res, next) => {
 });
 
 const stripe = new Stripe(
-  "sk_test_51QHmafIhkftuEy3nihoW4ZunaXVY1D85r176d91x9BAhGfvW92zG7r7A5rVeGuL1ysHVMOzflF0jwoCpyKJl760n00GC9ZYSJ4"
+  process.env.STRIPE_API_KEY
 );
 const pendingBookings = new Map();
 
