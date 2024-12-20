@@ -73,7 +73,7 @@ const onApplyCoupon = () => {
         {appliedCoupon && (
           <div className="mt-2 text-sm text-green-600">
             {t('extras.infoSup.promoCode.appliedStart')} {appliedCoupon.code} {t('extras.infoSup.promoCode.appliedEnd')}: -{appliedCoupon.discount} {t('extras.infoSup.promoCode.appliedCurrency')} <br/>
-            <p className="mt-4 text-sm text-gray-500">{t('priceDetails.taxesIncluded')}</p>
+            <p className="mt-4 text-sm text-gray-500">{t('booking.coupon.minusZero')}</p>
           </div>
         )}
       </div>
