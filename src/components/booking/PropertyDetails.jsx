@@ -284,7 +284,7 @@ export const PropertyDetails = ({
               {activeTab === "priceDetails" && roomPriceDetails && (
                 <div className="h-full overflow-y-auto sm:overflow-visible md:overflow-y-auto relative">
                     {/* Squirrel Image */}
-                  <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[100px] xl:left-[450px]">
+                  <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[130px] xl:left-[450px]">
                       <img 
                         src={Fox}
                         alt="Squirrel"

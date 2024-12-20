@@ -95,7 +95,8 @@
             "enterCode": "Veuillez entrer un code promo",
             "invalid": "Code promo invalide"
           },
-          "applied": "Code promo {{code}}"
+          "applied": "Code promo {{code}}",
+          "minusZero": "Les totaux inférieurs à 0€ ne seront pas acceptés à la caisse."
         },
         "people": {
           "singular": "personne",

@@ -94,7 +94,8 @@
                 "enterCode": "Please enter a promo code",
                 "invalid": "Invalid promo code"
             },
-            "applied": "Promo code {{code}}"
+            "applied": "Promo code {{code}}",
+            "minusZero": "Totals below 0€ will not be accepted for checkout"
             },
             "people": {
             "singular": "person",

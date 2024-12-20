@@ -95,7 +95,8 @@
             "enterCode": "Voer een promocode in",
             "invalid": "Ongeldige promocode"
           },
-          "applied": "Promocode {{code}}"
+          "applied": "Promocode {{code}}",
+          "minusZero": "Totalen onder € 0 worden niet geaccepteerd bij het afrekenen."
         },
         "people": {
           "singular": "persoon",
