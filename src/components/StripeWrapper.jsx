@@ -12,7 +12,7 @@ const stripePromise = loadStripe(publishableKey);
 
 const StripeWrapper = ({ clientSecret, children, onSuccess, onError }) => {
   if (!clientSecret) {
-    console.error('No client secret provided');
+    console.error('No client secret provide');
     return null;
   }
 
