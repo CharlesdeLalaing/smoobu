@@ -734,8 +734,7 @@ app.post("/api/create-payment-intent", async (req, res) => {
 
     // Create payment intent with total price (including extras and discounts)
     const paymentIntent = await stripe.paymentIntents.create({
-      // amount: Math.round(price * 100), // Convert to cents
-      amount: Math.max(0, Math.round(price * 100)),
+      amount: Math.round(price * 100), // Convert to cents
       currency: "eur",
       automatic_payment_methods: {
         enabled: true,
