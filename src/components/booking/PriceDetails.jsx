@@ -274,7 +274,7 @@ export const PriceDetails = ({
 
       {/* Additional information about payment */}
       <div className="mt-4 text-sm text-gray-500">
-        <p>{t('priceDetails.taxesIncluded')}</p>
+        <p>{t('booking.coupon.minusZero')}</p>
         {priceDetails.settings?.deposit && (
           <p className="mt-1">
             {t('priceDetails.depositRequired', {
