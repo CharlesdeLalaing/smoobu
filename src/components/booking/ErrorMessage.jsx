@@ -5,7 +5,7 @@ export const ErrorMessage = ({ message }) => {
   const { t } = useTranslation();
   
   return (
-    <div className="p-4 mb-4 border border-red-200 rounded-md bg-red-50">
+    <div className="p-4 mb-4 border border-red-200 rounded-sm bg-red-50">
       <div className="flex">
         <div className="flex-shrink-0">
           <svg
