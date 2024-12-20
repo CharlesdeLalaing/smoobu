@@ -1,5 +1,6 @@
 import React from "react";
 import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { Listbox } from "@headlessui/react";
 
 import { useTranslation } from "react-i18next";
