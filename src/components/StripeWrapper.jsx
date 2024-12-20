@@ -2,14 +2,12 @@ import React from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-// Add explicit console log
-const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PK_KEY;
+const publishableKey = process.env.REACT_APP_STRIPE_PK_KEY;
 console.log('Stripe Setup:', {
   keyExists: !!publishableKey,
   keyPrefix: publishableKey?.substring(0, 7)
 });
 
-// Initialize Stripe outside component
 const stripePromise = loadStripe(publishableKey);
 
 const StripeWrapper = ({ clientSecret, children, onSuccess, onError }) => {
@@ -27,12 +25,6 @@ const StripeWrapper = ({ clientSecret, children, onSuccess, onError }) => {
       },
     },
   };
-
-  // Add debug log for mounting
-  console.log('Mounting StripeWrapper with:', {
-    hasClientSecret: !!clientSecret,
-    hasStripePromise: !!stripePromise
-  });
 
   return (
     <Elements stripe={stripePromise} options={options}>
