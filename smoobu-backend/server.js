@@ -125,45 +125,242 @@ const extrasFrenchNames = {
 
 
 
+
 // Create a new coupon
-app.post("/api/coupons", async (req, res) => {
+app.post("/api/coupons", express.json(), async (req, res) => {
   try {
-    const { code, discount, type, currency } = req.body;
+    const { code, discount, type = "fixed", currency = "EUR" } = req.body;
     
-    // Check if coupon already exists
-    const couponRef = await db.collection('coupons').where('code', '==', code.toUpperCase()).get();
-    
-    if (!couponRef.empty) {
-      return res.status(400).json({ error: "Coupon code already exists" });
-    }
-    
-    // Add new coupon
+    // Add new coupon directly to Firebase
     const couponDoc = {
       code: code.toUpperCase(),
-      discount,
+      discount: parseFloat(discount),
       type,
       currency,
       isUsable: true,
       createdAt: new Date().toISOString(),
       usedCount: 0
     };
-    
-    const docRef = await db.collection('coupons').add(couponDoc);
-    res.status(201).json({ id: docRef.id, ...couponDoc });
+
+    try {
+      const docRef = await db.collection('coupons').add(couponDoc);
+      console.log("Coupon stored in Firebase with ID:", docRef.id);
+      res.status(201).json({ id: docRef.id, ...couponDoc });
+    } catch (firebaseError) {
+      console.error("Error storing in Firebase:", firebaseError);
+      res.status(500).json({ error: "Failed to create coupon in database" });
+    }
   } catch (error) {
     console.error("Error creating coupon:", error);
     res.status(500).json({ error: "Failed to create coupon" });
   }
 });
 
-// Get all coupons
-app.get("/api/coupons", async (req, res) => {
+// Migration endpoint
+app.post("/api/migrate-coupons", express.json(), async (req, res) => {
   try {
-    const snapshot = await db.collection('coupons').orderBy('createdAt', 'desc').get();
+    // Your existing coupons object
+    const VALID_COUPONS = {
+      TESTDISCOUNT: {
+        discount: 10,
+        type: "fixed",
+        currency: "EUR",
+      },
+      DOME390: {
+        discount: 390,
+        type: "fixed",
+        currency: "EUR",
+      },
+      DOME215: {
+        discount: 215,
+        type: "fixed",
+        currency: "EUR",
+      },
+      BULLE305: {
+        discount: 305,
+        type: "fixed",
+        currency: "EUR",
+      },
+      DOME235: {
+        discount: 235,
+        type: "fixed",
+        currency: "EUR",
+      },
+      DOME295: {
+        discount: 295,
+        type: "fixed",
+        currency: "EUR",
+      },
+      BULLE400: {
+        discount: 400,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6104": {
+        discount: 150,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6096": {
+        discount: 300,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6105": {
+        discount: 200,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6111": {
+        discount: 180,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6112": {
+        discount: 360,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6496": {
+        discount: 190,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6714": {
+        discount: 275,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6898": {
+        discount: 265,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6899": {
+        discount: 315,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6901": {
+        discount: 200,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6968": {
+        discount: 400,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6969": {
+        discount: 315,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6970": {
+        discount: 235,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.6973": {
+        discount: 210,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.7082": {
+        discount: 360,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.7095": {
+        discount: 270,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.7105": {
+        discount: 215,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.7157": {
+        discount: 240,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.10476": {
+        discount: 315,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.10492": {
+        discount: 245,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.10495": {
+        discount: 210,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.10551": {
+        discount: 275,
+        type: "fixed",
+        currency: "EUR",
+      },
+      "GIFT.10577": {
+        discount: 230,
+        type: "fixed",
+        currency: "EUR",
+      }
+    };
+
+    // Check if coupons already exist
+    for (const [code, details] of Object.entries(VALID_COUPONS)) {
+      // Check if coupon already exists
+      const existingCoupon = await db.collection('coupons')
+        .where('code', '==', code)
+        .get();
+
+      if (existingCoupon.empty) {
+        const couponDoc = {
+          code: code,
+          discount: details.discount,
+          type: details.type,
+          currency: details.currency,
+          isUsable: true,
+          createdAt: new Date().toISOString(),
+          usedCount: 0
+        };
+
+        await db.collection('coupons').add(couponDoc);
+        console.log(`Migrated coupon: ${code}`);
+      } else {
+        console.log(`Skipping existing coupon: ${code}`);
+      }
+    }
+
+    res.json({ message: "Migration completed successfully" });
+  } catch (error) {
+    console.error("Migration failed:", error);
+    res.status(500).json({ error: "Migration failed", details: error.message });
+  }
+});
+
+
+// Get all coupons
+app.get("/api/coupons", express.json(), async (req, res) => {
+  try {
+    const couponsRef = db.collection('coupons');
+    const snapshot = await couponsRef.orderBy('createdAt', 'desc').get();
+    
+    if (snapshot.empty) {
+      return res.json([]); // Return empty array if no coupons found
+    }
+
     const coupons = [];
     snapshot.forEach(doc => {
       coupons.push({ id: doc.id, ...doc.data() });
     });
+    
     res.json(coupons);
   } catch (error) {
     console.error("Error fetching coupons:", error);
@@ -171,20 +368,21 @@ app.get("/api/coupons", async (req, res) => {
   }
 });
 
-// Get specific coupon by code
-app.get("/api/coupons/:code", async (req, res) => {
+// Get specific coupon
+app.get("/api/coupons/:code", express.json(), async (req, res) => {
   try {
     const { code } = req.params;
-    const couponRef = await db.collection('coupons')
+    const couponsRef = db.collection('coupons');
+    const snapshot = await couponsRef
       .where('code', '==', code.toUpperCase())
       .where('isUsable', '==', true)
       .get();
-    
-    if (couponRef.empty) {
+
+    if (snapshot.empty) {
       return res.status(404).json({ error: "Invalid or used coupon" });
     }
-    
-    const couponDoc = couponRef.docs[0];
+
+    const couponDoc = snapshot.docs[0];
     res.json({ id: couponDoc.id, ...couponDoc.data() });
   } catch (error) {
     console.error("Error fetching coupon:", error);
@@ -193,25 +391,26 @@ app.get("/api/coupons/:code", async (req, res) => {
 });
 
 // Mark coupon as used
-app.put("/api/coupons/:code/use", async (req, res) => {
+app.put("/api/coupons/:code/use", express.json(), async (req, res) => {
   try {
     const { code } = req.params;
-    const couponRef = await db.collection('coupons')
+    const couponsRef = db.collection('coupons');
+    const snapshot = await couponsRef
       .where('code', '==', code.toUpperCase())
       .where('isUsable', '==', true)
       .get();
-    
-    if (couponRef.empty) {
+
+    if (snapshot.empty) {
       return res.status(404).json({ error: "Invalid or used coupon" });
     }
-    
-    const couponDoc = couponRef.docs[0];
+
+    const couponDoc = snapshot.docs[0];
     await couponDoc.ref.update({
       isUsable: false,
       usedCount: (couponDoc.data().usedCount || 0) + 1,
       lastUsedAt: new Date().toISOString()
     });
-    
+
     res.json({ message: "Coupon marked as used" });
   } catch (error) {
     console.error("Error updating coupon:", error);
@@ -635,7 +834,10 @@ app.use(
   cors({
     origin: [
       "https://reservation.fermedebasseilles.be", 
-      "https://booking-rho-plum.vercel.app"  
+      "https://booking-rho-plum.vercel.app",
+      "http://localhost:5173",  // Add your local development URL
+      "http://localhost:3000",
+      "http://127.0.0.1:5173"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
