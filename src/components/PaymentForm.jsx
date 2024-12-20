@@ -7,7 +7,7 @@ const PaymentForm = ({ onSuccess, onError }) => {
   const { t } = useTranslation();
   
 
-const stripe = us!é&@¥#£QAeStripe();
+const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
