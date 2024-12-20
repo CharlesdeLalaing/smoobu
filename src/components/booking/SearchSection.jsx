@@ -1,11 +1,11 @@
 import React from "react";
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { Listbox } from "@headlessui/react";
 
 import { useTranslation } from "react-i18next";
+import "./datepicker-custom.css";
 
-import "react-datepicker/dist/react-datepicker.css";
+
 import { GuestSelect } from "./GuestSelect";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { adultes, childrenOptions } from "../utils/constants";

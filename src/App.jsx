@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import BookingConfirmation from "./components/BookingConfirmation";
+import "react-datepicker/dist/react-datepicker.css";
 import Booking2 from "./components/booking/BookingForm";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
