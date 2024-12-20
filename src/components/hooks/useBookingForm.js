@@ -438,53 +438,96 @@ const handleChange = async (e) => {
 };
 
  // useBookingForm.js
-const handleApplyCoupon = (couponCode) => {
-  // console.log('handleApplyCoupon called with:', couponCode);
+// const handleApplyCoupon = (couponCode) => {
+//   // console.log('handleApplyCoupon called with:', couponCode);
+//   setCouponError(null);
+
+//   if (!couponCode) {
+//     // console.log('No coupon code provided');
+//     setCouponError("Veuillez entrer un code promo");
+//     return;
+//   }
+
+//   const couponInfo = VALID_COUPONS[couponCode.toUpperCase()];
+//   console.log('Found coupon info:', couponInfo);
+
+//   if (!couponInfo) {
+//     // console.log('Invalid coupon code');
+//     setCouponError("Code promo invalide");
+//     return;
+//   }
+
+//   setAppliedCoupon({
+//     code: couponCode.toUpperCase(),
+//     ...couponInfo,
+//   });
+//   console.log('Applied coupon:', {
+//     code: couponCode.toUpperCase(),
+//     ...couponInfo,
+//   });
+
+//   setPriceDetails((prev) => {
+//     const newPriceDetails = {
+//       ...prev,
+//       priceElements: [
+//         ...(prev?.priceElements || []),
+//         {
+//           type: "coupon",
+//           name: `Code promo ${couponCode.toUpperCase()}`,
+//           amount: -couponInfo.discount,
+//           currencyCode: couponInfo.currency,
+//         },
+//       ],
+//     };
+//     // console.log('Updated price details:', newPriceDetails);
+//     return newPriceDetails;
+//   });
+
+//   setCoupon("");
+// };
+
+// Replace the existing handleApplyCoupon function in your useBookingForm.js
+
+const handleApplyCoupon = async (couponCode) => {
   setCouponError(null);
 
   if (!couponCode) {
-    // console.log('No coupon code provided');
     setCouponError("Veuillez entrer un code promo");
     return;
   }
 
-  const couponInfo = VALID_COUPONS[couponCode.toUpperCase()];
-  console.log('Found coupon info:', couponInfo);
+  try {
+    const response = await api.get(`/coupons/${couponCode}`);
+    const couponInfo = response.data;
 
-  if (!couponInfo) {
-    // console.log('Invalid coupon code');
-    setCouponError("Code promo invalide");
-    return;
+    setAppliedCoupon({
+      code: couponCode.toUpperCase(),
+      ...couponInfo
+    });
+
+    setPriceDetails((prev) => {
+      const newPriceDetails = {
+        ...prev,
+        priceElements: [
+          ...(prev?.priceElements || []),
+          {
+            type: "coupon",
+            name: `Code promo ${couponCode.toUpperCase()}`,
+            amount: -couponInfo.discount,
+            currencyCode: couponInfo.currency,
+          },
+        ],
+      };
+      return newPriceDetails;
+    });
+
+    setCoupon("");
+  } catch (error) {
+    setCouponError(error.response?.data?.error || "Code promo invalide");
   }
-
-  setAppliedCoupon({
-    code: couponCode.toUpperCase(),
-    ...couponInfo,
-  });
-  console.log('Applied coupon:', {
-    code: couponCode.toUpperCase(),
-    ...couponInfo,
-  });
-
-  setPriceDetails((prev) => {
-    const newPriceDetails = {
-      ...prev,
-      priceElements: [
-        ...(prev?.priceElements || []),
-        {
-          type: "coupon",
-          name: `Code promo ${couponCode.toUpperCase()}`,
-          amount: -couponInfo.discount,
-          currencyCode: couponInfo.currency,
-        },
-      ],
-    };
-    // console.log('Updated price details:', newPriceDetails);
-    return newPriceDetails;
-  });
-
-  setCoupon("");
 };
+
+
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 

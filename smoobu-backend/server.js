@@ -125,6 +125,102 @@ const extrasFrenchNames = {
 
 
 
+// Create a new coupon
+app.post("/api/coupons", async (req, res) => {
+  try {
+    const { code, discount, type, currency } = req.body;
+    
+    // Check if coupon already exists
+    const couponRef = await db.collection('coupons').where('code', '==', code.toUpperCase()).get();
+    
+    if (!couponRef.empty) {
+      return res.status(400).json({ error: "Coupon code already exists" });
+    }
+    
+    // Add new coupon
+    const couponDoc = {
+      code: code.toUpperCase(),
+      discount,
+      type,
+      currency,
+      isUsable: true,
+      createdAt: new Date().toISOString(),
+      usedCount: 0
+    };
+    
+    const docRef = await db.collection('coupons').add(couponDoc);
+    res.status(201).json({ id: docRef.id, ...couponDoc });
+  } catch (error) {
+    console.error("Error creating coupon:", error);
+    res.status(500).json({ error: "Failed to create coupon" });
+  }
+});
+
+// Get all coupons
+app.get("/api/coupons", async (req, res) => {
+  try {
+    const snapshot = await db.collection('coupons').orderBy('createdAt', 'desc').get();
+    const coupons = [];
+    snapshot.forEach(doc => {
+      coupons.push({ id: doc.id, ...doc.data() });
+    });
+    res.json(coupons);
+  } catch (error) {
+    console.error("Error fetching coupons:", error);
+    res.status(500).json({ error: "Failed to fetch coupons" });
+  }
+});
+
+// Get specific coupon by code
+app.get("/api/coupons/:code", async (req, res) => {
+  try {
+    const { code } = req.params;
+    const couponRef = await db.collection('coupons')
+      .where('code', '==', code.toUpperCase())
+      .where('isUsable', '==', true)
+      .get();
+    
+    if (couponRef.empty) {
+      return res.status(404).json({ error: "Invalid or used coupon" });
+    }
+    
+    const couponDoc = couponRef.docs[0];
+    res.json({ id: couponDoc.id, ...couponDoc.data() });
+  } catch (error) {
+    console.error("Error fetching coupon:", error);
+    res.status(500).json({ error: "Failed to fetch coupon" });
+  }
+});
+
+// Mark coupon as used
+app.put("/api/coupons/:code/use", async (req, res) => {
+  try {
+    const { code } = req.params;
+    const couponRef = await db.collection('coupons')
+      .where('code', '==', code.toUpperCase())
+      .where('isUsable', '==', true)
+      .get();
+    
+    if (couponRef.empty) {
+      return res.status(404).json({ error: "Invalid or used coupon" });
+    }
+    
+    const couponDoc = couponRef.docs[0];
+    await couponDoc.ref.update({
+      isUsable: false,
+      usedCount: (couponDoc.data().usedCount || 0) + 1,
+      lastUsedAt: new Date().toISOString()
+    });
+    
+    res.json({ message: "Coupon marked as used" });
+  } catch (error) {
+    console.error("Error updating coupon:", error);
+    res.status(500).json({ error: "Failed to update coupon" });
+  }
+});
+
+
+
 // Modified processExtraName function
 const processExtraName = (extra) => {
   // If the name is a translation key (starts with "extras.")
@@ -369,6 +465,17 @@ app.post(
           );
 
           console.log("Smoobu booking created:", smoobuResponse.data);
+
+          // ADD THE NEW COUPON USAGE CODE HERE
+          if (bookingData.couponApplied) {
+            try {
+              await axios.put(
+                `${process.env.API_URL}/api/coupons/${bookingData.couponApplied.code}/use`
+              );
+            } catch (error) {
+              console.error("Error marking coupon as used:", error);
+            }
+          }
 
           // Store booking in Firebase
           const bookingDoc = {
