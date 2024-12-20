@@ -2,17 +2,18 @@ import React from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-const publishableKey = process.env.REACT_APP_STRIPE_PK_KEY;
-console.log('Stripe Setup:', {
-  keyExists: !!publishableKey,
-  keyPrefix: publishableKey?.substring(0, 7)
-});
+// Use import.meta.env for Vite or process.env for Create React App
+const publishableKey = import.meta.env.VITE_STRIPE_PK_KEY || process.env.REACT_APP_STRIPE_PK_KEY;
+
+if (!publishableKey) {
+  console.error('Stripe publishable key is not defined in environment variables');
+}
 
 const stripePromise = loadStripe(publishableKey);
 
 const StripeWrapper = ({ clientSecret, children, onSuccess, onError }) => {
   if (!clientSecret) {
-    console.error('No client secret provide');
+    console.error('No client secret provided');
     return null;
   }
 
