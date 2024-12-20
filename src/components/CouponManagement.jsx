@@ -1,7 +1,7 @@
 // Create a new file: src/components/CouponManagement.jsx
 
 import React, { useState, useEffect } from 'react';
-import { api } from "../utils/api";
+import { api } from "./utils/api";
 
 const CouponManagement = () => {
   const [coupons, setCoupons] = useState([]);
