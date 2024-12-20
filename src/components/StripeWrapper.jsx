@@ -2,17 +2,19 @@ import React from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-const stripePromise = loadStripe(String(process.env.NEXT_PUBLIC_STRIPE_PK_KEY));
+// Add explicit console log
+const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PK_KEY;
+console.log('Stripe Setup:', {
+  keyExists: !!publishableKey,
+  keyPrefix: publishableKey?.substring(0, 7)
+});
+
+// Initialize Stripe outside component
+const stripePromise = loadStripe(publishableKey);
 
 const StripeWrapper = ({ clientSecret, children, onSuccess, onError }) => {
-  console.log('StripeWrapper Debug:', {
-    hasClientSecret: !!clientSecret,
-    hasStripePromise: !!stripePromise,
-    pk_key_exists: !!process.env.NEXT_PUBLIC_STRIPE_PK_KEY
-  });
-
   if (!clientSecret) {
-    console.error('Missing client secret');
+    console.error('No client secret provided');
     return null;
   }
 
@@ -25,6 +27,12 @@ const StripeWrapper = ({ clientSecret, children, onSuccess, onError }) => {
       },
     },
   };
+
+  // Add debug log for mounting
+  console.log('Mounting StripeWrapper with:', {
+    hasClientSecret: !!clientSecret,
+    hasStripePromise: !!stripePromise
+  });
 
   return (
     <Elements stripe={stripePromise} options={options}>
