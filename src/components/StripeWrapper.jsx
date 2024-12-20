@@ -2,10 +2,20 @@ import React from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-
 const stripePromise = loadStripe(String(process.env.NEXT_PUBLIC_STRIPE_PK_KEY));
 
 const StripeWrapper = ({ clientSecret, children, onSuccess, onError }) => {
+  console.log('StripeWrapper Debug:', {
+    hasClientSecret: !!clientSecret,
+    hasStripePromise: !!stripePromise,
+    pk_key_exists: !!process.env.NEXT_PUBLIC_STRIPE_PK_KEY
+  });
+
+  if (!clientSecret) {
+    console.error('Missing client secret');
+    return null;
+  }
+
   const options = {
     clientSecret,
     appearance: {
