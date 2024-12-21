@@ -59,6 +59,11 @@ export const VALID_COUPONS = {
     type: "fixed",
     currency: "EUR",
   },
+  "CHARLOT": {
+    discount: 199,
+    type: "fixed",
+    currency: "EUR",
+  },
   "GIFT.6496": {
     discount: 190,
     type: "fixed",
