@@ -43,38 +43,6 @@ import toilet from "../../assets/Chambres/icons8-toilet-50.png";
 import wifi from "../../assets/Chambres/icons8-wifi-50.png";
 
 export const roomsData = {
-  1644643: {
-    id: 1644643,
-    type: "rooms.types.unusual",
-    nameKey: "rooms.names.bulle",
-    description: "rooms.descriptions.bulle",
-    images: {
-      main: Bulle_img_1,
-      secondary: Bulle_img_2,
-      tertiary: Bulle_img_3,
-      quaternary: Bulle_img_4,
-      quinary: Bulle_img_5,
-      senary: Bulle_img_6
-    },
-    maxGuests: 2,
-    features: [
-      { icon: people, title: "rooms.features.maxGuests", value: 2 },
-      { icon: bed, title: "rooms.features.bedKing" },
-      { icon: dog, title: "rooms.features.pets" },
-      { icon: toilet, title: "rooms.features.dryToilet" },
-      { icon: fire, title: "rooms.features.brazier" },
-    ],
-    size: "30m²",
-    calendarData: {
-      id: "1644643",
-      verification: "d70371945b04df2e536bb400d92cacf6d8570999a385af194dd64661801f9b46",
-      urls: {
-        en: "https://login.smoobu.com/en/cockpit/widget/single-calendar/1644643",
-        fr: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/1644643",
-        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1644643"
-      }
-    }
-  },
 
   1946282: {
     id: 1946282,
@@ -105,6 +73,41 @@ export const roomsData = {
         en: "https://login.smoobu.com/en/cockpit/widget/single-calendar/1946282",
         fr: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/1946282",
         nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1946282"
+      }
+    }
+  },
+
+
+  
+  1644643: {
+    id: 1644643,
+    type: "rooms.types.unusual",
+    nameKey: "rooms.names.bulle",
+    description: "rooms.descriptions.bulle",
+    images: {
+      main: Bulle_img_1,
+      secondary: Bulle_img_2,
+      tertiary: Bulle_img_3,
+      quaternary: Bulle_img_4,
+      quinary: Bulle_img_5,
+      senary: Bulle_img_6
+    },
+    maxGuests: 2,
+    features: [
+      { icon: people, title: "rooms.features.maxGuests", value: 2 },
+      { icon: bed, title: "rooms.features.bedKing" },
+      { icon: dog, title: "rooms.features.pets" },
+      { icon: toilet, title: "rooms.features.dryToilet" },
+      { icon: fire, title: "rooms.features.brazier" },
+    ],
+    size: "30m²",
+    calendarData: {
+      id: "1644643",
+      verification: "d70371945b04df2e536bb400d92cacf6d8570999a385af194dd64661801f9b46",
+      urls: {
+        en: "https://login.smoobu.com/en/cockpit/widget/single-calendar/1644643",
+        fr: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/1644643",
+        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1644643"
       }
     }
   },
