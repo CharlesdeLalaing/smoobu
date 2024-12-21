@@ -307,6 +307,46 @@ const calculatePriceWithSettings = (
 // Helper function for delays
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Fonction de validation des montants
+const validateBookingAmounts = (bookingData) => {
+  if (!bookingData.price || bookingData.price <= 0) {
+    throw new Error(`Invalid booking price: ${bookingData.price}`);
+  }
+  
+  if (bookingData.deposit < 0) {
+    throw new Error(`Invalid deposit amount: ${bookingData.deposit}`);
+  }
+  
+  // Vérifier la cohérence entre le prix total et les composants
+  const calculatedTotal = (
+    Number(bookingData.basePrice) +
+    (Number(bookingData.extrasTotal) || 0) -
+    (Number(bookingData.longStayDiscount) || 0) -
+    (Number(bookingData.couponDiscount) || 0)
+  );
+  
+  if (Math.abs(calculatedTotal - bookingData.price) > 0.01) {
+    throw new Error(`Price mismatch: total ${bookingData.price} != calculated ${calculatedTotal}`);
+  }
+};
+
+// Fonction retry pour les appels Smoobu
+const retrySmoobuCall = async (fn, maxRetries = 3) => {
+  let lastError;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      console.error(`Retry ${i + 1}/${maxRetries} failed:`, error.response?.data || error.message);
+      if (i < maxRetries - 1) {
+        await wait(2000 * Math.pow(2, i)); // Exponential backoff
+      }
+    }
+  }
+  throw lastError;
+};
+
 
 app.post(
   "/webhook",
@@ -341,8 +381,12 @@ app.post(
         }
 
         try {
+
+           // Valider les montants
+          validateBookingAmounts(bookingData);
           // First create the main booking
-          const smoobuResponse = await axios.post(
+          const smoobuResponse = await retrySmoobuCall(async () => {
+            return await axios.post(
             "https://login.smoobu.com/api/reservations",
             {
               arrivalDate: bookingData.arrivalDate,
@@ -370,6 +414,7 @@ app.post(
               },
             }
           );
+        });
 
           console.log("Smoobu booking created:", smoobuResponse.data);
 
@@ -505,10 +550,18 @@ app.post(
           console.log("Successfully processed booking and removed from pending bookings");
 
         } catch (error) {
-          console.error(
-            "Error creating Smoobu booking:",
-            error.response?.data || error.message
-          );
+          console.error("Detailed error in booking creation:", {
+            error: error.message,
+            response: error.response?.data,
+            bookingData: {
+              ...bookingData,
+              price: Number(bookingData.price),
+              basePrice: Number(bookingData.basePrice),
+              extrasTotal: Number(bookingData.extrasTotal),
+              longStayDiscount: Number(bookingData.longStayDiscount),
+              couponDiscount: Number(bookingData.couponDiscount),
+            }
+          });
           return res.status(500).json({
             error: "Failed to create booking in Smoobu",
             details: error.response?.data || error.message
