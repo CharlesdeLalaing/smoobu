@@ -2,19 +2,20 @@ import React from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-// Add console.log to check if the key is being loaded
-console.log("Stripe Key:", process.env.VITE_STRIPE_PUBLISHABLE_KEY);
+// Add these debug logs
+console.log("All env variables:", import.meta.env);
+console.log("Stripe Key:", import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const stripePromise = loadStripe(
-  process.env.VITE_STRIPE_PUBLISHABLE_KEY
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 );
 
 const StripeWrapper = ({ clientSecret, children, onSuccess, onError }) => {
-  // Add error handling for missing key
-  if (!process.env.VITE_STRIPE_PUBLISHABLE_KEY) {
-    console.error("Stripe publishable key is missing!");
+  // Add another log here
+  if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) {
+    console.error("⚠️ Stripe key is missing in environment!");
   }
-
+  
   const options = {
     clientSecret,
     appearance: {
