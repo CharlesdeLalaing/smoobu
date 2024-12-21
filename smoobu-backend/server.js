@@ -19,9 +19,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const stripe = new Stripe(
-  `${process.env.STRIPE_API_KEY}`
-);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const pendingBookings = new Map();
 
@@ -318,7 +316,7 @@ app.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        `${process.env.STRIPE_SIG_KEY}`
+        process.env.STRIPE_WEBHOOK_SECRET
       );
 
       console.log("Webhook event verified:", event.type);
