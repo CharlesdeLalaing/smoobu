@@ -36,7 +36,7 @@ const BookingConfirmation = () => {
     }
   }, [paymentIntent]);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = "https://booking-9u8u.onrender.com";
 
   // const fetchBookingDetails = async (paymentIntentId) => {
   //   try {
