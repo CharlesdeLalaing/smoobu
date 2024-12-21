@@ -36,19 +36,49 @@ const BookingConfirmation = () => {
     }
   }, [paymentIntent]);
 
-  const API_URL = "https://booking-9u8u.onrender.com";
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  // const fetchBookingDetails = async (paymentIntentId) => {
+  //   try {
+  //     const response = await fetch(
+  //       `${API_URL}/api/bookings/${paymentIntentId}`
+  //     );
+  //     const data = await response.json();
+  //     if (data.error) throw new Error(data.error);
+  //     setBookingDetails(data);
+  //     setStatus("success");
+  //   } catch (error) {
+  //     console.error("Error fetching booking details:", error);
+  //     setStatus("error");
+  //   }
+  // };
 
   const fetchBookingDetails = async (paymentIntentId) => {
     try {
+      console.log("Starting to fetch booking details");
+      console.log("API URL:", `${API_URL}/api/bookings/${paymentIntentId}`);
+      
       const response = await fetch(
-        `${API_URL}/api/bookings/${paymentIntentId}`
-      );
+        `${API_URL}/api/bookings/${paymentIntentId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+      });
+      
+      console.log("Response status:", response.status);
       const data = await response.json();
-      if (data.error) throw new Error(data.error);
+      console.log("Response data:", data);
+  
+      if (data.error) {
+        console.error("API returned error:", data.error);
+        throw new Error(data.error);
+      }
+      
       setBookingDetails(data);
       setStatus("success");
     } catch (error) {
-      console.error("Error fetching booking details:", error);
+      console.error("Detailed error in fetchBookingDetails:", error);
       setStatus("error");
     }
   };

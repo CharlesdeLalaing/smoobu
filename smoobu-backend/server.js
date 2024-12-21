@@ -523,17 +523,11 @@ app.post(
 
 // Use JSON parsing and CORS for all other routes
 app.use(express.json());
-app.use(
-  cors({
-    origin: [
-      "https://reservation.fermedebasseilles.be", 
-      "https://booking-rho-plum.vercel.app"  
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true
-  })
-);
+app.use(cors({
+  origin: ['https://reservation.fermedebasseilles.be', 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true
+}));
 
 app.get('/api/apartments', async (req, res) => {
   try {
