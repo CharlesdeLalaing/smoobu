@@ -84,7 +84,7 @@ export const PropertyDetails = ({
 
   const sortRooms = (rooms) => {
     // Define the desired order of room IDs
-    const customOrder = [1644643, 1946282, 1946279, 1946276, 1946270];
+    const customOrder = [1946282, 1644643, 1946279, 1946276, 1946270];
     
     return [...rooms].sort((a, b) => {
       // First priority: selected room
