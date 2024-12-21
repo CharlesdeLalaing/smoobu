@@ -19,6 +19,9 @@ app.use((req, res, next) => {
   next();
 });
 
+app.options('/webhook', cors());
+
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const pendingBookings = new Map();
@@ -311,8 +314,12 @@ app.post(
   async (req, res) => {
     const sig = req.headers["stripe-signature"];
     let event;
-    console.log("🔄 Received webhook call");
-    console.log("Headers:", req.headers);
+    console.log('Webhook called:', {
+      method: req.method,
+      path: req.path,
+      signature: sig,
+      contentType: req.headers['content-type']
+    });
 
     try {
       event = stripe.webhooks.constructEvent(
@@ -321,8 +328,7 @@ app.post(
         "whsec_sbVaa5obD8UFZ5hzg0iEZpLHozrHi4Z8"
       );
 
-      console.log("✅ Webhook event verified:", event.type);
-      console.log("Event data:", event.data);
+      console.log('Event constructed:', event.type);
 
       if (event.type === "payment_intent.succeeded") {
         const paymentIntent = event.data.object;
@@ -509,7 +515,7 @@ app.post(
         }
       }
 
-      res.json({ received: true });
+      return res.json({ received: true });
     } catch (err) {
       console.error("❌ Webhook Error:", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -524,6 +530,19 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
+
+
+// Add these test endpoints
+app.get('/test', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
+
+app.post('/test', express.raw({type: 'application/json'}), (req, res) => {
+  console.log('Test POST received');
+  console.log('Headers:', req.headers);
+  console.log('Body:', req.body.toString());
+  res.json({ status: 'ok', message: 'POST received' });
+});
 
 app.get('/api/apartments', async (req, res) => {
   try {
@@ -819,7 +838,6 @@ app.get("/api/bookings/:paymentIntentId", async (req, res) => {
     });
   }
 });
-
 
 
 // Debug endpoint to check pending bookings
