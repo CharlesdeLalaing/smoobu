@@ -101,7 +101,7 @@ export const ExtrasSection = ({
               {item.price}€
             </div>
           </div>
-          <p className="text-[13px] text-gray-600 line-clamp-2">
+          <p className="text-[13px] text-gray-600 line-clamp-3">
             {itemDescription}
           </p>
           <QuantitySelector
