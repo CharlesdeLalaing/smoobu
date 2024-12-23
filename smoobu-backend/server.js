@@ -347,170 +347,247 @@ const retrySmoobuCall = async (fn, maxRetries = 3) => {
   throw lastError;
 };
 
-const endpointSecret = 'whsec_sbVaa5obD8UFZ5hzg0iEZpLHozrHi4Z8';
-
 app.post(
   '/webhook',
   express.raw({ type: 'application/json' }),
   async (req, res) => {
+    res.json({ received: true });
     const sig = req.headers['stripe-signature'];
     let event;
-
     console.log('Received webhook call');
 
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        'whsec_sbVaa5obD8UFZ5hzg0iEZpLHozrHi4Z8'
+      );
+
       console.log('Webhook event verified:', event.type);
-    } catch (err) {
-      console.error('Webhook Error:', err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
 
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object;
-      const bookingReference = paymentIntent.metadata?.bookingReference;
-      const bookingData = pendingBookings.get(bookingReference);
+      if (event.type === 'payment_intent.succeeded') {
+        const paymentIntent = event.data.object;
+        const bookingReference = paymentIntent.metadata.bookingReference;
+        const bookingData = pendingBookings.get(bookingReference);
 
-      if (!bookingData) {
-        console.error('No booking data found for reference:', bookingReference);
-        return res.status(400).json({ error: 'Booking data not found!' });
-      }
+        console.log('Retrieved booking data:', bookingData);
 
-      console.log('Retrieved booking data:', bookingData);
-
-      try {
-        // Validate booking amounts
-        validateBookingAmounts(bookingData);
-
-        // Create booking in Smoobu
-        const smoobuResponse = await retrySmoobuCall(async () => {
-          return axios.post(
-            'https://login.smoobu.com/api/reservations',
-            {
-              arrivalDate: bookingData.arrivalDate,
-              departureDate: bookingData.departureDate,
-              arrivalTime: bookingData.arrivalTime,
-              channelId: bookingData.channelId,
-              apartmentId: bookingData.apartmentId,
-              firstName: bookingData.firstName,
-              lastName: bookingData.lastName,
-              email: bookingData.email,
-              phone: bookingData.phone,
-              notice: bookingData.notice,
-              adults: Number(bookingData.adults),
-              children: Number(bookingData.children),
-              price: Number(bookingData.price),
-              priceStatus: 1,
-              deposit: Number(bookingData.deposit),
-              depositStatus: 1,
-              language: 'en',
-            },
-            {
-              headers: {
-                'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
-                'Content-Type': 'application/json',
-              },
-            }
+        if (!bookingData) {
+          console.error(
+            'No booking data found for reference:',
+            bookingReference
           );
-        });
-
-        console.log('Smoobu booking created:', smoobuResponse.data);
-
-        // Prepare booking document for Firebase
-        const bookingDoc = {
-          ...bookingData,
-          smoobuReservationId: smoobuResponse.data.id,
-          paymentIntentId: paymentIntent.id,
-          stripePaymentStatus: paymentIntent.status,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          extras: bookingData.extras
-            ? bookingData.extras.map((extra) => ({
-                ...extra,
-                name: extrasFrenchNames[extra.name] || extra.name,
-                extraPersonName:
-                  extra.extraPersonQuantity > 0
-                    ? extrasFrenchNames['extras.additionalPerson']
-                    : undefined,
-              }))
-            : [],
-        };
-
-        // Store booking in Firebase
-        try {
-          const docRef = await db.collection('bookings').add(bookingDoc);
-          console.log('Booking stored in Firebase with ID:', docRef.id);
-        } catch (firebaseError) {
-          console.error('Error storing booking in Firebase:', firebaseError);
+          // return res.status(400).json({ error: "Booking data not found!" });
+          return;
         }
 
-        // Process extras, if any
-        if (bookingData.extras?.length > 0) {
-          console.log('Processing extras...');
+        try {
+          // Valider les montants
+          validateBookingAmounts(bookingData);
+          // First create the main booking
+          const smoobuResponse = await retrySmoobuCall(async () => {
+            return await axios.post(
+              'https://login.smoobu.com/api/reservations',
+              {
+                arrivalDate: bookingData.arrivalDate,
+                departureDate: bookingData.departureDate,
+                arrivalTime: bookingData.arrivalTime,
+                channelId: bookingData.channelId,
+                apartmentId: bookingData.apartmentId,
+                firstName: bookingData.firstName,
+                lastName: bookingData.lastName,
+                email: bookingData.email,
+                phone: bookingData.phone,
+                notice: bookingData.notice,
+                adults: Number(bookingData.adults),
+                children: Number(bookingData.children),
+                price: Number(bookingData.price),
+                priceStatus: 1,
+                deposit: Number(bookingData.deposit),
+                depositStatus: 1,
+                language: 'en',
+              },
+              {
+                headers: {
+                  'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+          });
 
-          for (const extra of bookingData.extras) {
-            let retryCount = 0;
-            const maxRetries = 3;
+          console.log('Smoobu booking created:', smoobuResponse.data);
 
-            while (retryCount < maxRetries) {
-              try {
-                const extraData = {
-                  type: 'addon',
-                  name: extrasFrenchNames[extra.name] || extra.name,
-                  amount: extra.amount,
-                  quantity: extra.quantity,
-                  currencyCode: 'EUR',
-                };
+          // Store booking in Firebase
+          const bookingDoc = {
+            ...bookingData,
+            smoobuReservationId: smoobuResponse.data.id,
+            paymentIntentId: paymentIntent.id,
+            stripePaymentStatus: paymentIntent.status,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            // Translate extras if they exist
+            extras: bookingData.extras
+              ? bookingData.extras.map((extra) => {
+                  const translatedExtra = {
+                    ...extra,
+                    name: extra.name.startsWith('extras.')
+                      ? extrasFrenchNames[extra.name] || extra.name
+                      : extra.name,
+                  };
 
-                // Post extra to Smoobu
-                await axios.post(
-                  `https://login.smoobu.com/api/reservations/${smoobuResponse.data.id}/price-elements`,
-                  extraData,
-                  {
-                    headers: {
-                      'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
-                      'Content-Type': 'application/json',
-                    },
+                  // Only add extraPersonName if there's an extraPersonQuantity
+                  if (extra.extraPersonQuantity > 0) {
+                    translatedExtra.extraPersonName =
+                      extrasFrenchNames['extras.additionalPerson'];
                   }
-                );
-                console.log(`Extra processed: ${extra.name}`);
-                break; // Exit retry loop
-              } catch (error) {
-                retryCount++;
-                console.error(
-                  `Failed to process extra: ${extra.name}, retrying...`,
-                  error
-                );
 
-                if (retryCount === maxRetries) {
-                  console.error(
-                    `Failed to process extra after ${maxRetries} attempts:`,
-                    error
-                  );
-                } else {
-                  await wait(2000 * retryCount); // Exponential backoff
+                  return translatedExtra;
+                })
+              : [],
+          };
+
+          try {
+            const docRef = await db.collection('bookings').add(bookingDoc);
+            console.log('Booking stored in Firebase with ID:', docRef.id);
+          } catch (firebaseError) {
+            console.error('Error storing in Firebase:', firebaseError);
+            // Continue with the rest of the booking process even if Firebase storage fails
+          }
+
+          const reservationId = smoobuResponse.data.id;
+
+          // Add initial delay after booking creation
+          await wait(2000);
+
+          // Process extras if they exist
+
+          // Modified webhook handler
+          if (bookingData.extras && bookingData.extras.length > 0) {
+            console.log('Creating extras as price elements...');
+
+            for (const extra of bookingData.extras) {
+              let retryCount = 0;
+              const maxRetries = 3;
+
+              while (retryCount < maxRetries) {
+                try {
+                  // Process the name to get French version
+                  const processedName = {
+                    nameKey: extra.name.startsWith('extras.')
+                      ? extra.name
+                      : null,
+                    name: extra.name.startsWith('extras.')
+                      ? extrasFrenchNames[extra.name]
+                      : extra.name,
+                  };
+
+                  // Add base extra if it's not an additional person charge
+                  if (!processedName.name.includes('Personne supplémentaire')) {
+                    const extraResponse = await axios.post(
+                      `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+                      {
+                        type: 'addon',
+                        name: processedName.name, // French name for Smoobu
+                        nameKey: processedName.nameKey, // Original translation key for frontend
+                        amount: extra.amount,
+                        quantity: extra.quantity,
+                        currencyCode: 'EUR',
+                      },
+                      {
+                        headers: {
+                          'Api-Key':
+                            'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+                          'Content-Type': 'application/json',
+                        },
+                      }
+                    );
+                    console.log(
+                      `Added base extra: ${processedName.name}`,
+                      extraResponse.data
+                    );
+                  }
+
+                  // Handle additional persons with French translation
+                  if (extra.extraPersonQuantity > 0 && extra.extraPersonPrice) {
+                    await wait(1000);
+                    const extraPersonResponse = await axios.post(
+                      `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+                      {
+                        type: 'addon',
+                        name: `${processedName.name} - ${extrasFrenchNames['extras.additionalPerson']}`,
+                        nameKey: 'extras.additionalPerson',
+                        amount:
+                          extra.extraPersonPrice * extra.extraPersonQuantity,
+                        quantity: extra.extraPersonQuantity,
+                        currencyCode: 'EUR',
+                      },
+                      {
+                        headers: {
+                          'Api-Key':
+                            'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+                          'Content-Type': 'application/json',
+                        },
+                      }
+                    );
+                    console.log(
+                      `Added extra person charges for: ${processedName.name}`,
+                      extraPersonResponse.data
+                    );
+                  }
+
+                  break; // Success - exit retry loop
+                } catch (extraError) {
+                  retryCount++;
+                  console.log(`Retry ${retryCount} for extra ${extra.name}`);
+
+                  if (retryCount === maxRetries) {
+                    console.error(
+                      `Failed to add extra ${extra.name} after ${maxRetries} attempts:`,
+                      extraError.response?.data || extraError.message
+                    );
+                  } else {
+                    await wait(2000 * retryCount); // Exponential backoff
+                    continue;
+                  }
                 }
               }
             }
           }
+
+          // Clean up the pending booking after successful processing
+          pendingBookings.delete(bookingReference);
+          console.log(
+            'Successfully processed booking and removed from pending bookings'
+          );
+        } catch (error) {
+          console.error('Detailed error in booking creation:', {
+            error: error.message,
+            response: error.response?.data,
+            bookingData: {
+              ...bookingData,
+              price: Number(bookingData.price),
+              basePrice: Number(bookingData.basePrice),
+              extrasTotal: Number(bookingData.extrasTotal),
+              longStayDiscount: Number(bookingData.longStayDiscount),
+              couponDiscount: Number(bookingData.couponDiscount),
+            },
+          });
+          return res.status(500).json({
+            error: 'Failed to create booking in Smoobu',
+            details: error.response?.data || error.message,
+          });
         }
-
-        // Remove pending booking after successful processing
-        pendingBookings.delete(bookingReference);
-        console.log(
-          'Booking successfully processed and removed from pending bookings'
-        );
-
-        res.json({ success: true });
-      } catch (error) {
-        console.error('Error processing booking:', error.message);
-        res.status(500).json({ error: 'Internal server error' });
       }
-    } else {
-      res.status(400).json({ error: 'Unhandled event type' });
+
+      // res.json({ received: true });
+    } catch (err) {
+      console.error('Webhook Error:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
     }
   }
 );
+
 // Use JSON parsing and CORS for all other routes
 app.use(express.json());
 app.use(
