@@ -1,10 +1,10 @@
-import express from "express";
-import cors from "cors";
-import axios from "axios";
-import Stripe from "stripe";
-import * as dotenv from "dotenv";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
+import express from 'express';
+import cors from 'cors';
+import axios from 'axios';
+import Stripe from 'stripe';
+import * as dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import { db } from './firebase-config.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,12 +15,11 @@ dotenv.config();
 const app = express();
 
 app.use((req, res, next) => {
-  console.log("Incoming Origin:", req.headers.origin);
+  console.log('Incoming Origin:', req.headers.origin);
   next();
 });
 
 app.options('/webhook', cors());
-
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -99,33 +98,31 @@ const discountSettings = {
 const extrasFrenchNames = {
   // Packs
   'extras.packs.essential.name': "L'essentiel (pour 2)",
-  'extras.packs.relaxGourmet.name': "Le détente gourmet (pour 2)",
-  'extras.packs.racletteRelax.name': "La raclette en détente (pour 2)",
-  'extras.packs.romanticGourmet.name': "Le romantique gourmet (pour 2)",
-  'extras.packs.racletteRomantic.name': "La raclette romantique (pour 2)",
-  
+  'extras.packs.relaxGourmet.name': 'Le détente gourmet (pour 2)',
+  'extras.packs.racletteRelax.name': 'La raclette en détente (pour 2)',
+  'extras.packs.romanticGourmet.name': 'Le romantique gourmet (pour 2)',
+  'extras.packs.racletteRomantic.name': 'La raclette romantique (pour 2)',
+
   // Spa
-  'extras.spa.basic.name': "Formule SPA (2 pers)",
-  'extras.spa.withBottle.name': "Formule SPA + bouteille (2 pers)",
-  
+  'extras.spa.basic.name': 'Formule SPA (2 pers)',
+  'extras.spa.withBottle.name': 'Formule SPA + bouteille (2 pers)',
+
   // Meals
-  'extras.meals.meatballsLiege.name': "Boulettes de viande sauce liégeoise",
-  'extras.meals.meatballsTomato.name': "Boulette de viande sauce tomate",
-  'extras.meals.waterzooi.name': "Waterzooi de volaille",
-  'extras.meals.chiliVeg.name': "Chili végétarien",
-  'extras.meals.carrotSoup.name': "Velouté de carotte et cumin",
-  
+  'extras.meals.meatballsLiege.name': 'Boulettes de viande sauce liégeoise',
+  'extras.meals.meatballsTomato.name': 'Boulette de viande sauce tomate',
+  'extras.meals.waterzooi.name': 'Waterzooi de volaille',
+  'extras.meals.chiliVeg.name': 'Chili végétarien',
+  'extras.meals.carrotSoup.name': 'Velouté de carotte et cumin',
+
   // Meal Formulas
-  'extras.formulesRepas.breakfast.name': "Formule petit-déjeuner (2 pers)",
-  'extras.formulesRepas.gourmet.name': "Formule gourmet (2 pers)",
-  'extras.formulesRepas.raclette.name': "Formule raclette (2 pers)",
-  'extras.formulesRepas.apero.name': "Formule planche apéro (2 pers)",
-  
+  'extras.formulesRepas.breakfast.name': 'Formule petit-déjeuner (2 pers)',
+  'extras.formulesRepas.gourmet.name': 'Formule gourmet (2 pers)',
+  'extras.formulesRepas.raclette.name': 'Formule raclette (2 pers)',
+  'extras.formulesRepas.apero.name': 'Formule planche apéro (2 pers)',
+
   // Additional Person translation
-  'extras.additionalPerson': "Personne supplémentaire"
+  'extras.additionalPerson': 'Personne supplémentaire',
 };
-
-
 
 // Modified processExtraName function
 const processExtraName = (extra) => {
@@ -158,10 +155,10 @@ const calculatePriceWithSettings = (
   const endDateTime = new Date(endDate);
 
   // Special handling for departure-arrival day
-  const startDateStr = currentDate.toISOString().split("T")[0];
+  const startDateStr = currentDate.toISOString().split('T')[0];
   const prevDay = new Date(currentDate);
   prevDay.setDate(prevDay.getDate() - 1);
-  const prevDayStr = prevDay.toISOString().split("T")[0];
+  const prevDayStr = prevDay.toISOString().split('T')[0];
 
   // If starting on a departure day, don't count it as unavailable
   const isDepartureDay =
@@ -169,15 +166,14 @@ const calculatePriceWithSettings = (
     rates[startDateStr] &&
     rates[startDateStr].available === 1;
 
-
   while (currentDate <= endDateTime) {
-    const dateStr = currentDate.toISOString().split("T")[0];
+    const dateStr = currentDate.toISOString().split('T')[0];
     const nextDate = new Date(currentDate);
     nextDate.setDate(nextDate.getDate() + 1);
-    const nextDateStr = nextDate.toISOString().split("T")[0];
-    
+    const nextDateStr = nextDate.toISOString().split('T')[0];
+
     // Only count if this is not the departure day OK
-    if (dateStr !== endDateTime.toISOString().split("T")[0]) {
+    if (dateStr !== endDateTime.toISOString().split('T')[0]) {
       const dayRate = rates[dateStr];
       if (dayRate) {
         if (
@@ -190,11 +186,11 @@ const calculatePriceWithSettings = (
         }
       }
     }
-  
+
     currentDate.setDate(currentDate.getDate() + 1);
   }
-  
-  console.log("Base calculation:", {
+
+  console.log('Base calculation:', {
     totalPrice,
     numberOfNights,
   });
@@ -204,7 +200,7 @@ const calculatePriceWithSettings = (
   if (numberOfNights >= settings.lengthOfStayDiscount.minNights) {
     discount =
       (totalPrice * settings.lengthOfStayDiscount.discountPercentage) / 100;
-    console.log("Long stay discount:", {
+    console.log('Long stay discount:', {
       numberOfNights,
       minimumNights: settings.lengthOfStayDiscount.minNights,
       discountPercentage: settings.lengthOfStayDiscount.discountPercentage,
@@ -219,7 +215,7 @@ const calculatePriceWithSettings = (
   const extraChildrenFee =
     numberOfChildren * settings.extraChildPerNight * numberOfNights;
 
-  console.log("Guest fees:", {
+  console.log('Guest fees:', {
     extraGuests,
     extraGuestsFee,
     extraChildrenFee,
@@ -230,46 +226,46 @@ const calculatePriceWithSettings = (
   // Build price elements array
   const priceElements = [
     {
-      type: "basePrice",
-      name: "Prix de base",
+      type: 'basePrice',
+      name: 'Prix de base',
       amount: totalPrice,
-      currencyCode: "EUR",
+      currencyCode: 'EUR',
     },
   ];
 
   if (extraGuestsFee > 0) {
     priceElements.push({
-      type: "addon",
-      name: "Frais de personne supplémentaire",
+      type: 'addon',
+      name: 'Frais de personne supplémentaire',
       amount: extraGuestsFee,
-      currencyCode: "EUR",
+      currencyCode: 'EUR',
     });
   }
 
   if (extraChildrenFee > 0) {
     priceElements.push({
-      type: "addon",
+      type: 'addon',
       name: "Frais d'enfants supplémentaires",
       amount: extraChildrenFee,
-      currencyCode: "EUR",
+      currencyCode: 'EUR',
     });
   }
 
   if (settings.cleaningFee > 0) {
     priceElements.push({
-      type: "cleaningFee",
-      name: "Frais de nettoyage",
+      type: 'cleaningFee',
+      name: 'Frais de nettoyage',
       amount: settings.cleaningFee,
-      currencyCode: "EUR",
+      currencyCode: 'EUR',
     });
   }
 
   if (discount > 0) {
     priceElements.push({
-      type: "longStayDiscount",
+      type: 'longStayDiscount',
       name: `Réduction long séjour (${settings.lengthOfStayDiscount.discountPercentage}%)`,
       amount: -discount,
-      currencyCode: "EUR",
+      currencyCode: 'EUR',
     });
   }
 
@@ -278,7 +274,7 @@ const calculatePriceWithSettings = (
     totalPrice + extraGuestsFee + extraChildrenFee + settings.cleaningFee;
   const finalPrice = subtotal - discount;
 
-  console.log("Final price calculation:", {
+  console.log('Final price calculation:', {
     basePrice: totalPrice,
     extraGuestsFee,
     extraChildrenFee,
@@ -305,28 +301,29 @@ const calculatePriceWithSettings = (
 
 // Webhook endpoint must come before JSON middleware
 // Helper function for delays
-const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Fonction de validation des montants
 const validateBookingAmounts = (bookingData) => {
   if (!bookingData.price || bookingData.price <= 0) {
     throw new Error(`Invalid booking price: ${bookingData.price}`);
   }
-  
+
   if (bookingData.deposit < 0) {
     throw new Error(`Invalid deposit amount: ${bookingData.deposit}`);
   }
-  
+
   // Vérifier la cohérence entre le prix total et les composants
-  const calculatedTotal = (
+  const calculatedTotal =
     Number(bookingData.basePrice) +
     (Number(bookingData.extrasTotal) || 0) -
     (Number(bookingData.longStayDiscount) || 0) -
-    (Number(bookingData.couponDiscount) || 0)
-  );
-  
+    (Number(bookingData.couponDiscount) || 0);
+
   if (Math.abs(calculatedTotal - bookingData.price) > 0.01) {
-    throw new Error(`Price mismatch: total ${bookingData.price} != calculated ${calculatedTotal}`);
+    throw new Error(
+      `Price mismatch: total ${bookingData.price} != calculated ${calculatedTotal}`
+    );
   }
 };
 
@@ -338,7 +335,10 @@ const retrySmoobuCall = async (fn, maxRetries = 3) => {
       return await fn();
     } catch (error) {
       lastError = error;
-      console.error(`Retry ${i + 1}/${maxRetries} failed:`, error.response?.data || error.message);
+      console.error(
+        `Retry ${i + 1}/${maxRetries} failed:`,
+        error.response?.data || error.message
+      );
       if (i < maxRetries - 1) {
         await wait(2000 * Math.pow(2, i)); // Exponential backoff
       }
@@ -347,49 +347,45 @@ const retrySmoobuCall = async (fn, maxRetries = 3) => {
   throw lastError;
 };
 
+const endpointSecret = 'whsec_sbVaa5obD8UFZ5hzg0iEZpLHozrHi4Z8';
 
 app.post(
-  "/webhook",
-  express.raw({ type: "application/json" }),
+  '/webhook',
+  express.raw({ type: 'application/json' }),
   async (req, res) => {
-    res.json({ received: true });
-    const sig = req.headers["stripe-signature"];
+    const sig = req.headers['stripe-signature'];
     let event;
-    console.log("Received webhook call");
+
+    console.log('Received webhook call');
 
     try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        "whsec_sbVaa5obD8UFZ5hzg0iEZpLHozrHi4Z8"
-      );
+      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+      console.log('Webhook event verified:', event.type);
+    } catch (err) {
+      console.error('Webhook Error:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
 
-      console.log("Webhook event verified:", event.type);
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object;
+      const bookingReference = paymentIntent.metadata?.bookingReference;
+      const bookingData = pendingBookings.get(bookingReference);
 
-      if (event.type === "payment_intent.succeeded") {
-        const paymentIntent = event.data.object;
-        const bookingReference = paymentIntent.metadata.bookingReference;
-        const bookingData = pendingBookings.get(bookingReference);
+      if (!bookingData) {
+        console.error('No booking data found for reference:', bookingReference);
+        return res.status(400).json({ error: 'Booking data not found!' });
+      }
 
-        console.log("Retrieved booking data:", bookingData);
+      console.log('Retrieved booking data:', bookingData);
 
-        if (!bookingData) {
-          console.error(
-            "No booking data found for reference:",
-            bookingReference
-          );
-          // return res.status(400).json({ error: "Booking data not found!" });
-          return
-        }
+      try {
+        // Validate booking amounts
+        validateBookingAmounts(bookingData);
 
-        try {
-
-           // Valider les montants
-          validateBookingAmounts(bookingData);
-          // First create the main booking
-          const smoobuResponse = await retrySmoobuCall(async () => {
-            return await axios.post(
-            "https://login.smoobu.com/api/reservations",
+        // Create booking in Smoobu
+        const smoobuResponse = await retrySmoobuCall(async () => {
+          return axios.post(
+            'https://login.smoobu.com/api/reservations',
             {
               arrivalDate: bookingData.arrivalDate,
               departureDate: bookingData.departureDate,
@@ -407,63 +403,50 @@ app.post(
               priceStatus: 1,
               deposit: Number(bookingData.deposit),
               depositStatus: 1,
-              language: "en",
+              language: 'en',
             },
             {
               headers: {
-                "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-                "Content-Type": "application/json",
+                'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+                'Content-Type': 'application/json',
               },
             }
           );
         });
 
-          console.log("Smoobu booking created:", smoobuResponse.data);
+        console.log('Smoobu booking created:', smoobuResponse.data);
 
-          // Store booking in Firebase
-          const bookingDoc = {
-            ...bookingData,
-            smoobuReservationId: smoobuResponse.data.id,
-            paymentIntentId: paymentIntent.id,
-            stripePaymentStatus: paymentIntent.status,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            // Translate extras if they exist
-            extras: bookingData.extras ? bookingData.extras.map(extra => {
-              const translatedExtra = {
+        // Prepare booking document for Firebase
+        const bookingDoc = {
+          ...bookingData,
+          smoobuReservationId: smoobuResponse.data.id,
+          paymentIntentId: paymentIntent.id,
+          stripePaymentStatus: paymentIntent.status,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          extras: bookingData.extras
+            ? bookingData.extras.map((extra) => ({
                 ...extra,
-                name: extra.name.startsWith('extras.') ? extrasFrenchNames[extra.name] || extra.name : extra.name,
-              };
-              
-              // Only add extraPersonName if there's an extraPersonQuantity
-              if (extra.extraPersonQuantity > 0) {
-                translatedExtra.extraPersonName = extrasFrenchNames['extras.additionalPerson'];
-              }
-              
-              return translatedExtra;
-            }) : []
-          };
+                name: extrasFrenchNames[extra.name] || extra.name,
+                extraPersonName:
+                  extra.extraPersonQuantity > 0
+                    ? extrasFrenchNames['extras.additionalPerson']
+                    : undefined,
+              }))
+            : [],
+        };
 
-          try {
-            const docRef = await db.collection('bookings').add(bookingDoc);
-            console.log("Booking stored in Firebase with ID:", docRef.id);
-            } catch (firebaseError) {
-            console.error("Error storing in Firebase:", firebaseError);
-            // Continue with the rest of the booking process even if Firebase storage fails
-          }
+        // Store booking in Firebase
+        try {
+          const docRef = await db.collection('bookings').add(bookingDoc);
+          console.log('Booking stored in Firebase with ID:', docRef.id);
+        } catch (firebaseError) {
+          console.error('Error storing booking in Firebase:', firebaseError);
+        }
 
-
-          const reservationId = smoobuResponse.data.id;
-
-          // Add initial delay after booking creation
-          await wait(2000);
-
-          // Process extras if they exist
-
-
-        // Modified webhook handler
-        if (bookingData.extras && bookingData.extras.length > 0) {
-          console.log("Creating extras as price elements...");
+        // Process extras, if any
+        if (bookingData.extras?.length > 0) {
+          console.log('Processing extras...');
 
           for (const extra of bookingData.extras) {
             let retryCount = 0;
@@ -471,150 +454,110 @@ app.post(
 
             while (retryCount < maxRetries) {
               try {
-                // Process the name to get French version
-                const processedName = {
-                  nameKey: extra.name.startsWith('extras.') ? extra.name : null,
-                  name: extra.name.startsWith('extras.') ? extrasFrenchNames[extra.name] : extra.name
+                const extraData = {
+                  type: 'addon',
+                  name: extrasFrenchNames[extra.name] || extra.name,
+                  amount: extra.amount,
+                  quantity: extra.quantity,
+                  currencyCode: 'EUR',
                 };
 
-                // Add base extra if it's not an additional person charge
-                if (!processedName.name.includes("Personne supplémentaire")) {
-                  const extraResponse = await axios.post(
-                    `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-                    {
-                      type: "addon",
-                      name: processedName.name, // French name for Smoobu
-                      nameKey: processedName.nameKey, // Original translation key for frontend
-                      amount: extra.amount,
-                      quantity: extra.quantity,
-                      currencyCode: "EUR",
+                // Post extra to Smoobu
+                await axios.post(
+                  `https://login.smoobu.com/api/reservations/${smoobuResponse.data.id}/price-elements`,
+                  extraData,
+                  {
+                    headers: {
+                      'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+                      'Content-Type': 'application/json',
                     },
-                    {
-                      headers: {
-                        "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-                        "Content-Type": "application/json",
-                      },
-                    }
-                  );
-                  console.log(
-                    `Added base extra: ${processedName.name}`,
-                    extraResponse.data
-                  );
-                }
-
-                // Handle additional persons with French translation
-                if (extra.extraPersonQuantity > 0 && extra.extraPersonPrice) {
-                  await wait(1000);
-                  const extraPersonResponse = await axios.post(
-                    `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-                    {
-                      type: "addon",
-                      name: `${processedName.name} - ${extrasFrenchNames['extras.additionalPerson']}`,
-                      nameKey: "extras.additionalPerson",
-                      amount: extra.extraPersonPrice * extra.extraPersonQuantity,
-                      quantity: extra.extraPersonQuantity,
-                      currencyCode: "EUR",
-                    },
-                    {
-                      headers: {
-                        "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-                        "Content-Type": "application/json",
-                      },
-                    }
-                  );
-                  console.log(
-                    `Added extra person charges for: ${processedName.name}`,
-                    extraPersonResponse.data
-                  );
-                }
-
-                break; // Success - exit retry loop
-              } catch (extraError) {
+                  }
+                );
+                console.log(`Extra processed: ${extra.name}`);
+                break; // Exit retry loop
+              } catch (error) {
                 retryCount++;
-                console.log(`Retry ${retryCount} for extra ${extra.name}`);
+                console.error(
+                  `Failed to process extra: ${extra.name}, retrying...`,
+                  error
+                );
 
                 if (retryCount === maxRetries) {
                   console.error(
-                    `Failed to add extra ${extra.name} after ${maxRetries} attempts:`,
-                    extraError.response?.data || extraError.message
+                    `Failed to process extra after ${maxRetries} attempts:`,
+                    error
                   );
                 } else {
                   await wait(2000 * retryCount); // Exponential backoff
-                  continue;
                 }
               }
             }
           }
         }
 
-          // Clean up the pending booking after successful processing
-          pendingBookings.delete(bookingReference);
-          console.log("Successfully processed booking and removed from pending bookings");
+        // Remove pending booking after successful processing
+        pendingBookings.delete(bookingReference);
+        console.log(
+          'Booking successfully processed and removed from pending bookings'
+        );
 
-        } catch (error) {
-          console.error("Detailed error in booking creation:", {
-            error: error.message,
-            response: error.response?.data,
-            bookingData: {
-              ...bookingData,
-              price: Number(bookingData.price),
-              basePrice: Number(bookingData.basePrice),
-              extrasTotal: Number(bookingData.extrasTotal),
-              longStayDiscount: Number(bookingData.longStayDiscount),
-              couponDiscount: Number(bookingData.couponDiscount),
-            }
-          });
-          return res.status(500).json({
-            error: "Failed to create booking in Smoobu",
-            details: error.response?.data || error.message
-          });
-        }
+        res.json({ success: true });
+      } catch (error) {
+        console.error('Error processing booking:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
       }
-
-      // res.json({ received: true });
-    } catch (err) {
-      console.error("Webhook Error:", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+    } else {
+      res.status(400).json({ error: 'Unhandled event type' });
     }
   }
 );
-
 // Use JSON parsing and CORS for all other routes
 app.use(express.json());
-app.use(cors({
-  origin: ['https://reservation.fermedebasseilles.be', 'http://localhost:5173'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: [
+      'https://reservation.fermedebasseilles.be',
+      'http://localhost:5173',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+  })
+);
 
 app.get('/api/apartments', async (req, res) => {
   try {
-    const response = await axios.get('https://login.smoobu.com/api/apartments', {
-      headers: {
-        'Api-Key': "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-        'Cache-Control': 'no-cache',
-        "Content-Type": "application/json",
+    const response = await axios.get(
+      'https://login.smoobu.com/api/apartments',
+      {
+        headers: {
+          'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+          'Cache-Control': 'no-cache',
+          'Content-Type': 'application/json',
+        },
       }
-    });
+    );
     res.json(response.data);
   } catch (error) {
     res.status(error.response?.status || 500).json({
       status: error.response?.status,
       title: error.response?.data?.title || 'Error',
-      detail: error.response?.data?.detail || 'Failed to fetch apartments'
+      detail: error.response?.data?.detail || 'Failed to fetch apartments',
     });
   }
 });
 
 app.get('/api/apartments/:id', async (req, res) => {
   try {
-    const response = await axios.get(`https://login.smoobu.com/api/apartments/${req.params.id}`, {
-      headers: {
-        'Api-Key': "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-        "Content-Type": "application/json",
+    const response = await axios.get(
+      `https://login.smoobu.com/api/apartments/${req.params.id}`,
+      {
+        headers: {
+          'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+          'Content-Type': 'application/json',
+        },
       }
-    });
-    
+    );
+
     // Smoobu API returns images in the response
     const images = response.data.images || [];
     res.json({ images });
@@ -623,40 +566,39 @@ app.get('/api/apartments/:id', async (req, res) => {
   }
 });
 
-
-  // Replace your current /api/rates endpoint with this one
-app.get("/api/rates", async (req, res) => {
+// Replace your current /api/rates endpoint with this one
+app.get('/api/rates', async (req, res) => {
   try {
     const { apartments, start_date, end_date, adults, children } = req.query;
 
-    console.log("Processing rates request:", {
+    console.log('Processing rates request:', {
       apartments,
       start_date,
       end_date,
       adults,
-      children
+      children,
     });
 
     // Validate required parameters
     if (!start_date || !end_date) {
       return res.status(400).json({
-        error: "Missing dates",
-        details: "Both start_date and end_date are required"
+        error: 'Missing dates',
+        details: 'Both start_date and end_date are required',
       });
     }
 
     if (!apartments) {
       return res.status(400).json({
-        error: "Missing apartments",
-        details: "Apartments parameter is required"
+        error: 'Missing apartments',
+        details: 'Apartments parameter is required',
       });
     }
 
     // Make the API call to Smoobu
-    const response = await axios.get("https://login.smoobu.com/api/rates", {
+    const response = await axios.get('https://login.smoobu.com/api/rates', {
       headers: {
-        "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-        "Content-Type": "application/json",
+        'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+        'Content-Type': 'application/json',
       },
       params: {
         apartments: Array.isArray(apartments) ? apartments : [apartments],
@@ -666,9 +608,9 @@ app.get("/api/rates", async (req, res) => {
     });
 
     if (!response.data || !response.data.data) {
-      return res.status(404).json({ 
-        error: "No rates found",
-        details: "The API returned no data"
+      return res.status(404).json({
+        error: 'No rates found',
+        details: 'The API returned no data',
       });
     }
 
@@ -677,47 +619,52 @@ app.get("/api/rates", async (req, res) => {
     let hasAvailability = false;
 
     // Process each apartment
-    (Array.isArray(apartments) ? apartments : [apartments]).forEach(apartmentId => {
-      const apartmentData = response.data.data[apartmentId];
-      if (!apartmentData) return;
+    (Array.isArray(apartments) ? apartments : [apartments]).forEach(
+      (apartmentId) => {
+        const apartmentData = response.data.data[apartmentId];
+        if (!apartmentData) return;
 
-      formattedData[apartmentId] = apartmentData;
-      const settings = discountSettings[apartmentId];
-      
-      if (!settings) {
-        console.log(`No settings found for apartment ${apartmentId}`);
-        return;
-      }
+        formattedData[apartmentId] = apartmentData;
+        const settings = discountSettings[apartmentId];
 
-      try {
-        // Calculate price details using your existing function
-        const priceCalculation = calculatePriceWithSettings(
-          apartmentData,
-          start_date,
-          end_date,
-          parseInt(adults) || 1,
-          parseInt(children) || 0,
-          settings
-        );
-
-        if (priceCalculation && priceCalculation.finalPrice > 0) {
-          priceDetailsByApartment[apartmentId] = {
-            ...priceCalculation,
-            isAvailable: true,
-            settings: {
-              maxGuests: settings.maxGuests,
-              startingAtGuest: settings.startingAtGuest,
-              extraGuestsPerNight: settings.extraGuestsPerNight,
-              extraChildPerNight: settings.extraChildPerNight,
-              lengthOfStayDiscount: settings.lengthOfStayDiscount
-            }
-          };
-          hasAvailability = true;
+        if (!settings) {
+          console.log(`No settings found for apartment ${apartmentId}`);
+          return;
         }
-      } catch (calcError) {
-        console.error(`Error calculating price for apartment ${apartmentId}:`, calcError);
+
+        try {
+          // Calculate price details using your existing function
+          const priceCalculation = calculatePriceWithSettings(
+            apartmentData,
+            start_date,
+            end_date,
+            parseInt(adults) || 1,
+            parseInt(children) || 0,
+            settings
+          );
+
+          if (priceCalculation && priceCalculation.finalPrice > 0) {
+            priceDetailsByApartment[apartmentId] = {
+              ...priceCalculation,
+              isAvailable: true,
+              settings: {
+                maxGuests: settings.maxGuests,
+                startingAtGuest: settings.startingAtGuest,
+                extraGuestsPerNight: settings.extraGuestsPerNight,
+                extraChildPerNight: settings.extraChildPerNight,
+                lengthOfStayDiscount: settings.lengthOfStayDiscount,
+              },
+            };
+            hasAvailability = true;
+          }
+        } catch (calcError) {
+          console.error(
+            `Error calculating price for apartment ${apartmentId}:`,
+            calcError
+          );
+        }
       }
-    });
+    );
 
     // Check if we found any available apartments
     if (!hasAvailability) {
@@ -725,32 +672,31 @@ app.get("/api/rates", async (req, res) => {
         data: formattedData,
         priceDetails: {},
         hasAvailability: false,
-        message: "No apartments available for the selected dates and guests"
+        message: 'No apartments available for the selected dates and guests',
       });
     }
 
-    console.log("Sending response with price details:", {
+    console.log('Sending response with price details:', {
       apartmentCount: Object.keys(priceDetailsByApartment).length,
-      availableApartments: Object.keys(priceDetailsByApartment)
+      availableApartments: Object.keys(priceDetailsByApartment),
     });
 
     res.json({
       data: formattedData,
       priceDetails: priceDetailsByApartment,
-      hasAvailability: true
+      hasAvailability: true,
     });
-
   } catch (error) {
-    console.error("Error in /api/rates:", error);
+    console.error('Error in /api/rates:', error);
     res.status(500).json({
-      error: "Failed to fetch rates",
+      error: 'Failed to fetch rates',
       details: error.response?.data || error.message,
-      status: error.response?.status || 500
+      status: error.response?.status || 500,
     });
   }
 });
 
-app.post("/api/create-payment-intent", async (req, res) => {
+app.post('/api/create-payment-intent', async (req, res) => {
   try {
     const { price, bookingData } = req.body;
 
@@ -759,14 +705,14 @@ app.post("/api/create-payment-intent", async (req, res) => {
       bookingData.extras = bookingData.extras.map((extra) => {
         const baseExtra = {
           ...extra,
-          nameKey: extra.name.startsWith("extras.") ? extra.name : null,
+          nameKey: extra.name.startsWith('extras.') ? extra.name : null,
         };
 
         // If there are extra persons, ensure their translation is preserved too
         if (extra.extraPersonQuantity > 0) {
           return {
             ...baseExtra,
-            extraPersonNameKey: "extras.additionalPerson",
+            extraPersonNameKey: 'extras.additionalPerson',
           };
         }
 
@@ -777,16 +723,16 @@ app.post("/api/create-payment-intent", async (req, res) => {
     const bookingReference = `BOOKING-${Date.now()}-${Math.random()
       .toString(36)
       .substr(2, 9)}`;
-    console.log("Generated booking reference:", bookingReference);
+    console.log('Generated booking reference:', bookingReference);
 
     // Store booking data for webhook
     pendingBookings.set(bookingReference, bookingData);
-    console.log("Stored booking data with extras:", bookingData);
+    console.log('Stored booking data with extras:', bookingData);
 
     // Create payment intent with total price (including extras and discounts)
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(price * 100), // Convert to cents
-      currency: "eur",
+      currency: 'eur',
       automatic_payment_methods: {
         enabled: true,
       },
@@ -795,26 +741,26 @@ app.post("/api/create-payment-intent", async (req, res) => {
         basePrice: bookingData.basePrice.toString(),
         extrasTotal: (price - bookingData.basePrice).toString(),
         longStayDiscount: bookingData.priceDetails.discount.toString(),
-        couponDiscount: (bookingData.couponApplied?.discount || "0").toString(),
+        couponDiscount: (bookingData.couponApplied?.discount || '0').toString(),
       },
     });
 
-    console.log("Created payment intent:", paymentIntent.id);
+    console.log('Created payment intent:', paymentIntent.id);
 
     res.json({
       clientSecret: paymentIntent.client_secret,
       bookingReference: bookingReference,
     });
   } catch (error) {
-    console.error("Error creating payment intent:", error);
+    console.error('Error creating payment intent:', error);
     res.status(500).json({
-      error: "Failed to create payment intent",
+      error: 'Failed to create payment intent',
       details: error.message,
     });
   }
 });
 
-app.get("/api/bookings/:paymentIntentId", async (req, res) => {
+app.get('/api/bookings/:paymentIntentId', async (req, res) => {
   try {
     const { paymentIntentId } = req.params;
 
@@ -822,22 +768,19 @@ app.get("/api/bookings/:paymentIntentId", async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
     if (!paymentIntent) {
-      return res.status(404).json({ error: "Payment not found" });
+      return res.status(404).json({ error: 'Payment not found' });
     }
 
     const bookingReference = paymentIntent.metadata.bookingReference;
     const bookingData = pendingBookings.get(bookingReference);
 
-
-
     if (!bookingData) {
       return res.status(404).json({
-        error: "Booking details not found",
+        error: 'Booking details not found',
         paymentIntent: paymentIntentId,
         bookingReference: bookingReference,
       });
     }
-    
 
     // Récupérer les montants des réductions depuis les metadata
     const basePrice = parseFloat(paymentIntent.metadata.basePrice);
@@ -874,17 +817,16 @@ app.get("/api/bookings/:paymentIntentId", async (req, res) => {
 
     res.json(responseData);
   } catch (error) {
-    console.error("Error fetching booking:", error);
+    console.error('Error fetching booking:', error);
     res.status(500).json({
-      error: "Failed to fetch booking details",
+      error: 'Failed to fetch booking details',
       message: error.message,
     });
   }
 });
 
-
 // Debug endpoint to check pending bookings
-app.get("/api/pending-bookings", (req, res) => {
+app.get('/api/pending-bookings', (req, res) => {
   const bookings = Array.from(pendingBookings.entries());
   res.json(bookings);
 });
@@ -892,29 +834,29 @@ app.get("/api/pending-bookings", (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log("Webhook endpoint ready at /webhook");
+  console.log('Webhook endpoint ready at /webhook');
 });
 
-
-app.get("/api/bookings-history/:email", async (req, res) => {
+app.get('/api/bookings-history/:email', async (req, res) => {
   try {
     const { email } = req.params;
-    const snapshot = await db.collection('bookings')
+    const snapshot = await db
+      .collection('bookings')
       .where('email', '==', email)
       .orderBy('createdAt', 'desc')
       .get();
-    
+
     const bookings = [];
-    snapshot.forEach(doc => {
+    snapshot.forEach((doc) => {
       bookings.push({ id: doc.id, ...doc.data() });
     });
-    
+
     res.json(bookings);
   } catch (error) {
-    console.error("Error fetching bookings:", error);
+    console.error('Error fetching bookings:', error);
     res.status(500).json({
-      error: "Failed to fetch bookings",
-      message: error.message
+      error: 'Failed to fetch bookings',
+      message: error.message,
     });
   }
 });
