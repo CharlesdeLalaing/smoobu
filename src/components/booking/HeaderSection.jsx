@@ -110,7 +110,7 @@ export const HeaderSection = () => {
           {/* Social and Language */}
           <div className="flex items-center mt-2 space-x-4 md:mt-0">
             {/* Language Buttons */}
-            <div className="flex items-center gap-2 px-2 py-1 bg-white rounded bg-opacity-10">
+            {/* <div className="flex items-center gap-2 px-2 py-1 bg-white rounded bg-opacity-10">
               {languages.map((lang) => (
                 <button
                   key={lang.code}
@@ -128,6 +128,50 @@ export const HeaderSection = () => {
                   />
                 </button>
               ))}
+            </div> */}
+
+            <div className="relative">
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center gap-2 px-2 py-1 bg-white bg-opacity-10 rounded hover:bg-opacity-20"
+              >
+                <img
+                  src={currentLang?.flag}
+                  alt={`Current language: ${currentLang?.name}`}
+                  className="h-5 w-5 rounded-sm"
+                />
+                <svg 
+                  className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isOpen && (
+                <div className="absolute top-full mt-1 bg-white bg-opacity-10 rounded shadow-lg">
+                  {languages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => {
+                        handleLanguageChange(lang.code);
+                        setIsOpen(false);
+                      }}
+                      className={`flex items-center gap-2 w-full px-3 py-2 hover:bg-white hover:bg-opacity-20 
+                        ${currentLanguage === lang.code ? 'bg-white bg-opacity-20' : ''}`}
+                    >
+                      <img
+                        src={lang.flag}
+                        alt={`Switch to ${lang.name}`}
+                        className="h-5 w-5 rounded-sm"
+                      />
+                      <span className="text-sm">{lang.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center space-x-4">
