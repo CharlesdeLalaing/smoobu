@@ -70,26 +70,58 @@ export const ExtrasSection = ({
   //   ));
   // }
 
+  // function renderGroupedBoissons() {
+  //   const types = Object.keys(extras.drinkTypes);
+    
+  //   const groupedBoissons = extraCategories.boissons.items.reduce((groups, item) => {
+  //     if (types.includes(item.type)) {
+  //       groups[item.type] = [...(groups[item.type] || []), item];
+  //     }
+  //     return groups;
+  //   }, {});
+  
+  //   return types.map(type => groupedBoissons[type] && (
+  //     <div key={type} className="pb-6">
+  //       <h2 className="mb-4 text-xl font-semibold text-gray-800 capitalize">
+  //         {t(`extras.drinkTypes.${type}`)}
+  //       </h2>
+  //       <div className="space-y-4">
+  //         {groupedBoissons[type]?.map(item => renderExtraItem(item))}
+  //       </div>
+  //     </div>
+  //   ));
+  // }
+
   function renderGroupedBoissons() {
-    const types = Object.keys(extras.drinkTypes);
+    const drinkTypes = {
+      wine: t('extras.drinkTypes.wine'),
+      beer: t('extras.drinkTypes.beer'),
+      soft: t('extras.drinkTypes.soft'),
+      bulles: t('extras.drinkTypes.bulles')
+    };
     
     const groupedBoissons = extraCategories.boissons.items.reduce((groups, item) => {
-      if (types.includes(item.type)) {
-        groups[item.type] = [...(groups[item.type] || []), item];
+      if (item.type && drinkTypes[item.type]) {
+        if (!groups[item.type]) {
+          groups[item.type] = [];
+        }
+        groups[item.type].push(item);
       }
       return groups;
     }, {});
   
-    return types.map(type => groupedBoissons[type] && (
-      <div key={type} className="pb-6">
-        <h2 className="mb-4 text-xl font-semibold text-gray-800 capitalize">
-          {t(`extras.drinkTypes.${type}`)}
-        </h2>
-        <div className="space-y-4">
-          {groupedBoissons[type]?.map(item => renderExtraItem(item))}
+    return Object.entries(drinkTypes).map(([type, label]) => 
+      groupedBoissons[type] && (
+        <div key={type} className="pb-6">
+          <h2 className="mb-4 text-xl font-semibold text-gray-800 capitalize">
+            {label}
+          </h2>
+          <div className="space-y-4">
+            {groupedBoissons[type]?.map(item => renderExtraItem(item))}
+          </div>
         </div>
-      </div>
-    ));
+      )
+    );
   }
 
   function renderRegularExtras() {
