@@ -5,7 +5,8 @@ import logoBaseilles from "../assets/logoBaseilles.webp";
 import "../assets/bookingConfirmation.css";
 
 const BookingConfirmation = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  
   const [status, setStatus] = useState("loading");
   const [bookingDetails, setBookingDetails] = useState(null);
   const [searchParams] = useSearchParams();
@@ -55,7 +56,7 @@ const BookingConfirmation = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat("fr-BE", {
+    return new Intl.DateTimeFormat(i18n.language, {  // Use the current language
       day: "numeric",
       month: "long",
       year: "numeric",
