@@ -2,8 +2,8 @@ import detente from "../assets/Packs/detente.webp";
 import essentiel from "../assets/Packs/essentiel.webp";
 import racletteromantique from "../assets/Packs/raclette-romantique.webp";
 import raclettedetente from "../assets/Packs/raclette-detente.webp";
-import barbecueromantique from "../assets/Packs/barbecue-romantique.webp";
-import barbecuedetente from "../assets/Packs/barbecue-detente.webp";
+import barbecueromantique from "../assets/Packs/barbecue-romantique.png";
+import barbecuedetente from "../assets/Packs/barbecue-detente.png";
 import romantiquegourmet from "../assets/Packs/romantique-gourmet.webp";
 
 //Les plats de Bossimé
