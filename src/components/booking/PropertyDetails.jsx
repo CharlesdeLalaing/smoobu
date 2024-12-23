@@ -248,7 +248,7 @@ export const PropertyDetails = ({
                   </div>
       
                   <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
-                    <div className="features-list flex">
+                    <div className="features-list flex w-full ">
                       {room.features.map((feature, index) => {
                         // Handle dynamic values for features like maxGuests
                         let translatedTitle = feature.value ? 
@@ -353,7 +353,7 @@ export const PropertyDetails = ({
               </div>
   
               <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
-                <div className="features-list flex">
+                <div className="features-list flex w-full">
                   {room.features.map((feature, index) => {
                     // Handle dynamic values for features like maxGuests
                     let translatedTitle = feature.value ? 
