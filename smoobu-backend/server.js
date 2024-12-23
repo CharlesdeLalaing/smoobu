@@ -304,48 +304,48 @@ const calculatePriceWithSettings = (
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Fonction de validation des montants
-const validateBookingAmounts = (bookingData) => {
-  if (!bookingData.price || bookingData.price <= 0) {
-    throw new Error(`Invalid booking price: ${bookingData.price}`);
-  }
+// const validateBookingAmounts = (bookingData) => {
+//   if (!bookingData.price || bookingData.price <= 0) {
+//     throw new Error(`Invalid booking price: ${bookingData.price}`);
+//   }
 
-  if (bookingData.deposit < 0) {
-    throw new Error(`Invalid deposit amount: ${bookingData.deposit}`);
-  }
+//   if (bookingData.deposit < 0) {
+//     throw new Error(`Invalid deposit amount: ${bookingData.deposit}`);
+//   }
 
-  // Vérifier la cohérence entre le prix total et les composants
-  const calculatedTotal =
-    Number(bookingData.basePrice) +
-    (Number(bookingData.extrasTotal) || 0) -
-    (Number(bookingData.longStayDiscount) || 0) -
-    (Number(bookingData.couponDiscount) || 0);
+//   // Vérifier la cohérence entre le prix total et les composants
+//   const calculatedTotal =
+//     Number(bookingData.basePrice) +
+//     (Number(bookingData.extrasTotal) || 0) -
+//     (Number(bookingData.longStayDiscount) || 0) -
+//     (Number(bookingData.couponDiscount) || 0);
 
-  if (Math.abs(calculatedTotal - bookingData.price) > 0.01) {
-    throw new Error(
-      `Price mismatch: total ${bookingData.price} != calculated ${calculatedTotal}`
-    );
-  }
-};
+//   if (Math.abs(calculatedTotal - bookingData.price) > 0.01) {
+//     throw new Error(
+//       `Price mismatch: total ${bookingData.price} != calculated ${calculatedTotal}`
+//     );
+//   }
+// };
 
 // Fonction retry pour les appels Smoobu
-const retrySmoobuCall = async (fn, maxRetries = 3) => {
-  let lastError;
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      console.error(
-        `Retry ${i + 1}/${maxRetries} failed:`,
-        error.response?.data || error.message
-      );
-      if (i < maxRetries - 1) {
-        await wait(2000 * Math.pow(2, i)); // Exponential backoff
-      }
-    }
-  }
-  throw lastError;
-};
+// const retrySmoobuCall = async (fn, maxRetries = 3) => {
+//   let lastError;
+//   for (let i = 0; i < maxRetries; i++) {
+//     try {
+//       return await fn();
+//     } catch (error) {
+//       lastError = error;
+//       console.error(
+//         `Retry ${i + 1}/${maxRetries} failed:`,
+//         error.response?.data || error.message
+//       );
+//       if (i < maxRetries - 1) {
+//         await wait(2000 * Math.pow(2, i)); // Exponential backoff
+//       }
+//     }
+//   }
+//   throw lastError;
+// };
 
 app.post(
   '/webhook',
@@ -382,7 +382,7 @@ app.post(
 
         try {
           // Valider les montants
-          validateBookingAmounts(bookingData);
+          // validateBookingAmounts(bookingData);
           // First create the main booking
           const smoobuResponse = await retrySmoobuCall(async () => {
             return await axios.post(
