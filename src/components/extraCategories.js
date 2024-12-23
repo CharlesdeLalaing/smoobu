@@ -227,8 +227,8 @@ export const extraCategories = {
       },
       {
         id: "formuleBarbecue",
-        name: "extras.formulesRepas.bbq.name",
-        descriptionKey: "extras.formulesRepas.bbq.description",
+        name: "extras.formulesRepas.barbecue.name",
+        descriptionKey: "extras.formulesRepas.barbecue.description",
         price: 85,
         extraPersonPrice: 20,
         image: babrecue,

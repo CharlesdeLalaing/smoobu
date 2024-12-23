@@ -191,11 +191,11 @@
                 "description": "This pack includes an assortment of raclette cheese and fine cold cuts, a bottle of sparkling wine, a massage oil bottle with petals, as well as a full breakfast and 2 hours access to the spa with jacuzzi and sauna"
                 },
                 "bbqRomantic": {
-                "name": "The Romantic BBQ (for 2)",
+                "name": "The Romantic barbecue (for 2)",
                 "description": "This package includes a barbecue with beef ribeye, chicken and homemade bacon. It also includes fresh sides and a bottle of wine."
                 },
                 "bbqRelax": {
-                "name": "The Relaxing BBQ (for 2)",
+                "name": "The Relaxing barbecue (for 2)",
                 "description": "This pack includes an assortment of meats and fresh sides, a bottle of wine, a full breakfast, and 2 hours access to our spa with jacuzzi and sauna."
                 }
             },

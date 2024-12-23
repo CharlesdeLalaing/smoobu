@@ -192,11 +192,11 @@
             "description": "Dit pakket bevat een assortiment raclette kaas en fijne vleeswaren, een fles bubbels, een flesje massageolie met bloemblaadjes, een volledig ontbijt en 2 uur toegang tot de spa met jacuzzi en sauna"
           },
           "bbqRomantic": {
-            "name": "De Romantische BBQ (voor 2)",
+            "name": "De Romantische barbecue (voor 2)",
             "description": "Dit pakket bevat een barbecue met rundvlees ribeye, kip en huisgemaakte spek. Het bevat ook verse bijgerechten en een fles wijn."
           },
           "bbqRelax": {
-            "name": "De Ontspannende BBQ (voor 2)",
+            "name": "De Ontspannende barbecue (voor 2)",
             "description": "Dit pakket bevat een assortiment vlees en verse bijgerechten, een fles wijn, een volledig ontbijt en 2 uur toegang tot onze spa met jacuzzi en sauna."
           }
         },

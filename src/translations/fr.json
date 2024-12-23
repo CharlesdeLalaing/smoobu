@@ -192,11 +192,11 @@
             "description": "Ce pack inclut un assortiment de fromages à raclette et de charcuteries fines, une bouteille de crémant, un flacon d'huile de massage avec des pétales, ainsi qu'un petit-déjeuner complet et 2 heures d'accès au spa avec jacuzzi et sauna"
           },
           "bbqRomantic": {
-            "name": "La raclette romantique (pour 2)",
+            "name": "Le barbecue romantique (pour 2)",
             "description": "Cette formule comprend un barbecue avec entrecôte de bœuf, poulet et lard maison. Elle inclut également des accompagnements frais et une bouteille de vin."
           },
           "bbqRelax": {
-            "name": "La raclette romantique (pour 2)",
+            "name": "La barbecue détente (pour 2)",
             "description": "Ce pack inclut un assortiment de viandes et d’accompagnements frais, une bouteille de vin, un petit-déjeuner complet, ainsi que 2 heures d’accès à notre spa avec jacuzzi et sauna."
           }
         },
