@@ -345,7 +345,7 @@ const retrySmoobuCall = async (fn, maxRetries = 3) => {
 };
 
 app.use(cors({
-  origin: ['https://smoobu-charlesdelalaings-projects.vercel.app/', 'http://localhost:5173'],
+  origin: ['https://smoobu-charlesdelalaings-projects.vercel.app', 'http://localhost:5173'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
