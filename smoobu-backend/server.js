@@ -21,7 +21,6 @@ app.use((req, res, next) => {
 
 app.options('/webhook', cors());
 
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const pendingBookings = new Map();
@@ -124,8 +123,6 @@ const extrasFrenchNames = {
   // Additional Person translation
   'extras.additionalPerson': "Personne supplémentaire"
 };
-
-
 
 // Modified processExtraName function
 const processExtraName = (extra) => {
@@ -346,7 +343,6 @@ const retrySmoobuCall = async (fn, maxRetries = 3) => {
   }
   throw lastError;
 };
-
 
 app.post(
   "/webhook",
@@ -621,7 +617,6 @@ app.get('/api/apartments/:id', async (req, res) => {
   }
 });
 
-
   // Replace your current /api/rates endpoint with this one
 app.get("/api/rates", async (req, res) => {
   try {
@@ -880,7 +875,6 @@ app.get("/api/bookings/:paymentIntentId", async (req, res) => {
   }
 });
 
-
 // Debug endpoint to check pending bookings
 app.get("/api/pending-bookings", (req, res) => {
   const bookings = Array.from(pendingBookings.entries());
@@ -892,7 +886,6 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log("Webhook endpoint ready at /webhook");
 });
-
 
 app.get("/api/bookings-history/:email", async (req, res) => {
   try {
