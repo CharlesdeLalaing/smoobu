@@ -2,9 +2,6 @@ import React from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-// Add these debug logs
-console.log("All env variables:", import.meta.env);
-console.log("Stripe Key:", import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const stripePromise = loadStripe(
   import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY

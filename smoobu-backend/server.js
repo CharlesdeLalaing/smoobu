@@ -15,7 +15,7 @@ dotenv.config();
 const app = express();
 
 app.use((req, res, next) => {
-  console.log('Incoming Origin:', req.headers.origin);
+  // console.log('Incoming Origin:', req.headers.origin);
   next();
 });
 
@@ -182,7 +182,7 @@ const calculatePriceWithSettings = (
         ) {
           totalPrice += dayRate.price;
           numberOfNights++;
-          console.log(`Adding price for ${dateStr}:`, dayRate.price);
+          // console.log(`Adding price for ${dateStr}:`, dayRate.price);
         }
       }
     }
@@ -190,22 +190,22 @@ const calculatePriceWithSettings = (
     currentDate.setDate(currentDate.getDate() + 1);
   }
 
-  console.log('Base calculation:', {
-    totalPrice,
-    numberOfNights,
-  });
+  // console.log('Base calculation:', {
+  //   totalPrice,
+  //   numberOfNights,
+  // });
 
   // Calculate long stay discount only on the base room price
   let discount = 0;
   if (numberOfNights >= settings.lengthOfStayDiscount.minNights) {
     discount =
       (totalPrice * settings.lengthOfStayDiscount.discountPercentage) / 100;
-    console.log('Long stay discount:', {
-      numberOfNights,
-      minimumNights: settings.lengthOfStayDiscount.minNights,
-      discountPercentage: settings.lengthOfStayDiscount.discountPercentage,
-      discountAmount: discount,
-    });
+    // console.log('Long stay discount:', {
+    //   numberOfNights,
+    //   minimumNights: settings.lengthOfStayDiscount.minNights,
+    //   discountPercentage: settings.lengthOfStayDiscount.discountPercentage,
+    //   discountAmount: discount,
+    // });
   }
 
   // Guest fees
@@ -215,13 +215,13 @@ const calculatePriceWithSettings = (
   const extraChildrenFee =
     numberOfChildren * settings.extraChildPerNight * numberOfNights;
 
-  console.log('Guest fees:', {
-    extraGuests,
-    extraGuestsFee,
-    extraChildrenFee,
-    extraGuestsPerNight: settings.extraGuestsPerNight,
-    extraChildPerNight: settings.extraChildPerNight,
-  });
+  // console.log('Guest fees:', {
+  //   extraGuests,
+  //   extraGuestsFee,
+  //   extraChildrenFee,
+  //   extraGuestsPerNight: settings.extraGuestsPerNight,
+  //   extraChildPerNight: settings.extraChildPerNight,
+  // });
 
   // Build price elements array
   const priceElements = [
@@ -274,17 +274,17 @@ const calculatePriceWithSettings = (
     totalPrice + extraGuestsFee + extraChildrenFee + settings.cleaningFee;
   const finalPrice = subtotal - discount;
 
-  console.log('Final price calculation:', {
-    basePrice: totalPrice,
-    extraGuestsFee,
-    extraChildrenFee,
-    cleaningFee: settings.cleaningFee,
-    subtotal,
-    discount,
-    finalPrice,
-    numberOfNights,
-    priceElements,
-  });
+  // console.log('Final price calculation:', {
+  //   basePrice: totalPrice,
+  //   extraGuestsFee,
+  //   extraChildrenFee,
+  //   cleaningFee: settings.cleaningFee,
+  //   subtotal,
+  //   discount,
+  //   finalPrice,
+  //   numberOfNights,
+  //   priceElements,
+  // });
 
   return {
     originalPrice: totalPrice,
@@ -353,7 +353,7 @@ app.post(
   async (req, res) => {
     const sig = req.headers['stripe-signature'];
     let event;
-    console.log('Received webhook call');
+    // console.log('Received webhook call');
 
     try {
       event = stripe.webhooks.constructEvent(
@@ -362,14 +362,14 @@ app.post(
         'whsec_sbVaa5obD8UFZ5hzg0iEZpLHozrHi4Z8'
       );
 
-      console.log('Webhook event verified:', event.type);
+      // console.log('Webhook event verified:', event.type);
 
       if (event.type === 'payment_intent.succeeded') {
         const paymentIntent = event.data.object;
         const bookingReference = paymentIntent.metadata.bookingReference;
         const bookingData = pendingBookings.get(bookingReference);
 
-        console.log('Retrieved booking data:', bookingData);
+        // console.log('Retrieved booking data:', bookingData);
 
         if (!bookingData) {
           console.error(
@@ -413,7 +413,7 @@ app.post(
             }
           );
 
-          console.log("Smoobu booking created:", smoobuResponse.data);
+          // console.log("Smoobu booking created:", smoobuResponse.data);
 
           // Store booking in Firebase
           const bookingDoc = {
@@ -461,7 +461,7 @@ app.post(
 
           // Modified webhook handler
           if (bookingData.extras && bookingData.extras.length > 0) {
-            console.log('Creating extras as price elements...');
+            // console.log('Creating extras as price elements...');
 
             for (const extra of bookingData.extras) {
               let retryCount = 0;
@@ -499,10 +499,10 @@ app.post(
                         },
                       }
                     );
-                    console.log(
-                      `Added base extra: ${processedName.name}`,
-                      extraResponse.data
-                    );
+                    // console.log(
+                    //   `Added base extra: ${processedName.name}`,
+                    //   extraResponse.data
+                    // );
                   }
 
                   // Handle additional persons with French translation
@@ -527,22 +527,22 @@ app.post(
                         },
                       }
                     );
-                    console.log(
-                      `Added extra person charges for: ${processedName.name}`,
-                      extraPersonResponse.data
-                    );
+                    // console.log(
+                    //   `Added extra person charges for: ${processedName.name}`,
+                    //   extraPersonResponse.data
+                    // );
                   }
 
                   break; // Success - exit retry loop
                 } catch (extraError) {
                   retryCount++;
-                  console.log(`Retry ${retryCount} for extra ${extra.name}`);
+                  // console.log(`Retry ${retryCount} for extra ${extra.name}`);
 
                   if (retryCount === maxRetries) {
-                    console.error(
-                      `Failed to add extra ${extra.name} after ${maxRetries} attempts:`,
-                      extraError.response?.data || extraError.message
-                    );
+                    // console.error(
+                    //   `Failed to add extra ${extra.name} after ${maxRetries} attempts:`,
+                    //   extraError.response?.data || extraError.message
+                    // );
                   } else {
                     await wait(2000 * retryCount); // Exponential backoff
                     continue;
@@ -554,22 +554,22 @@ app.post(
 
           // Clean up the pending booking after successful processing
           pendingBookings.delete(bookingReference);
-          console.log(
-            'Successfully processed booking and removed from pending bookings'
-          );
+          // console.log(
+          //   'Successfully processed booking and removed from pending bookings'
+          // );
         } catch (error) {
-          console.error('Detailed error in booking creation:', {
-            error: error.message,
-            response: error.response?.data,
-            bookingData: {
-              ...bookingData,
-              price: Number(bookingData.price),
-              basePrice: Number(bookingData.basePrice),
-              extrasTotal: Number(bookingData.extrasTotal),
-              longStayDiscount: Number(bookingData.longStayDiscount),
-              couponDiscount: Number(bookingData.couponDiscount),
-            },
-          });
+          // console.error('Detailed error in booking creation:', {
+          //   error: error.message,
+          //   response: error.response?.data,
+          //   bookingData: {
+          //     ...bookingData,
+          //     price: Number(bookingData.price),
+          //     basePrice: Number(bookingData.basePrice),
+          //     extrasTotal: Number(bookingData.extrasTotal),
+          //     longStayDiscount: Number(bookingData.longStayDiscount),
+          //     couponDiscount: Number(bookingData.couponDiscount),
+          //   },
+          // });
           return res.status(500).json({
             error: 'Failed to create booking in Smoobu',
             details: error.response?.data || error.message,
@@ -579,7 +579,7 @@ app.post(
 
       res.json({ received: true });
     } catch (err) {
-      console.error('Webhook Error:', err.message);
+      // console.error('Webhook Error:', err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
   }
@@ -645,13 +645,13 @@ app.get('/api/rates', async (req, res) => {
   try {
     const { apartments, start_date, end_date, adults, children } = req.query;
 
-    console.log('Processing rates request:', {
-      apartments,
-      start_date,
-      end_date,
-      adults,
-      children,
-    });
+    // console.log('Processing rates request:', {
+    //   apartments,
+    //   start_date,
+    //   end_date,
+    //   adults,
+    //   children,
+    // });
 
     // Validate required parameters
     if (!start_date || !end_date) {
@@ -702,7 +702,7 @@ app.get('/api/rates', async (req, res) => {
         const settings = discountSettings[apartmentId];
 
         if (!settings) {
-          console.log(`No settings found for apartment ${apartmentId}`);
+          // console.log(`No settings found for apartment ${apartmentId}`);
           return;
         }
 
@@ -732,10 +732,10 @@ app.get('/api/rates', async (req, res) => {
             hasAvailability = true;
           }
         } catch (calcError) {
-          console.error(
-            `Error calculating price for apartment ${apartmentId}:`,
-            calcError
-          );
+          // console.error(
+          //   `Error calculating price for apartment ${apartmentId}:`,
+          //   calcError
+          // );
         }
       }
     );
@@ -750,10 +750,10 @@ app.get('/api/rates', async (req, res) => {
       });
     }
 
-    console.log('Sending response with price details:', {
-      apartmentCount: Object.keys(priceDetailsByApartment).length,
-      availableApartments: Object.keys(priceDetailsByApartment),
-    });
+    // console.log('Sending response with price details:', {
+    //   apartmentCount: Object.keys(priceDetailsByApartment).length,
+    //   availableApartments: Object.keys(priceDetailsByApartment),
+    // });
 
     res.json({
       data: formattedData,
@@ -761,7 +761,7 @@ app.get('/api/rates', async (req, res) => {
       hasAvailability: true,
     });
   } catch (error) {
-    console.error('Error in /api/rates:', error);
+    // console.error('Error in /api/rates:', error);
     res.status(500).json({
       error: 'Failed to fetch rates',
       details: error.response?.data || error.message,
@@ -797,11 +797,11 @@ app.post('/api/create-payment-intent', async (req, res) => {
     const bookingReference = `BOOKING-${Date.now()}-${Math.random()
       .toString(36)
       .substr(2, 9)}`;
-    console.log('Generated booking reference:', bookingReference);
+    // console.log('Generated booking reference:', bookingReference);
 
     // Store booking data for webhook
     pendingBookings.set(bookingReference, bookingData);
-    console.log('Stored booking data with extras:', bookingData);
+    // console.log('Stored booking data with extras:', bookingData);
 
     // Create payment intent with total price (including extras and discounts)
     const paymentIntent = await stripe.paymentIntents.create({
@@ -819,14 +819,14 @@ app.post('/api/create-payment-intent', async (req, res) => {
       },
     });
 
-    console.log('Created payment intent:', paymentIntent.id);
+    // console.log('Created payment intent:', paymentIntent.id);
 
     res.json({
       clientSecret: paymentIntent.client_secret,
       bookingReference: bookingReference,
     });
   } catch (error) {
-    console.error('Error creating payment intent:', error);
+    // console.error('Error creating payment intent:', error);
     res.status(500).json({
       error: 'Failed to create payment intent',
       details: error.message,
@@ -891,7 +891,7 @@ app.get('/api/bookings/:paymentIntentId', async (req, res) => {
 
     res.json(responseData);
   } catch (error) {
-    console.error('Error fetching booking:', error);
+    // console.error('Error fetching booking:', error);
     res.status(500).json({
       error: 'Failed to fetch booking details',
       message: error.message,
@@ -907,8 +907,8 @@ app.get('/api/pending-bookings', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log('Webhook endpoint ready at /webhook');
+  // console.log(`Server running on port ${PORT}`);
+  // console.log('Webhook endpoint ready at /webhook');
 });
 
 app.get('/api/bookings-history/:email', async (req, res) => {

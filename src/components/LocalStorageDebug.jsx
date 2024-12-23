@@ -4,7 +4,7 @@ const LocalStorageDebugger = () => {
   useEffect(() => {
     const storedBookingData = localStorage.getItem("bookingData");
     
-    console.log("Raw localStorage bookingData:", storedBookingData);
+    // console.log("Raw localStorage bookingData:", storedBookingData);
     
     if (storedBookingData) {
       try {

@@ -449,7 +449,7 @@ const handleApplyCoupon = (couponCode) => {
   }
 
   const couponInfo = VALID_COUPONS[couponCode.toUpperCase()];
-  console.log('Found coupon info:', couponInfo);
+  // console.log('Found coupon info:', couponInfo);
 
   if (!couponInfo) {
     // console.log('Invalid coupon code');
@@ -461,10 +461,10 @@ const handleApplyCoupon = (couponCode) => {
     code: couponCode.toUpperCase(),
     ...couponInfo,
   });
-  console.log('Applied coupon:', {
-    code: couponCode.toUpperCase(),
-    ...couponInfo,
-  });
+  // console.log('Applied coupon:', {
+  //   code: couponCode.toUpperCase(),
+  //   ...couponInfo,
+  // });
 
   setPriceDetails((prev) => {
     const newPriceDetails = {

@@ -55,8 +55,8 @@ const BookingConfirmation = () => {
 
   const fetchBookingDetails = async (paymentIntentId) => {
     try {
-      console.log("Starting to fetch booking details");
-      console.log("API URL:", `${API_URL}/api/bookings/${paymentIntentId}`);
+      // console.log("Starting to fetch booking details");
+      // console.log("API URL:", `${API_URL}/api/bookings/${paymentIntentId}`);
       
       const response = await fetch(
         `${API_URL}/api/bookings/${paymentIntentId}`, {
@@ -66,9 +66,9 @@ const BookingConfirmation = () => {
           },
       });
       
-      console.log("Response status:", response.status);
+      // console.log("Response status:", response.status);
       const data = await response.json();
-      console.log("Response data:", data);
+      // console.log("Response data:", data);
   
       if (data.error) {
         console.error("API returned error:", data.error);

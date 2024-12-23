@@ -10,21 +10,21 @@ const PaymentForm = ({ onSuccess, onError }) => {
   const [errorMessage, setErrorMessage] = useState(null);
 
   // Debug logs for initialization
-  console.log('PaymentForm Debug:', {
-    stripeLoaded: !!stripe,
-    elementsLoaded: !!elements,
-    isLoading: loading,
-    currentError: errorMessage
-  });
+  // console.log('PaymentForm Debug:', {
+  //   stripeLoaded: !!stripe,
+  //   elementsLoaded: !!elements,
+  //   isLoading: loading,
+  //   currentError: errorMessage
+  // });
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!stripe || !elements) {
-      console.error("PaymentForm Error: Stripe or Elements not initialized", {
-        stripeAvailable: !!stripe,
-        elementsAvailable: !!elements
-      });
+      // console.error("PaymentForm Error: Stripe or Elements not initialized", {
+      //   stripeAvailable: !!stripe,
+      //   elementsAvailable: !!elements
+      // });
       return;
     }
 
@@ -32,7 +32,7 @@ const PaymentForm = ({ onSuccess, onError }) => {
     setErrorMessage(null);
 
     try {
-      console.log("Attempting payment confirmation...");
+      // console.log("Attempting payment confirmation...");
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -42,20 +42,20 @@ const PaymentForm = ({ onSuccess, onError }) => {
       });
 
       if (error) {
-        console.error("Payment confirmation error:", {
-          errorType: error.type,
-          errorMessage: error.message,
-          errorCode: error.code,
-          fullError: error
-        });
+        // console.error("Payment confirmation error:", {
+        //   errorType: error.type,
+        //   errorMessage: error.message,
+        //   errorCode: error.code,
+        //   fullError: error
+        // });
         setErrorMessage(error.message);
         if (onError) onError(error.message);
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
-        console.log("Payment succeeded:", {
-          paymentIntentId: paymentIntent.id,
-          status: paymentIntent.status,
-          amount: paymentIntent.amount
-        });
+        // console.log("Payment succeeded:", {
+        //   paymentIntentId: paymentIntent.id,
+        //   status: paymentIntent.status,
+        //   amount: paymentIntent.amount
+        // });
         
         const bookingData = {
           paymentIntent,
@@ -64,7 +64,7 @@ const PaymentForm = ({ onSuccess, onError }) => {
         localStorage.setItem("bookingData", JSON.stringify(bookingData));
         if (onSuccess) onSuccess(paymentIntent);
       } else {
-        console.log("Payment state:", { paymentIntent });
+        // console.log("Payment state:", { paymentIntent });
       }
     } catch (err) {
       console.error("Payment submission error:", {
@@ -76,7 +76,7 @@ const PaymentForm = ({ onSuccess, onError }) => {
       if (onError) onError(err.message);
     } finally {
       setLoading(false);
-      console.log("Payment attempt completed, loading state reset");
+      // console.log("Payment attempt completed, loading state reset");
     }
   };
 
