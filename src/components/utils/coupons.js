@@ -1,7 +1,7 @@
 export const VALID_COUPONS = {
   TESTDISCOUNT: {
     discount: 10,
-    type: "fixed",
+    type: "percentage",
     currency: "EUR",
   },
   DOME390: {
@@ -56,11 +56,6 @@ export const VALID_COUPONS = {
   },
   "GIFT.6112": {
     discount: 360,
-    type: "fixed",
-    currency: "EUR",
-  },
-  "CHARLOT": {
-    discount: 199,
     type: "fixed",
     currency: "EUR",
   },
