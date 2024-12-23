@@ -49,10 +49,11 @@ export const ExtrasSection = ({
   function renderGroupedBoissons() {
     const groupedBoissons = extraCategories.boissons.items.reduce(
       (groups, item) => {
-        if (!groups[item.type]) {
-          groups[item.type] = [];
+        const type = item.typeKey.split('.').pop(); // Get the last part of typeKey
+        if (!groups[type]) {
+          groups[type] = [];
         }
-        groups[item.type].push(item);
+        groups[type].push(item);
         return groups;
       },
       {}
