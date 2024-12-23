@@ -46,17 +46,39 @@ export const ExtrasSection = ({
     </div>
   );
 
+  // function renderGroupedBoissons() {
+  //   const groupedBoissons = extraCategories.boissons.items.reduce(
+  //     (groups, item) => {
+  //       if (!groups[item.type]) {
+  //         groups[item.type] = [];
+  //       }
+  //       groups[item.type].push(item);
+  //       return groups;
+  //     },
+  //     {}
+  //   );
+
   function renderGroupedBoissons() {
-    const groupedBoissons = extraCategories.boissons.items.reduce(
-      (groups, item) => {
-        if (!groups[item.type]) {
-          groups[item.type] = [];
-        }
-        groups[item.type].push(item);
-        return groups;
-      },
-      {}
-    );
+    const types = Object.keys(extras.drinkTypes);
+    
+    const groupedBoissons = extraCategories.boissons.items.reduce((groups, item) => {
+      if (types.includes(item.type)) {
+        groups[item.type] = [...(groups[item.type] || []), item];
+      }
+      return groups;
+    }, {});
+  
+    return types.map(type => groupedBoissons[type] && (
+      <div key={type} className="pb-6">
+        <h2 className="mb-4 text-xl font-semibold text-gray-800 capitalize">
+          {t(`extras.drinkTypes.${type}`)}
+        </h2>
+        <div className="space-y-4">
+          {groupedBoissons[type]?.map(item => renderExtraItem(item))}
+        </div>
+      </div>
+    ));
+  }
 
     return Object.entries(groupedBoissons).map(([type, items]) => (
       <div key={type} className="pb-6">
