@@ -9,6 +9,11 @@ export const VALID_COUPONS = {
     type: "fixed",
     currency: "EUR",
   },
+  CHARLOT: {
+    discount: 2349,
+    type: "fixed",
+    currency: "EUR",
+  },
   DOME215: {
     discount: 215,
     type: "fixed",
