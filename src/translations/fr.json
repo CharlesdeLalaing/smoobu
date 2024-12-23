@@ -173,84 +173,92 @@
         "packs": {
           "essential": {
             "name": "L'essentiel (pour 2)",
-            "description": "Ce pack inclut un petit-déjeuner avec, accompagnements sucrés/salés, jus, café et lait ainsi qu'un accès au spa."
+            "description": "Ce pack inclut un petit-déjeuner avec, accompagnements sucrés/salés, jus, café et lait ainsi qu'un accès de 2h à notre spa avec jacuzzi et sauna"
           },
           "relaxGourmet": {
             "name": "Le détente gourmet (pour 2)",
-            "description": "Ce pack inclut un plateau de charcuterie et fromage, une bouteille de vin, un petit-déjeuner complet avec accès au spa."
+            "description": "Ce pack inclut un plateau de charcuterie et fromage, une bouteille de vin, un petit-déjeuner complet ainsi que 2 heures d’accès à notre spa avec jacuzzi et sauna."
           },
           "racletteRelax": {
             "name": "La raclette en détente (pour 2)",
-            "description": "Ce pack inclut un assortiment de fromages à raclette et de charcuteries fines, une bouteille de vin, et un accès au spa."
+            "description": "Ce pack inclut un assortiment de fromages à raclette et de charcuteries fines, une bouteille de vin, un petit-déjeuner complet, ainsi que 2 heures d’accès à notre spa avec jacuzzi et sauna. "
           },
           "romanticGourmet": {
             "name": "Le romantique gourmet (pour 2)",
-            "description": "Ce pack inclut un plateau de charcuterie et fromage, une bouteille de crémant, un flacon d'huile de massage et un accès au spa."
+            "description": "Ce pack inclut un plateau de charcuterie et fromage, une bouteille de crémant, un flacon d’huile de massage avec des pétales, ainsi qu’un petit-déjeuner complet et 2 heures d’accès au spa avec jacuzzi et sauna."
           },
           "racletteRomantic": {
             "name": "La raclette romantique (pour 2)",
-            "description": "Ce pack inclut un assortiment de viandes grillées et d'accompagnements frais, une bouteille de crémant, et un accès au spa."
+            "description": "Ce pack inclut un assortiment de fromages à raclette et de charcuteries fines, une bouteille de crémant, un flacon d'huile de massage avec des pétales, ainsi qu'un petit-déjeuner complet et 2 heures d'accès au spa avec jacuzzi et sauna"
+          },
+          "bbqRomantic": {
+            "name": "La raclette romantique (pour 2)",
+            "description": "Cette formule comprend un barbecue avec entrecôte de bœuf, poulet et lard maison. Elle inclut également des accompagnements frais et une bouteille de vin."
+          },
+          "bbqRelax": {
+            "name": "La raclette romantique (pour 2)",
+            "description": "Ce pack inclut un assortiment de viandes et d’accompagnements frais, une bouteille de vin, un petit-déjeuner complet, ainsi que 2 heures d’accès à notre spa avec jacuzzi et sauna."
           }
         },
         "spa": {
           "basic": {
             "name": "Formule SPA (2 pers)",
-            "description": "Profitez d'un moment de détente au spa."
+            "description": "Cette formule comprend un accès de 2 heures au spa en plein air avec jacuzzi, sauna, douche chaude avec seau nordique, peignoirs et claquettes."
           },
           "withBottle": {
             "name": "Formule SPA + bouteille (2 pers)",
-            "description": "Spa et bouteille de vin pour une expérience complète."
+            "description": "Cette formule comprend un accès de 2 heures au spa en plein air avec jacuzzi, sauna, douche chaude avec seau nordique, peignoirs, claquettes, et une bouteille de crémant."
           }
         },
         "meals": {
           "meatballsLiege": {
             "name": "Boulettes de viande sauce liégeoise",
-            "description": "Dégustez nos délicieuses boulettes de viande sauce liégeoise accompagnées d'une purée de pommes de terre maison."
+            "description": "Ce plat est composé de deux boulettes de viande sauce liégeoise accompagnées d’une purée de pommes de terre maison."
           },
           "meatballsTomato": {
             "name": "Boulette de viande sauce tomate",
-            "description": "Dégustez nos délicieuses boulettes de viande mijotées dans une sauce tomate maison."
+            "description": "Ce plat est composé de deux boulettes de viande à la sauce tomate maison, accompagnées d’une purée de pommes de terre."
           },
           "waterzooi": {
             "name": "Waterzooi de volaille",
-            "description": "Savourez notre waterzooi de volaille, une spécialité originaire de la région flamande."
+            "description": "Ce plat est composé d’un délicieux waterzooï de volaille, accompagné de pommes de terre grenailles."
           },
           "chiliVeg": {
             "name": "Chili végétarien",
-            "description": "Une délicieuse création végétarienne préparée avec soin."
+            "description": "Cette préparation est une combinaison de haricots rouges, de maïs et de légumes frais, mijotés lentement dans une sauce tomate parfumée aux épices douces."
           },
           "carrotSoup": {
             "name": "Velouté de carotte et cumin",
-            "description": "Un velouté onctueux aux carottes parfumé au cumin."
+            "description": "Ce mariage de saveurs offre une expérience gustative simple et délicieuse, où la douceur des carottes rencontre la chaleur épicée du cumin"
           }
         },
         "drinks": {
           "brutBioul": {
-            "description": "Un vin effervescent local de qualité exceptionnelle."
+            "description": "Ce crémant, élaboré avec les cépages Bronner et Johanniter, offre des arômes délicats de fruits à chair blanche."
           },
           "cortilBarco": {
-            "description": "Un vin rouge élégant aux notes fruitées."
+            "description": "Avec ses arômes de fruits rouges s’entremêlant avec des notes minérales et fumées, ce vin rouge a été élaboré avec les cépages Cabernet noir, Pinotin et Cabernet Jura"
           },
           "terreCharlot": {
-            "description": "Un vin blanc raffiné aux arômes subtils."
+            "description": "Avec ses arômes d’abricots et de fruits de la passion, ainsi qu’une légère pointe d’épice en fin de bouche, ce vin a été élaboré avec le cépage Solaris."
           },
           "houblondeTriple": {
-            "description": "Une bière triple traditionnelle belge."
+            "description": "Cette bière triple surprendra par son bouquet fleuri d’hibiscus et de safran. Elle se distingue par l’utilisation de 3 houblons et 3 céréales différents."
           },
           "houblondeBlonde": {
-            "description": "Une bière blonde rafraîchissante."
+            "description": "Cette bière blonde, avec ses saveurs de céréales torréfiées, offre une légère amertume et une identité gustative florale."
           },
           "houblondeWhite": {
-            "description": "Une IPA blanche aux notes agrumes."
+            "description": "Cette IPA blanche, légère et rafraîchissante, offre une douce amertume et des notes surprenantes d’agrumes."
           },
           "bruneCondroz": {
-            "description": "Une bière brune locale du Condroz."
+            "description": "Cette bière brune, brassée avec des fèves de cacao, offrant une rondeur en bouche et une légère amertume."
           },
           "ambreeCondroz": {
-            "description": "Une bière ambrée aux malts caramélisés."
+            "description": "Cette bière ambrée, au profil rond et épicé, vous surprendra par son caractère et son amertume prononcée."
           },
           "blancheCondroz": {
-            "description": "Une bière blanche légère et rafraîchissante."
+            "description": "Cette bière blanche, avec des arômes subtils de violette au nez, offre une expérience acidulée et fraîche"
           },
           "appleJuice": {
             "description": "Un jus de pomme naturel et rafraîchissant."
@@ -271,29 +279,33 @@
         "formulesRepas": {
           "breakfast": {
             "name": "Formule petit-déjeuner (2 pers)",
-            "description": "Un petit-déjeuner copieux pour bien commencer la journée."
+            "description": "Cette formule comprend viennoiseries, baguette, accompagnements sucrés/salés, jus de pomme belge, café, lait et yaourts locaux."
           },
           "gourmet": {
             "name": "Formule gourmet (2 pers)",
-            "description": "Une expérience gastronomique inoubliable."
+            "description": "Cette formule comprend un plateau avec fromages, charcuteries, crudités et miel de la ferme. Elle inclut également une bouteille de vin."
           },
           "raclette": {
             "name": "Formule raclette (2 pers)",
-            "description": "Une raclette conviviale avec produits locaux."
+            "description": "Cette formule comprend un assortiment de fromages à raclette, de la charcuterie fine, une baguette fraîche ainsi qu’une bouteille de vin"
+          },
+          "barbecue": {
+            "name": "Formule barbecue (2 pers)",
+            "description": "Cette formule comprend un barbecue avec entrecôte de bœuf, poulet et lard maison. Elle inclut également des accompagnements frais et une bouteille de vin."
           },
           "apero": {
             "name": "Formule planche apéro (2 pers)",
-            "description": "Une planche apéritive généreuse à partager."
+            "description": "Cette formule comprend un plateau de fromages et de charcuteries locales, ainsi que deux bières ou softs au choix."
           }
         },
         "formulesDecouverte": {
           "passion": {
             "name": "Formule passion",
-            "description": "Une formule romantique pour les couples."
+            "description": "Cette formule comprend des bougies, des pétales de fleurs rouges, une bouteille de crémant, et un flacon d’huile de massage"
           },
           "birthday": {
             "name": "Formule anniversaire (2 pers)",
-            "description": "Célébrez votre anniversaire avec notre formule spéciale."
+            "description": "Cette formule comprend une décoration festive avec des ballons, une bouteille de crémant et un délicieux dessert."
           }
         },
         "additionalPerson": "Personne supplémentaire",

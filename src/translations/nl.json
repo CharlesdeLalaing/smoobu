@@ -173,90 +173,98 @@
         "packs": {
           "essential": {
             "name": "Het Essentiële (voor 2)",
-            "description": "Dit pakket bevat ontbijt met zoete/hartige bijgerechten, sap, koffie en melk en toegang tot de spa."
+            "description": "Dit pakket bevat ontbijt met zoete/hartige bijgerechten, sap, koffie en melk en 2 uur toegang tot onze spa met jacuzzi en sauna"
           },
           "relaxGourmet": {
             "name": "De Gourmet Ontspanning (voor 2)",
-            "description": "Dit pakket bevat een plank met charcuterie en kaas, een fles wijn, een volledig ontbijt met toegang tot de spa."
+            "description": "Dit pakket bevat een plateau met vleeswaren en kaas, een fles wijn, een volledig ontbijt en 2 uur toegang tot onze spa met jacuzzi en sauna."
           },
           "racletteRelax": {
             "name": "De Ontspannende Raclette (voor 2)",
-            "description": "Dit pakket bevat een assortiment raclette kazen en fijne charcuterie, een fles wijn, en toegang tot de spa."
+            "description": "Dit pakket bevat een assortiment raclette kaas en fijne vleeswaren, een fles wijn, een volledig ontbijt en 2 uur toegang tot onze spa met jacuzzi en sauna."
           },
           "romanticGourmet": {
             "name": "De Romantische Gourmet (voor 2)",
-            "description": "Dit pakket bevat een plank met charcuterie en kaas, een fles crémant, een flesje massage-olie en toegang tot de spa."
+            "description": "Dit pakket bevat een plateau met vleeswaren en kaas, een fles bubbels, een flesje massageolie met bloemblaadjes, een volledig ontbijt en 2 uur toegang tot de spa met jacuzzi en sauna."
           },
           "racletteRomantic": {
             "name": "De Romantische Raclette (voor 2)",
-            "description": "Dit pakket bevat een assortiment gegrild vlees en verse bijgerechten, een fles crémant, en toegang tot de spa."
+            "description": "Dit pakket bevat een assortiment raclette kaas en fijne vleeswaren, een fles bubbels, een flesje massageolie met bloemblaadjes, een volledig ontbijt en 2 uur toegang tot de spa met jacuzzi en sauna"
+          },
+          "bbqRomantic": {
+            "name": "De Romantische BBQ (voor 2)",
+            "description": "Dit pakket bevat een barbecue met rundvlees ribeye, kip en huisgemaakte spek. Het bevat ook verse bijgerechten en een fles wijn."
+          },
+          "bbqRelax": {
+            "name": "De Ontspannende BBQ (voor 2)",
+            "description": "Dit pakket bevat een assortiment vlees en verse bijgerechten, een fles wijn, een volledig ontbijt en 2 uur toegang tot onze spa met jacuzzi en sauna."
           }
         },
         "spa": {
           "basic": {
             "name": "SPA Formule (2 pers)",
-            "description": "Geniet van een ontspannend moment in de spa."
+            "description": "Deze formule omvat 2 uur toegang tot de buitenspa met jacuzzi, sauna, warme douche met Noordse emmer, badjassen en slippers."
           },
           "withBottle": {
             "name": "SPA Formule + fles (2 pers)",
-            "description": "Spa en wijnfles voor een complete ervaring."
+            "description": "Deze formule omvat 2 uur toegang tot de buitenspa met jacuzzi, sauna, warme douche met Noordse emmer, badjassen, slippers en een fles bubbels."
           }
         },
         "meals": {
           "meatballsLiege": {
-            "name": "Gehaktballen Luikse saus",
-            "description": "Geniet van onze heerlijke gehaktballen in Luikse saus geserveerd met huisgemaakte aardappelpuree."
+            "name": "Luikse gehaktballen",
+            "description": "Dit gerecht bestaat uit twee gehaktballen in Luikse saus geserveerd met huisgemaakte aardappelpuree."
           },
           "meatballsTomato": {
             "name": "Gehaktballen in tomatensaus",
-            "description": "Geniet van onze heerlijke gehaktballen gestoofd in huisgemaakte tomatensaus."
+            "description": "Dit gerecht bestaat uit twee gehaktballen in huisgemaakte tomatensaus, geserveerd met aardappelpuree."
           },
           "waterzooi": {
-            "name": "Waterzooi van gevogelte",
-            "description": "Proef onze waterzooi van gevogelte, een specialiteit uit de Vlaamse regio."
+            "name": "Waterzooi van kip",
+            "description": "Dit gerecht bestaat uit een heerlijke waterzooi van kip, geserveerd met krielaardappeltjes."
           },
           "chiliVeg": {
             "name": "Vegetarische chili",
-            "description": "Een heerlijke vegetarische creatie met zorg bereid."
+            "description": "Deze bereiding is een combinatie van rode bonen, maïs en verse groenten, langzaam gestoofde in een tomatensaus op smaak gebracht met milde kruiden."
           },
           "carrotSoup": {
-            "name": "Wortel-komijnsoep",
-            "description": "Een romige wortelsoep op smaak gebracht met komijn."
+            "name": "Wortel- en komijnsoep",
+            "description": "Deze combinatie van smaken biedt een eenvoudige en heerlijke smaakervaring, waar de zoetheid van wortelen de kruidige warmte van komijn ontmoet"
           }
         },
         "drinks": {
           "brutBioul": {
-            "description": "Een lokale mousserende wijn van uitzonderlijke kwaliteit."
+            "description": "Deze mousserende wijn, gemaakt van Bronner en Johanniter druiven, biedt delicate aroma's van wit vruchtvlees."
           },
           "cortilBarco": {
-            "description": "Een elegante rode wijn met fruitige tonen."
+            "description": "Met zijn aroma's van rode vruchten verweven met minerale en rokerige tonen, werd deze rode wijn gemaakt van Cabernet Noir, Pinotin en Cabernet Jura druiven"
           },
           "terreCharlot": {
-            "description": "Een verfijnde witte wijn met subtiele aroma's."
+            "description": "Met zijn aroma's van abrikozen en passievrucht, en een licht kruidige afdronk, werd deze wijn gemaakt van de Solaris druivensoort."
           },
           "houblondeTriple": {
-            "description": "Een traditioneel Belgisch tripel bier."
+            "description": "Dit tripel bier zal verrassen met zijn bloemige boeket van hibiscus en saffraan. Het onderscheidt zich door het gebruik van 3 verschillende hoppen en 3 verschillende granen."
           },
           "houblondeBlonde": {
-            "description": "Een verfrissend blond bier."
+            "description": "Dit blonde bier, met zijn geroosterde graanaroma's, biedt een lichte bitterheid en een bloemige smaakidentiteit."
           },
           "houblondeWhite": {
-            "description": "Een witte IPA met citrustoetsen."
+            "description": "Deze witte IPA, licht en verfrissend, biedt een zachte bitterheid en verrassende citrustoetsen."
           },
           "bruneCondroz": {
-            "description": "Een lokaal bruin bier uit de Condroz streek."
+            "description": "Dit bruine bier, gebrouwen met cacaobonen, biedt rondheid in de mond en een lichte bitterheid."
           },
           "ambreeCondroz": {
-            "description": "Een amberkleurig bier met gekarameliseerde mouten."
+            "description": "Dit amberkleurige bier, met een rond en kruidig profiel, zal je verrassen met zijn karakter en uitgesproken bitterheid."
           },
           "blancheCondroz": {
-            "description": "Een licht en verfrissend witbier."
+            "description": "Dit witbier, met subtiele viooltjesaroma's in de neus, biedt een pittige en frisse ervaring"
           },
           "appleJuice": {
             "description": "Een natuurlijk en verfrissend appelsap."
           },
           "ritchieLemonRasp": {
-            "description": "Een bruisende drank met citroen- en framboossmaak."
+            "description": "Een bruisende drank met citroen en framboos smaken."
           },
           "ritchieOrangeVan": {
             "description": "Een verfrissende mix van sinaasappel en vanille."
@@ -271,29 +279,33 @@
         "formulesRepas": {
           "breakfast": {
             "name": "Ontbijtformule (2 pers)",
-            "description": "Een uitgebreid ontbijt om de dag goed te beginnen."
+            "description": "Deze formule bevat gebak, stokbrood, zoete/hartige bijgerechten, Belgisch appelsap, koffie, melk en lokale yoghurt."
           },
           "gourmet": {
-            "name": "Gourmetformule (2 pers)",
-            "description": "Een onvergetelijke gastronomische ervaring."
+            "name": "Gourmet formule (2 pers)",
+            "description": "Deze formule bevat een plateau met kaas, vleeswaren, rauwe groenten en honing van de boerderij. Het bevat ook een fles wijn."
           },
           "raclette": {
-            "name": "Racletteformule (2 pers)",
-            "description": "Een gezellige raclette met lokale producten."
+            "name": "Raclette formule (2 pers)",
+            "description": "Deze formule bevat een assortiment raclette kaas, fijne vleeswaren, een vers stokbrood en een fles wijn"
+          },
+          "barbecue": {
+            "name": "Barbecue formule (2 pers)",
+            "description": "Deze formule bevat een barbecue met rundvlees ribeye, kip en huisgemaakte spek. Het bevat ook verse bijgerechten en een fles wijn."
           },
           "apero": {
-            "name": "Aperitiefplank formule (2 pers)",
-            "description": "Een royale aperitiefplank om te delen."
+            "name": "Aperitief plank formule (2 pers)",
+            "description": "Deze formule bevat een plank met lokale kaas en vleeswaren, en twee bieren of frisdranken naar keuze."
           }
         },
         "formulesDecouverte": {
           "passion": {
-            "name": "Passieformule",
-            "description": "Een romantische formule voor koppels."
+            "name": "Passie formule",
+            "description": "Deze formule bevat kaarsen, rode bloemblaadjes, een fles bubbels en een flesje massageolie"
           },
           "birthday": {
             "name": "Verjaardagsformule (2 pers)",
-            "description": "Vier je verjaardag met onze speciale formule."
+            "description": "Deze formule bevat feestelijke decoratie met ballonnen, een fles bubbels en een heerlijk dessert."
           }
         },
         "additionalPerson": "Extra persoon",

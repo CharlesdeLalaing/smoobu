@@ -170,130 +170,142 @@
             "bulles": "Bubbles"
             },
             "packs": {
-            "essential": {
+                "essential": {
                 "name": "The Essential (for 2)",
-                "description": "This package includes breakfast with sweet/savory accompaniments, juice, coffee and milk as well as spa access."
-            },
-            "relaxGourmet": {
+                "description": "This pack includes breakfast with sweet/savory sides, juice, coffee and milk as well as 2-hour access to our spa with jacuzzi and sauna"
+                },
+                "relaxGourmet": {
                 "name": "The Gourmet Relaxation (for 2)",
-                "description": "This package includes a charcuterie and cheese platter, a bottle of wine, a full breakfast with spa access."
-            },
-            "racletteRelax": {
-                "name": "The Relaxation Raclette (for 2)",
-                "description": "This package includes an assortment of raclette cheeses and fine charcuterie, a bottle of wine, and spa access."
-            },
-            "romanticGourmet": {
+                "description": "This pack includes a charcuterie and cheese platter, a bottle of wine, a full breakfast and 2 hours access to our spa with jacuzzi and sauna."
+                },
+                "racletteRelax": {
+                "name": "The Relaxing Raclette (for 2)", 
+                "description": "This pack includes an assortment of raclette cheese and fine cold cuts, a bottle of wine, a full breakfast, and 2 hours access to our spa with jacuzzi and sauna."
+                },
+                "romanticGourmet": {
                 "name": "The Romantic Gourmet (for 2)",
-                "description": "This package includes a charcuterie and cheese platter, a bottle of crémant, a massage oil bottle and spa access."
-            },
-            "racletteRomantic": {
+                "description": "This pack includes a charcuterie and cheese platter, a bottle of sparkling wine, a massage oil bottle with petals, as well as a full breakfast and 2 hours access to the spa with jacuzzi and sauna."
+                },
+                "racletteRomantic": {
                 "name": "The Romantic Raclette (for 2)",
-                "description": "This package includes an assortment of grilled meats and fresh accompaniments, a bottle of crémant, and spa access."
-            }
+                "description": "This pack includes an assortment of raclette cheese and fine cold cuts, a bottle of sparkling wine, a massage oil bottle with petals, as well as a full breakfast and 2 hours access to the spa with jacuzzi and sauna"
+                },
+                "bbqRomantic": {
+                "name": "The Romantic BBQ (for 2)",
+                "description": "This package includes a barbecue with beef ribeye, chicken and homemade bacon. It also includes fresh sides and a bottle of wine."
+                },
+                "bbqRelax": {
+                "name": "The Relaxing BBQ (for 2)",
+                "description": "This pack includes an assortment of meats and fresh sides, a bottle of wine, a full breakfast, and 2 hours access to our spa with jacuzzi and sauna."
+                }
             },
             "spa": {
-            "basic": {
-                "name": "SPA Formula (2 pers)",
-                "description": "Enjoy a relaxing moment at the spa."
-            },
-            "withBottle": {
-                "name": "SPA Formula + bottle (2 pers)",
-                "description": "Spa and wine bottle for a complete experience."
-            }
+                "basic": {
+                "name": "SPA Package (2 pers)",
+                "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket, bathrobes and slippers."
+                },
+                "withBottle": {
+                "name": "SPA Package + bottle (2 pers)",
+                "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket, bathrobes, slippers, and a bottle of sparkling wine."
+                }
             },
             "meals": {
-            "meatballsLiege": {
-                "name": "Meatballs Liège style",
-                "description": "Enjoy our delicious meatballs in Liège sauce served with homemade mashed potatoes."
-            },
-            "meatballsTomato": {
+                "meatballsLiege": {
+                "name": "Liege-style meatballs",
+                "description": "This dish consists of two meatballs in Liege sauce served with homemade mashed potatoes."
+                },
+                "meatballsTomato": {
                 "name": "Meatballs in tomato sauce",
-                "description": "Enjoy our delicious meatballs simmered in homemade tomato sauce."
-            },
-            "waterzooi": {
+                "description": "This dish consists of two meatballs in homemade tomato sauce, served with mashed potatoes."
+                },
+                "waterzooi": {
                 "name": "Chicken waterzooi",
-                "description": "Savor our chicken waterzooi, a specialty from the Flemish region."
-            },
-            "chiliVeg": {
+                "description": "This dish consists of a delicious chicken waterzooi, served with baby potatoes."
+                },
+                "chiliVeg": {
                 "name": "Vegetarian chili",
-                "description": "A delicious vegetarian creation carefully prepared."
-            },
-            "carrotSoup": {
+                "description": "This preparation is a combination of red beans, corn and fresh vegetables, slowly simmered in a tomato sauce flavored with mild spices."
+                },
+                "carrotSoup": {
                 "name": "Carrot and cumin soup",
-                "description": "A creamy carrot soup flavored with cumin."
-            }
+                "description": "This combination of flavors offers a simple and delicious taste experience, where the sweetness of carrots meets the spicy warmth of cumin"
+                }
             },
             "drinks": {
                 "brutBioul": {
-                    "description": "A local sparkling wine of exceptional quality."
+                "description": "This sparkling wine, made with Bronner and Johanniter grapes, offers delicate aromas of white-fleshed fruits."
                 },
                 "cortilBarco": {
-                    "description": "An elegant red wine with fruity notes."
+                "description": "With its red fruit aromas intertwined with mineral and smoky notes, this red wine was made with Cabernet Noir, Pinotin and Cabernet Jura grapes"
                 },
                 "terreCharlot": {
-                    "description": "A refined white wine with subtle aromas."
+                "description": "With its aromas of apricots and passion fruit, and a slight spicy finish, this wine was made with the Solaris grape variety."
                 },
                 "houblondeTriple": {
-                    "description": "A traditional Belgian triple beer."
+                "description": "This triple beer will surprise with its floral bouquet of hibiscus and saffron. It stands out by using 3 different hops and 3 different cereals."
                 },
                 "houblondeBlonde": {
-                    "description": "A refreshing blonde beer."
+                "description": "This blonde beer, with its roasted cereal flavors, offers a light bitterness and a floral taste identity."
                 },
                 "houblondeWhite": {
-                    "description": "A white IPA with citrus notes."
+                "description": "This white IPA, light and refreshing, offers a gentle bitterness and surprising citrus notes."
                 },
                 "bruneCondroz": {
-                    "description": "A local brown beer from the Condroz region."
+                "description": "This brown beer, brewed with cocoa beans, offering roundness in the mouth and a slight bitterness."
                 },
                 "ambreeCondroz": {
-                    "description": "An amber beer with caramelized malts."
+                "description": "This amber beer, with a round and spicy profile, will surprise you with its character and pronounced bitterness."
                 },
                 "blancheCondroz": {
-                    "description": "A light and refreshing white beer."
+                "description": "This white beer, with subtle violet aromas on the nose, offers a tangy and fresh experience"
                 },
                 "appleJuice": {
-                    "description": "A natural and refreshing apple juice."
+                "description": "A natural and refreshing apple juice."
                 },
                 "ritchieLemonRasp": {
-                    "description": "A sparkling drink with lemon and raspberry flavors."
+                "description": "A sparkling drink with lemon and raspberry flavors."
                 },
                 "ritchieOrangeVan": {
-                    "description": "A refreshing blend of orange and vanilla."
+                "description": "A refreshing blend of orange and vanilla."
                 },
                 "ritchieCola": {
-                    "description": "A unique artisanal cola."
+                "description": "A unique artisanal cola."
                 },
                 "ritchieColaZero": {
-                    "description": "The sugar-free version of the artisanal cola."
+                "description": "The sugar-free version of the artisanal cola."
                 }
             },
             "formulesRepas": {
-            "breakfast": {
-                "name": "Breakfast formula (2 pers)",
-                "description": "A hearty breakfast to start the day right."
-            },
-            "gourmet": {
-                "name": "Gourmet formula (2 pers)",
-                "description": "An unforgettable gastronomic experience."
-            },
-            "raclette": {
-                "name": "Raclette formula (2 pers)",
-                "description": "A convivial raclette with local products."
-            },
-            "apero": {
-                "name": "Aperitif platter formula (2 pers)",
-                "description": "A generous appetizer platter to share."
-            }
+                "breakfast": {
+                "name": "Breakfast package (2 pers)",
+                "description": "This package includes pastries, baguette, sweet/savory sides, Belgian apple juice, coffee, milk and local yogurts."
+                },
+                "gourmet": {
+                "name": "Gourmet package (2 pers)",
+                "description": "This package includes a platter with cheese, cold cuts, raw vegetables and farm honey. It also includes a bottle of wine."
+                },
+                "raclette": {
+                "name": "Raclette package (2 pers)",
+                "description": "This package includes an assortment of raclette cheese, fine cold cuts, a fresh baguette and a bottle of wine"
+                },
+                "barbecue": {
+                "name": "Barbecue package (2 pers)",
+                "description": "This package includes a barbecue with beef ribeye, chicken and homemade bacon. It also includes fresh sides and a bottle of wine."
+                },
+                "apero": {
+                "name": "Aperitif platter package (2 pers)",
+                "description": "This package includes a platter of local cheese and cold cuts, as well as two beers or soft drinks of your choice."
+                }
             },
             "formulesDecouverte": {
-            "passion": {
-                "name": "Passion formula",
-                "description": "A romantic formula for couples."
-            },
-            "birthday": {
-                "name": "Birthday formula (2 pers)",
-                "description": "Celebrate your birthday with our special formula."
-            }
+                "passion": {
+                "name": "Passion package",
+                "description": "This package includes candles, red flower petals, a bottle of sparkling wine, and a bottle of massage oil"
+                },
+                "birthday": {
+                "name": "Birthday package (2 pers)",
+                "description": "This package includes festive decoration with balloons, a bottle of sparkling wine and a delicious dessert."
+                }
             },
             "additionalPerson": "Additional person",
             "infoSup": {

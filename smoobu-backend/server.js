@@ -102,6 +102,10 @@ const extrasFrenchNames = {
   'extras.packs.racletteRelax.name': 'La raclette en détente (pour 2)',
   'extras.packs.romanticGourmet.name': 'Le romantique gourmet (pour 2)',
   'extras.packs.racletteRomantic.name': 'La raclette romantique (pour 2)',
+  'extras.packs.bbqRelax.name': 'Le barbecue détente (pour 2)',
+  'extras.packs.bbqRomantic.name': 'Le romantique barbecue (pour 2)',
+  'extras.formulesDecouverte.passion.name': 'Formule passion (pour 2)',
+  'extras.formulesDecouverte.birthday.name': 'Formule anniversaire (pour 2)',
 
   // Spa
   'extras.spa.basic.name': 'Formule SPA (2 pers)',
@@ -118,6 +122,7 @@ const extrasFrenchNames = {
   'extras.formulesRepas.breakfast.name': 'Formule petit-déjeuner (2 pers)',
   'extras.formulesRepas.gourmet.name': 'Formule gourmet (2 pers)',
   'extras.formulesRepas.raclette.name': 'Formule raclette (2 pers)',
+  'extras.formulesRepas.bbq.name': 'Formule barbecue (2 pers)',
   'extras.formulesRepas.apero.name': 'Formule planche apéro (2 pers)',
 
   // Additional Person translation

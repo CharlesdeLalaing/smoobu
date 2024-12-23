@@ -2,6 +2,8 @@ import detente from "../assets/Packs/detente.webp";
 import essentiel from "../assets/Packs/essentiel.webp";
 import racletteromantique from "../assets/Packs/raclette-romantique.webp";
 import raclettedetente from "../assets/Packs/raclette-detente.webp";
+import barbecueromantique from "../assets/Packs/barbecue-romantique.webp";
+import barbecuedetente from "../assets/Packs/barbecue-detente.webp";
 import romantiquegourmet from "../assets/Packs/romantique-gourmet.webp";
 
 //Les plats de Bossimé
@@ -22,6 +24,7 @@ import formuledejeuner from "../assets/Repas/formule-dejeuner.webp";
 import formulegourmet from "../assets/Repas/formule-gourmet.webp";
 import plancheapero from "../assets/Repas/planche-apero.webp";
 import raclette from "../assets/Repas/raclette.webp";
+import babrecue from "../assets/Repas/barbecue.webp";
 
 //Boissons
 import ambreeCondroz from "../assets/Boissons/ambreeCondroz.webp";
@@ -86,6 +89,41 @@ export const extraCategories = {
         price: 170,
         extraPersonPrice: 40,
         image: racletteromantique,
+        typeKey: "extras.types.pack",
+      },
+      {
+        id: "packBbqDetente",
+        name: "extras.packs.bbqRelax.name",
+        descriptionKey: "extras.packs.bbqRelax.description",
+        price: 150,
+        extraPersonPrice: 40,
+        image: barbecuedetente,
+        typeKey: "extras.types.pack",
+      },
+      {
+        id: "packBbqRomantique",
+        name: "extras.packs.bbqRomantic.name",
+        descriptionKey: "extras.packs.bbqRomantic.description",
+        price: 170,
+        extraPersonPrice: 40,
+        image: barbecueromantique,
+        typeKey: "extras.types.pack",
+      },
+      {
+        id: "packPassion",
+        name: "extras.formulesDecouverte.passion.name",
+        descriptionKey: "extras.formulesDecouverte.passion.description",
+        price: 50,
+        image: passion,
+        typeKey: "extras.types.pack",
+      },
+      {
+        id: "packAnniversaire",
+        name: "extras.formulesDecouverte.birthday.name",
+        descriptionKey: "extras.formulesDecouverte.birthday.description",
+        price: 55,
+        extraPersonPrice: 5,
+        image: formuleanniversaire,
         typeKey: "extras.types.pack",
       },
     ],
@@ -185,6 +223,15 @@ export const extraCategories = {
         price: 85,
         extraPersonPrice: 20,
         image: raclette,
+        typeKey: "extras.types.formula",
+      },
+      {
+        id: "formuleBarbecue",
+        name: "extras.formulesRepas.bbq.name",
+        descriptionKey: "extras.formulesRepas.bbq.description",
+        price: 85,
+        extraPersonPrice: 20,
+        image: babrecue,
         typeKey: "extras.types.formula",
       },
       {
