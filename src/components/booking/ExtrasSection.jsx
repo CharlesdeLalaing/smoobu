@@ -26,8 +26,7 @@ export const ExtrasSection = ({
                   : "bg-[#668E73] bg-opacity-10 text-[#668E73] hover:bg-opacity-20"
               }`}
             >
-              {/* {t(category.nameKey)} */}
-              {t(`extras.categories.${key}`)}
+              {t(category.nameKey)}
             </button>
           ))}
         </div>
@@ -35,7 +34,8 @@ export const ExtrasSection = ({
 
       {/* Content */}
       <div
-        className="flex-1 min-h-0 overflow-y-auto h-[400px] overflow-auto"
+        className="flex-1 min-h-0 overflow-y-auto"
+        style={{ height: "400px", overflow: "scroll" }}
       >
         {selectedCategory === "boissons" ? (
           <div className="pb-4 space-y-6">{renderGroupedBoissons()}</div>
@@ -60,7 +60,7 @@ export const ExtrasSection = ({
 
     return Object.entries(groupedBoissons).map(([type, items]) => (
       <div key={type} className="pb-6">
-        <h2 className="mb-4 text-xl font-semibold text-gray-800">
+        <h2 className="mb-4 text-xl font-semibold text-gray-800 capitalize">
           {t(`extras.drinkTypes.${type}`)}
         </h2>
         <div className="space-y-4">
@@ -70,24 +70,15 @@ export const ExtrasSection = ({
     ));
   }
 
-
   function renderRegularExtras() {
-    const categoryItems = extraCategories[selectedCategory].items;
-    return (
-      <div>
-        <h2 className="mb-4 text-xl font-semibold text-gray-800">
-          {t(`extras.categories.${selectedCategory}`)}
-        </h2>
-        <div className="space-y-4">
-          {categoryItems.map((item) => renderExtraItem(item))}
-        </div>
-      </div>
+    return extraCategories[selectedCategory].items.map((item) =>
+      renderExtraItem(item)
     );
   }
 
   function renderExtraItem(item) {
-    const itemName = item.nameKey ? t(item.nameKey) : t(`extras.${selectedCategory}.${item.id}.name`);
-    const itemDescription = item.descriptionKey ? t(item.descriptionKey) : t(`extras.${selectedCategory}.${item.id}.description`);
+    const itemName = item.name ? t(item.name) : item.name;
+    const itemDescription = item.descriptionKey ? t(item.descriptionKey) : item.description;
 
     return (
       <div
@@ -156,7 +147,7 @@ const QuantitySelector = ({ item, selectedExtras, handleExtraChange }) => {
       {item.extraPersonPrice && (selectedExtras[item.id] || 0) > 0 && (
         <div className="mt-2">
           <p className="text-[14px] text-gray-600 mb-1">
-            {t('extras.additionalPerson')} (+{item.extraPersonPrice}€)
+            {t('extras.additionalPerson', { price: item.extraPersonPrice })}
           </p>
           <div className="flex items-center gap-3">
             <button
