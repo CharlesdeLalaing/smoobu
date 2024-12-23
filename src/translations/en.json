@@ -37,11 +37,11 @@
             "guesthouse": "Guesthouse & B&B"
             },
             "names": {
-            "bulle": "The Stream Bubble",
-            "dome": "The Dragonfly Dome",
-            "moulin": "The Mill",
-            "ble": "The Wheat Room",
-            "logis": "The Lodge"
+            "bulle": "The Bulle du Ruisseau",
+            "dome": "The Dôme des Libellules",
+            "moulin": "The Moulin",
+            "ble": "The Chambre of Blé",
+            "logis": "The Logis"
             },
             "descriptions": {
             "bulle": "Immerse yourself in the soothing intimacy of the Stream Bubble - an unusual cocoon nestled between earth and water, lulled by the song of the stream and the whispers of nature. With its Crusoe armchair and king-size bed, this space offers refined comfort in the heart of nature. Also enjoy the brazier for convivial evenings under the stars, perfect for roasting marshmallows and sharing unforgettable moments. Book now and let yourself be enchanted by the magical serenity of the Stream Bubble.",
@@ -180,7 +180,7 @@
                 },
                 "racletteRelax": {
                 "name": "The Relaxing Raclette (for 2)", 
-                "description": "This pack includes an assortment of raclette cheese and fine cold cuts, a bottle of wine, a full breakfast, and 2 hours access to our spa with jacuzzi and sauna."
+                "description": "*From November 1st to April 30th* This pack includes an assortment of raclette cheese and fine cold cuts, a bottle of wine, a full breakfast, and 2 hours access to our spa with jacuzzi and sauna."
                 },
                 "romanticGourmet": {
                 "name": "The Romantic Gourmet (for 2)",
@@ -188,15 +188,15 @@
                 },
                 "racletteRomantic": {
                 "name": "The Romantic Raclette (for 2)",
-                "description": "This pack includes an assortment of raclette cheese and fine cold cuts, a bottle of sparkling wine, a massage oil bottle with petals, as well as a full breakfast and 2 hours access to the spa with jacuzzi and sauna"
+                "description": "*From November 1st to April 30th* This pack includes an assortment of raclette cheese and fine cold cuts, a bottle of sparkling wine, a massage oil bottle with petals, as well as a full breakfast and 2 hours access to the spa with jacuzzi and sauna"
                 },
                 "bbqRomantic": {
                 "name": "The Romantic barbecue (for 2)",
-                "description": "This package includes a barbecue with beef ribeye, chicken and homemade bacon. It also includes fresh sides and a bottle of wine."
+                "description": "*From 1 April to 30 November* This package includes a barbecue with beef ribeye, chicken and homemade bacon. It also includes fresh sides and a bottle of wine."
                 },
                 "bbqRelax": {
                 "name": "The Relaxing barbecue (for 2)",
-                "description": "This pack includes an assortment of meats and fresh sides, a bottle of wine, a full breakfast, and 2 hours access to our spa with jacuzzi and sauna."
+                "description": "*From 1 April to 30 November* This pack includes an assortment of meats and fresh sides, a bottle of wine, a full breakfast, and 2 hours access to our spa with jacuzzi and sauna."
                 }
             },
             "spa": {
@@ -286,11 +286,11 @@
                 },
                 "raclette": {
                 "name": "Raclette package (2 pers)",
-                "description": "This package includes an assortment of raclette cheese, fine cold cuts, a fresh baguette and a bottle of wine"
+                "description": "*From November 1st to April 30th* This package includes an assortment of raclette cheese, fine cold cuts, a fresh baguette and a bottle of wine"
                 },
                 "barbecue": {
                 "name": "Barbecue package (2 pers)",
-                "description": "This package includes a barbecue with beef ribeye, chicken and homemade bacon. It also includes fresh sides and a bottle of wine."
+                "description": "*From 1 April to 30 November* This package includes a barbecue with beef ribeye, chicken and homemade bacon. It also includes fresh sides and a bottle of wine."
                 },
                 "apero": {
                 "name": "Aperitif platter package (2 pers)",

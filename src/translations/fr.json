@@ -181,7 +181,7 @@
           },
           "racletteRelax": {
             "name": "La raclette en détente (pour 2)",
-            "description": "Ce pack inclut un assortiment de fromages à raclette et de charcuteries fines, une bouteille de vin, un petit-déjeuner complet, ainsi que 2 heures d’accès à notre spa avec jacuzzi et sauna. "
+            "description": "*Du 1er novembre au 30 avril* Ce pack inclut un assortiment de fromages à raclette et de charcuteries fines, une bouteille de vin, un petit-déjeuner complet, ainsi que 2 heures d’accès à notre spa avec jacuzzi et sauna. "
           },
           "romanticGourmet": {
             "name": "Le romantique gourmet (pour 2)",
@@ -189,15 +189,15 @@
           },
           "racletteRomantic": {
             "name": "La raclette romantique (pour 2)",
-            "description": "Ce pack inclut un assortiment de fromages à raclette et de charcuteries fines, une bouteille de crémant, un flacon d'huile de massage avec des pétales, ainsi qu'un petit-déjeuner complet et 2 heures d'accès au spa avec jacuzzi et sauna"
+            "description": "*Du 1er novembre au 30 avril* Ce pack inclut un assortiment de fromages à raclette et de charcuteries fines, une bouteille de crémant, un flacon d'huile de massage avec des pétales, ainsi qu'un petit-déjeuner complet et 2 heures d'accès au spa avec jacuzzi et sauna"
           },
           "bbqRomantic": {
             "name": "Le barbecue romantique (pour 2)",
-            "description": "Cette formule comprend un barbecue avec entrecôte de bœuf, poulet et lard maison. Elle inclut également des accompagnements frais et une bouteille de vin."
+            "description": "*Du 1er avril au 30 novembre* Cette formule comprend un barbecue avec entrecôte de bœuf, poulet et lard maison. Elle inclut également des accompagnements frais et une bouteille de vin."
           },
           "bbqRelax": {
             "name": "La barbecue détente (pour 2)",
-            "description": "Ce pack inclut un assortiment de viandes et d’accompagnements frais, une bouteille de vin, un petit-déjeuner complet, ainsi que 2 heures d’accès à notre spa avec jacuzzi et sauna."
+            "description": "*Du 1er avril au 30 novembre* Ce pack inclut un assortiment de viandes et d’accompagnements frais, une bouteille de vin, un petit-déjeuner complet, ainsi que 2 heures d’accès à notre spa avec jacuzzi et sauna."
           }
         },
         "spa": {
@@ -287,11 +287,11 @@
           },
           "raclette": {
             "name": "Formule raclette (2 pers)",
-            "description": "Cette formule comprend un assortiment de fromages à raclette, de la charcuterie fine, une baguette fraîche ainsi qu’une bouteille de vin"
+            "description": "*Du 1er novembre au 30 avril* Cette formule comprend un assortiment de fromages à raclette, de la charcuterie fine, une baguette fraîche ainsi qu’une bouteille de vin"
           },
           "barbecue": {
             "name": "Formule barbecue (2 pers)",
-            "description": "Cette formule comprend un barbecue avec entrecôte de bœuf, poulet et lard maison. Elle inclut également des accompagnements frais et une bouteille de vin."
+            "description": "*Du 1er avril au 30 novembre* Cette formule comprend un barbecue avec entrecôte de bœuf, poulet et lard maison. Elle inclut également des accompagnements frais et une bouteille de vin."
           },
           "apero": {
             "name": "Formule planche apéro (2 pers)",
