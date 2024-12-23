@@ -92,13 +92,18 @@ const BookingConfirmation = () => {
     }).format(date);
   };
 
+  // Update the renderExtraName function in BookingConfirmation.js
   const renderExtraName = (extra) => {
-    // Handle translation keys that start with 'extras.'
-    if (extra.name && extra.name.startsWith("extras.")) {
-      return t(extra.name);
+    // Handle both direct translation keys and nested translation keys
+    if (extra.name) {
+      // If it's a translation key (starts with 'extras.')
+      if (typeof extra.name === 'string' && extra.name.startsWith('extras.')) {
+        return t(extra.name);
+      }
+      // For direct names (like drinks)
+      return extra.name;
     }
-    // Handle direct names (like drinks)
-    return extra.name;
+    return '';
   };
 
   const formatPrice = (price) => {
