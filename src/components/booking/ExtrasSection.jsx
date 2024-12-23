@@ -200,7 +200,7 @@ export const ExtrasSection = ({
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col h-[600px] overflow-hidden">
+    <div className="flex flex-col h-[300px] md:h-[500px] overflow-hidden">
       {/* Categories */}
       <div className="mb-4 shrink-0">
         <div className="flex flex-wrap gap-3">
