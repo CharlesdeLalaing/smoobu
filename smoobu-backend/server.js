@@ -384,38 +384,35 @@ app.post(
           // Valider les montants
           // validateBookingAmounts(bookingData);
           // First create the main booking
-          const smoobuResponse = await retrySmoobuCall(async () => {
-            return await axios.post(
-              'https://login.smoobu.com/api/reservations',
-              {
-                arrivalDate: bookingData.arrivalDate,
-                departureDate: bookingData.departureDate,
-                arrivalTime: bookingData.arrivalTime,
-                channelId: bookingData.channelId,
-                apartmentId: bookingData.apartmentId,
-                firstName: bookingData.firstName,
-                lastName: bookingData.lastName,
-                email: bookingData.email,
-                phone: bookingData.phone,
-                notice: bookingData.notice,
-                adults: Number(bookingData.adults),
-                children: Number(bookingData.children),
-                price: Number(bookingData.price),
-                priceStatus: 1,
-                deposit: Number(bookingData.deposit),
-                depositStatus: 1,
-                language: 'en',
+          const smoobuResponse = await axios.post(
+            "https://login.smoobu.com/api/reservations",
+            {
+              arrivalDate: bookingData.arrivalDate,
+              departureDate: bookingData.departureDate,
+              channelId: bookingData.channelId,
+              apartmentId: bookingData.apartmentId,
+              firstName: bookingData.firstName,
+              lastName: bookingData.lastName,
+              email: bookingData.email,
+              phone: bookingData.phone,
+              notice: bookingData.notice,
+              adults: Number(bookingData.adults),
+              children: Number(bookingData.children),
+              price: Number(bookingData.price),
+              priceStatus: 1,
+              deposit: Number(bookingData.deposit),
+              depositStatus: 1,
+              language: "en",
+            },
+            {
+              headers: {
+                "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                "Content-Type": "application/json",
               },
-              {
-                headers: {
-                  'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
-                  'Content-Type': 'application/json',
-                },
-              }
-            );
-          });
+            }
+          );
 
-          console.log('Smoobu booking created:', smoobuResponse.data);
+          console.log("Smoobu booking created:", smoobuResponse.data);
 
           // Store booking in Firebase
           const bookingDoc = {
