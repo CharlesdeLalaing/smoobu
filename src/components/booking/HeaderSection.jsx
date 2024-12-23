@@ -17,6 +17,7 @@ export const HeaderSection = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState("fr");
   const [showAccommodationsSubmenu, setShowAccommodationsSubmenu] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Handle body scroll when mobile menu is open
   useEffect(() => {
@@ -42,6 +43,8 @@ export const HeaderSection = () => {
     { code: "en", name: "EN", flag: GreatBritain },
     { code: "nl", name: "NL", flag: Netherland },
   ];
+
+  const currentLang = languages.find(lang => lang.code === currentLanguage);
 
   // Create menu items using routes
   const menuItems = [
@@ -151,16 +154,15 @@ export const HeaderSection = () => {
               </button>
 
               {isOpen && (
-                <div className="absolute top-full mt-1 bg-white bg-opacity-10 rounded shadow-lg">
-                  {languages.map((lang) => (
+                <div className="absolute top-full mt-1 bg-white z-50 bg-opacity-1 rounded shadow-lg">
+                  {languages.filter(lang => lang.code !== currentLanguage).map((lang) => (
                     <button
                       key={lang.code}
                       onClick={() => {
                         handleLanguageChange(lang.code);
                         setIsOpen(false);
                       }}
-                      className={`flex items-center gap-2 w-full px-3 py-2 hover:bg-white hover:bg-opacity-20 
-                        ${currentLanguage === lang.code ? 'bg-white bg-opacity-20' : ''}`}
+                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-white hover:bg-opacity-20"
                     >
                       <img
                         src={lang.flag}
