@@ -1,7 +1,7 @@
 export const VALID_COUPONS = {
-  TESTDISCOUNT: {
+  POTE: {
     discount: 10,
-    type: "fixed",
+    type: "percentage",
     currency: "EUR",
   },
   DOME390: {

@@ -207,7 +207,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.brutBioul.description",
         price: 50,
         image: brutBioul,
-        typeKey: "extras.types.bulles",
+        typeKey: "extras.drinkTypes.bulles",
       },
       {
         id: "cortilBarco",
@@ -215,7 +215,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.cortilBarco.description",
         price: 30,
         image: cortilBarco,
-        typeKey: "extras.types.wine",
+        typeKey: "extras.drinkTypes.wine",
       },
       {
         id: "terreCharlot",
@@ -223,7 +223,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.terreCharlot.description",
         price: 30,
         image: terreCharlot,
-        typeKey: "extras.types.wine",
+        typeKey: "extras.drinkTypes.wine",
       },
       // Beers
       {
@@ -232,7 +232,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.houblondeTriple.description",
         price: 4,
         image: houblondeTriple,
-        typeKey: "extras.types.beer",
+        typeKey: "extras.drinkTypes.beer",
       },
       {
         id: "houblondeBlonde",
@@ -240,7 +240,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.houblondeBlonde.description",
         price: 4,
         image: houblondeBlonde,
-        typeKey: "extras.types.beer",
+        typeKey: "extras.drinkTypes.beer",
       },
       {
         id: "houblondeWhite",
@@ -248,7 +248,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.houblondeWhite.description",
         price: 4,
         image: houblondeWhite,
-        typeKey: "extras.types.beer",
+        typeKey: "extras.drinkTypes.beer",
       },
       {
         id: "bruneCondroz",
@@ -256,7 +256,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.bruneCondroz.description",
         price: 4,
         image: bruneCondroz,
-        typeKey: "extras.types.beer",
+        typeKey: "extras.drinkTypes.beer",
       },
       {
         id: "ambreeCondroz",
@@ -264,7 +264,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.ambreeCondroz.description",
         price: 4,
         image: ambreeCondroz,
-        typeKey: "extras.types.beer",
+        typeKey: "extras.drinkTypes.beer",
       },
       {
         id: "blancheCondroz",
@@ -272,7 +272,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.blancheCondroz.description",
         price: 4,
         image: blancheCondroz,
-        typeKey: "extras.types.beer",
+        typeKey: "extras.drinkTypes.beer",
       },
       // Softs
       {
@@ -281,7 +281,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.appleJuice.description",
         price: 3,
         image: pomHappy,
-        typeKey: "extras.types.soft",
+        typeKey: "extras.drinkTypes.soft",
       },
       {
         id: "ritchieLemonRasp",
@@ -289,7 +289,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.ritchieLemonRasp.description",
         price: 3,
         image: ritchieCitronFramboise,
-        typeKey: "extras.types.soft",
+        typeKey: "extras.drinkTypes.soft",
       },
       {
         id: "ritchieOrangeVan",
@@ -297,7 +297,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.ritchieOrangeVan.description",
         price: 3,
         image: ritchieOrange,
-        typeKey: "extras.types.soft",
+        typeKey: "extras.drinkTypes.soft",
       },
       {
         id: "ritchieCola",
@@ -305,7 +305,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.ritchieCola.description",
         price: 3,
         image: ritchieCola,
-        typeKey: "extras.types.soft",
+        typeKey: "extras.drinkTypes.soft",
       },
       {
         id: "ritchieColaZero",
@@ -313,7 +313,7 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.ritchieColaZero.description",
         price: 3,
         image: ritchieColaZero,
-        typeKey: "extras.types.soft",
+        typeKey: "extras.drinkTypes.soft",
       },
     ],
   },
