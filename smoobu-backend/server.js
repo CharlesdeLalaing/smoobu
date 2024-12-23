@@ -389,6 +389,7 @@ app.post(
             {
               arrivalDate: bookingData.arrivalDate,
               departureDate: bookingData.departureDate,
+              arrivalTime: bookingData.arrivalTime,
               channelId: bookingData.channelId,
               apartmentId: bookingData.apartmentId,
               firstName: bookingData.firstName,
