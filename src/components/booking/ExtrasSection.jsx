@@ -250,7 +250,7 @@ export const ExtrasSection = ({
     return Object.entries(groupedBoissons).map(([type, items]) => (
       <div key={type} className="pb-6">
         <h2 className="mb-4 text-xl font-semibold text-gray-800 capitalize">
-          {t(`extras.drinkTypes.${type}`)}
+          {t(`extras.drinkTypes.${drinkTypes}`)}
         </h2>
         <div className="space-y-4">
           {items.map((item) => renderExtraItem(item))}
