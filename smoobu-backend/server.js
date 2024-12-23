@@ -352,6 +352,7 @@ app.post(
   "/webhook",
   express.raw({ type: "application/json" }),
   async (req, res) => {
+    res.json({ received: true });
     const sig = req.headers["stripe-signature"];
     let event;
     console.log("Received webhook call");
@@ -377,7 +378,8 @@ app.post(
             "No booking data found for reference:",
             bookingReference
           );
-          return res.status(400).json({ error: "Booking data not found!" });
+          // return res.status(400).json({ error: "Booking data not found!" });
+          return
         }
 
         try {
@@ -569,7 +571,7 @@ app.post(
         }
       }
 
-      res.json({ received: true });
+      // res.json({ received: true });
     } catch (err) {
       console.error("Webhook Error:", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
