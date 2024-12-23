@@ -239,7 +239,7 @@ const BookingConfirmation = () => {
             </p>
 
             {/* For the extras, we use the translation keys from extras section */}
-            {bookingDetails?.extras?.map((extra, index) => (
+            {/* {bookingDetails?.extras?.map((extra, index) => (
               <p key={index}>
                 {renderExtraName(extra)} (x{extra.quantity}):{" "}
                 {formatPrice(
@@ -254,7 +254,22 @@ const BookingConfirmation = () => {
                   </span>
                 )}
               </p>
-            ))}
+            ))} */}
+
+            {bookingDetails?.extras?.map((extra, index) => {
+              const hasExtraPerson = extra.extraPersonQuantity > 0;
+              
+              return (
+                <p key={index}>
+                  {renderExtraName(extra)} (x{extra.quantity}): {formatPrice(extra.amount)}€
+                  {hasExtraPerson && (
+                    <span className="text-sm text-gray-600">
+                      {` (${t("extras.additionalPerson")} (x${extra.extraPersonQuantity}) : ${formatPrice(extra.extraPersonAmount)}€)`}
+                    </span>
+                  )}
+                </p>
+              );
+            })}
 
             {/* Long stay discount */}
             {bookingDetails?.priceDetails?.discount > 0 && (
