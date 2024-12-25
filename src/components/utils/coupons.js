@@ -9,11 +9,6 @@ export const VALID_COUPONS = {
     type: "fixed",
     currency: "EUR",
   },
-  CHARLOT: {
-    discount: 2349,
-    type: "fixed",
-    currency: "EUR",
-  },
   DOME215: {
     discount: 215,
     type: "fixed",
@@ -151,6 +146,11 @@ export const VALID_COUPONS = {
   },
   "GIFT.10577": {
     discount: 230,
+    type: "fixed",
+    currency: "EUR",
+  },
+  "8QYXC4S98J": {
+    discount: 180,
     type: "fixed",
     currency: "EUR",
   }
