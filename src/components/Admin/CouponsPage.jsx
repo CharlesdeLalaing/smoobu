@@ -1,7 +1,7 @@
 // src/components/Admin/CouponsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Pencil, Trash2, Search } from 'lucide-react';
-import { db } from '../../../firebase-config';
+import { db } from '../../../smoobu-backend/firebase-config';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
 
 const CouponsPage = () => {
