@@ -1,8 +1,8 @@
 // src/components/Admin/CouponsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Pencil, Trash2, Search } from 'lucide-react';
-import { db } from '../../../smoobu-backend/firebase-config';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { db } from '../../../firebase-config';
 
 const CouponsPage = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -17,10 +17,6 @@ const CouponsPage = () => {
     });
 
     // Fetch coupons from Firebase
-    useEffect(() => {
-        fetchCoupons();
-    }, []);
-
     const fetchCoupons = async () => {
         try {
             const couponsCollection = collection(db, 'coupons');
@@ -35,6 +31,10 @@ const CouponsPage = () => {
         }
     };
 
+    useEffect(() => {
+        fetchCoupons();
+    }, []);
+
     // Create new coupon
     const handleCreateCoupon = async (e) => {
         e.preventDefault();
@@ -43,7 +43,8 @@ const CouponsPage = () => {
             await addDoc(couponsCollection, {
                 ...formData,
                 discount: Number(formData.discount),
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                active: true
             });
             setShowCreateModal(false);
             resetForm();
@@ -301,4 +302,3 @@ const CouponsPage = () => {
 };
 
 export default CouponsPage;
-
