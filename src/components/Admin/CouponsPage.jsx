@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Pencil, Trash2, Search } from 'lucide-react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../../../firebase-config';
+import { db } from '../../../smoobu-backend/firebase-config';
 
 const CouponsPage = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
