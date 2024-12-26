@@ -1,7 +1,6 @@
 import admin from 'firebase-admin';
 import * as dotenv from "dotenv";
 
-
 dotenv.config();
 
 // Format the private key properly
