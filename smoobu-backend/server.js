@@ -5,7 +5,6 @@ import Stripe from 'stripe';
 import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import * as dotenv from 'dotenv';
 
 import { db } from './firebase-config.js';
 
