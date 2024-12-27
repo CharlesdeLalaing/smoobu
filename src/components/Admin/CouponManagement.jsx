@@ -35,24 +35,28 @@ const CouponManagement = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const data = {
-      ...formData,
-      expiryDate: Timestamp.fromDate(new Date(formData.expiryDate))
-    };
-    try {
-      if (editingCoupon) {
-        await updateDoc(doc(db, 'coupons', editingCoupon.id), data);
-      } else {
-        await addDoc(collection(db, 'coupons'), data);
-      }
-      await fetchCoupons();
-      handleCloseModal();
-    } catch (error) {
-      console.error('Error saving coupon:', error);
-    }
+  // In CouponManagement.jsx
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const data = {
+    ...formData,
+    expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
+    usedCount: 0, // Track usage
+    lastUsedDate: null
   };
+  
+  try {
+    if (editingCoupon) {
+      await updateDoc(doc(db, 'coupons', editingCoupon.id), data);
+    } else {
+      await addDoc(collection(db, 'coupons'), data);
+    }
+    await fetchCoupons();
+    handleCloseModal();
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
 
   const handleEdit = (coupon) => {
     setEditingCoupon(coupon);
@@ -80,6 +84,23 @@ const CouponManagement = () => {
       status: 'active'
     });
   };
+
+  // Function to mark coupon as used
+const markCouponAsUsed = async (couponId) => {
+  try {
+    const couponRef = doc(db, 'coupons', couponId);
+    await updateDoc(couponRef, {
+      status: 'used',
+      usedCount: increment(1),
+      lastUsedDate: Timestamp.now()
+    });
+    await fetchCoupons();
+  } catch (error) {
+    console.error('Error marking coupon as used:', error);
+  }
+};
+
+
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;

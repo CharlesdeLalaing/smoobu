@@ -1,3 +1,7 @@
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { db } from '../../firebase';
+
+
 export const VALID_COUPONS = {
     "DOME.390": {
       discount: 390,
@@ -169,4 +173,27 @@ export const VALID_COUPONS = {
       type: "fixed",
       currency: "EUR",
     }
+};
+
+
+export const initializeCoupons = async () => {
+  try {
+    const batch = [];
+    for (const [code, details] of Object.entries(VALID_COUPONS)) {
+      batch.push(addDoc(collection(db, 'coupons'), {
+        code,
+        ...details,
+        status: 'active',
+        expiryDate: Timestamp.fromDate(new Date('2025-12-31')),
+        usedCount: 0,
+        lastUsedDate: null,
+        usedBy: [],
+        dateCreated: Timestamp.now()
+      }));
+    }
+    await Promise.all(batch);
+    console.log('Coupons added successfully');
+  } catch (error) {
+    console.error('Error:', error);
+  }
 };
