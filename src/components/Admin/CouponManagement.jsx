@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { db } from '../../../smoobu-backend/firebase';
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 
 const CouponManagement = () => {
-  const [coupons, setCoupons] = useState([
-    { id: 1, code: 'SUMMER2024', discount: 20, type: 'percentage', expiryDate: '2024-12-31', status: 'active' },
-    { id: 2, code: 'WELCOME10', discount: 10, type: 'fixed', expiryDate: '2024-06-30', status: 'inactive' }
-  ]);
+  const [coupons, setCoupons] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState(null);
   const [formData, setFormData] = useState({
@@ -15,17 +14,40 @@ const CouponManagement = () => {
     expiryDate: '',
     status: 'active'
   });
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (editingCoupon) {
-      setCoupons(coupons.map(c => 
-        c.id === editingCoupon.id ? { ...formData, id: c.id } : c
-      ));
-    } else {
-      setCoupons([...coupons, { ...formData, id: Date.now() }]);
+  useEffect(() => {
+    fetchCoupons();
+  }, []);
+
+  const fetchCoupons = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'coupons'));
+      const couponsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setCoupons(couponsData);
+    } catch (error) {
+      console.error('Error fetching coupons:', error);
+    } finally {
+      setIsLoading(false);
     }
-    handleCloseModal();
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingCoupon) {
+        await updateDoc(doc(db, 'coupons', editingCoupon.id), formData);
+      } else {
+        await addDoc(collection(db, 'coupons'), formData);
+      }
+      await fetchCoupons();
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error saving coupon:', error);
+    }
   };
 
   const handleEdit = (coupon) => {
@@ -34,8 +56,13 @@ const CouponManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    setCoupons(coupons.filter(c => c.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await deleteDoc(doc(db, 'coupons', id));
+      await fetchCoupons();
+    } catch (error) {
+      console.error('Error deleting coupon:', error);
+    }
   };
 
   const handleCloseModal = () => {
@@ -49,6 +76,10 @@ const CouponManagement = () => {
       status: 'active'
     });
   };
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
