@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Pencil, Trash2, Search } from 'lucide-react';
 import { collection, addDoc, deleteDoc, updateDoc, doc, query, where, getDocs, onSnapshot, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase-config';
+import { db } from './firebase-config';
 
 const CouponsPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
