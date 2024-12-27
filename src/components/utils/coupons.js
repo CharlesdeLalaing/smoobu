@@ -197,3 +197,5 @@ export const initializeCoupons = async () => {
     console.error('Error:', error);
   }
 };
+
+initializeCoupons();
