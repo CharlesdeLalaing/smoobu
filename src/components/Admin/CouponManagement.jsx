@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 
 const CouponManagement = () => {
@@ -37,11 +37,15 @@ const CouponManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const data = {
+      ...formData,
+      expiryDate: Timestamp.fromDate(new Date(formData.expiryDate))
+    };
     try {
       if (editingCoupon) {
-        await updateDoc(doc(db, 'coupons', editingCoupon.id), formData);
+        await updateDoc(doc(db, 'coupons', editingCoupon.id), data);
       } else {
-        await addDoc(collection(db, 'coupons'), formData);
+        await addDoc(collection(db, 'coupons'), data);
       }
       await fetchCoupons();
       handleCloseModal();
@@ -114,7 +118,11 @@ const CouponManagement = () => {
                   {coupon.discount}{coupon.type === 'percentage' ? '%' : '$'}
                 </td>
                 <td className="px-6 py-4 text-sm capitalize">{coupon.type}</td>
-                <td className="px-6 py-4 text-sm">{coupon.expiryDate}</td>
+                <td className="px-6 py-4 text-sm">
+                  {coupon.expiryDate instanceof Timestamp ? 
+                    coupon.expiryDate.toDate().toLocaleDateString() : 
+                    coupon.expiryDate}
+                </td>
                 <td className="px-6 py-4 text-sm">
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     coupon.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
