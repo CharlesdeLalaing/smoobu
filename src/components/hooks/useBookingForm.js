@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { api } from "../utils/api";
-// import { VALID_COUPONS } from "../utils/coupons";
-
-// Add these imports at the top
-import { db } from "../../firebase";
-import { collection, query, where, getDocs, updateDoc, doc, Timestamp, increment } from "firebase/firestore";
-
-
+import { VALID_COUPONS } from "../utils/coupons";
 import { calculateExtrasTotal } from "../utils/booking";
 import { extraCategories } from "../extraCategories"
 import { useNavigate } from "react-router-dom";
@@ -444,118 +438,53 @@ const handleChange = async (e) => {
 };
 
  // useBookingForm.js
-// const handleApplyCoupon = (couponCode) => {
-//   // console.log('handleApplyCoupon called with:', couponCode);
-//   setCouponError(null);
-
-//   if (!couponCode) {
-//     // console.log('No coupon code provided');
-//     setCouponError("Veuillez entrer un code promo");
-//     return;
-//   }
-
-//   const couponInfo = VALID_COUPONS[couponCode.toUpperCase()];
-//   // console.log('Found coupon info:', couponInfo);
-
-//   if (!couponInfo) {
-//     // console.log('Invalid coupon code');
-//     setCouponError("Code promo invalide");
-//     return;
-//   }
-
-//   setAppliedCoupon({
-//     code: couponCode.toUpperCase(),
-//     ...couponInfo,
-//   });
-//   // console.log('Applied coupon:', {
-//   //   code: couponCode.toUpperCase(),
-//   //   ...couponInfo,
-//   // });
-
-//   setPriceDetails((prev) => {
-//     const newPriceDetails = {
-//       ...prev,
-//       priceElements: [
-//         ...(prev?.priceElements || []),
-//         {
-//           type: "coupon",
-//           name: `Code promo ${couponCode.toUpperCase()}`,
-//           amount: -couponInfo.discount,
-//           currencyCode: couponInfo.currency,
-//         },
-//       ],
-//     };
-//     // console.log('Updated price details:', newPriceDetails);
-//     return newPriceDetails;
-//   });
-
-//   setCoupon("");
-// };
-
-const handleApplyCoupon = async (couponCode) => {
+const handleApplyCoupon = (couponCode) => {
+  // console.log('handleApplyCoupon called with:', couponCode);
   setCouponError(null);
 
   if (!couponCode) {
-    setCouponError("Please enter a coupon code");
+    // console.log('No coupon code provided');
+    setCouponError("Veuillez entrer un code promo");
     return;
   }
 
-  try {
-    const couponsRef = collection(db, 'coupons');
-    const q = query(
-      couponsRef, 
-      where('code', '==', couponCode.toUpperCase()),
-      where('status', '==', 'active')
-    );
-    
-    const querySnapshot = await getDocs(q);
-    
-    if (querySnapshot.empty) {
-      setCouponError("Invalid or expired coupon code");
-      return;
-    }
+  const couponInfo = VALID_COUPONS[couponCode.toUpperCase()];
+  // console.log('Found coupon info:', couponInfo);
 
-    const couponDoc = querySnapshot.docs[0];
-    const couponData = couponDoc.data();
+  if (!couponInfo) {
+    // console.log('Invalid coupon code');
+    setCouponError("Code promo invalide");
+    return;
+  }
 
-    const expiryDate = couponData.expiryDate.toDate();
-    if (expiryDate < new Date()) {
-      setCouponError("Coupon has expired");
-      return;
-    }
+  setAppliedCoupon({
+    code: couponCode.toUpperCase(),
+    ...couponInfo,
+  });
+  // console.log('Applied coupon:', {
+  //   code: couponCode.toUpperCase(),
+  //   ...couponInfo,
+  // });
 
-    const couponInfo = {
-      id: couponDoc.id,
-      code: couponCode.toUpperCase(),
-      discount: couponData.discount,
-      type: couponData.type,
-      currency: 'EUR'
-    };
-
-    setAppliedCoupon(couponInfo);
-
-    setPriceDetails((prev) => ({
+  setPriceDetails((prev) => {
+    const newPriceDetails = {
       ...prev,
       priceElements: [
         ...(prev?.priceElements || []),
         {
-          type: 'coupon',
-          name: `Coupon ${couponCode.toUpperCase()}`,
-          amount: couponData.type === 'percentage' 
-            ? -(prev?.originalPrice * couponData.discount / 100)
-            : -couponData.discount,
-          currencyCode: 'EUR',
+          type: "coupon",
+          name: `Code promo ${couponCode.toUpperCase()}`,
+          amount: -couponInfo.discount,
+          currencyCode: couponInfo.currency,
         },
       ],
-    }));
+    };
+    // console.log('Updated price details:', newPriceDetails);
+    return newPriceDetails;
+  });
 
-    setCoupon("");
-  } catch (error) {
-    console.error('Error applying coupon:', error);
-    setCouponError("Error applying coupon");
-  }
+  setCoupon("");
 };
-
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
