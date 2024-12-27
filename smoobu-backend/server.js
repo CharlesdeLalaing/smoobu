@@ -1,4 +1,7 @@
 import express from 'express';
+
+import { collection, query, where, getDocs, updateDoc, doc, Timestamp, increment } from 'firebase/firestore';
+
 import cors from 'cors';
 import axios from 'axios';
 import Stripe from 'stripe';
@@ -422,6 +425,22 @@ app.post(
 
           // console.log("Smoobu booking created:", smoobuResponse.data);
 
+           // Update coupon status if used
+          if (bookingData.couponApplied?.code) {
+            const couponsRef = collection(db, 'coupons');
+            const q = query(couponsRef, where('code', '==', bookingData.couponApplied.code));
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+              const couponDoc = querySnapshot.docs[0];
+              await updateDoc(doc(db, 'coupons', couponDoc.id), {
+                status: 'used',
+                usedCount: increment(1),
+                lastUsedDate: Timestamp.now()
+              });
+            }
+          }
+
           // Store booking in Firebase
           const bookingDoc = {
             ...bookingData,
@@ -583,6 +602,8 @@ app.post(
           });
         }
       }
+
+      //ici
 
       res.json({ received: true });
     } catch (err) {
