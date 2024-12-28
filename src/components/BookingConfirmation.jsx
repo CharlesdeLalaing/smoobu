@@ -287,7 +287,7 @@ const BookingConfirmation = () => {
             )}
 
             {/* Promo code */}
-            {bookingDetails?.couponApplied && (
+            {/* {bookingDetails?.couponApplied && (
               <p className="discount-text">
                 {t(
                   "bookingConfirmation.success.sections.priceDetails.promoCode",
@@ -296,6 +296,30 @@ const BookingConfirmation = () => {
                     amount: formatPrice(bookingDetails.couponApplied.discount),
                   }
                 )}
+              </p>
+            )} */}
+
+            {/* Promo code */}
+            {bookingDetails?.couponApplied && (
+              <p className="discount-text">
+                {t("bookingConfirmation.success.sections.priceDetails.promoCode", {
+                  code: bookingDetails.couponApplied.code,
+                  amount: formatPrice(bookingDetails.couponApplied.discount),
+                })}
+                {bookingDetails.couponApplied.type === 'percentage' && (
+                  <span className="text-sm text-gray-600">
+                    {` (${bookingDetails.couponApplied.discount}%)`}
+                  </span>
+                )}
+              </p>
+            )}
+
+            {/* Add this to your price breakdown section right before the total */}
+            {bookingDetails?.priceBreakdown?.couponDiscount > 0 && (
+              <p className="discount-text">
+                {t("bookingConfirmation.success.sections.priceDetails.discount", {
+                  amount: formatPrice(bookingDetails.priceBreakdown.couponDiscount)
+                })}
               </p>
             )}
 

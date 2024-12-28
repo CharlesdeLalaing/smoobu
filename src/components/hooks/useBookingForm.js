@@ -411,13 +411,21 @@ const handleChange = async (e) => {
   // Calculate final total
   const finalTotal = subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
 
+   // Format coupon information
+  const couponInfo = appliedCoupon ? {
+    code: appliedCoupon.code,
+    discount: appliedCoupon.discount,
+    type: appliedCoupon.type // Include the type (percentage or fixed)
+  } : null;
+
   const bookingData = {
     ...formData,
     extras: selectedExtrasArray,
     priceBreakdown: {
       basePrice: roomBasePrice,
       finalPrice: finalTotal,
-      extrasTotal: extrasTotal
+      extrasTotal: extrasTotal,
+      couponDiscount: couponDiscount // Add explicit coupon discount to price breakdown
     },
     priceDetails: {
       ...selectedApartmentPriceDetails,
@@ -429,10 +437,7 @@ const handleChange = async (e) => {
       }
     },
     price: finalTotal,
-    couponApplied: appliedCoupon ? {
-      code: appliedCoupon.code,
-      discount: couponDiscount
-    } : null
+    couponApplied: couponInfo // Use the formatted coupon info
   };
 
   // console.log('Final booking data:', bookingData);
