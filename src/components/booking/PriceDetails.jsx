@@ -204,13 +204,13 @@ export const PriceDetails = ({
   // Subtract both discounts from the subtotal
   const finalTotal = subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
 
-  if (finalTotal === 0) {
-    return (
-      <div className="my-4 text-sm font-bold text-red-500">
-        {t('priceDetails.roomNotAvailable')}
-      </div>
-    );
-  }
+  // if (finalTotal === 0) {
+  //   return (
+  //     <div className="my-4 text-sm font-bold text-red-500">
+  //       {t('priceDetails.roomNotAvailable')}
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="p-4 mt-4 rounded-lg bg-gray-50" style={{ height: "350px", overflow: "scroll" }}>
