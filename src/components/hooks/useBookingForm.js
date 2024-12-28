@@ -512,9 +512,7 @@ const handleApplyCoupon = async (couponCode) => {
     const couponsRef = collection(db, 'coupons');
     const q = query(
       couponsRef, 
-      where('code', '==', couponCode.toUpperCase()),
-      where('status', '==', 'active'),
-      where('usedCount', '<', 1) // Only get coupons that haven't been used
+      where('code', '==', couponCode.toUpperCase())
     );
     
     const querySnapshot = await getDocs(q);
@@ -524,7 +522,19 @@ const handleApplyCoupon = async (couponCode) => {
       return;
     }
 
-    const couponData = querySnapshot.docs[0].data();
+    const couponDoc = querySnapshot.docs[0];
+    const couponData = couponDoc.data();
+    
+    // Then check all conditions manually
+    if (couponData.status !== 'active') {
+      setCouponError("This coupon is not active");
+      return;
+    }
+
+    if (couponData.usedCount && couponData.usedCount > 0) {
+      setCouponError("This coupon has already been used");
+      return;
+    }
     
     // Check if coupon is expired
     const expiryDate = couponData.expiryDate?.toDate();
@@ -547,6 +557,7 @@ const handleApplyCoupon = async (couponCode) => {
 
     // Apply the coupon
     setAppliedCoupon({
+      id: couponDoc.id,
       code: couponCode.toUpperCase(),
       type: couponData.type,
       discount: discountAmount,
