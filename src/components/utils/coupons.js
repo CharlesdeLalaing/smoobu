@@ -198,4 +198,4 @@ export const initializeCoupons = async () => {
   }
 };
 
-initializeCoupons();
+// initializeCoupons();
