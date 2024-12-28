@@ -109,8 +109,13 @@ const BookingConfirmation = () => {
     return '';
   };
 
+  // const formatPrice = (price) => {
+  //   return typeof price === "number" ? price.toFixed(2) : "0.00";
+  // };
+  {/* Update the formatPrice function to handle string values */}
   const formatPrice = (price) => {
-    return typeof price === "number" ? price.toFixed(2) : "0.00";
+    const numberPrice = typeof price === "string" ? parseFloat(price) : price;
+    return typeof numberPrice === "number" ? numberPrice.toFixed(2) : "0.00";
   };
 
   if (status === "loading") {
@@ -290,7 +295,7 @@ const BookingConfirmation = () => {
             )}
 
             {/* Promo code */}
-            {bookingDetails?.couponApplied && (
+            {/* {bookingDetails?.couponApplied && (
               <p className="discount-text">
                 {t(
                   "bookingConfirmation.success.sections.priceDetails.promoCode",
@@ -299,6 +304,21 @@ const BookingConfirmation = () => {
                     amount: formatPrice(bookingDetails.couponApplied.discount),
                   }
                 )}
+              </p>
+            )} */}
+            {/* Promo code */}
+            {bookingDetails?.couponApplied && (
+              <p className="discount-text" style={{ color: '#22c55e' }}> {/* Add green color for discounts */}
+                {bookingDetails.couponApplied.type === 'percentage' 
+                  ? t("bookingConfirmation.success.sections.priceDetails.promoCode", {
+                      code: bookingDetails.couponApplied.code,
+                      amount: formatPrice(Number(bookingDetails.priceBreakdown.couponDiscount))
+                    })
+                  : t("bookingConfirmation.success.sections.priceDetails.promoCode", {
+                      code: bookingDetails.couponApplied.code,
+                      amount: formatPrice(Number(bookingDetails.priceBreakdown.couponDiscount))
+                    })
+                }
               </p>
             )}
             
