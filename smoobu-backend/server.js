@@ -559,6 +559,24 @@ app.post(
             }
           }
 
+          if (bookingData.couponApplied?.id) {
+            try {
+              // Update the coupon in Firebase
+              const couponRef = doc(db, 'coupons', bookingData.couponApplied.id);
+              await updateDoc(couponRef, {
+                status: 'used',
+                usedCount: increment(1),
+                lastUsedDate: new Date().toISOString(),
+                lastUsedBy: bookingData.email // Optional: track who used it
+              });
+              
+              console.log('Coupon marked as used:', bookingData.couponApplied.code);
+            } catch (error) {
+              console.error('Error updating coupon status:', error);
+              // Don't throw error here, allow the booking to complete
+            }
+          }
+
           // Clean up the pending booking after successful processing
           pendingBookings.delete(bookingReference);
           // console.log(

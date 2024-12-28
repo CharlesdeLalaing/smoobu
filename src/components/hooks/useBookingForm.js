@@ -513,7 +513,8 @@ const handleApplyCoupon = async (couponCode) => {
     const q = query(
       couponsRef, 
       where('code', '==', couponCode.toUpperCase()),
-      where('status', '==', 'active')
+      where('status', '==', 'active'),
+      where('usedCount', '<', 1) // Only get coupons that haven't been used
     );
     
     const querySnapshot = await getDocs(q);

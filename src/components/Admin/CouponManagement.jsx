@@ -12,7 +12,10 @@ const CouponManagement = () => {
     discount: '',
     type: 'percentage',
     expiryDate: '',
-    status: 'active'
+    status: 'active',
+    usedCount: 0,
+    lastUsedDate: null,
+    lastUsedBy: null
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -121,22 +124,23 @@ const markCouponAsUsed = async (couponId) => {
 
       <div className="overflow-x-auto bg-white rounded-lg shadow">
         <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Code</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Discount</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Type</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Expiry Date</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
-            </tr>
-          </thead>
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Code</th>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Discount</th>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Type</th>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Expiry Date</th>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Used</th>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
+          </tr>
+        </thead>
           <tbody className="divide-y divide-gray-200">
             {coupons.map((coupon) => (
               <tr key={coupon.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm">{coupon.code}</td>
                 <td className="px-6 py-4 text-sm">
-                  {coupon.discount}{coupon.type === 'percentage' ? '%' : '$'}
+                  {coupon.discount}{coupon.type === 'percentage' ? '%' : '€'}
                 </td>
                 <td className="px-6 py-4 text-sm capitalize">{coupon.type}</td>
                 <td className="px-6 py-4 text-sm">
@@ -146,16 +150,28 @@ const markCouponAsUsed = async (couponId) => {
                 </td>
                 <td className="px-6 py-4 text-sm">
                   <span className={`px-2 py-1 rounded-full text-xs ${
-                    coupon.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    coupon.status === 'active' && (!coupon.usedCount || coupon.usedCount === 0)
+                      ? 'bg-green-100 text-green-800'
+                      : coupon.status === 'used' || coupon.usedCount > 0
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {coupon.status}
+                    {coupon.usedCount > 0 ? 'Used' : coupon.status}
                   </span>
+                </td>
+                <td className="px-6 py-4 text-sm">
+                  {coupon.lastUsedDate ? (
+                    <span title={`Used by: ${coupon.lastUsedBy || 'Unknown'}`}>
+                      {new Date(coupon.lastUsedDate).toLocaleDateString()}
+                    </span>
+                  ) : 'Never'}
                 </td>
                 <td className="px-6 py-4 text-sm">
                   <div className="flex gap-3">
                     <button
                       onClick={() => handleEdit(coupon)}
                       className="text-blue-600 hover:text-blue-800"
+                      disabled={coupon.usedCount > 0}
                     >
                       <Pencil size={16} />
                     </button>
