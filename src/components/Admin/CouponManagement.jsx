@@ -10,12 +10,13 @@ const CouponManagement = () => {
   const [formData, setFormData] = useState({
     code: '',
     discount: '',
-    type: 'percentage',
+    type: 'fixed',
     expiryDate: '',
     status: 'active',
+    currency: 'EUR',
     usedCount: 0,
     lastUsedDate: null,
-    lastUsedBy: null
+    usedBy: []
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -25,18 +26,19 @@ const CouponManagement = () => {
 
   const fetchCoupons = async () => {
     try {
+      console.log('Fetching coupons...');
       const querySnapshot = await getDocs(collection(db, 'coupons'));
       const couponsData = querySnapshot.docs.map(doc => {
         const data = doc.data();
+        console.log('Coupon data:', { id: doc.id, ...data });
         return {
           id: doc.id,
           ...data,
-          expiryDate: data.expiryDate instanceof Timestamp ? 
-            data.expiryDate.toDate() : 
-            data.expiryDate
+          dateCreated: data.dateCreated?.toDate(),
+          expiryDate: data.expiryDate?.toDate(),
+          lastUsedDate: data.lastUsedDate?.toDate()
         };
       });
-      console.log('Fetched coupons:', couponsData);
       setCoupons(couponsData);
     } catch (error) {
       console.error('Error fetching coupons:', error);
@@ -49,11 +51,14 @@ const CouponManagement = () => {
     e.preventDefault();
     const data = {
       ...formData,
+      code: formData.code.toUpperCase(),
+      discount: Number(formData.discount),
+      dateCreated: Timestamp.now(),
       expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
       usedCount: editingCoupon ? formData.usedCount : 0,
-      lastUsedDate: editingCoupon ? formData.lastUsedDate : null,
-      lastUsedBy: editingCoupon ? formData.lastUsedBy : null,
-      status: formData.status
+      lastUsedDate: null,
+      usedBy: [],
+      currency: 'EUR'
     };
     
     try {
@@ -81,11 +86,13 @@ const CouponManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    try {
-      await deleteDoc(doc(db, 'coupons', id));
-      await fetchCoupons();
-    } catch (error) {
-      console.error('Error deleting coupon:', error);
+    if (window.confirm('Are you sure you want to delete this coupon?')) {
+      try {
+        await deleteDoc(doc(db, 'coupons', id));
+        await fetchCoupons();
+      } catch (error) {
+        console.error('Error deleting coupon:', error);
+      }
     }
   };
 
@@ -95,12 +102,22 @@ const CouponManagement = () => {
     setFormData({
       code: '',
       discount: '',
-      type: 'percentage',
+      type: 'fixed',
       expiryDate: '',
       status: 'active',
+      currency: 'EUR',
       usedCount: 0,
       lastUsedDate: null,
-      lastUsedBy: null
+      usedBy: []
+    });
+  };
+
+  const formatDate = (date) => {
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString('fr-BE', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
@@ -128,50 +145,32 @@ const CouponManagement = () => {
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Code</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Discount</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Type</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Expiry Date</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Created</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Expires</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Usage</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Used</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {coupons.map((coupon) => (
               <tr key={coupon.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 text-sm">{coupon.code}</td>
+                <td className="px-6 py-4 text-sm font-medium">{coupon.code}</td>
                 <td className="px-6 py-4 text-sm">
-                  {coupon.discount}{coupon.type === 'percentage' ? '%' : '€'}
+                  {coupon.discount} {coupon.currency}
                 </td>
                 <td className="px-6 py-4 text-sm capitalize">{coupon.type}</td>
-                <td className="px-6 py-4 text-sm">
-                  {coupon.expiryDate instanceof Date ? 
-                    coupon.expiryDate.toLocaleDateString() : 
-                    new Date(coupon.expiryDate).toLocaleDateString()}
-                </td>
+                <td className="px-6 py-4 text-sm">{formatDate(coupon.dateCreated)}</td>
+                <td className="px-6 py-4 text-sm">{formatDate(coupon.expiryDate)}</td>
                 <td className="px-6 py-4 text-sm">
                   <span className={`px-2 py-1 rounded-full text-xs ${
-                    coupon.status === 'active' && (!coupon.usedCount || coupon.usedCount === 0)
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
+                    coupon.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}>
-                    {coupon.usedCount > 0 ? 'Used' : coupon.status}
+                    {coupon.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm">
-                  {coupon.usedCount > 0 ? (
-                    <div>
-                      <div>Used: {coupon.usedCount} time(s)</div>
-                      {coupon.lastUsedDate && (
-                        <div className="text-xs text-gray-500">
-                          Last used: {new Date(coupon.lastUsedDate).toLocaleDateString()}
-                        </div>
-                      )}
-                      {coupon.lastUsedBy && (
-                        <div className="text-xs text-gray-500">
-                          By: {coupon.lastUsedBy}
-                        </div>
-                      )}
-                    </div>
-                  ) : 'Never used'}
+                  {coupon.usedCount || 0} times
                 </td>
                 <td className="px-6 py-4 text-sm">
                   <div className="flex gap-3">
@@ -222,7 +221,7 @@ const CouponManagement = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Discount
+                  Discount Amount (€)
                 </label>
                 <input
                   type="number"
@@ -241,8 +240,8 @@ const CouponManagement = () => {
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="percentage">Percentage</option>
                   <option value="fixed">Fixed Amount</option>
+                  <option value="percentage">Percentage</option>
                 </select>
               </div>
               <div>
