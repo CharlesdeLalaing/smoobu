@@ -26,10 +26,17 @@ const CouponManagement = () => {
   const fetchCoupons = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'coupons'));
-      const couponsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const couponsData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          expiryDate: data.expiryDate instanceof Timestamp ? 
+            data.expiryDate.toDate() : 
+            data.expiryDate
+        };
+      });
+      console.log('Fetched coupons:', couponsData);
       setCoupons(couponsData);
     } catch (error) {
       console.error('Error fetching coupons:', error);
@@ -38,32 +45,38 @@ const CouponManagement = () => {
     }
   };
 
-  // In CouponManagement.jsx
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  const data = {
-    ...formData,
-    expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
-    usedCount: 0, // Track usage
-    lastUsedDate: null
-  };
-  
-  try {
-    if (editingCoupon) {
-      await updateDoc(doc(db, 'coupons', editingCoupon.id), data);
-    } else {
-      await addDoc(collection(db, 'coupons'), data);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const data = {
+      ...formData,
+      expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
+      usedCount: editingCoupon ? formData.usedCount : 0,
+      lastUsedDate: editingCoupon ? formData.lastUsedDate : null,
+      lastUsedBy: editingCoupon ? formData.lastUsedBy : null,
+      status: formData.status
+    };
+    
+    try {
+      if (editingCoupon) {
+        await updateDoc(doc(db, 'coupons', editingCoupon.id), data);
+      } else {
+        await addDoc(collection(db, 'coupons'), data);
+      }
+      await fetchCoupons();
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error:', error);
     }
-    await fetchCoupons();
-    handleCloseModal();
-  } catch (error) {
-    console.error('Error:', error);
-  }
-};
+  };
 
   const handleEdit = (coupon) => {
     setEditingCoupon(coupon);
-    setFormData(coupon);
+    setFormData({
+      ...coupon,
+      expiryDate: coupon.expiryDate instanceof Date 
+        ? coupon.expiryDate.toISOString().split('T')[0]
+        : new Date(coupon.expiryDate).toISOString().split('T')[0]
+    });
     setIsModalOpen(true);
   };
 
@@ -84,26 +97,12 @@ const handleSubmit = async (e) => {
       discount: '',
       type: 'percentage',
       expiryDate: '',
-      status: 'active'
+      status: 'active',
+      usedCount: 0,
+      lastUsedDate: null,
+      lastUsedBy: null
     });
   };
-
-  // Function to mark coupon as used
-const markCouponAsUsed = async (couponId) => {
-  try {
-    const couponRef = doc(db, 'coupons', couponId);
-    await updateDoc(couponRef, {
-      status: 'used',
-      usedCount: increment(1),
-      lastUsedDate: Timestamp.now()
-    });
-    await fetchCoupons();
-  } catch (error) {
-    console.error('Error marking coupon as used:', error);
-  }
-};
-
-
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
@@ -124,17 +123,17 @@ const markCouponAsUsed = async (couponId) => {
 
       <div className="overflow-x-auto bg-white rounded-lg shadow">
         <table className="w-full">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Code</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Discount</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Type</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Expiry Date</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Used</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
-          </tr>
-        </thead>
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Code</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Discount</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Type</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Expiry Date</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Usage</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
+            </tr>
+          </thead>
           <tbody className="divide-y divide-gray-200">
             {coupons.map((coupon) => (
               <tr key={coupon.id} className="hover:bg-gray-50">
@@ -144,27 +143,35 @@ const markCouponAsUsed = async (couponId) => {
                 </td>
                 <td className="px-6 py-4 text-sm capitalize">{coupon.type}</td>
                 <td className="px-6 py-4 text-sm">
-                  {coupon.expiryDate instanceof Timestamp ? 
-                    coupon.expiryDate.toDate().toLocaleDateString() : 
-                    coupon.expiryDate}
+                  {coupon.expiryDate instanceof Date ? 
+                    coupon.expiryDate.toLocaleDateString() : 
+                    new Date(coupon.expiryDate).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 text-sm">
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     coupon.status === 'active' && (!coupon.usedCount || coupon.usedCount === 0)
                       ? 'bg-green-100 text-green-800'
-                      : coupon.status === 'used' || coupon.usedCount > 0
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-yellow-100 text-yellow-800'
+                      : 'bg-red-100 text-red-800'
                   }`}>
                     {coupon.usedCount > 0 ? 'Used' : coupon.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm">
-                  {coupon.lastUsedDate ? (
-                    <span title={`Used by: ${coupon.lastUsedBy || 'Unknown'}`}>
-                      {new Date(coupon.lastUsedDate).toLocaleDateString()}
-                    </span>
-                  ) : 'Never'}
+                  {coupon.usedCount > 0 ? (
+                    <div>
+                      <div>Used: {coupon.usedCount} time(s)</div>
+                      {coupon.lastUsedDate && (
+                        <div className="text-xs text-gray-500">
+                          Last used: {new Date(coupon.lastUsedDate).toLocaleDateString()}
+                        </div>
+                      )}
+                      {coupon.lastUsedBy && (
+                        <div className="text-xs text-gray-500">
+                          By: {coupon.lastUsedBy}
+                        </div>
+                      )}
+                    </div>
+                  ) : 'Never used'}
                 </td>
                 <td className="px-6 py-4 text-sm">
                   <div className="flex gap-3">
@@ -208,7 +215,7 @@ const markCouponAsUsed = async (couponId) => {
                 <input
                   type="text"
                   value={formData.code}
-                  onChange={(e) => setFormData({...formData, code: e.target.value})}
+                  onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
