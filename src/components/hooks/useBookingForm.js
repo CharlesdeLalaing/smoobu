@@ -1,5 +1,10 @@
 import { useState } from "react";
 import { api } from "../utils/api";
+
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../firebase'; // Adjust the import path as needed
+
+
 import { VALID_COUPONS } from "../utils/coupons";
 import { calculateExtrasTotal } from "../utils/booking";
 import { extraCategories } from "../extraCategories"
@@ -348,21 +353,20 @@ const handleChange = async (e) => {
           price: finalTotal,
           basePrice: basePrice,
           extras: selectedExtrasArray,
-          couponApplied: appliedCoupon
-            ? {
-                code: appliedCoupon.code,
-                discount: couponDiscount,
-              }
-            : null,
+          couponApplied: appliedCoupon ? {
+            code: appliedCoupon.code,
+            discount: appliedCoupon.discount,
+            type: appliedCoupon.type
+          } : null,
           priceDetails: {
             ...selectedRoomPrice,
             finalPrice: finalTotal,
             calculatedDiscounts: {
               longStay: longStayDiscount,
-              coupon: couponDiscount,
-            },
-          },
-        },
+              coupon: appliedCoupon ? appliedCoupon.discount : 0
+            }
+          }
+        }
       });
 
       setClientSecret(response.data.clientSecret);
@@ -378,6 +382,8 @@ const handleChange = async (e) => {
       setLoading(false);
     }
   };
+
+
 
   const handlePaymentSuccess = () => {
   const selectedExtrasArray = createSelectedExtrasArray();
@@ -438,53 +444,143 @@ const handleChange = async (e) => {
 };
 
  // useBookingForm.js
-const handleApplyCoupon = (couponCode) => {
-  // console.log('handleApplyCoupon called with:', couponCode);
+// const handleApplyCoupon = (couponCode) => {
+//   // console.log('handleApplyCoupon called with:', couponCode);
+//   setCouponError(null);
+
+//   if (!couponCode) {
+//     // console.log('No coupon code provided');
+//     setCouponError("Veuillez entrer un code promo");
+//     return;
+//   }
+
+//   const couponInfo = VALID_COUPONS[couponCode.toUpperCase()];
+//   // console.log('Found coupon info:', couponInfo);
+
+//   if (!couponInfo) {
+//     // console.log('Invalid coupon code');
+//     setCouponError("Code promo invalide");
+//     return;
+//   }
+
+//   setAppliedCoupon({
+//     code: couponCode.toUpperCase(),
+//     ...couponInfo,
+//   });
+//   // console.log('Applied coupon:', {
+//   //   code: couponCode.toUpperCase(),
+//   //   ...couponInfo,
+//   // });
+
+//   setPriceDetails((prev) => {
+//     const newPriceDetails = {
+//       ...prev,
+//       priceElements: [
+//         ...(prev?.priceElements || []),
+//         {
+//           type: "coupon",
+//           name: `Code promo ${couponCode.toUpperCase()}`,
+//           amount: -couponInfo.discount,
+//           currencyCode: couponInfo.currency,
+//         },
+//       ],
+//     };
+//     // console.log('Updated price details:', newPriceDetails);
+//     return newPriceDetails;
+//   });
+
+//   setCoupon("");
+// };
+
+
+const handleApplyCoupon = async (couponCode) => {
   setCouponError(null);
 
   if (!couponCode) {
-    // console.log('No coupon code provided');
-    setCouponError("Veuillez entrer un code promo");
+    setCouponError("Please enter a coupon code");
     return;
   }
 
-  const couponInfo = VALID_COUPONS[couponCode.toUpperCase()];
-  // console.log('Found coupon info:', couponInfo);
+  try {
+    // Query Firebase for the coupon
+    const couponsRef = collection(db, 'coupons');
+    const q = query(
+      couponsRef, 
+      where('code', '==', couponCode.toUpperCase()),
+      where('status', '==', 'active')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      setCouponError("Invalid or inactive coupon code");
+      return;
+    }
 
-  if (!couponInfo) {
-    // console.log('Invalid coupon code');
-    setCouponError("Code promo invalide");
-    return;
-  }
+    const couponData = querySnapshot.docs[0].data();
+    
+    // Check if coupon is expired
+    const expiryDate = couponData.expiryDate?.toDate();
+    if (expiryDate && expiryDate < new Date()) {
+      setCouponError("This coupon has expired");
+      return;
+    }
 
-  setAppliedCoupon({
-    code: couponCode.toUpperCase(),
-    ...couponInfo,
-  });
-  // console.log('Applied coupon:', {
-  //   code: couponCode.toUpperCase(),
-  //   ...couponInfo,
-  // });
+    // Calculate discount amount based on type
+    let discountAmount = 0;
+    if (couponData.type === 'percentage') {
+      // If selected room price exists, calculate percentage discount
+      if (priceDetails?.[formData.apartmentId]?.finalPrice) {
+        discountAmount = (priceDetails[formData.apartmentId].finalPrice * couponData.discount) / 100;
+      }
+    } else {
+      // Fixed amount discount
+      discountAmount = couponData.discount;
+    }
 
-  setPriceDetails((prev) => {
-    const newPriceDetails = {
-      ...prev,
-      priceElements: [
-        ...(prev?.priceElements || []),
+    // Apply the coupon
+    setAppliedCoupon({
+      code: couponCode.toUpperCase(),
+      type: couponData.type,
+      discount: discountAmount,
+      currency: 'EUR'
+    });
+
+    // Update price details to include coupon discount
+    setPriceDetails((prev) => {
+      if (!prev || !prev[formData.apartmentId]) return prev;
+
+      const currentPriceDetails = prev[formData.apartmentId];
+      const updatedPriceElements = [
+        ...(currentPriceDetails.priceElements || []),
         {
-          type: "coupon",
-          name: `Code promo ${couponCode.toUpperCase()}`,
-          amount: -couponInfo.discount,
-          currencyCode: couponInfo.currency,
-        },
-      ],
-    };
-    // console.log('Updated price details:', newPriceDetails);
-    return newPriceDetails;
-  });
+          type: 'coupon',
+          name: `Coupon discount (${couponCode.toUpperCase()})`,
+          amount: -discountAmount,
+          currencyCode: 'EUR'
+        }
+      ];
 
-  setCoupon("");
+      return {
+        ...prev,
+        [formData.apartmentId]: {
+          ...currentPriceDetails,
+          finalPrice: currentPriceDetails.finalPrice - discountAmount,
+          priceElements: updatedPriceElements
+        }
+      };
+    });
+
+    setCoupon("");
+  } catch (error) {
+    console.error('Error applying coupon:', error);
+    setCouponError("Error validating coupon");
+  }
 };
+
+
+
+
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
