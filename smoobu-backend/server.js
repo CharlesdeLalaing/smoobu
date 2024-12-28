@@ -6,6 +6,8 @@ import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
+
+import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from './firebase-config.js';
 
 
