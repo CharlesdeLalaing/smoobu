@@ -93,12 +93,7 @@
         "coupon": {
           "errors": {
             "enterCode": "Veuillez entrer un code promo",
-            "invalid": "Code promo invalide",
-            "inactive": "Ce code promo n'est pas actif",
-            "used": "Ce code promo a déjà été utilisé",
-            "expired": "Ce code promo a expiré",
-            "noRoom": "Veuillez d'abord sélectionner une chambre",
-            "validation": "Erreur lors de la validation du code promo"
+            "invalid": "Code promo invalide"
           },
           "applied": "Code promo {{code}}",
           "minusZero": "Les totaux inférieurs à 0€ ne seront pas acceptés à la caisse."
@@ -412,8 +407,7 @@
               "basePrice": "Prix de base: {{price}}€",
               "extraPerson": "Personne supplémentaire ({{quantity}}x): {{price}}€",
               "longStayDiscount": "Réduction long séjour ({{percentage}}%): -{{amount}}€",
-              "promoCodePercentage": "Code promo {{code}} ({{percentage}}%): -{{amount}}€",
-              "promoCodeFixed": "Code promo {{code}}: -{{amount}}€",
+              "promoCode": "Code promo ({{code}}): -{{amount}}€",
               "total": "Total: {{price}}€",
               "termsAccepted": "Conditions générales: Acceptée"
             },

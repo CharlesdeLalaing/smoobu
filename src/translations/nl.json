@@ -92,13 +92,8 @@
         },
         "coupon": {
           "errors": {
-            "enterCode": "Voer een promotiecode in",
-            "invalid": "Ongeldige promotiecode",
-            "inactive": "Deze promotiecode is niet actief",
-            "used": "Deze promotiecode is al gebruikt",
-            "expired": "Deze promotiecode is verlopen",
-            "noRoom": "Selecteer eerst een kamer",
-            "validation": "Fout bij het valideren van de promotiecode"
+            "enterCode": "Voer een promocode in",
+            "invalid": "Ongeldige promocode"
           },
           "applied": "Promocode {{code}}",
           "minusZero": "Totalen onder € 0 worden niet geaccepteerd bij het afrekenen."
@@ -412,8 +407,7 @@
               "basePrice": "Basisprijs: {{price}}€",
               "extraPerson": "Extra persoon ({{quantity}}x): {{price}}€",
               "longStayDiscount": "Korting lang verblijf ({{percentage}}%): -{{amount}}€",
-              "promoCodePercentage": "Kortingscode {{code}} ({{percentage}}%): -{{amount}}€",
-              "promoCodeFixed": "Kortingscode {{code}}: -{{amount}}€",
+              "promoCode": "Promocode ({{code}}): -{{amount}}€",
               "total": "Totaal: {{price}}€",
               "termsAccepted": "Algemene voorwaarden: Geaccepteerd"
             },

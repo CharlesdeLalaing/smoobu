@@ -307,8 +307,8 @@ const BookingConfirmation = () => {
               </p>
             )} */}
             {/* Promo code */}
-            {/* {bookingDetails?.couponApplied && (
-              <p className="discount-text" style={{ color: '#22c55e' }}>
+            {bookingDetails?.couponApplied && (
+              <p className="discount-text" style={{ color: '#22c55e' }}> {/* Add green color for discounts */}
                 {bookingDetails.couponApplied.type === 'percentage' 
                   ? t("bookingConfirmation.success.sections.priceDetails.promoCode", {
                       code: bookingDetails.couponApplied.code,
@@ -317,21 +317,6 @@ const BookingConfirmation = () => {
                   : t("bookingConfirmation.success.sections.priceDetails.promoCode", {
                       code: bookingDetails.couponApplied.code,
                       amount: formatPrice(Number(bookingDetails.priceBreakdown.couponDiscount))
-                    })
-                }
-              </p>
-            )} */}
-            {bookingDetails?.couponApplied && (
-              <p className="discount-text" style={{ color: '#22c55e' }}>
-                {bookingDetails.couponApplied.type === 'percentage' 
-                  ? t("bookingConfirmation.success.sections.priceDetails.promoCodePercentage", {
-                      code: bookingDetails.couponApplied.code,
-                      percentage: bookingDetails.couponApplied.originalDiscount,
-                      amount: formatPrice(bookingDetails.priceBreakdown.couponDiscount)
-                    })
-                  : t("bookingConfirmation.success.sections.priceDetails.promoCodeFixed", {
-                      code: bookingDetails.couponApplied.code,
-                      amount: formatPrice(bookingDetails.priceBreakdown.couponDiscount)
                     })
                 }
               </p>

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { api } from "../utils/api";
-import { useTranslation } from "react-i18next";
 
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase'; // Adjust the import path as needed
@@ -12,7 +11,6 @@ import { extraCategories } from "../extraCategories"
 import { useNavigate } from "react-router-dom";
 
 export const useBookingForm = () => {
-  const { t } = useTranslation();
   // Form State
 
   const navigate = useNavigate();
@@ -501,108 +499,11 @@ const handleChange = async (e) => {
 // };
 
 
-// const handleApplyCoupon = async (couponCode) => {
-//   setCouponError(null);
-
-//   if (!couponCode) {
-//     setCouponError("Please enter a coupon code");
-//     return;
-//   }
-
-//   try {
-//     // Query Firebase for the coupon
-//     const couponsRef = collection(db, 'coupons');
-//     const q = query(
-//       couponsRef, 
-//       where('code', '==', couponCode.toUpperCase())
-//     );
-    
-//     const querySnapshot = await getDocs(q);
-    
-//     if (querySnapshot.empty) {
-//       setCouponError("Invalid or inactive coupon code");
-//       return;
-//     }
-
-//     const couponDoc = querySnapshot.docs[0];
-//     const couponData = couponDoc.data();
-    
-//     // Then check all conditions manually
-//     if (couponData.status !== 'active') {
-//       setCouponError("This coupon is not active");
-//       return;
-//     }
-
-//     if (couponData.usedCount && couponData.usedCount > 0) {
-//       setCouponError("This coupon has already been used");
-//       return;
-//     }
-    
-//     // Check if coupon is expired
-//     const expiryDate = couponData.expiryDate?.toDate();
-//     if (expiryDate && expiryDate < new Date()) {
-//       setCouponError("This coupon has expired");
-//       return;
-//     }
-
-//     // Calculate discount amount based on type
-//     let discountAmount = 0;
-//     if (couponData.type === 'percentage') {
-//       // If selected room price exists, calculate percentage discount
-//       if (priceDetails?.[formData.apartmentId]?.finalPrice) {
-//         discountAmount = (priceDetails[formData.apartmentId].finalPrice * couponData.discount) / 100;
-//       }
-//     } else {
-//       // Fixed amount discount
-//       discountAmount = couponData.discount;
-//     }
-
-//     // Apply the coupon
-//     setAppliedCoupon({
-//       id: couponDoc.id,
-//       code: couponCode.toUpperCase(),
-//       type: couponData.type,
-//       discount: discountAmount,
-//       currency: 'EUR'
-//     });
-
-//     // Update price details to include coupon discount
-//     setPriceDetails((prev) => {
-//       if (!prev || !prev[formData.apartmentId]) return prev;
-
-//       const currentPriceDetails = prev[formData.apartmentId];
-//       const updatedPriceElements = [
-//         ...(currentPriceDetails.priceElements || []),
-//         {
-//           type: 'coupon',
-//           name: `Coupon discount (${couponCode.toUpperCase()})`,
-//           amount: -discountAmount,
-//           currencyCode: 'EUR'
-//         }
-//       ];
-
-//       return {
-//         ...prev,
-//         [formData.apartmentId]: {
-//           ...currentPriceDetails,
-//           finalPrice: currentPriceDetails.finalPrice - discountAmount,
-//           priceElements: updatedPriceElements
-//         }
-//       };
-//     });
-
-//     setCoupon("");
-//   } catch (error) {
-//     console.error('Error applying coupon:', error);
-//     setCouponError("Error validating coupon");
-//   }
-// };
-
 const handleApplyCoupon = async (couponCode) => {
   setCouponError(null);
 
   if (!couponCode) {
-    setCouponError(t("booking.coupon.errors.enterCode"));
+    setCouponError("Please enter a coupon code");
     return;
   }
 
@@ -617,14 +518,14 @@ const handleApplyCoupon = async (couponCode) => {
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
-      setCouponError(t("booking.coupon.errors.invalid"));
+      setCouponError("Invalid or inactive coupon code");
       return;
     }
 
     const couponDoc = querySnapshot.docs[0];
     const couponData = couponDoc.data();
     
-    // Validate coupon
+    // Then check all conditions manually
     if (couponData.status !== 'active') {
       setCouponError("This coupon is not active");
       return;
@@ -642,46 +543,16 @@ const handleApplyCoupon = async (couponCode) => {
       return;
     }
 
-    // Calculate current total before discount
-    const selectedRoomPrice = priceDetails?.[formData.apartmentId];
-    if (!selectedRoomPrice) {
-      setCouponError("Please select a room first");
-      return;
-    }
-
-    // Calculate extras total
-    const extrasTotal = Object.entries(selectedExtras)
-      .filter(([_, quantity]) => quantity > 0)
-      .reduce((sum, [extraId, quantity]) => {
-        const isExtraPerson = extraId.endsWith("-extra");
-        const baseExtraId = isExtraPerson ? extraId.replace("-extra", "") : extraId;
-        const extra = Object.values(extraCategories)
-          .flatMap((category) => category.items)
-          .find((item) => item.id === baseExtraId);
-
-        if (!extra) return sum;
-        const price = isExtraPerson ? extra.extraPersonPrice : extra.price;
-        return sum + (price * quantity);
-      }, 0);
-
-    const subtotalBeforeDiscount = selectedRoomPrice.originalPrice + extrasTotal;
-
     // Calculate discount amount based on type
     let discountAmount = 0;
     if (couponData.type === 'percentage') {
-      discountAmount = (subtotalBeforeDiscount * couponData.discount) / 100;
+      // If selected room price exists, calculate percentage discount
+      if (priceDetails?.[formData.apartmentId]?.finalPrice) {
+        discountAmount = (priceDetails[formData.apartmentId].finalPrice * couponData.discount) / 100;
+      }
     } else {
       // Fixed amount discount
       discountAmount = couponData.discount;
-    }
-
-    // Check if discount would make total negative
-    const longStayDiscount = selectedRoomPrice.discount || 0;
-    const finalTotal = subtotalBeforeDiscount - longStayDiscount - discountAmount;
-
-    if (finalTotal < 0) {
-      setCouponError(t("booking.coupon.minusZero"));
-      return;
     }
 
     // Apply the coupon
@@ -689,8 +560,7 @@ const handleApplyCoupon = async (couponCode) => {
       id: couponDoc.id,
       code: couponCode.toUpperCase(),
       type: couponData.type,
-      discount: couponData.type === 'percentage' ? couponData.discount : discountAmount,
-      originalDiscount: couponData.discount, // Store original discount value
+      discount: discountAmount,
       currency: 'EUR'
     });
 
@@ -703,7 +573,7 @@ const handleApplyCoupon = async (couponCode) => {
         ...(currentPriceDetails.priceElements || []),
         {
           type: 'coupon',
-          name: `Code promo (${couponCode.toUpperCase()})${couponData.type === 'percentage' ? ` - ${couponData.discount}%` : ''}`,
+          name: `Coupon discount (${couponCode.toUpperCase()})`,
           amount: -discountAmount,
           currencyCode: 'EUR'
         }
@@ -725,6 +595,7 @@ const handleApplyCoupon = async (couponCode) => {
     setCouponError("Error validating coupon");
   }
 };
+
 
 
 
