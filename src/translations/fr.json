@@ -407,7 +407,8 @@
               "basePrice": "Prix de base: {{price}}€",
               "extraPerson": "Personne supplémentaire ({{quantity}}x): {{price}}€",
               "longStayDiscount": "Réduction long séjour ({{percentage}}%): -{{amount}}€",
-              "promoCode": "Code promo ({{code}}): -{{amount}}€",
+              "promoCodePercentage": "Code promo {{code}} ({{percentage}}%): -{{amount}}€",
+              "promoCodeFixed": "Code promo {{code}}: -{{amount}}€",
               "total": "Total: {{price}}€",
               "termsAccepted": "Conditions générales: Acceptée"
             },

@@ -407,7 +407,8 @@
               "basePrice": "Basisprijs: {{price}}€",
               "extraPerson": "Extra persoon ({{quantity}}x): {{price}}€",
               "longStayDiscount": "Korting lang verblijf ({{percentage}}%): -{{amount}}€",
-              "promoCode": "Promocode ({{code}}): -{{amount}}€",
+              "promoCodePercentage": "Kortingscode {{code}} ({{percentage}}%): -{{amount}}€",
+              "promoCodeFixed": "Kortingscode {{code}}: -{{amount}}€",
               "total": "Totaal: {{price}}€",
               "termsAccepted": "Algemene voorwaarden: Geaccepteerd"
             },
