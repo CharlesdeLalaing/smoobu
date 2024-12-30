@@ -137,6 +137,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useTranslation } from 'react-i18next';
+import { extraCategories } from "../extraCategories";
 
 export const PriceDetails = ({
   priceDetails,

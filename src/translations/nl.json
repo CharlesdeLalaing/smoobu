@@ -92,8 +92,13 @@
         },
         "coupon": {
           "errors": {
-            "enterCode": "Voer een promocode in",
-            "invalid": "Ongeldige promocode"
+            "enterCode": "Voer een promotiecode in",
+            "invalid": "Ongeldige promotiecode",
+            "inactive": "Deze promotiecode is niet actief",
+            "used": "Deze promotiecode is al gebruikt",
+            "expired": "Deze promotiecode is verlopen",
+            "noRoom": "Selecteer eerst een kamer",
+            "validation": "Fout bij het valideren van de promotiecode"
           },
           "applied": "Promocode {{code}}",
           "minusZero": "Totalen onder € 0 worden niet geaccepteerd bij het afrekenen."

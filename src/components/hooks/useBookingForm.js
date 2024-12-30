@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../utils/api";
+import { useTranslation } from "react-i18next";
 
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase'; // Adjust the import path as needed
@@ -11,6 +12,7 @@ import { extraCategories } from "../extraCategories"
 import { useNavigate } from "react-router-dom";
 
 export const useBookingForm = () => {
+  const { t } = useTranslation();
   // Form State
 
   const navigate = useNavigate();
