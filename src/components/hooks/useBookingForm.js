@@ -441,7 +441,7 @@ const handleChange = async (e) => {
   };
 
   // console.log('Final booking data:', bookingData);
-  console.log('Booking data before storage:', bookingData);
+  // console.log('Booking data before storage:', bookingData);
 
   localStorage.setItem("bookingData", JSON.stringify(bookingData));
 

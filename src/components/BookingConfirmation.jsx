@@ -20,9 +20,9 @@ const BookingConfirmation = () => {
       try {
         const parsedData = JSON.parse(storedBookingData);
         // console.log("Parsed booking data:", parsedData);
-        console.log("Parsed booking data:", parsedData);
-        console.log("Coupon info:", parsedData.couponApplied);
-        console.log("Price breakdown:", parsedData.priceBreakdown);
+        // console.log("Parsed booking data:", parsedData);
+        // console.log("Coupon info:", parsedData.couponApplied);
+        // console.log("Price breakdown:", parsedData.priceBreakdown);
         setBookingDetails(parsedData);
         setStatus("success");
         if (parsedData) {
