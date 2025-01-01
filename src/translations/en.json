@@ -339,7 +339,7 @@
             "basePrice": "Base price",
             "longStayDiscount": "Long stay discount",
             "promoCode": {
-                "fixed": "Promo code ({{code}})",
+                "fixed": "Promo code",
                 "percentage": "Promo code ({{code}} - {{value}}%)"
             },
             "subtotal": "Subtotal",

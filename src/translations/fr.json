@@ -340,7 +340,7 @@
         "basePrice": "Prix de base",
         "longStayDiscount": "Réduction long séjour",
         "promoCode": {
-          "fixed": "Code promo ({{code}})",
+          "fixed": "Code promo",
           "percentage": "Code promo ({{code}} - {{value}}%)"
         },
         "subtotal": "Sous-total",

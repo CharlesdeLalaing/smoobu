@@ -340,7 +340,7 @@
         "basePrice": "Basisprijs",
         "longStayDiscount": "Korting voor lang verblijf",
         "promoCode": {
-          "fixed": "Kortingscode ({{code}})",
+          "fixed": "Kortingscode",
           "percentage": "Kortingscode ({{code}} - {{value}}%)"
         },
         "subtotal": "Subtotaal",
