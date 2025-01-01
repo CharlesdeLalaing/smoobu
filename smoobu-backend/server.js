@@ -63,7 +63,7 @@ const sendBookingConfirmation = async (bookingData) => {
 
         <div style="margin: 20px 0;">
           <h2>Détails des prix</h2>
-          <p>Prix de base: ${bookingData.priceBreakdown.basePrice.toFixed(2)} EUR</p>
+          <p>Prix de base: ${bookingData.basePrice.toFixed(2)} EUR</p>
           ${bookingData.extras?.map(extra => `
             <p>${extra.name} (x${extra.quantity}): ${extra.amount.toFixed(2)} EUR</p>
             ${extra.extraPersonQuantity ? `<p>Personne supplémentaire (x${extra.extraPersonQuantity}): ${extra.extraPersonAmount.toFixed(2)} EUR</p>` : ''}
@@ -74,8 +74,8 @@ const sendBookingConfirmation = async (bookingData) => {
           ${bookingData.couponApplied ? 
             `<p style="color: #22c55e;">
               ${bookingData.couponApplied.type === 'percentage' 
-                ? `Code promo (${bookingData.couponApplied.code} - ${bookingData.couponApplied.percentageValue}%): -${bookingData.priceBreakdown.couponDiscount.toFixed(2)} EUR`
-                : `Code promo (${bookingData.couponApplied.code}): -${bookingData.priceBreakdown.couponDiscount.toFixed(2)} EUR`}
+                ? `Code promo (${bookingData.couponApplied.code} - ${bookingData.couponApplied.percentageValue}%): -${(bookingData.couponApplied.discount || 0).toFixed(2)} EUR`
+                : `Code promo (${bookingData.couponApplied.code}): -${(bookingData.couponApplied.discount || 0).toFixed(2)} EUR`}
             </p>` 
             : ''}
           <p style="font-weight: bold; margin-top: 10px;">Total: ${bookingData.price.toFixed(2)} EUR</p>
