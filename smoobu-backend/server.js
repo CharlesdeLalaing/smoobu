@@ -543,7 +543,7 @@ app.post(
           try {
             const docRef = await db.collection('bookings').add(bookingDoc);
             console.log('Booking stored in Firebase with ID:', docRef.id);
-            
+
             await sendBookingConfirmation(bookingDoc);
           } catch (firebaseError) {
             console.error('Error storing in Firebase:', firebaseError);
@@ -1061,6 +1061,7 @@ app.post('/api/test-email', async (req, res) => {
       html: '<h1>Test booking confirmation</h1><p>This is a test email.</p>'
     });
     res.json({ success: true });
+    console.error('Email test worked:');
   } catch (error) {
     console.error('Email test failed:', error);
     res.status(500).json({ error: error.message });
