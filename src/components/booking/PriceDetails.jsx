@@ -374,11 +374,22 @@ export const PriceDetails = ({
       )}
 
       {/* Coupon discount */}
-      {couponDiscount > 0 && (
+      {/* {couponDiscount > 0 && (
         <div className="flex items-center justify-between text-green-600">
           <span>
             {t('priceDetails.promoCode')} ({appliedCoupon.code})
             {appliedCoupon.type === 'percentage' ? ` (${appliedCoupon.percentageValue}%)` : ''}
+          </span>
+          <span>-{couponDiscount.toFixed(2)} EUR</span>
+        </div>
+      )} */}
+      {couponDiscount > 0 && (
+        <div className="flex items-center justify-between text-green-600">
+          <span>
+            {appliedCoupon.type === 'percentage' 
+              ? `${t('priceDetails.promoCode')} (${appliedCoupon.code} - ${appliedCoupon.percentageValue}%)`
+              : `${t('priceDetails.promoCode')} (${appliedCoupon.code})`
+            }
           </span>
           <span>-{couponDiscount.toFixed(2)} EUR</span>
         </div>
