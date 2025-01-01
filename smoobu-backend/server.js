@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
 import Stripe from 'stripe';
+import nodemailer from 'nodemailer';
 import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -28,6 +29,15 @@ app.options('/webhook', cors());
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const pendingBookings = new Map();
+
+// After imports, with other configurations
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
 
 // Discount settings
 const discountSettings = {
@@ -967,5 +977,21 @@ app.get('/api/bookings-history/:email', async (req, res) => {
       error: 'Failed to fetch bookings',
       message: error.message,
     });
+  }
+});
+
+
+app.post('/api/test-email', async (req, res) => {
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER, // Send to yourself first
+      subject: 'Test Email',
+      html: '<h1>Test booking confirmation</h1><p>This is a test email.</p>'
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Email test failed:', error);
+    res.status(500).json({ error: error.message });
   }
 });
