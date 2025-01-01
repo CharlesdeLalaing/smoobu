@@ -39,6 +39,75 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Add this function near the top with other helpers
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString('fr-BE', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+};
+
+const sendBookingConfirmation = async (bookingData) => {
+  try {
+    const emailContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1>Confirmation de réservation - Ferme de Basseilles</h1>
+        
+        <div style="margin: 20px 0;">
+          <h2>Détails du séjour</h2>
+          <p>Arrivée: ${formatDate(bookingData.arrivalDate)} à ${bookingData.arrivalTime}</p>
+          <p>Départ: ${formatDate(bookingData.departureDate)}</p>
+          <p>Voyageurs: ${bookingData.adults} adultes${bookingData.children ? `, ${bookingData.children} enfants` : ''}</p>
+        </div>
+
+        <div style="margin: 20px 0;">
+          <h2>Détails des prix</h2>
+          <p>Prix de base: ${bookingData.priceBreakdown.basePrice.toFixed(2)} EUR</p>
+          ${bookingData.extras?.map(extra => `
+            <p>${extra.name} (x${extra.quantity}): ${extra.amount.toFixed(2)} EUR</p>
+            ${extra.extraPersonQuantity ? `<p>Personne supplémentaire (x${extra.extraPersonQuantity}): ${extra.extraPersonAmount.toFixed(2)} EUR</p>` : ''}
+          `).join('')}
+          ${bookingData.priceDetails?.discount ? 
+            `<p style="color: #22c55e;">Réduction long séjour (${bookingData.priceDetails.settings.lengthOfStayDiscount.discountPercentage}%): -${bookingData.priceDetails.discount.toFixed(2)} EUR</p>` 
+            : ''}
+          ${bookingData.couponApplied ? 
+            `<p style="color: #22c55e;">
+              ${bookingData.couponApplied.type === 'percentage' 
+                ? `Code promo (${bookingData.couponApplied.code} - ${bookingData.couponApplied.percentageValue}%): -${bookingData.priceBreakdown.couponDiscount.toFixed(2)} EUR`
+                : `Code promo (${bookingData.couponApplied.code}): -${bookingData.priceBreakdown.couponDiscount.toFixed(2)} EUR`}
+            </p>` 
+            : ''}
+          <p style="font-weight: bold; margin-top: 10px;">Total: ${bookingData.price.toFixed(2)} EUR</p>
+        </div>
+
+        <div style="margin: 20px 0;">
+          <h2>Coordonnées</h2>
+          <p>${bookingData.firstName} ${bookingData.lastName}</p>
+          <p>Email: ${bookingData.email}</p>
+          ${bookingData.phone ? `<p>Téléphone: ${bookingData.phone}</p>` : ''}
+        </div>
+
+        <div style="margin-top: 30px;">
+          <p>À bientôt!</p>
+          <p>L'équipe de la Ferme de Basseilles</p>
+        </div>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: bookingData.email,
+      subject: 'Confirmation de réservation - Ferme de Basseilles',
+      html: emailContent
+    });
+
+    console.log('Confirmation email sent to:', bookingData.email);
+  } catch (error) {
+    console.error('Error sending confirmation email:', error);
+  }
+};
+
 // Discount settings
 const discountSettings = {
   1946282: {
@@ -474,6 +543,8 @@ app.post(
           try {
             const docRef = await db.collection('bookings').add(bookingDoc);
             console.log('Booking stored in Firebase with ID:', docRef.id);
+            
+            await sendBookingConfirmation(bookingDoc);
           } catch (firebaseError) {
             console.error('Error storing in Firebase:', firebaseError);
             // Continue with the rest of the booking process even if Firebase storage fails
