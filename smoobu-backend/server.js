@@ -451,6 +451,14 @@ app.post(
                   return translatedExtra;
                 })
               : [],
+              appliedCoupon: bookingData.couponApplied ? {
+              code: bookingData.couponApplied.code,
+              type: bookingData.couponApplied.type,
+              discount: bookingData.couponApplied.discount,
+              percentageValue: bookingData.couponApplied.type === 'percentage' 
+                ? bookingData.couponApplied.percentageValue 
+                : null
+            } : null
           };
 
           try {

@@ -338,7 +338,10 @@
             "title": "Price details:",
             "basePrice": "Base price",
             "longStayDiscount": "Long stay discount",
-            "promoCode": "Promo code",
+            "promoCode": {
+                "fixed": "Promo code ({{code}})",
+                "percentage": "Promo code ({{code}} - {{value}}%)"
+            },
             "subtotal": "Subtotal",
             "totalDiscounts": "Total discounts",
             "total": "Total",
@@ -408,7 +411,9 @@
                 "longStayDiscount": "Long stay discount ({{percentage}}%): -{{amount}}€",
                 "promoCode": "Promo code ({{code}}): -{{amount}}€",
                 "total": "Total: {{price}}€",
-                "termsAccepted": "General conditions: Accepted"
+                "termsAccepted": "General conditions: Accepted",
+                "promoCodeFixed": "Promo code ({{code}}): -{{amount}}€",
+                "promoCodePercentage": "Promo code ({{code}} - {{value}}%): -{{amount}}€"
             },
             "address": {
                 "title": "Address"

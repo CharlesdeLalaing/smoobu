@@ -339,7 +339,10 @@
         "title": "Prijsdetails:",
         "basePrice": "Basisprijs",
         "longStayDiscount": "Korting voor lang verblijf",
-        "promoCode": "Promocode",
+        "promoCode": {
+          "fixed": "Kortingscode ({{code}})",
+          "percentage": "Kortingscode ({{code}} - {{value}}%)"
+        },
         "subtotal": "Subtotaal",
         "totalDiscounts": "Totale kortingen",
         "total": "Totaal",
@@ -409,7 +412,9 @@
               "longStayDiscount": "Korting lang verblijf ({{percentage}}%): -{{amount}}€",
               "promoCode": "Promocode ({{code}}): -{{amount}}€",
               "total": "Totaal: {{price}}€",
-              "termsAccepted": "Algemene voorwaarden: Geaccepteerd"
+              "termsAccepted": "Algemene voorwaarden: Geaccepteerd",
+              "promoCodeFixed": "Kortingscode ({{code}}): -{{amount}}€",
+              "promoCodePercentage": "Kortingscode ({{code}} - {{value}}%): -{{amount}}€"
             },
             "address": {
               "title": "Adres"
