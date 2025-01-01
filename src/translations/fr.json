@@ -341,7 +341,7 @@
         "longStayDiscount": "Réduction long séjour",
         "promoCode": {
           "fixed": "Code promo",
-          "percentage": "Code promo ({{code}} - {{value}}%)"
+          "percentage": "Code promo"
         },
         "subtotal": "Sous-total",
         "totalDiscounts": "Total des réductions",

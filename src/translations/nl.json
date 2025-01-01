@@ -341,7 +341,7 @@
         "longStayDiscount": "Korting voor lang verblijf",
         "promoCode": {
           "fixed": "Kortingscode",
-          "percentage": "Kortingscode ({{code}} - {{value}}%)"
+          "percentage": "Kortingscode"
         },
         "subtotal": "Subtotaal",
         "totalDiscounts": "Totale kortingen",

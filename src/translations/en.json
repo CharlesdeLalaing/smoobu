@@ -340,7 +340,7 @@
             "longStayDiscount": "Long stay discount",
             "promoCode": {
                 "fixed": "Promo code",
-                "percentage": "Promo code ({{code}} - {{value}}%)"
+                "percentage": "Promo code"
             },
             "subtotal": "Subtotal",
             "totalDiscounts": "Total discounts",
