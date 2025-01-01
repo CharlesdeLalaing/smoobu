@@ -387,8 +387,8 @@ export const PriceDetails = ({
         <div className="flex items-center justify-between text-green-600">
           <span>
             {appliedCoupon.type === 'percentage' 
-              ? `${t('priceDetails.promoCode')} (${appliedCoupon.code} - ${appliedCoupon.percentageValue}%)`
-              : `${t('priceDetails.promoCode')} (${appliedCoupon.code})`
+              ? `${t('priceDetails.promoCode.percentage')} (${appliedCoupon.code} - ${appliedCoupon.percentageValue}%)`
+              : `${t('priceDetails.promoCode.fixed')} (${appliedCoupon.code})`
             }
           </span>
           <span>-{couponDiscount.toFixed(2)} EUR</span>
