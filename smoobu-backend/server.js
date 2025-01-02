@@ -12,8 +12,13 @@ import {
   doc, 
   updateDoc, 
   increment, 
-  arrayUnion 
+  arrayUnion,
+  collection,
+  query,
+  where,
+  getDocs 
 } from 'firebase/firestore';
+
 import { db } from './firebase-config.js';
 
 
@@ -937,41 +942,53 @@ app.post(
           }
 
           // Update coupon if one was used
-          if (bookingData.couponApplied?.id) {
-            console.log('🟨 Attempting to update coupon:', {
-              couponId: bookingData.couponApplied.id,
-              code: bookingData.couponApplied.code
+          if (bookingData.couponApplied?.code) {  // Changed from .id to .code since that's what we have
+            console.log('🟨 Starting coupon update process:', {
+              couponCode: bookingData.couponApplied.code,
+              couponData: bookingData.couponApplied
             });
-            
+          
             try {
-              const couponRef = doc(db, 'coupons', bookingData.couponApplied.id);
-              
-              const usageRecord = {
-                email: bookingData.email,
-                name: `${bookingData.firstName} ${bookingData.lastName}`,
-                bookingAmount: bookingData.price,
-                usageDate: new Date().toISOString(),
-                discountApplied: bookingData.couponApplied.discount
-              };
-
-              await updateDoc(couponRef, {
-                status: 'inactive',
-                usedCount: increment(1),
-                lastUsedDate: new Date().toISOString(),
-                lastUsedBy: bookingData.email,
-                usageHistory: arrayUnion(usageRecord),
-                updatedAt: new Date().toISOString()
-              });
-              
-              console.log('🟩 Coupon status updated successfully:', {
-                code: bookingData.couponApplied.code,
-                status: 'inactive'
-              });
+              // First, query to get the coupon document
+              const couponsRef = collection(db, 'coupons');
+              const q = query(couponsRef, where('code', '==', bookingData.couponApplied.code));
+              const querySnapshot = await getDocs(q);
+          
+              if (!querySnapshot.empty) {
+                const couponDoc = querySnapshot.docs[0];
+                console.log('🟨 Found coupon document:', couponDoc.id);
+          
+                const usageRecord = {
+                  email: bookingData.email,
+                  name: `${bookingData.firstName} ${bookingData.lastName}`,
+                  bookingAmount: bookingData.price,
+                  usageDate: new Date().toISOString(),
+                  discountApplied: bookingData.couponApplied.discount
+                };
+          
+                const couponRef = doc(db, 'coupons', couponDoc.id);
+                await updateDoc(couponRef, {
+                  status: 'inactive',
+                  usedCount: increment(1),
+                  lastUsedDate: new Date().toISOString(),
+                  lastUsedBy: bookingData.email,
+                  usageHistory: arrayUnion(usageRecord),
+                  updatedAt: new Date().toISOString()
+                });
+                
+                console.log('🟩 Coupon update successful:', {
+                  couponId: couponDoc.id,
+                  code: bookingData.couponApplied.code,
+                  newStatus: 'inactive'
+                });
+              } else {
+                console.error('🟥 Coupon document not found for code:', bookingData.couponApplied.code);
+              }
             } catch (error) {
               console.error('🟥 Error updating coupon:', {
                 error: error.message,
                 stack: error.stack,
-                couponId: bookingData.couponApplied.id
+                couponData: bookingData.couponApplied
               });
             }
           }
