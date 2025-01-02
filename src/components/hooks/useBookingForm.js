@@ -437,7 +437,12 @@ const handleChange = async (e) => {
       }
     },
     price: finalTotal,
-    couponApplied: couponInfo // Use the formatted coupon info
+    couponApplied: appliedCoupon ? {
+      id: appliedCoupon.id,
+      code: appliedCoupon.code,
+      discount: appliedCoupon.discount,
+      type: appliedCoupon.type
+    } : null,
   };
 
   // console.log('Final booking data:', bookingData);

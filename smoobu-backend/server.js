@@ -8,7 +8,12 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { 
+  doc, 
+  updateDoc, 
+  increment, 
+  arrayUnion 
+} from 'firebase/firestore';
 import { db } from './firebase-config.js';
 
 
@@ -650,21 +655,59 @@ app.post(
             }
           }
 
+          // if (bookingData.couponApplied?.id) {
+          //   try {
+          //     // Update the coupon in Firebase
+          //     const couponRef = doc(db, 'coupons', bookingData.couponApplied.id);
+          //     await updateDoc(couponRef, {
+          //       status: 'used',
+          //       usedCount: increment(1),
+          //       lastUsedDate: new Date().toISOString(),
+          //       lastUsedBy: bookingData.email // Optional: track who used it
+          //     });
+              
+          //     console.log('Coupon marked as used:', bookingData.couponApplied.code);
+          //   } catch (error) {
+          //     console.error('Error updating coupon status:', error);
+          //     // Don't throw error here, allow the booking to complete
+          //   }
+          // }
+
+          // FIXED IMPLEMENTATION:
           if (bookingData.couponApplied?.id) {
             try {
-              // Update the coupon in Firebase
               const couponRef = doc(db, 'coupons', bookingData.couponApplied.id);
+              
+              // Create a more complete usage record
+              const usageRecord = {
+                email: bookingData.email,
+                name: `${bookingData.firstName} ${bookingData.lastName}`,
+                bookingAmount: bookingData.price,
+                usageDate: new Date().toISOString(),
+                discountApplied: bookingData.couponApplied.discount
+              };
+
               await updateDoc(couponRef, {
-                status: 'used',
+                status: 'inactive', // Changed to match UI expectations
                 usedCount: increment(1),
                 lastUsedDate: new Date().toISOString(),
-                lastUsedBy: bookingData.email // Optional: track who used it
+                lastUsedBy: bookingData.email,
+                usageHistory: arrayUnion(usageRecord), // Add to usage history array
+                updatedAt: new Date().toISOString()
               });
               
-              console.log('Coupon marked as used:', bookingData.couponApplied.code);
+              console.log('Coupon status updated successfully:', {
+                code: bookingData.couponApplied.code,
+                userId: bookingData.email,
+                status: 'inactive'
+              });
             } catch (error) {
-              console.error('Error updating coupon status:', error);
-              // Don't throw error here, allow the booking to complete
+              console.error('Error updating coupon status:', {
+                couponId: bookingData.couponApplied.id,
+                error: error.message,
+                stack: error.stack
+              });
+              // Still allow booking to complete but log detailed error
             }
           }
 
