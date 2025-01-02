@@ -612,7 +612,7 @@ const handleApplyCoupon = async (couponCode) => {
 
   try {
     // Query Firebase for the coupon
-    const couponsRef = collection(db, 'coupons');
+    const couponsRef = collection(db2, 'coupons');
     const q = query(
       couponsRef, 
       where('code', '==', couponCode.toUpperCase())

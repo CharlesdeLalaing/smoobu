@@ -1,5 +1,5 @@
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db2 } from '../../firebase';
 
 
 export const VALID_COUPONS = {
@@ -180,7 +180,7 @@ export const initializeCoupons = async () => {
   try {
     const batch = [];
     for (const [code, details] of Object.entries(VALID_COUPONS)) {
-      batch.push(addDoc(collection(db, 'coupons'), {
+      batch.push(addDoc(collection(db2, 'coupons'), {
         code,
         ...details,
         status: 'active',
