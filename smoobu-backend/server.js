@@ -869,6 +869,29 @@ app.post(
           const reservationId = smoobuResponse.data.id;
           await wait(2000);
 
+          // First add base price
+          try {
+            await axios.post(
+              `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+              {
+                type: 'base',
+                name: 'Prix de base',
+                amount: bookingData.basePrice,
+                quantity: 1,
+                currencyCode: 'EUR'
+              },
+              {
+                headers: {
+                  'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            await wait(1000);
+          } catch (error) {
+            console.error('🟥 Failed to add base price:', error);
+          }
+
           // Process extras if they exist
           if (bookingData.extras && bookingData.extras.length > 0) {
             for (const extra of bookingData.extras) {
@@ -904,10 +927,10 @@ app.post(
                         },
                       }
                     );
+                    await wait(1000);
                   }
 
                   if (extra.extraPersonQuantity > 0 && extra.extraPersonPrice) {
-                    await wait(1000);
                     await axios.post(
                       `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
                       {
@@ -925,6 +948,7 @@ app.post(
                         },
                       }
                     );
+                    await wait(1000);
                   }
 
                   break;
@@ -940,6 +964,155 @@ app.post(
               }
             }
           }
+
+          // Add coupon discount if exists
+          if (bookingData.couponApplied) {
+            let retryCount = 0;
+            const maxRetries = 3;
+
+            while (retryCount < maxRetries) {
+              try {
+                const couponName = bookingData.couponApplied.type === 'percentage' 
+                  ? `Code promo: ${bookingData.couponApplied.code} (-${bookingData.couponApplied.percentageValue}%)`
+                  : `Code promo: ${bookingData.couponApplied.code}`;
+                  
+                await axios.post(
+                  `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+                  {
+                    type: 'discount',
+                    name: couponName,
+                    amount: -bookingData.couponApplied.discount, // Negative amount for discount
+                    quantity: 1,
+                    currencyCode: 'EUR'
+                  },
+                  {
+                    headers: {
+                      'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+                      'Content-Type': 'application/json'
+                    }
+                  }
+                );
+                await wait(1000);
+                break;
+              } catch (couponError) {
+                retryCount++;
+                if (retryCount === maxRetries) {
+                  console.error('🟥 Failed to add coupon discount:', couponError);
+                } else {
+                  await wait(2000 * retryCount);
+                  continue;
+                }
+              }
+            }
+          }
+
+          // Add long stay discount if applicable
+          if (bookingData.priceDetails?.discount > 0) {
+            let retryCount = 0;
+            const maxRetries = 3;
+
+            while (retryCount < maxRetries) {
+              try {
+                await axios.post(
+                  `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+                  {
+                    type: 'discount',
+                    name: `Réduction long séjour (${bookingData.priceDetails.settings.lengthOfStayDiscount.discountPercentage}%)`,
+                    amount: -bookingData.priceDetails.discount,
+                    quantity: 1,
+                    currencyCode: 'EUR'
+                  },
+                  {
+                    headers: {
+                      'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+                      'Content-Type': 'application/json'
+                    }
+                  }
+                );
+                break;
+              } catch (discountError) {
+                retryCount++;
+                if (retryCount === maxRetries) {
+                  console.error('🟥 Failed to add long stay discount:', discountError);
+                } else {
+                  await wait(2000 * retryCount);
+                  continue;
+                }
+              }
+            }
+          }
+
+          // Process extras if they exist
+          // if (bookingData.extras && bookingData.extras.length > 0) {
+          //   for (const extra of bookingData.extras) {
+          //     let retryCount = 0;
+          //     const maxRetries = 3;
+
+          //     while (retryCount < maxRetries) {
+          //       try {
+          //         const processedName = {
+          //           nameKey: extra.name.startsWith('extras.')
+          //             ? extra.name
+          //             : null,
+          //           name: extra.name.startsWith('extras.')
+          //             ? extrasFrenchNames[extra.name]
+          //             : extra.name,
+          //         };
+
+          //         if (!processedName.name.includes('Personne supplémentaire')) {
+          //           await axios.post(
+          //             `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+          //             {
+          //               type: 'addon',
+          //               name: processedName.name,
+          //               nameKey: processedName.nameKey,
+          //               amount: extra.amount,
+          //               quantity: extra.quantity,
+          //               currencyCode: 'EUR',
+          //             },
+          //             {
+          //               headers: {
+          //                 'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+          //                 'Content-Type': 'application/json',
+          //               },
+          //             }
+          //           );
+          //         }
+
+          //         if (extra.extraPersonQuantity > 0 && extra.extraPersonPrice) {
+          //           await wait(1000);
+          //           await axios.post(
+          //             `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+          //             {
+          //               type: 'addon',
+          //               name: `${processedName.name} - ${extrasFrenchNames['extras.additionalPerson']}`,
+          //               nameKey: 'extras.additionalPerson',
+          //               amount: extra.extraPersonPrice * extra.extraPersonQuantity,
+          //               quantity: extra.extraPersonQuantity,
+          //               currencyCode: 'EUR',
+          //             },
+          //             {
+          //               headers: {
+          //                 'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+          //                 'Content-Type': 'application/json',
+          //               },
+          //             }
+          //           );
+          //         }
+
+          //         break;
+          //       } catch (extraError) {
+          //         retryCount++;
+          //         if (retryCount === maxRetries) {
+          //           console.error('🟥 Failed to add extra:', extraError);
+          //         } else {
+          //           await wait(2000 * retryCount);
+          //           continue;
+          //         }
+          //       }
+          //     }
+          //   }
+          // }
 
           // Update coupon if one was used
           // if (bookingData.couponApplied?.code) {  // Changed from .id to .code since that's what we have
@@ -994,55 +1167,55 @@ app.post(
           // }
 
           // Inside your webhook handler where the coupon update happens:
-          if (bookingData.couponApplied?.code) {
-            console.log('🟨 Starting coupon update process:', {
-              couponCode: bookingData.couponApplied.code,
-              couponData: bookingData.couponApplied
-            });
+          // if (bookingData.couponApplied?.code) {
+          //   console.log('🟨 Starting coupon update process:', {
+          //     couponCode: bookingData.couponApplied.code,
+          //     couponData: bookingData.couponApplied
+          //   });
 
-            try {
-              const couponsRef = db.collection('coupons');
-              const couponQuery = await couponsRef
-                .where('code', '==', bookingData.couponApplied.code)
-                .get();
+          //   try {
+          //     const couponsRef = db.collection('coupons');
+          //     const couponQuery = await couponsRef
+          //       .where('code', '==', bookingData.couponApplied.code)
+          //       .get();
 
-              if (!couponQuery.empty) {
-                const couponDoc = couponQuery.docs[0];
-                console.log('🟨 Found coupon document:', couponDoc.id);
+          //     if (!couponQuery.empty) {
+          //       const couponDoc = couponQuery.docs[0];
+          //       console.log('🟨 Found coupon document:', couponDoc.id);
 
-                const usageRecord = {
-                  email: bookingData.email,
-                  name: `${bookingData.firstName} ${bookingData.lastName}`,
-                  bookingAmount: bookingData.price,
-                  usageDate: new Date().toISOString(),
-                  discountApplied: bookingData.couponApplied.discount
-                };
+          //       const usageRecord = {
+          //         email: bookingData.email,
+          //         name: `${bookingData.firstName} ${bookingData.lastName}`,
+          //         bookingAmount: bookingData.price,
+          //         usageDate: new Date().toISOString(),
+          //         discountApplied: bookingData.couponApplied.discount
+          //       };
 
-                await couponDoc.ref.update({
-                  status: 'inactive',
-                  usedCount: FieldValue.increment(1),
-                  lastUsedDate: new Date().toISOString(),
-                  lastUsedBy: bookingData.email,
-                  usageHistory: FieldValue.arrayUnion(usageRecord),
-                  updatedAt: new Date().toISOString()
-                });
+          //       await couponDoc.ref.update({
+          //         status: 'inactive',
+          //         usedCount: FieldValue.increment(1),
+          //         lastUsedDate: new Date().toISOString(),
+          //         lastUsedBy: bookingData.email,
+          //         usageHistory: FieldValue.arrayUnion(usageRecord),
+          //         updatedAt: new Date().toISOString()
+          //       });
                 
-                console.log('🟩 Coupon update successful:', {
-                  couponId: couponDoc.id,
-                  code: bookingData.couponApplied.code,
-                  newStatus: 'inactive'
-                });
-              } else {
-                console.error('🟥 Coupon document not found for code:', bookingData.couponApplied.code);
-              }
-            } catch (error) {
-              console.error('🟥 Error updating coupon:', {
-                error: error.message,
-                stack: error.stack,
-                couponData: bookingData.couponApplied
-              });
-            }
-          }
+          //       console.log('🟩 Coupon update successful:', {
+          //         couponId: couponDoc.id,
+          //         code: bookingData.couponApplied.code,
+          //         newStatus: 'inactive'
+          //       });
+          //     } else {
+          //       console.error('🟥 Coupon document not found for code:', bookingData.couponApplied.code);
+          //     }
+          //   } catch (error) {
+          //     console.error('🟥 Error updating coupon:', {
+          //       error: error.message,
+          //       stack: error.stack,
+          //       couponData: bookingData.couponApplied
+          //     });
+          //   }
+          // }
 
           pendingBookings.delete(bookingReference);
           console.log('🟩 Booking process completed successfully');
@@ -1286,20 +1459,95 @@ app.post('/api/create-payment-intent', async (req, res) => {
     // console.log('Stored booking data with extras:', bookingData);
 
     // Create payment intent with total price (including extras and discounts)
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(price * 100), // Convert to cents
-      currency: 'eur',
-      automatic_payment_methods: {
-        enabled: true,
-      },
-      metadata: {
-        bookingReference: bookingReference,
-        basePrice: bookingData.basePrice.toString(),
-        extrasTotal: (price - bookingData.basePrice).toString(),
-        longStayDiscount: bookingData.priceDetails.discount.toString(),
-        couponDiscount: (bookingData.couponApplied?.discount || '0').toString(),
-      },
-    });
+    // const paymentIntent = await stripe.paymentIntents.create({
+    //   amount: Math.round(price * 100), // Convert to cents
+    //   currency: 'eur',
+    //   automatic_payment_methods: {
+    //     enabled: true,
+    //   },
+    //   metadata: {
+    //     bookingReference: bookingReference,
+    //     basePrice: bookingData.basePrice.toString(),
+    //     extrasTotal: (price - bookingData.basePrice).toString(),
+    //     longStayDiscount: bookingData.priceDetails.discount.toString(),
+    //     couponDiscount: (bookingData.couponApplied?.discount || '0').toString(),
+    //   },
+    // });
+
+    // const paymentIntent = await stripe.paymentIntents.create({
+    //   amount: Math.round(price * 100), // Convert to cents
+    //   currency: 'eur',
+    //   automatic_payment_methods: {
+    //     enabled: true,
+    //   },
+    //   description: `Booking ${bookingReference}: ${bookingData.roomName || 'Room'} (${bookingData.checkIn} - ${bookingData.checkOut})`,
+    //   metadata: {
+    //     bookingReference: bookingReference,
+    //     basePrice: bookingData.basePrice.toString(),
+    //     extrasTotal: (price - bookingData.basePrice).toString(),
+    //     longStayDiscount: bookingData.priceDetails.discount.toString(),
+    //     couponDiscount: (bookingData.couponApplied?.discount || '0').toString(),
+    //     // Add these additional fields
+    //     checkIn: bookingData.checkIn,
+    //     checkOut: bookingData.checkOut,
+    //     guestName: bookingData.guestName,
+    //     guestEmail: bookingData.guestEmail,
+    //     roomName: bookingData.roomName,
+    //     // If you have itemized extras, you can include them as a JSON string
+    //     extras: JSON.stringify(bookingData.extras),
+    //   },
+    // });
+
+    // For Stripe payment intent creation
+const paymentIntent = await stripe.paymentIntents.create({
+  amount: Math.round(price * 100),
+  currency: 'eur',
+  automatic_payment_methods: {
+    enabled: true,
+  },
+  description: `Réservation: ${bookingData.roomName} (${bookingData.arrivalDate} - ${bookingData.departureDate})`,
+  metadata: {
+    // Booking identification
+    bookingReference: bookingReference,
+    smoobuApartmentId: bookingData.apartmentId,
+    
+    // Guest information
+    guestName: `${bookingData.firstName} ${bookingData.lastName}`,
+    guestEmail: bookingData.email,
+    guestPhone: bookingData.phone || '',
+    adults: bookingData.adults.toString(),
+    children: bookingData.children.toString(),
+    
+    // Dates
+    arrivalDate: bookingData.arrivalDate,
+    departureDate: bookingData.departureDate,
+    arrivalTime: bookingData.arrivalTime,
+    
+    // Price breakdown
+    basePrice: bookingData.basePrice.toString(),
+    extrasTotal: (price - bookingData.basePrice).toString(),
+    longStayDiscount: bookingData.priceDetails.discount.toString(),
+    couponDiscount: (bookingData.couponApplied?.discount || '0').toString(),
+    totalPrice: price.toString(),
+    
+    // Extras summary (compact version)
+    extrasCount: bookingData.extras ? bookingData.extras.length.toString() : '0',
+    extrasSummary: bookingData.extras ? 
+      JSON.stringify(bookingData.extras.map(e => ({
+        name: e.name,
+        qty: e.quantity,
+        amount: e.amount
+      }))) : '',
+      
+    // Coupon information if applied
+    couponCode: bookingData.couponApplied?.code || '',
+    couponType: bookingData.couponApplied?.type || '',
+    
+    // Additional booking details
+    notice: bookingData.notice || '',
+    channelId: bookingData.channelId.toString()
+  }
+});
 
     // console.log('Created payment intent:', paymentIntent.id);
 
