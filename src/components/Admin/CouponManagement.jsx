@@ -24,21 +24,45 @@ const CouponManagement = () => {
     fetchCoupons();
   }, []);
 
+  // Add this helper function to safely handle date conversion
+  const convertToDate = (timestamp) => {
+    if (!timestamp) return null;
+    // Check if it's a Firebase Timestamp
+    if (timestamp?.toDate) {
+      return timestamp.toDate();
+    }
+    // Check if it's a string date
+    if (typeof timestamp === 'string') {
+      return new Date(timestamp);
+    }
+    // If it's already a Date object
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+    // If we can't convert it, return null
+    return null;
+  };
+
+
+
   const fetchCoupons = async () => {
     try {
       console.log('Chargement des coupons...');
       const querySnapshot = await getDocs(collection(db, 'coupons'));
       const couponsData = querySnapshot.docs.map(doc => {
         const data = doc.data();
-        console.log('Données du coupon:', { id: doc.id, ...data });
+        console.log('Données du coupon brutes:', { id: doc.id, ...data });
+        
         return {
           id: doc.id,
           ...data,
-          dateCreated: data.dateCreated?.toDate(),
-          expiryDate: data.expiryDate?.toDate(),
-          lastUsedDate: data.lastUsedDate?.toDate()
+          dateCreated: convertToDate(data.dateCreated),
+          expiryDate: convertToDate(data.expiryDate),
+          lastUsedDate: convertToDate(data.lastUsedDate)
         };
       });
+      
+      console.log('Coupons transformés:', couponsData);
       setCoupons(couponsData);
     } catch (error) {
       console.error('Erreur lors du chargement des coupons:', error);
@@ -47,30 +71,62 @@ const CouponManagement = () => {
     }
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   const data = {
+  //     ...formData,
+  //     code: formData.code.toUpperCase(),
+  //     discount: Number(formData.discount),
+  //     dateCreated: Timestamp.now(),
+  //     expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
+  //     usedCount: editingCoupon ? formData.usedCount : 0,
+  //     lastUsedDate: null,
+  //     usedBy: [],
+  //     currency: 'EUR'
+  //   };
+    
+  //   try {
+  //     if (editingCoupon) {
+  //       await updateDoc(doc(db, 'coupons', editingCoupon.id), data);
+  //     } else {
+  //       await addDoc(collection(db, 'coupons'), data);
+  //     }
+  //     await fetchCoupons();
+  //     handleCloseModal();
+  //   } catch (error) {
+  //     console.error('Erreur:', error);
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const data = {
-      ...formData,
-      code: formData.code.toUpperCase(),
-      discount: Number(formData.discount),
-      dateCreated: Timestamp.now(),
-      expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
-      usedCount: editingCoupon ? formData.usedCount : 0,
-      lastUsedDate: null,
-      usedBy: [],
-      currency: 'EUR'
-    };
-    
     try {
+      const data = {
+        ...formData,
+        code: formData.code.toUpperCase(),
+        discount: Number(formData.discount),
+        dateCreated: editingCoupon ? formData.dateCreated : Timestamp.now(),
+        expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
+        usedCount: editingCoupon ? formData.usedCount : 0,
+        lastUsedDate: null,
+        usedBy: editingCoupon ? formData.usedBy || [] : [],
+        currency: 'EUR',
+        type: formData.type || 'fixed',
+        status: formData.status || 'active'
+      };
+      
+      console.log('Saving coupon data:', data);
+  
       if (editingCoupon) {
         await updateDoc(doc(db, 'coupons', editingCoupon.id), data);
       } else {
         await addDoc(collection(db, 'coupons'), data);
       }
+      
       await fetchCoupons();
       handleCloseModal();
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur lors de la sauvegarde du coupon:', error);
     }
   };
 
