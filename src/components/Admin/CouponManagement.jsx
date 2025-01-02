@@ -258,7 +258,7 @@ const CouponManagement = () => {
                 <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden lg:table-cell">Créé le</th>
                 <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden sm:table-cell">Expire le</th>
                 <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Statut</th>
-                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden sm:table-cell">Utilisé</th>
+                {/* <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden sm:table-cell">Utilisé</th> */}
                 <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Actions</th>
               </tr>
             </thead>
@@ -281,9 +281,9 @@ const CouponManagement = () => {
                       {coupon.status === 'active' ? 'Actif' : 'Inactif'}
                     </span>
                   </td>
-                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm hidden sm:table-cell">
+                  {/* <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm hidden sm:table-cell">
                     {coupon.usedCount || 0} fois
-                  </td>
+                  </td> */}
                   <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm">
                     <div className="flex gap-2 md:gap-3">
                       <button
