@@ -721,8 +721,11 @@ app.post(
                   discountApplied: bookingData.couponApplied.discount
                 };
 
+                const newStatus = bookingData.couponApplied.code === 'POTES' ? 'active' : 'inactive';
+
+
                 await couponDoc.ref.update({
-                  status: 'inactive',
+                  status: newStatus,
                   usedCount: FieldValue.increment(1),
                   lastUsedDate: new Date().toISOString(),
                   lastUsedBy: bookingData.email,
@@ -733,7 +736,7 @@ app.post(
                 console.log('🟩 Coupon update successful:', {
                   couponId: couponDoc.id,
                   code: bookingData.couponApplied.code,
-                  newStatus: 'inactive'
+                  newStatus: newStatus
                 });
               } else {
                 console.error('🟥 Coupon document not found for code:', bookingData.couponApplied.code);
