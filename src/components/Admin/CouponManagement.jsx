@@ -27,7 +27,7 @@ const CouponManagement = () => {
   const fetchCoupons = async () => {
     try {
       console.log('Chargement des coupons...');
-      const querySnapshot = await getDocs(collection(db2, 'coupons'));
+      const querySnapshot = await getDocs(collection(db, 'coupons'));
       const couponsData = querySnapshot.docs.map(doc => {
         const data = doc.data();
         console.log('Données du coupon:', { id: doc.id, ...data });
@@ -63,9 +63,9 @@ const CouponManagement = () => {
     
     try {
       if (editingCoupon) {
-        await updateDoc(doc(db2, 'coupons', editingCoupon.id), data);
+        await updateDoc(doc(db, 'coupons', editingCoupon.id), data);
       } else {
-        await addDoc(collection(db2, 'coupons'), data);
+        await addDoc(collection(db, 'coupons'), data);
       }
       await fetchCoupons();
       handleCloseModal();
@@ -88,7 +88,7 @@ const CouponManagement = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce coupon ?')) {
       try {
-        await deleteDoc(doc(db2, 'coupons', id));
+        await deleteDoc(doc(db, 'coupons', id));
         await fetchCoupons();
       } catch (error) {
         console.error('Erreur lors de la suppression du coupon:', error);

@@ -8,10 +8,18 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 
-import { getFirestore, doc, updateDoc, increment, arrayUnion, collection, query, where, getDocs } from 'firebase/firestore';
+import { 
+  doc, 
+  updateDoc, 
+  increment, 
+  arrayUnion,
+  collection,
+  query,
+  where,
+  getDocs 
+} from 'firebase/firestore';
 
 import { db } from './firebase-config.js';
-import { db2 } from '../src/firebase';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -933,7 +941,59 @@ app.post(
             }
           }
 
-          // Then replace the coupon update section with this:
+          // Update coupon if one was used
+          // if (bookingData.couponApplied?.code) {  // Changed from .id to .code since that's what we have
+          //   console.log('🟨 Starting coupon update process:', {
+          //     couponCode: bookingData.couponApplied.code,
+          //     couponData: bookingData.couponApplied
+          //   });
+          
+          //   try {
+          //     // First, query to get the coupon document
+          //     const couponsRef = collection(db, 'coupons');
+          //     const q = query(couponsRef, where('code', '==', bookingData.couponApplied.code));
+          //     const querySnapshot = await getDocs(q);
+          
+          //     if (!querySnapshot.empty) {
+          //       const couponDoc = querySnapshot.docs[0];
+          //       console.log('🟨 Found coupon document:', couponDoc.id);
+          
+          //       const usageRecord = {
+          //         email: bookingData.email,
+          //         name: `${bookingData.firstName} ${bookingData.lastName}`,
+          //         bookingAmount: bookingData.price,
+          //         usageDate: new Date().toISOString(),
+          //         discountApplied: bookingData.couponApplied.discount
+          //       };
+          
+          //       const couponRef = doc(db, 'coupons', couponDoc.id);
+          //       await updateDoc(couponRef, {
+          //         status: 'inactive',
+          //         usedCount: increment(1),
+          //         lastUsedDate: new Date().toISOString(),
+          //         lastUsedBy: bookingData.email,
+          //         usageHistory: arrayUnion(usageRecord),
+          //         updatedAt: new Date().toISOString()
+          //       });
+                
+          //       console.log('🟩 Coupon update successful:', {
+          //         couponId: couponDoc.id,
+          //         code: bookingData.couponApplied.code,
+          //         newStatus: 'inactive'
+          //       });
+          //     } else {
+          //       console.error('🟥 Coupon document not found for code:', bookingData.couponApplied.code);
+          //     }
+          //   } catch (error) {
+          //     console.error('🟥 Error updating coupon:', {
+          //       error: error.message,
+          //       stack: error.stack,
+          //       couponData: bookingData.couponApplied
+          //     });
+          //   }
+          // }
+
+          // Inside your webhook handler where the coupon update happens:
           if (bookingData.couponApplied?.code) {
             console.log('🟨 Starting coupon update process:', {
               couponCode: bookingData.couponApplied.code,
@@ -941,17 +1001,13 @@ app.post(
             });
 
             try {
-              // Use the existing db instance
-              const couponsCollection = collection(db2, 'coupons');
-              const couponQuery = query(
-                couponsCollection, 
-                where('code', '==', bookingData.couponApplied.code)
-              );
+              const couponsRef = db.collection('coupons');
+              const couponQuery = await couponsRef
+                .where('code', '==', bookingData.couponApplied.code)
+                .get();
 
-              const querySnapshot = await getDocs(couponQuery);
-              
-              if (!querySnapshot.empty) {
-                const couponDoc = querySnapshot.docs[0];
+              if (!couponQuery.empty) {
+                const couponDoc = couponQuery.docs[0];
                 console.log('🟨 Found coupon document:', couponDoc.id);
 
                 const usageRecord = {
@@ -962,19 +1018,12 @@ app.post(
                   discountApplied: bookingData.couponApplied.discount
                 };
 
-                const couponRef = doc(db2, 'coupons', couponDoc.id);
-                
-                console.log('🟨 Attempting to update coupon:', {
-                  docId: couponDoc.id,
-                  usageRecord: usageRecord
-                });
-
-                await updateDoc(couponRef, {
+                await couponDoc.ref.update({
                   status: 'inactive',
-                  usedCount: increment(1),
+                  usedCount: db.FieldValue.increment(1),
                   lastUsedDate: new Date().toISOString(),
                   lastUsedBy: bookingData.email,
-                  usageHistory: arrayUnion(usageRecord),
+                  usageHistory: db.FieldValue.arrayUnion(usageRecord),
                   updatedAt: new Date().toISOString()
                 });
                 
