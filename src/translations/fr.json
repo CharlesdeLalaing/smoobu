@@ -93,7 +93,11 @@
         "coupon": {
           "errors": {
             "enterCode": "Veuillez entrer un code promo",
-            "invalid": "Code promo invalide"
+            "invalid": "Code promo invalide",
+            "inactive": "Ce code promo n'est plus actif",
+            "expired": "Ce code promo a expiré",
+            "alreadyUsed": "Ce code promo a déjà été utilisé",
+            "notFound": "Code promo introuvable"
           },
           "applied": "Code promo {{code}}",
           "minusZero": "Les totaux inférieurs à 0€ ne seront pas acceptés à la caisse."

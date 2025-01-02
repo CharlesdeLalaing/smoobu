@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { InputField } from "./InputField";
-
 import LongBird from '../../assets/GlobalImg/long_bird.webp';
-
 
 export const InfoSupSection = ({
   formData,
@@ -11,22 +9,47 @@ export const InfoSupSection = ({
   appliedCoupon,
   handleApplyCoupon,
 }) => {
-
   const { t } = useTranslation();
-  
-
   const [coupon, setCoupon] = useState("");
   const [couponError, setCouponError] = useState(null);
 
-const onApplyCoupon = () => {
-  // console.log("Button clicked");
-  // console.log("Coupon value:", coupon);
-  // console.log("handleApplyCoupon exists:", !!handleApplyCoupon);
-  if (handleApplyCoupon) {
-    handleApplyCoupon(coupon);
-    setCouponError(null);
-  }
-};
+  const onApplyCoupon = async () => {
+    if (!coupon) {
+      setCouponError(t('booking.coupon.errors.enterCode'));
+      return;
+    }
+
+    try {
+      if (handleApplyCoupon) {
+        // The handleApplyCoupon function should now return an object with status
+        const result = await handleApplyCoupon(coupon);
+        
+        if (result?.error) {
+          switch (result.error) {
+            case 'inactive':
+              setCouponError(t('booking.coupon.errors.inactive'));
+              break;
+            case 'expired':
+              setCouponError(t('booking.coupon.errors.expired'));
+              break;
+            case 'used':
+              setCouponError(t('booking.coupon.errors.alreadyUsed'));
+              break;
+            case 'not_found':
+              setCouponError(t('booking.coupon.errors.notFound'));
+              break;
+            default:
+              setCouponError(t('booking.coupon.errors.invalid'));
+          }
+        } else {
+          setCouponError(null);
+        }
+      }
+    } catch (error) {
+      setCouponError(t('booking.coupon.errors.invalid'));
+    }
+  };
+
   return (
     <div className="w-full mt-6 space-y-8 relative">
       {/* Notes Section */}
@@ -53,9 +76,14 @@ const onApplyCoupon = () => {
               <input
                 type="text"
                 value={coupon}
-                onChange={(e) => setCoupon(e.target.value)}
+                onChange={(e) => {
+                  setCoupon(e.target.value);
+                  setCouponError(null); // Clear error when user types
+                }}
                 placeholder={t('extras.infoSup.promoCode.placeholder')}
-                className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
+                className={`mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2 ${
+                  couponError ? 'border-red-500' : ''
+                }`}
               />
             </label>
             {couponError && (
@@ -70,7 +98,7 @@ const onApplyCoupon = () => {
             {t('extras.infoSup.promoCode.button')}
           </button>
         </div>
-        {appliedCoupon && (
+        {appliedCoupon && !couponError && (
           <div className="mt-2 text-sm text-green-600">
             {t('extras.infoSup.promoCode.appliedStart')} {appliedCoupon.code} {t('extras.infoSup.promoCode.appliedEnd')}: -{appliedCoupon.discount} {t('extras.infoSup.promoCode.appliedCurrency')} <br/>
             <p className="mt-4 text-sm text-gray-500">{t('booking.coupon.minusZero')}</p>
@@ -78,13 +106,14 @@ const onApplyCoupon = () => {
         )}
       </div>
       <div className="absolute top-[70px] left-[220px] sm:top-[70px] sm:left-[250px] md:top-[50px] md:left-[550px] lg:top-[50px] lg:left-[300px] xl:top-[230px] xl:left-[550px]">
-                      <img 
-                        src={LongBird}
-                        alt="Squirrel"
-                        className="w-24 md:w-32 lg:w-40 h-auto"
-                      />
+        <img 
+          src={LongBird}
+          alt="Long Bird"
+          className="w-24 md:w-32 lg:w-40 h-auto"
+        />
       </div>
-      {/* Special Requests Section */}
     </div>
   );
 };
+
+export default InfoSupSection;
