@@ -519,21 +519,22 @@ const CouponManagement = () => {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestion des Coupons</h1>
+    <div className="p-3 md:p-6 w-full max-w-6xl mx-auto">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-xl md:text-2xl font-bold">Gestion des Coupons</h1>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 bg-[#678D73] text-white px-4 py-2 rounded-lg hover:bg-[#678D73]"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#678D73] text-white px-4 py-2 rounded-lg hover:bg-[#678D73]"
         >
           <Plus size={20} />
-          Ajouter un Coupon
+          <span>Ajouter un Coupon</span>
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="mb-6 bg-white p-4 rounded-lg shadow space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Filters Section */}
+      <div className="mb-6 bg-white p-3 md:p-4 rounded-lg shadow space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {/* Search */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -576,73 +577,76 @@ const CouponManagement = () => {
         </div>
       </div>
 
-      <div className="overflow-x-auto bg-white rounded-lg shadow">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Code</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Réduction</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Type</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Créé le</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Expire le</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Statut</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Utilisé</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filteredCoupons.map((coupon) => (
-              <tr key={coupon.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 text-sm font-medium">{coupon.code}</td>
-                <td className="px-6 py-4 text-sm">
-                  {coupon.discount} {coupon.currency}
-                </td>
-                <td className="px-6 py-4 text-sm capitalize">
-                  {coupon.type === 'fixed' ? 'Montant fixe' : 'Pourcentage'}
-                </td>
-                <td className="px-6 py-4 text-sm">{formatDate(coupon.dateCreated)}</td>
-                <td className="px-6 py-4 text-sm">{formatDate(coupon.expiryDate)}</td>
-                <td className="px-6 py-4 text-sm">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    coupon.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {coupon.status === 'active' ? 'Actif' : 'Inactif'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm">
-                  {coupon.usedCount || 0} fois
-                </td>
-                <td className="px-6 py-4 text-sm">
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleEdit(coupon)}
-                      className="text-[#678D73] hover:text-[#678D73]"
-                      disabled={coupon.usedCount > 0}
-                      title="Modifier"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(coupon.id)}
-                      className="text-red-600 hover:text-red-800"
-                      title="Supprimer"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
+      {/* Table Section */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Code</th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Réduction</th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden md:table-cell">Type</th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden lg:table-cell">Créé le</th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden sm:table-cell">Expire le</th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Statut</th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden sm:table-cell">Utilisé</th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredCoupons.map((coupon) => (
+                <tr key={coupon.id} className="hover:bg-gray-50">
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm font-medium">{coupon.code}</td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm">
+                    {coupon.discount} {coupon.currency}
+                  </td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm capitalize hidden md:table-cell">
+                    {coupon.type === 'fixed' ? 'Montant fixe' : 'Pourcentage'}
+                  </td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm hidden lg:table-cell">{formatDate(coupon.dateCreated)}</td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm hidden sm:table-cell">{formatDate(coupon.expiryDate)}</td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm">
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      coupon.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {coupon.status === 'active' ? 'Actif' : 'Inactif'}
+                    </span>
+                  </td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm hidden sm:table-cell">
+                    {coupon.usedCount || 0} fois
+                  </td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm">
+                    <div className="flex gap-2 md:gap-3">
+                      <button
+                        onClick={() => handleEdit(coupon)}
+                        className="text-[#678D73] hover:text-[#678D73]"
+                        disabled={coupon.usedCount > 0}
+                        title="Modifier"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(coupon.id)}
+                        className="text-red-600 hover:text-red-800"
+                        title="Supprimer"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 p-4 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-4 md:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg md:text-xl font-semibold">
                 {editingCoupon ? 'Modifier le Coupon' : 'Ajouter un nouveau Coupon'}
               </h2>
               <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700">
@@ -650,17 +654,17 @@ const CouponManagement = () => {
               </button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Code du Coupon
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.code}
-                    onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-                    required
-                  />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Code du Coupon
+                </label>
+                <input
+                  type="text"
+                  value={formData.code}
+                  onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+                  required
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -712,17 +716,17 @@ const CouponManagement = () => {
                   <option value="inactive">Inactif</option>
                 </select>
               </div>
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-50"
+                  className="w-full sm:w-auto px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-50"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#678D73] text-white rounded-lg hover:bg-[#678D73]"
+                  className="w-full sm:w-auto px-4 py-2 bg-[#678D73] text-white rounded-lg hover:bg-[#678D73]"
                 >
                   {editingCoupon ? 'Mettre à jour' : 'Créer'}
                 </button>
