@@ -62,5 +62,6 @@ try {
   });
 }
 
+export const FieldValue = admin.firestore.FieldValue;
 // Export both Admin and Client instances
 export { db, clientDb, auth };

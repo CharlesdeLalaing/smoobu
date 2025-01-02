@@ -19,7 +19,7 @@ import {
   getDocs 
 } from 'firebase/firestore';
 
-import { db } from './firebase-config.js';
+import { db, FieldValue } from './firebase-config.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1020,10 +1020,10 @@ app.post(
 
                 await couponDoc.ref.update({
                   status: 'inactive',
-                  usedCount: db.FieldValue.increment(1),
+                  usedCount: FieldValue.increment(1),
                   lastUsedDate: new Date().toISOString(),
                   lastUsedBy: bookingData.email,
-                  usageHistory: db.FieldValue.arrayUnion(usageRecord),
+                  usageHistory: FieldValue.arrayUnion(usageRecord),
                   updatedAt: new Date().toISOString()
                 });
                 
