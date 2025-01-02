@@ -721,9 +721,17 @@ app.post(
                   discountApplied: bookingData.couponApplied.discount
                 };
 
-                const newStatus = bookingData.couponApplied.code === 'POTES' ? 'active' : 'inactive';
-
-
+                // For "POTES" coupon, only update usage history
+                if (bookingData.couponApplied.code === 'POTES') {
+                  await couponDoc.ref.update({
+                    usageHistory: FieldValue.arrayUnion(usageRecord)
+                  });
+                  
+                  console.log('🟩 POTES coupon usage recorded:', {
+                    couponId: couponDoc.id,
+                    code: bookingData.couponApplied.code
+                  });
+                } else {
                 await couponDoc.ref.update({
                   status: newStatus,
                   usedCount: FieldValue.increment(1),
@@ -738,6 +746,7 @@ app.post(
                   code: bookingData.couponApplied.code,
                   newStatus: newStatus
                 });
+              }
               } else {
                 console.error('🟥 Coupon document not found for code:', bookingData.couponApplied.code);
               }
