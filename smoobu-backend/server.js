@@ -222,6 +222,15 @@ const extrasFrenchNames = {
   'extras.additionalPerson': 'Personne supplémentaire',
 };
 
+// Add this near your other constants at the top of server.js
+const roomNames = {
+  '1946282': 'Le Dôme des Libellules',
+  '1644643': 'La Bulle du Ruisseau',
+  '1946279': 'Le Moulin',
+  '1946276': 'La Chambre de Blé',
+  '1946270': 'Le Logis'
+};
+
 // Modified processExtraName function
 const processExtraName = (extra) => {
   // If the name is a translation key (starts with "extras.")
@@ -988,8 +997,8 @@ const paymentIntent = await stripe.paymentIntents.create({
     enabled: true,
   },
   description: `Réservation - ${bookingData.firstName} ${bookingData.lastName}
-    Chambre: ${roomsData[bookingData.apartmentId].nameKey.replace('rooms.names.', '')} 
-    (${formatDate(bookingData.arrivalDate)} - ${formatDate(bookingData.departureDate)})
+    Chambre: ${roomNames[bookingData.apartmentId]} 
+    (${bookingData.arrivalDate} - ${bookingData.departureDate})
     Base: ${bookingData.basePrice}€${bookingData.extras?.length ? ` • Extras: ${(price - bookingData.basePrice)}€` : ''}${bookingData.couponApplied ? ` • Code ${bookingData.couponApplied.code}: -${bookingData.couponApplied.discount}€` : ''}`,
   metadata: {
     // Client information
@@ -999,13 +1008,12 @@ const paymentIntent = await stripe.paymentIntents.create({
     
     // Room details
     roomId: bookingData.apartmentId,
-    roomType: roomsData[bookingData.apartmentId].type,
-    roomName: roomsData[bookingData.apartmentId].nameKey.replace('rooms.names.', ''),
+    roomName: roomNames[bookingData.apartmentId],
     
     // Booking details
     bookingReference: bookingReference,
-    checkIn: formatDate(bookingData.arrivalDate),
-    checkOut: formatDate(bookingData.departureDate),
+    checkIn: bookingData.arrivalDate,
+    checkOut: bookingData.departureDate,
     
     // Price breakdown
     basePrice: `${bookingData.basePrice}€`,
