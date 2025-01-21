@@ -162,10 +162,10 @@
       "extras": {
         "categories": {
           "packs": "Pakketten",
-          "spa": "Spa",
-          "meals": "Maaltijden van Bossimé",
           "formulesRepas": "Maaltijdformules",
+          "spa": "Spa",
           "formulesDecouverte": "Ontdekkingsformules",
+          "meals": "Maaltijden van Bossimé",
           "boissons": "Dranken"
         },
         "drinkTypes": {

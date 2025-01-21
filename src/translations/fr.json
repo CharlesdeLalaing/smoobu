@@ -162,8 +162,8 @@
       "extras": {
         "categories": {
           "packs": "Les packs",
-          "spa": "Spa",
           "meals": "Les repas de Bossimé",
+          "spa": "Spa",
           "formulesRepas": "Les formules repas",
           "formulesDecouverte": "Les formules découverte",
           "boissons": "Les boissons"
