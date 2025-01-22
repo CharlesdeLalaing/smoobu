@@ -11,6 +11,9 @@ const ExtrasReport = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalBookings, setTotalBookings] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState('count');
+  const [sortDirection, setSortDirection] = useState('desc');
 
   const years = Array.from(
     { length: 3 },
@@ -61,6 +64,27 @@ const ExtrasReport = () => {
     fetchReport();
   }, [selectedMonth, selectedYear]);
 
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  const filteredAndSortedData = reportData
+    .filter(extra => 
+      extra.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const multiplier = sortDirection === 'asc' ? 1 : -1;
+      if (sortField === 'name') {
+        return multiplier * a.name.localeCompare(b.name);
+      }
+      return multiplier * (a[sortField] - b[sortField]);
+    });
+
   if (loading) {
     return (
       <div className="p-8">
@@ -83,7 +107,7 @@ const ExtrasReport = () => {
       </div>
       
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label htmlFor="month" className="block text-sm font-medium text-gray-700 mb-2">
               Month
@@ -119,6 +143,20 @@ const ExtrasReport = () => {
               ))}
             </select>
           </div>
+
+          <div>
+            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+              Search Extras
+            </label>
+            <input
+              type="text"
+              id="search"
+              className="w-full p-2 border border-gray-300 rounded-md"
+              placeholder="Search by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
@@ -139,11 +177,23 @@ const ExtrasReport = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Extra Name
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('name')}
+                  >
+                    Extra Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Times Selected
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('count')}
+                  >
+                    Times Selected {sortField === 'count' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('totalAmount')}
+                  >
+                    Total Amount {sortField === 'totalAmount' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Type
@@ -154,14 +204,17 @@ const ExtrasReport = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {reportData.length > 0 ? (
-                  reportData.map((extra) => (
+                {filteredAndSortedData.length > 0 ? (
+                  filteredAndSortedData.map((extra) => (
                     <tr key={extra.name} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {extra.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {extra.count}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        €{extra.totalAmount.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {extra.details.calculationType === 0 && 'Per Booking'}
@@ -176,7 +229,7 @@ const ExtrasReport = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
                       No extras data available for this period
                     </td>
                   </tr>

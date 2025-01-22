@@ -810,27 +810,21 @@ app.get('/api/extras-report', async (req, res) => {
     console.log('Request params:', { month, year });
     console.log('Calculated dates:', { startDate, endDate });
 
-    // Get bookings
+    // Get bookings from Smoobu API
     const bookingsResponse = await axios.get('https://login.smoobu.com/api/reservations', {
       headers: {
         'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
         'Cache-Control': 'no-cache'
+      },
+      params: {
+        arrivalFrom: startDate,
+        arrivalTo: endDate,
+        excludeBlocked: true
       }
     });
 
-    // Filter bookings based on arrival date
-    const bookings = (bookingsResponse.data.bookings || []).filter(booking => {
-      const arrivalDate = new Date(booking.arrival);
-      const departureDate = new Date(booking.departure);
-      const periodStart = new Date(`${year}-${month}-01`);
-      const periodEnd = new Date(year, month, 0); // Last day of month
-      
-      return (
-        (arrivalDate <= periodEnd && departureDate >= periodStart) && 
-        !booking['is-blocked-booking']
-      );
-    });
-
+    // Get relevant bookings
+    const bookings = bookingsResponse.data.bookings || [];
     console.log(`Found ${bookings.length} bookings for period ${month}/${year}`);
 
     // Initialize extras counter
@@ -844,6 +838,7 @@ app.get('/api/extras-report', async (req, res) => {
         processedCount++;
         console.log(`Processing booking ${booking.id} (${booking.arrival} - ${booking.departure})`);
 
+        // Get price elements for each booking
         const priceElementsResponse = await axios.get(
           `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`,
           {
@@ -854,21 +849,21 @@ app.get('/api/extras-report', async (req, res) => {
           }
         );
 
+        // Filter addons from price elements
         const addons = (priceElementsResponse.data.priceElements || [])
-        .filter(element => element.type === 'addon')
-        .map(addon => ({
-          ...addon,
-          name: Object.entries(extrasFrenchNames).find(([key, value]) => 
-            value === addon.name
-          )?.[0] || addon.name
-        }));
+          .filter(element => element.type === 'addon');
 
-        console.log(`Processing booking ${booking.id}:`, {
-          arrival: booking.arrival,
-          departure: booking.departure,
-          addonsCount: addons.length
-        });
-        
+        if (addons.length > 0) {
+          bookingsWithExtras++;
+          console.log(`Found ${addons.length} extras in booking ${booking.id}:`, 
+            addons.map(a => ({
+              name: a.name,
+              amount: a.amount,
+              quantity: a.quantity || 1
+            }))
+          );
+        }
+
         // Count each addon
         addons.forEach(addon => {
           if (!extrasCount[addon.name]) {
@@ -876,8 +871,9 @@ app.get('/api/extras-report', async (req, res) => {
               count: 0,
               totalAmount: 0,
               details: {
-                type: addon.type,
-                name: addon.name
+                calculationType: addon.calculationType || 0,
+                optional: true,
+                type: addon.type
               }
             };
           }
