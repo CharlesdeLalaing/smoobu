@@ -810,69 +810,68 @@ app.get('/api/extras-report', async (req, res) => {
     console.log('Request params:', { month, year });
     console.log('Calculated dates:', { startDate, endDate });
 
-    // First API call to get bookings
-    const bookingsUrl = 'https://login.smoobu.com/api/reservations';
-    console.log('Calling Smoobu API:', {
-      url: bookingsUrl,
-      params: {
-        arrival_date_start: startDate,
-        arrival_date_end: endDate
-      }
-    });
-
-    const bookingsResponse = await axios.get(bookingsUrl, {
+    // Get bookings with modified parameters
+    const bookingsResponse = await axios.get('https://login.smoobu.com/api/reservations', {
       headers: {
         'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
         'Cache-Control': 'no-cache'
       },
       params: {
-        arrival_date_start: startDate,
-        arrival_date_end: endDate
+        start_date: startDate,
+        end_date: endDate,
+        booking_status: 'CONFIRMED' // Only get confirmed bookings
       }
     });
 
-    // Log raw response data
-    console.log('Raw Smoobu response structure:', {
-      status: bookingsResponse.status,
-      dataKeys: Object.keys(bookingsResponse.data),
-      bookingsCount: bookingsResponse.data.bookings?.length,
-      firstBooking: bookingsResponse.data.bookings?.[0] ? {
-        id: bookingsResponse.data.bookings[0].id,
-        arrivalDate: bookingsResponse.data.bookings[0].arrivalDate,
-        departureDate: bookingsResponse.data.bookings[0].departureDate
-      } : null
+    // Filter bookings by date manually to ensure we have the right ones
+    const bookings = (bookingsResponse.data.bookings || []).filter(booking => {
+      const arrivalDate = new Date(booking.arrivalDate);
+      const arrivalMonth = arrivalDate.getMonth() + 1;
+      const arrivalYear = arrivalDate.getFullYear();
+      
+      return (
+        arrivalMonth === parseInt(month) &&
+        arrivalYear === parseInt(year)
+      );
     });
 
-    const bookings = bookingsResponse.data.bookings || [];
+    console.log('Filtered bookings:', {
+      total: bookingsResponse.data.bookings?.length,
+      filtered: bookings.length,
+      month,
+      year
+    });
 
     // Initialize extras counter
     const extrasCount = {};
     
-    // Track processed bookings
-    let processedBookings = 0;
-    let bookingsWithExtras = 0;
-
     // Process each booking
     for (const booking of bookings) {
-      processedBookings++;
       try {
-        const priceElementsUrl = `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`;
-        console.log(`Fetching price elements for booking ${booking.id}`);
-
-        const priceElementsResponse = await axios.get(priceElementsUrl, {
-          headers: {
-            'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
-            'Cache-Control': 'no-cache'
-          }
+        console.log('Processing booking:', {
+          id: booking.id,
+          arrivalDate: booking.arrivalDate,
+          departureDate: booking.departureDate
         });
+
+        const priceElementsResponse = await axios.get(
+          `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`,
+          {
+            headers: {
+              'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+              'Cache-Control': 'no-cache'
+            }
+          }
+        );
 
         const addons = priceElementsResponse.data.priceElements?.filter(
           element => element.type === 'addon'
         ) || [];
 
         if (addons.length > 0) {
-          bookingsWithExtras++;
-          console.log(`Found ${addons.length} extras in booking ${booking.id}`);
+          console.log(`Found ${addons.length} extras in booking ${booking.id}:`, 
+            addons.map(a => ({ name: a.name, quantity: a.quantity }))
+          );
         }
 
         // Count each addon
@@ -897,15 +896,6 @@ app.get('/api/extras-report', async (req, res) => {
       }
     }
 
-    // Print summary before sending response
-    console.log('=== PROCESSING SUMMARY ===');
-    console.log({
-      totalBookings: bookings.length,
-      processedBookings,
-      bookingsWithExtras,
-      uniqueExtrasFound: Object.keys(extrasCount).length
-    });
-
     const reportData = Object.entries(extrasCount)
       .map(([name, data]) => ({
         name,
@@ -915,7 +905,13 @@ app.get('/api/extras-report', async (req, res) => {
       }))
       .sort((a, b) => b.count - a.count);
 
-    console.log('=== END OF REQUEST ===');
+    console.log('=== PROCESSING SUMMARY ===');
+    console.log({
+      periodRequested: `${month}/${year}`,
+      totalBookings: bookings.length,
+      uniqueExtrasFound: reportData.length,
+      extrasSummary: reportData.map(d => `${d.name}: ${d.count}`)
+    });
 
     res.json({
       month,
