@@ -803,29 +803,33 @@ app.get('/api/extras-report', async (req, res) => {
     
     // Format dates for Smoobu API
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const endDate = `${year}-${String(month).padStart(2, '0')}-31`;
+    // Calculate the last day of the month correctly
+    const lastDay = new Date(year, month, 0).getDate();
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
     
     console.log('Fetching bookings for period:', { startDate, endDate });
 
-    // 1. First get all bookings for the period
+    // Get bookings with arrival OR departure date in the selected month
     const bookingsResponse = await axios.get('https://login.smoobu.com/api/reservations', {
       headers: {
         'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
         'Cache-Control': 'no-cache'
       },
       params: {
-        start_date: startDate,
-        end_date: endDate
+        arrival_date_start: startDate,
+        arrival_date_end: endDate,
+        departure_date_start: startDate,
+        departure_date_end: endDate
       }
     });
 
     const bookings = bookingsResponse.data.bookings || [];
-    console.log(`Found ${bookings.length} bookings`);
+    console.log(`Found ${bookings.length} bookings for ${month}/${year}`);
 
     // Initialize extras counter
     const extrasCount = {};
 
-    // 2. For each booking, fetch its price elements
+    // Process each booking
     for (const booking of bookings) {
       try {
         const priceElementsResponse = await axios.get(
@@ -840,7 +844,7 @@ app.get('/api/extras-report', async (req, res) => {
 
         const priceElements = priceElementsResponse.data.priceElements || [];
         
-        // Process only addon type elements
+        // Filter and count addon type elements
         const addons = priceElements.filter(element => element.type === 'addon');
         
         // Count each addon
@@ -876,7 +880,7 @@ app.get('/api/extras-report', async (req, res) => {
       }))
       .sort((a, b) => b.count - a.count);
 
-    console.log('Report summary:', {
+    console.log('Report summary for', `${month}/${year}:`, {
       totalBookings: bookings.length,
       uniqueExtras: reportData.length,
       totalExtrasUsed: reportData.reduce((sum, item) => sum + item.count, 0)
