@@ -1,12 +1,14 @@
+// ExtrasReport.jsx
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import MonthlyExtrasReport from './MonthlyExtrasReport';
 import { Calendar } from 'lucide-react';
+import axios from 'axios';
 
 const ExtrasReport = () => {
-  const { apiKey } = useAuth();
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [reportData, setReportData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Generate array of recent years (current year and 2 years back)
   const years = Array.from(
@@ -22,6 +24,28 @@ const ExtrasReport = () => {
       label: new Date(2024, i).toLocaleString('default', { month: 'long' })
     })
   );
+
+  const fetchReport = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/extras-report', {
+        params: {
+          month: selectedMonth,
+          year: selectedYear
+        }
+      });
+      setReportData(response.data.data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchReport();
+  }, [selectedMonth, selectedYear]);
 
   return (
     <div className="p-8">
@@ -76,11 +100,55 @@ const ExtrasReport = () => {
         </div>
       </div>
 
-      <MonthlyExtrasReport
-        apiKey={apiKey}
-        month={selectedMonth}
-        year={selectedYear}
-      />
+      {loading ? (
+        <div className="text-center py-4">Loading...</div>
+      ) : error ? (
+        <div className="text-red-500 py-4">{error}</div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-md">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Extra Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Times Selected
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Optional
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {reportData.map((extra) => (
+                  <tr key={extra.name} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {extra.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {extra.count}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {extra.details.calculationType === 0 && 'Per Booking'}
+                      {extra.details.calculationType === 1 && 'Per Person'}
+                      {extra.details.calculationType === 2 && 'Per Night'}
+                      {extra.details.calculationType === 3 && 'Per Person/Night'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {extra.details.optional ? 'Yes' : 'No'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
