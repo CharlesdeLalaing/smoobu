@@ -1174,3 +1174,75 @@ app.post('/api/test-email', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
+// Add this new endpoint after your other endpoints
+app.get('/api/extras-report', async (req, res) => {
+  try {
+    const { month, year } = req.query;
+
+    // Step 1: Fetch all bookings for the specified month
+    const bookingsResponse = await axios.get('https://login.smoobu.com/api/reservations', {
+      headers: {
+        'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+        'Cache-Control': 'no-cache'
+      }
+    });
+
+    // Step 2: Fetch all addons
+    const addonsResponse = await axios.get('https://login.smoobu.com/api/addons', {
+      headers: {
+        'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+        'Cache-Control': 'no-cache'
+      }
+    });
+
+    // Filter bookings for the specified month and year
+    const monthlyBookings = bookingsResponse.data.bookings.filter(booking => {
+      const bookingDate = new Date(booking.arrivalDate);
+      return bookingDate.getMonth() === parseInt(month) - 1 && 
+             bookingDate.getFullYear() === parseInt(year);
+    });
+
+    // Initialize counts for all addons
+    const extrasCount = {};
+    addonsResponse.data.addons.forEach(addon => {
+      extrasCount[addon.name] = {
+        count: 0,
+        details: addon
+      };
+    });
+
+    // Count the extras from bookings
+    monthlyBookings.forEach(booking => {
+      if (booking.addons) {
+        booking.addons.forEach(bookingAddon => {
+          if (extrasCount[bookingAddon.name]) {
+            extrasCount[bookingAddon.name].count += bookingAddon.quantity || 1;
+          }
+        });
+      }
+    });
+
+    // Convert to array for response
+    const reportData = Object.entries(extrasCount).map(([name, data]) => ({
+      name,
+      count: data.count,
+      details: data.details
+    }));
+
+    res.json({
+      month,
+      year,
+      data: reportData,
+      totalBookings: monthlyBookings.length
+    });
+
+  } catch (error) {
+    console.error('Error generating extras report:', error);
+    res.status(500).json({
+      error: 'Failed to generate extras report',
+      details: error.response?.data || error.message
+    });
+  }
+});

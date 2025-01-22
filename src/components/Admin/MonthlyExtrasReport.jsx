@@ -8,81 +8,24 @@ const MonthlyExtrasReport = ({ apiKey, month, year }) => {
 
   useEffect(() => {
     const fetchExtrasReport = async () => {
-      try {
-        setLoading(true);
-        
-        // Step 1: Fetch all bookings for the specified month
-        const bookingsResponse = await axios.get('https://login.smoobu.com/api/reservations', {
-          headers: {
-            'Api-Key': apiKey,
-            'Cache-Control': 'no-cache'
-          }
-        });
-
-        if (!bookingsResponse.data) {
-          throw new Error('Failed to fetch bookings');
+        try {
+          setLoading(true);
+          
+          const response = await axios.get('/api/extras-report', {
+            params: {
+              month: selectedMonth,
+              year: selectedYear
+            }
+          });
+      
+          setExtrasReport(response.data.data);
+          setLoading(false);
+      
+        } catch (err) {
+          setError(err.message);
+          setLoading(false);
         }
-
-        const bookingsData = bookingsResponse.data;
-        
-        // Filter bookings for the specified month and year
-        const monthlyBookings = bookingsData.bookings.filter(booking => {
-          const bookingDate = new Date(booking.arrivalDate);
-          return bookingDate.getMonth() === month - 1 && 
-                 bookingDate.getFullYear() === year;
-        });
-
-        // Step 2: Fetch all addons
-        const addonsResponse = await axios.get('https://login.smoobu.com/api/addons', {
-          headers: {
-            'Api-Key': apiKey,
-            'Cache-Control': 'no-cache'
-          }
-        });
-
-        if (!addonsResponse.data) {
-          throw new Error('Failed to fetch addons');
-        }
-
-        const addonsData = addonsResponse.data;
-
-        // Step 3: Count the usage of each extra
-        const extrasCount = {};
-
-        // Initialize counts for all possible extras
-        addonsData.addons.forEach(addon => {
-          extrasCount[addon.name] = {
-            count: 0,
-            details: addon
-          };
-        });
-
-        // Count the extras from bookings
-        monthlyBookings.forEach(booking => {
-          if (booking.addons) {
-            booking.addons.forEach(bookingAddon => {
-              if (extrasCount[bookingAddon.name]) {
-                extrasCount[bookingAddon.name].count += bookingAddon.quantity || 1;
-              }
-            });
-          }
-        });
-
-        // Convert to array for display
-        const reportData = Object.entries(extrasCount).map(([name, data]) => ({
-          name,
-          count: data.count,
-          details: data.details
-        }));
-
-        setExtrasReport(reportData);
-        setLoading(false);
-
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-      }
-    };
+      };
 
     fetchExtrasReport();
   }, [apiKey, month, year]);
