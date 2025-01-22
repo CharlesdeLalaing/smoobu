@@ -30,7 +30,7 @@ const ExtrasReport = () => {
       
       const monthStr = String(selectedMonth).padStart(2, '0');
       
-      console.log('Fetching report for:', { month: monthStr, year: selectedYear });
+      console.log('Sending request with params:', { month: monthStr, year: selectedYear });
       
       const response = await axios.get('/api/extras-report', {
         params: {
@@ -39,23 +39,23 @@ const ExtrasReport = () => {
         }
       });
       
-      console.log('Server response:', response.data);
+      // Log the raw response
+      console.log('Raw response:', response);
+      console.log('Response data type:', typeof response.data);
+      console.log('Response data:', response.data);
   
-      // Validate response data
-      if (!response.data || !response.data.data) {
-        throw new Error('Invalid response format from server');
+      // More lenient data validation
+      if (response.data) {
+        const reportData = response.data.data || [];
+        console.log('Processed report data:', reportData);
+        setReportData(reportData);
+        setTotalBookings(response.data.totalBookings || 0);
+      } else {
+        throw new Error('Empty response from server');
       }
-  
-      // Ensure data is an array
-      const reportData = Array.isArray(response.data.data) ? response.data.data : [];
-      
-      setReportData(reportData);
-      setTotalBookings(response.data.totalBookings || 0);
-      
     } catch (err) {
-      console.error('Error fetching report:', err);
-      const errorMessage = err.response?.data?.details || err.message;
-      setError(errorMessage);
+      console.error('Full error object:', err);
+      setError(err.response?.data?.error || err.message);
       setReportData([]);
     } finally {
       setLoading(false);

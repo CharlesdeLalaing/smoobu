@@ -795,13 +795,13 @@ app.use(
   })
 );
 
-// Then add all your API routes
 app.get('/api/extras-report', async (req, res) => {
   try {
-    console.log('Received extras report request:', req.query);
+    console.log('Received request with params:', req.query);
     const { month, year } = req.query;
     
     if (!month || !year) {
+      console.log('Missing parameters');
       return res.status(400).json({
         error: 'Missing parameters',
         details: 'Both month and year are required'
@@ -811,6 +811,8 @@ app.get('/api/extras-report', async (req, res) => {
     // Format dates for Smoobu API
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = `${year}-${String(month).padStart(2, '0')}-31`;
+    
+    console.log('Fetching from Smoobu with dates:', { startDate, endDate });
 
     // Fetch bookings for the specific month
     const bookingsResponse = await axios.get('https://login.smoobu.com/api/reservations', {
@@ -824,6 +826,9 @@ app.get('/api/extras-report', async (req, res) => {
       }
     });
 
+    console.log('Smoobu bookings response status:', bookingsResponse.status);
+    console.log('Bookings count:', bookingsResponse.data?.bookings?.length || 0);
+
     // Fetch all addons
     const addonsResponse = await axios.get('https://login.smoobu.com/api/addons', {
       headers: {
@@ -832,7 +837,10 @@ app.get('/api/extras-report', async (req, res) => {
       }
     });
 
-    // Count extras usage
+    console.log('Smoobu addons response status:', addonsResponse.status);
+    console.log('Addons count:', addonsResponse.data?.addons?.length || 0);
+
+    // Process the data
     const extrasCount = {};
     addonsResponse.data.addons.forEach(addon => {
       extrasCount[addon.name] = {
@@ -841,7 +849,7 @@ app.get('/api/extras-report', async (req, res) => {
       };
     });
 
-    // Process bookings
+    // Count extras from bookings
     const bookings = bookingsResponse.data.bookings || [];
     bookings.forEach(booking => {
       if (booking.addons && Array.isArray(booking.addons)) {
@@ -853,7 +861,7 @@ app.get('/api/extras-report', async (req, res) => {
       }
     });
 
-    // Convert to array and sort by usage
+    // Prepare response data
     const reportData = Object.entries(extrasCount)
       .map(([name, data]) => ({
         name,
@@ -862,16 +870,22 @@ app.get('/api/extras-report', async (req, res) => {
       }))
       .sort((a, b) => b.count - a.count);
 
-    res.json({
+    const responseData = {
       month,
       year,
       data: reportData,
       totalBookings: bookings.length
-    });
+    };
+
+    console.log('Sending response with data count:', reportData.length);
+    console.log('Response structure:', Object.keys(responseData));
+
+    return res.json(responseData);
 
   } catch (error) {
-    console.error('Error generating extras report:', error);
-    res.status(500).json({
+    console.error('Error in extras-report:', error);
+    console.error('Error details:', error.response?.data);
+    return res.status(500).json({
       error: 'Failed to generate extras report',
       details: error.response?.data || error.message
     });
