@@ -721,6 +721,8 @@ app.post(
                   discountApplied: bookingData.couponApplied.discount
                 };
 
+                const newStatus = bookingData.couponApplied.code === 'POTES' ? 'active' : 'inactive';
+
                 // For "POTES" coupon, only update usage history
                 if (bookingData.couponApplied.code === 'POTES') {
                   await couponDoc.ref.update({
