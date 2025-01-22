@@ -23,7 +23,7 @@ function App() {
             <Route path="/" element={<Booking2 />} />
             <Route path="/admin/login" element={<Login />} />
             <Route 
-              path="/admin/coupons" 
+              path="/coupons" 
               element={
                 <ProtectedRoute>
                   <CouponManagement />
@@ -31,7 +31,7 @@ function App() {
               } 
             />
             <Route 
-              path="/admin/extras-report" 
+              path="/extras-report" 
               element={
                 <ProtectedRoute>
                   <ExtrasReport />
