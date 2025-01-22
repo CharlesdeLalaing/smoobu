@@ -795,6 +795,89 @@ app.use(
   })
 );
 
+// Then add all your API routes
+app.get('/api/extras-report', async (req, res) => {
+  try {
+    console.log('Received extras report request:', req.query);
+    const { month, year } = req.query;
+    
+    if (!month || !year) {
+      return res.status(400).json({
+        error: 'Missing parameters',
+        details: 'Both month and year are required'
+      });
+    }
+
+    // Format dates for Smoobu API
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endDate = `${year}-${String(month).padStart(2, '0')}-31`;
+
+    // Fetch bookings for the specific month
+    const bookingsResponse = await axios.get('https://login.smoobu.com/api/reservations', {
+      headers: {
+        'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+        'Cache-Control': 'no-cache'
+      },
+      params: {
+        start_date: startDate,
+        end_date: endDate
+      }
+    });
+
+    // Fetch all addons
+    const addonsResponse = await axios.get('https://login.smoobu.com/api/addons', {
+      headers: {
+        'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+        'Cache-Control': 'no-cache'
+      }
+    });
+
+    // Count extras usage
+    const extrasCount = {};
+    addonsResponse.data.addons.forEach(addon => {
+      extrasCount[addon.name] = {
+        count: 0,
+        details: addon
+      };
+    });
+
+    // Process bookings
+    const bookings = bookingsResponse.data.bookings || [];
+    bookings.forEach(booking => {
+      if (booking.addons && Array.isArray(booking.addons)) {
+        booking.addons.forEach(addon => {
+          if (extrasCount[addon.name]) {
+            extrasCount[addon.name].count += parseInt(addon.quantity) || 1;
+          }
+        });
+      }
+    });
+
+    // Convert to array and sort by usage
+    const reportData = Object.entries(extrasCount)
+      .map(([name, data]) => ({
+        name,
+        count: data.count,
+        details: data.details
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    res.json({
+      month,
+      year,
+      data: reportData,
+      totalBookings: bookings.length
+    });
+
+  } catch (error) {
+    console.error('Error generating extras report:', error);
+    res.status(500).json({
+      error: 'Failed to generate extras report',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 app.get('/api/apartments', async (req, res) => {
   try {
     const response = await axios.get(
@@ -1175,107 +1258,3 @@ app.post('/api/test-email', async (req, res) => {
   }
 });
 
-
-app.get('/api/extras-report', async (req, res) => {
-  try {
-    console.log('Received request with params:', req.query);
-    const { month, year } = req.query;
-    
-    if (!month || !year) {
-      return res.status(400).json({
-        error: 'Missing parameters',
-        details: 'Both month and year are required'
-      });
-    }
-
-    // Format dates for Smoobu API
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const endDate = `${year}-${String(month).padStart(2, '0')}-31`;
-    
-    console.log('Fetching bookings for period:', { startDate, endDate });
-
-    // Fetch bookings for the specific month
-    const bookingsResponse = await axios.get('https://login.smoobu.com/api/reservations', {
-      headers: {
-        'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
-        'Cache-Control': 'no-cache'
-      },
-      params: {
-        start_date: startDate,
-        end_date: endDate
-      }
-    });
-
-    console.log('Received bookings:', {
-      count: bookingsResponse.data?.bookings?.length || 0
-    });
-
-    // Fetch all addons
-    const addonsResponse = await axios.get('https://login.smoobu.com/api/addons', {
-      headers: {
-        'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
-        'Cache-Control': 'no-cache'
-      }
-    });
-
-    console.log('Received addons:', {
-      count: addonsResponse.data?.addons?.length || 0
-    });
-
-    // Validate responses
-    if (!bookingsResponse.data?.bookings || !Array.isArray(bookingsResponse.data.bookings)) {
-      throw new Error('Invalid bookings data received from Smoobu');
-    }
-
-    if (!addonsResponse.data?.addons || !Array.isArray(addonsResponse.data.addons)) {
-      throw new Error('Invalid addons data received from Smoobu');
-    }
-
-    // Count extras usage
-    const extrasCount = {};
-    addonsResponse.data.addons.forEach(addon => {
-      extrasCount[addon.name] = {
-        count: 0,
-        details: addon
-      };
-    });
-
-    // Process bookings
-    const bookings = bookingsResponse.data.bookings;
-    bookings.forEach(booking => {
-      if (booking.addons && Array.isArray(booking.addons)) {
-        booking.addons.forEach(addon => {
-          if (extrasCount[addon.name]) {
-            extrasCount[addon.name].count += parseInt(addon.quantity) || 1;
-          }
-        });
-      }
-    });
-
-    // Convert to array and sort by usage
-    const reportData = Object.entries(extrasCount)
-      .map(([name, data]) => ({
-        name,
-        count: data.count,
-        details: data.details
-      }))
-      .sort((a, b) => b.count - a.count);
-
-    const response = {
-      month,
-      year,
-      data: reportData,
-      totalBookings: bookings.length
-    };
-
-    console.log('Sending response with', reportData.length, 'extras');
-    res.json(response);
-
-  } catch (error) {
-    console.error('Error generating extras report:', error);
-    res.status(500).json({
-      error: 'Failed to generate extras report',
-      details: error.response?.data || error.message
-    });
-  }
-});
