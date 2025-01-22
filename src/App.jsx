@@ -5,6 +5,7 @@ import BookingConfirmation from "./components/BookingConfirmation";
 import "react-datepicker/dist/react-datepicker.css";
 import Booking2 from "./components/booking/BookingForm";
 import CouponManagement from "./components/Admin/CouponManagement";
+import ExtrasReport from "./components/Admin/ExtrasReport"; // New import
 import Login from "./components/Admin/Login";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
@@ -22,10 +23,18 @@ function App() {
             <Route path="/" element={<Booking2 />} />
             <Route path="/admin/login" element={<Login />} />
             <Route 
-              path="/coupons" 
+              path="/admin/coupons" 
               element={
                 <ProtectedRoute>
                   <CouponManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/extras-report" 
+              element={
+                <ProtectedRoute>
+                  <ExtrasReport />
                 </ProtectedRoute>
               } 
             />

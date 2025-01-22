@@ -1,0 +1,82 @@
+import React, { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import MonthlyExtrasReport from './MonthlyExtrasReport';
+import { Calendar } from 'lucide-react';
+
+const ExtrasReport = () => {
+  const { apiKey } = useAuth();
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  // Generate array of recent years (current year and 2 years back)
+  const years = Array.from(
+    { length: 3 },
+    (_, i) => new Date().getFullYear() - i
+  );
+
+  // Array of months for the dropdown
+  const months = Array.from(
+    { length: 12 },
+    (_, i) => ({
+      value: i + 1,
+      label: new Date(2024, i).toLocaleString('default', { month: 'long' })
+    })
+  );
+
+  return (
+    <div className="p-8 max-w-7xl mx-auto">
+      <div className="flex items-center gap-2 mb-6">
+        <Calendar className="w-8 h-8 text-blue-600" />
+        <h1 className="text-3xl font-bold">Extras Monthly Report</h1>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="month" className="block text-sm font-medium text-gray-700 mb-2">
+              Month
+            </label>
+            <select
+              id="month"
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+            >
+              {months.map((month) => (
+                <option key={month.value} value={month.value}>
+                  {month.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-2">
+              Year
+            </label>
+            <select
+              id="year"
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <MonthlyExtrasReport
+        apiKey={apiKey}
+        month={selectedMonth}
+        year={selectedYear}
+      />
+    </div>
+  );
+};
+
+export default ExtrasReport;
