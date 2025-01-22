@@ -1,4 +1,3 @@
-// ExtrasReport.jsx
 import React, { useState } from 'react';
 import { Calendar } from 'lucide-react';
 import axios from 'axios';
@@ -6,8 +5,8 @@ import axios from 'axios';
 const ExtrasReport = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [reportData, setReportData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [reportData, setReportData] = useState([]); // Initialize as empty array
+  const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState(null);
 
   // Generate array of recent years (current year and 2 years back)
@@ -28,16 +27,17 @@ const ExtrasReport = () => {
   const fetchReport = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/extras-report', {
+      const response = await axios.get('http://localhost:3000/api/extras-report', {
         params: {
           month: selectedMonth,
           year: selectedYear
         }
       });
-      setReportData(response.data.data);
+      setReportData(response.data.data || []); // Ensure we set an empty array if no data
       setError(null);
     } catch (err) {
       setError(err.message);
+      setReportData([]); // Reset to empty array on error
     } finally {
       setLoading(false);
     }
@@ -46,6 +46,32 @@ const ExtrasReport = () => {
   React.useEffect(() => {
     fetchReport();
   }, [selectedMonth, selectedYear]);
+
+  // Render loading state
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="flex items-center gap-2 mb-6">
+          <Calendar className="w-6 h-6 text-blue-600" />
+          <h1 className="text-3xl font-bold">Extras Monthly Report</h1>
+        </div>
+        <div className="text-center py-4">Loading...</div>
+      </div>
+    );
+  }
+
+  // Render error state
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="flex items-center gap-2 mb-6">
+          <Calendar className="w-6 h-6 text-blue-600" />
+          <h1 className="text-3xl font-bold">Extras Monthly Report</h1>
+        </div>
+        <div className="text-red-500 py-4">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -100,32 +126,28 @@ const ExtrasReport = () => {
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-4">Loading...</div>
-      ) : error ? (
-        <div className="text-red-500 py-4">{error}</div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-md">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Extra Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Times Selected
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Optional
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {reportData.map((extra) => (
+      <div className="bg-white rounded-lg shadow-md">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Extra Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Times Selected
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Optional
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {Array.isArray(reportData) && reportData.length > 0 ? (
+                reportData.map((extra) => (
                   <tr key={extra.name} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {extra.name}
@@ -143,12 +165,18 @@ const ExtrasReport = () => {
                       {extra.details.optional ? 'Yes' : 'No'}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                    No extras data available for this period
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </div>
   );
 };
