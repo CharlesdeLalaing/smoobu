@@ -803,8 +803,8 @@ app.get('/api/extras-report', async (req, res) => {
     
     // Format dates for Smoobu API
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const lastDay = new Date(year, month, 0).getDate();
-    const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
+const lastDay = new Date(year, parseInt(month), 0).getDate();
+const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
     
     console.log('=== START OF REQUEST ===');
     console.log('Request params:', { month, year });
@@ -817,11 +817,15 @@ app.get('/api/extras-report', async (req, res) => {
         'Cache-Control': 'no-cache'
       },
       params: {
-        arrivalFrom: startDate,
-        arrivalTo: endDate,
-        excludeBlocked: true
+        created_from: startDate,
+        created_to: endDate,
+        excludeBlocked: true,
+        showCancellation: false,
       }
     });
+
+    console.log('Smoobu API Response:', bookingsResponse.data);
+    console.log('Number of bookings:', bookingsResponse.data.bookings?.length || 0);
 
     // Get relevant bookings
     const bookings = bookingsResponse.data.bookings || [];
