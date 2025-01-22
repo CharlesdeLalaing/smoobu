@@ -820,11 +820,14 @@ app.get('/api/extras-report', async (req, res) => {
 
     // Filter bookings based on arrival date
     const bookings = (bookingsResponse.data.bookings || []).filter(booking => {
-      const bookingDate = booking.arrival;  // Use the correct field
+      const arrivalDate = new Date(booking.arrival);
+      const departureDate = new Date(booking.departure);
+      const periodStart = new Date(`${year}-${month}-01`);
+      const periodEnd = new Date(year, month, 0); // Last day of month
+      
       return (
-        bookingDate >= startDate && 
-        bookingDate <= endDate && 
-        !booking['is-blocked-booking']  // Exclude blocked bookings
+        (arrivalDate <= periodEnd && departureDate >= periodStart) && 
+        !booking['is-blocked-booking']
       );
     });
 
@@ -852,19 +855,20 @@ app.get('/api/extras-report', async (req, res) => {
         );
 
         const addons = (priceElementsResponse.data.priceElements || [])
-          .filter(element => element.type === 'addon');
+        .filter(element => element.type === 'addon')
+        .map(addon => ({
+          ...addon,
+          name: Object.entries(extrasFrenchNames).find(([key, value]) => 
+            value === addon.name
+          )?.[0] || addon.name
+        }));
 
-        if (addons.length > 0) {
-          bookingsWithExtras++;
-          console.log(`Found ${addons.length} extras in booking ${booking.id}:`, 
-            addons.map(a => ({
-              name: a.name,
-              amount: a.amount,
-              quantity: a.quantity || 1
-            }))
-          );
-        }
-
+        console.log(`Processing booking ${booking.id}:`, {
+          arrival: booking.arrival,
+          departure: booking.departure,
+          addonsCount: addons.length
+        });
+        
         // Count each addon
         addons.forEach(addon => {
           if (!extrasCount[addon.name]) {
