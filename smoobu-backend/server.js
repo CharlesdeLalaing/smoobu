@@ -803,50 +803,78 @@ app.get('/api/extras-report', async (req, res) => {
     
     // Format dates for Smoobu API
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    // Calculate the last day of the month correctly
     const lastDay = new Date(year, month, 0).getDate();
     const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
     
-    console.log('Fetching bookings for period:', { startDate, endDate });
+    console.log('=== START OF REQUEST ===');
+    console.log('Request params:', { month, year });
+    console.log('Calculated dates:', { startDate, endDate });
 
-    // Get bookings with arrival OR departure date in the selected month
-    const bookingsResponse = await axios.get('https://login.smoobu.com/api/reservations', {
+    // First API call to get bookings
+    const bookingsUrl = 'https://login.smoobu.com/api/reservations';
+    console.log('Calling Smoobu API:', {
+      url: bookingsUrl,
+      params: {
+        arrival_date_start: startDate,
+        arrival_date_end: endDate
+      }
+    });
+
+    const bookingsResponse = await axios.get(bookingsUrl, {
       headers: {
         'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
         'Cache-Control': 'no-cache'
       },
       params: {
         arrival_date_start: startDate,
-        arrival_date_end: endDate,
-        departure_date_start: startDate,
-        departure_date_end: endDate
+        arrival_date_end: endDate
       }
     });
 
+    // Log raw response data
+    console.log('Raw Smoobu response structure:', {
+      status: bookingsResponse.status,
+      dataKeys: Object.keys(bookingsResponse.data),
+      bookingsCount: bookingsResponse.data.bookings?.length,
+      firstBooking: bookingsResponse.data.bookings?.[0] ? {
+        id: bookingsResponse.data.bookings[0].id,
+        arrivalDate: bookingsResponse.data.bookings[0].arrivalDate,
+        departureDate: bookingsResponse.data.bookings[0].departureDate
+      } : null
+    });
+
     const bookings = bookingsResponse.data.bookings || [];
-    console.log(`Found ${bookings.length} bookings for ${month}/${year}`);
 
     // Initialize extras counter
     const extrasCount = {};
+    
+    // Track processed bookings
+    let processedBookings = 0;
+    let bookingsWithExtras = 0;
 
     // Process each booking
     for (const booking of bookings) {
+      processedBookings++;
       try {
-        const priceElementsResponse = await axios.get(
-          `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`,
-          {
-            headers: {
-              'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
-              'Cache-Control': 'no-cache'
-            }
-          }
-        );
+        const priceElementsUrl = `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`;
+        console.log(`Fetching price elements for booking ${booking.id}`);
 
-        const priceElements = priceElementsResponse.data.priceElements || [];
-        
-        // Filter and count addon type elements
-        const addons = priceElements.filter(element => element.type === 'addon');
-        
+        const priceElementsResponse = await axios.get(priceElementsUrl, {
+          headers: {
+            'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+            'Cache-Control': 'no-cache'
+          }
+        });
+
+        const addons = priceElementsResponse.data.priceElements?.filter(
+          element => element.type === 'addon'
+        ) || [];
+
+        if (addons.length > 0) {
+          bookingsWithExtras++;
+          console.log(`Found ${addons.length} extras in booking ${booking.id}`);
+        }
+
         // Count each addon
         addons.forEach(addon => {
           if (!extrasCount[addon.name]) {
@@ -860,17 +888,24 @@ app.get('/api/extras-report', async (req, res) => {
               }
             };
           }
-          
           extrasCount[addon.name].count += addon.quantity || 1;
           extrasCount[addon.name].totalAmount += addon.amount;
         });
 
       } catch (error) {
-        console.error(`Error fetching price elements for booking ${booking.id}:`, error.message);
+        console.error(`Error with booking ${booking.id}:`, error.message);
       }
     }
 
-    // Convert to array and sort by usage
+    // Print summary before sending response
+    console.log('=== PROCESSING SUMMARY ===');
+    console.log({
+      totalBookings: bookings.length,
+      processedBookings,
+      bookingsWithExtras,
+      uniqueExtrasFound: Object.keys(extrasCount).length
+    });
+
     const reportData = Object.entries(extrasCount)
       .map(([name, data]) => ({
         name,
@@ -880,11 +915,7 @@ app.get('/api/extras-report', async (req, res) => {
       }))
       .sort((a, b) => b.count - a.count);
 
-    console.log('Report summary for', `${month}/${year}:`, {
-      totalBookings: bookings.length,
-      uniqueExtras: reportData.length,
-      totalExtrasUsed: reportData.reduce((sum, item) => sum + item.count, 0)
-    });
+    console.log('=== END OF REQUEST ===');
 
     res.json({
       month,
@@ -894,7 +925,8 @@ app.get('/api/extras-report', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error generating report:', error);
+    console.error('=== ERROR IN REQUEST ===');
+    console.error(error);
     res.status(500).json({
       error: 'Failed to generate report',
       details: error.message
