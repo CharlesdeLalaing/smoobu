@@ -1,21 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import axios from 'axios';
 
 const ExtrasReport = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [reportData, setReportData] = useState([]); // Initialize as empty array
-  const [loading, setLoading] = useState(true); // Start with loading true
+  const [reportData, setReportData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [totalBookings, setTotalBookings] = useState(0);
 
-  // Generate array of recent years (current year and 2 years back)
   const years = Array.from(
     { length: 3 },
     (_, i) => new Date().getFullYear() - i
   );
 
-  // Array of months for the dropdown
   const months = Array.from(
     { length: 12 },
     (_, i) => ({
@@ -27,48 +26,47 @@ const ExtrasReport = () => {
   const fetchReport = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/extras-report', {
+      setError(null);
+      
+      // Format month to ensure it's two digits
+      const monthStr = String(selectedMonth).padStart(2, '0');
+      
+      const response = await axios.get('/api/extras-report', {
         params: {
-          month: selectedMonth,
+          month: monthStr,
           year: selectedYear
         }
       });
-      setReportData(response.data.data || []); // Ensure we set an empty array if no data
-      setError(null);
+
+      if (response.data && Array.isArray(response.data.data)) {
+        setReportData(response.data.data);
+        setTotalBookings(response.data.totalBookings || 0);
+      } else {
+        throw new Error('Invalid data format received from server');
+      }
     } catch (err) {
-      setError(err.message);
-      setReportData([]); // Reset to empty array on error
+      console.error('Error fetching report:', err);
+      setError(err.response?.data?.details || err.message);
+      setReportData([]);
     } finally {
       setLoading(false);
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchReport();
   }, [selectedMonth, selectedYear]);
 
-  // Render loading state
   if (loading) {
     return (
       <div className="p-8">
         <div className="flex items-center gap-2 mb-6">
           <Calendar className="w-6 h-6 text-blue-600" />
-          <h1 className="text-3xl font-bold">Extras Monthly Report</h1>
+          <h1 className="text-2xl font-bold">Extras Monthly Report</h1>
         </div>
-        <div className="text-center py-4">Loading...</div>
-      </div>
-    );
-  }
-
-  // Render error state
-  if (error) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center gap-2 mb-6">
-          <Calendar className="w-6 h-6 text-blue-600" />
-          <h1 className="text-3xl font-bold">Extras Monthly Report</h1>
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-        <div className="text-red-500 py-4">Error: {error}</div>
       </div>
     );
   }
@@ -77,7 +75,7 @@ const ExtrasReport = () => {
     <div className="p-8">
       <div className="flex items-center gap-2 mb-6">
         <Calendar className="w-6 h-6 text-blue-600" />
-        <h1 className="text-3xl font-bold">Extras Monthly Report</h1>
+        <h1 className="text-2xl font-bold">Extras Monthly Report</h1>
       </div>
       
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -91,7 +89,7 @@ const ExtrasReport = () => {
             </label>
             <select
               id="month"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-2 border border-gray-300 rounded-md"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
             >
@@ -112,7 +110,7 @@ const ExtrasReport = () => {
             </label>
             <select
               id="year"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-2 border border-gray-300 rounded-md"
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
             >
@@ -126,57 +124,70 @@ const ExtrasReport = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Extra Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Times Selected
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Optional
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {Array.isArray(reportData) && reportData.length > 0 ? (
-                reportData.map((extra) => (
-                  <tr key={extra.name} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {extra.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {extra.count}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {extra.details.calculationType === 0 && 'Per Booking'}
-                      {extra.details.calculationType === 1 && 'Per Person'}
-                      {extra.details.calculationType === 2 && 'Per Night'}
-                      {extra.details.calculationType === 3 && 'Per Person/Night'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {extra.details.optional ? 'Yes' : 'No'}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          {error}
+        </div>
+      )}
+
+      {!error && (
+        <div className="bg-white rounded-lg shadow-md">
+          <div className="p-4 border-b">
+            <p className="text-sm text-gray-600">
+              Total bookings for this period: {totalBookings}
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Extra Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Times Selected
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Optional
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {reportData.length > 0 ? (
+                  reportData.map((extra) => (
+                    <tr key={extra.name} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {extra.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {extra.count}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {extra.details.calculationType === 0 && 'Per Booking'}
+                        {extra.details.calculationType === 1 && 'Per Person'}
+                        {extra.details.calculationType === 2 && 'Per Night'}
+                        {extra.details.calculationType === 3 && 'Per Person/Night'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {extra.details.optional ? 'Yes' : 'No'}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                      No extras data available for this period
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
-                    No extras data available for this period
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
