@@ -562,26 +562,27 @@ app.post(
                       : extra.name,
                   };
 
-                  if (!processedName.name.includes('Personne supplémentaire')) {
-                    await axios.post(
-                      `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-                      {
-                        type: 'addon',
-                        name: processedName.name,
-                        nameKey: processedName.nameKey,
-                        amount: extra.amount,
-                        quantity: extra.quantity,
-                        currencyCode: 'EUR',
-                      },
-                      {
-                        headers: {
-                          'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
-                          'Content-Type': 'application/json',
-                        },
-                      }
-                    );
-                    await wait(1000);
-                  }
+                // With this
+if (processedName.name && !processedName.name.toLowerCase().includes('personne supplémentaire'.toLowerCase())) {
+  await axios.post(
+    `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+    {
+      type: 'addon',
+      name: processedName.name,
+      nameKey: processedName.nameKey,
+      amount: extra.amount,
+      quantity: extra.quantity,
+      currencyCode: 'EUR',
+    },
+    {
+      headers: {
+        'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  await wait(1000);
+}
 
                   if (extra.extraPersonQuantity > 0 && extra.extraPersonPrice) {
                     await axios.post(
@@ -800,6 +801,16 @@ app.use(
 app.get('/api/extras-report', async (req, res) => {
   try {
     const { month, year } = req.query;
+
+    const normalizeExtraName = (name) => {
+      // Find matching French name if exists
+      const frenchName = Object.entries(extrasFrenchNames)
+        .find(([key, value]) => 
+          value.toLowerCase() === name.toLowerCase() ||
+          key.toLowerCase() === name.toLowerCase()
+        );
+      return frenchName ? frenchName[1] : name;
+    };
     
     // Format dates for Smoobu API
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -855,7 +866,12 @@ const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
 
         // Filter addons from price elements
         const addons = (priceElementsResponse.data.priceElements || [])
-          .filter(element => element.type === 'addon');
+  .filter(element => 
+    element.type === 'addon' || 
+    (element.type !== 'basePrice' && 
+     element.type !== 'discount' && 
+     element.type !== 'cleaningFee')
+  );
 
         if (addons.length > 0) {
           bookingsWithExtras++;
@@ -870,8 +886,9 @@ const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
 
         // Count each addon
         addons.forEach(addon => {
-          if (!extrasCount[addon.name]) {
-            extrasCount[addon.name] = {
+          const normalizedName = normalizeExtraName(addon.name);
+          if (!extrasCount[normalizedName]) {
+            extrasCount[normalizedName] = {
               count: 0,
               totalAmount: 0,
               details: {
@@ -881,10 +898,9 @@ const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
               }
             };
           }
-          extrasCount[addon.name].count += addon.quantity || 1;
-          extrasCount[addon.name].totalAmount += addon.amount;
+          extrasCount[normalizedName].count += addon.quantity || 1;
+          extrasCount[normalizedName].totalAmount += addon.amount;
         });
-
       } catch (error) {
         console.error(`Error processing booking ${booking.id}:`, error.message);
       }
