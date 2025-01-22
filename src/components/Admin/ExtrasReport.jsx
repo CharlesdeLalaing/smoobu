@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://booking-9u8u.onrender.com';
+
 const ExtrasReport = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -30,31 +32,26 @@ const ExtrasReport = () => {
       
       const monthStr = String(selectedMonth).padStart(2, '0');
       
-      console.log('Sending request with params:', { month: monthStr, year: selectedYear });
+      console.log('Sending request to:', `${API_URL}/api/extras-report`);
       
-      const response = await axios.get('/api/extras-report', {
+      const response = await axios.get(`${API_URL}/api/extras-report`, {
         params: {
           month: monthStr,
           year: selectedYear
         }
       });
       
-      // Log the raw response
-      console.log('Raw response:', response);
-      console.log('Response data type:', typeof response.data);
-      console.log('Response data:', response.data);
-  
-      // More lenient data validation
+      console.log('Server response:', response.data);
+
       if (response.data) {
         const reportData = response.data.data || [];
-        console.log('Processed report data:', reportData);
         setReportData(reportData);
         setTotalBookings(response.data.totalBookings || 0);
       } else {
         throw new Error('Empty response from server');
       }
     } catch (err) {
-      console.error('Full error object:', err);
+      console.error('Error fetching report:', err);
       setError(err.response?.data?.error || err.message);
       setReportData([]);
     } finally {
