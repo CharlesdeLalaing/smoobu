@@ -1176,14 +1176,23 @@ app.post('/api/test-email', async (req, res) => {
 });
 
 
-// In server.js, update the extras-report endpoint
 app.get('/api/extras-report', async (req, res) => {
   try {
+    console.log('Received request with params:', req.query);
     const { month, year } = req.query;
     
+    if (!month || !year) {
+      return res.status(400).json({
+        error: 'Missing parameters',
+        details: 'Both month and year are required'
+      });
+    }
+
     // Format dates for Smoobu API
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = `${year}-${String(month).padStart(2, '0')}-31`;
+    
+    console.log('Fetching bookings for period:', { startDate, endDate });
 
     // Fetch bookings for the specific month
     const bookingsResponse = await axios.get('https://login.smoobu.com/api/reservations', {
@@ -1197,6 +1206,10 @@ app.get('/api/extras-report', async (req, res) => {
       }
     });
 
+    console.log('Received bookings:', {
+      count: bookingsResponse.data?.bookings?.length || 0
+    });
+
     // Fetch all addons
     const addonsResponse = await axios.get('https://login.smoobu.com/api/addons', {
       headers: {
@@ -1204,6 +1217,19 @@ app.get('/api/extras-report', async (req, res) => {
         'Cache-Control': 'no-cache'
       }
     });
+
+    console.log('Received addons:', {
+      count: addonsResponse.data?.addons?.length || 0
+    });
+
+    // Validate responses
+    if (!bookingsResponse.data?.bookings || !Array.isArray(bookingsResponse.data.bookings)) {
+      throw new Error('Invalid bookings data received from Smoobu');
+    }
+
+    if (!addonsResponse.data?.addons || !Array.isArray(addonsResponse.data.addons)) {
+      throw new Error('Invalid addons data received from Smoobu');
+    }
 
     // Count extras usage
     const extrasCount = {};
@@ -1215,17 +1241,16 @@ app.get('/api/extras-report', async (req, res) => {
     });
 
     // Process bookings
-    if (bookingsResponse.data.bookings) {
-      bookingsResponse.data.bookings.forEach(booking => {
-        if (booking.addons && Array.isArray(booking.addons)) {
-          booking.addons.forEach(addon => {
-            if (extrasCount[addon.name]) {
-              extrasCount[addon.name].count += parseInt(addon.quantity) || 1;
-            }
-          });
-        }
-      });
-    }
+    const bookings = bookingsResponse.data.bookings;
+    bookings.forEach(booking => {
+      if (booking.addons && Array.isArray(booking.addons)) {
+        booking.addons.forEach(addon => {
+          if (extrasCount[addon.name]) {
+            extrasCount[addon.name].count += parseInt(addon.quantity) || 1;
+          }
+        });
+      }
+    });
 
     // Convert to array and sort by usage
     const reportData = Object.entries(extrasCount)
@@ -1236,12 +1261,15 @@ app.get('/api/extras-report', async (req, res) => {
       }))
       .sort((a, b) => b.count - a.count);
 
-    res.json({
+    const response = {
       month,
       year,
       data: reportData,
-      totalBookings: bookingsResponse.data.bookings?.length || 0
-    });
+      totalBookings: bookings.length
+    };
+
+    console.log('Sending response with', reportData.length, 'extras');
+    res.json(response);
 
   } catch (error) {
     console.error('Error generating extras report:', error);

@@ -28,8 +28,9 @@ const ExtrasReport = () => {
       setLoading(true);
       setError(null);
       
-      // Format month to ensure it's two digits
       const monthStr = String(selectedMonth).padStart(2, '0');
+      
+      console.log('Fetching report for:', { month: monthStr, year: selectedYear });
       
       const response = await axios.get('/api/extras-report', {
         params: {
@@ -37,16 +38,24 @@ const ExtrasReport = () => {
           year: selectedYear
         }
       });
-
-      if (response.data && Array.isArray(response.data.data)) {
-        setReportData(response.data.data);
-        setTotalBookings(response.data.totalBookings || 0);
-      } else {
-        throw new Error('Invalid data format received from server');
+      
+      console.log('Server response:', response.data);
+  
+      // Validate response data
+      if (!response.data || !response.data.data) {
+        throw new Error('Invalid response format from server');
       }
+  
+      // Ensure data is an array
+      const reportData = Array.isArray(response.data.data) ? response.data.data : [];
+      
+      setReportData(reportData);
+      setTotalBookings(response.data.totalBookings || 0);
+      
     } catch (err) {
       console.error('Error fetching report:', err);
-      setError(err.response?.data?.details || err.message);
+      const errorMessage = err.response?.data?.details || err.message;
+      setError(errorMessage);
       setReportData([]);
     } finally {
       setLoading(false);
