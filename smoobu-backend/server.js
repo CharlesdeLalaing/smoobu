@@ -828,8 +828,8 @@ const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
         'Cache-Control': 'no-cache'
       },
       params: {
-        created_from: startDate,
-        created_to: endDate,
+        arrivalFrom: startDate,
+        arrivalTo: endDate,
         excludeBlocked: true,
         showCancellation: false,
       }
