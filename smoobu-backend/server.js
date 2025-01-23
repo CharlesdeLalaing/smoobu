@@ -811,11 +811,12 @@ app.get("/api/extras-report", async (req, res) => {
       return frenchName ? frenchName[1] : name;
     };
 
-    // Format dates for Smoobu API
     const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}-01`;
-    const endDate = new Date(endYear, parseInt(endMonth), 0)
-      .toISOString()
-      .split("T")[0];
+    const lastDay = new Date(endYear, parseInt(endMonth), 0).getDate();
+    const endDate = `${endYear}-${String(endMonth).padStart(
+      2,
+      "0"
+    )}-${lastDay}`;
 
     console.log("=== START OF REQUEST ===");
     console.log("Request params:", {
@@ -826,7 +827,6 @@ app.get("/api/extras-report", async (req, res) => {
     });
     console.log("Calculated dates:", { startDate, endDate });
 
-    // Get bookings from Smoobu API
     const bookingsResponse = await axios.get(
       "https://login.smoobu.com/api/reservations",
       {
@@ -849,18 +849,15 @@ app.get("/api/extras-report", async (req, res) => {
       bookingsResponse.data.bookings?.length || 0
     );
 
-    // Get relevant bookings
     const bookings = bookingsResponse.data.bookings || [];
     console.log(
-      `Found ${bookings.length} bookings for period ${month}/${year}`
+      `Found ${bookings.length} bookings for period ${startMonth}/${startYear} - ${endMonth}/${endYear}`
     );
 
-    // Initialize extras counter
     const extrasCount = {};
     let processedCount = 0;
     let bookingsWithExtras = 0;
 
-    // Process each booking
     for (const booking of bookings) {
       try {
         processedCount++;
@@ -868,7 +865,6 @@ app.get("/api/extras-report", async (req, res) => {
           `Processing booking ${booking.id} (${booking.arrival} - ${booking.departure})`
         );
 
-        // Get price elements for each booking
         const priceElementsResponse = await axios.get(
           `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`,
           {
@@ -879,7 +875,6 @@ app.get("/api/extras-report", async (req, res) => {
           }
         );
 
-        // Filter addons from price elements
         const extraNames = [
           "L'essentiel (pour 2) - Personne supplémentaire",
           "Le détente gourmet (pour 2) - Personne supplémentaire",
@@ -948,7 +943,6 @@ app.get("/api/extras-report", async (req, res) => {
           );
         }
 
-        // Count each addon
         addons.forEach((addon) => {
           const normalizedName = normalizeExtraName(addon.name);
           if (!extrasCount[normalizedName]) {
@@ -970,7 +964,6 @@ app.get("/api/extras-report", async (req, res) => {
       }
     }
 
-    // Convert to array and sort by usage
     const reportData = Object.entries(extrasCount)
       .map(([name, data]) => ({
         name,
@@ -982,7 +975,7 @@ app.get("/api/extras-report", async (req, res) => {
 
     console.log("=== PROCESSING SUMMARY ===");
     console.log({
-      period: `${month}/${year}`,
+      period: `${startMonth}/${startYear} - ${endMonth}/${endYear}`,
       totalBookingsInPeriod: bookings.length,
       processedBookings: processedCount,
       bookingsWithExtras,
@@ -990,14 +983,14 @@ app.get("/api/extras-report", async (req, res) => {
       extrasList: reportData.map((d) => `${d.name}: ${d.count}`),
     });
 
-      res.json({
-        startMonth,
-        startYear,
-        endMonth,
-        endYear,
-        data: reportData,
-        totalBookings: bookings.length,
-      });
+    res.json({
+      startMonth,
+      startYear,
+      endMonth,
+      endYear,
+      data: reportData,
+      totalBookings: bookings.length,
+    });
   } catch (error) {
     console.error("=== ERROR IN REQUEST ===");
     console.error(error);
