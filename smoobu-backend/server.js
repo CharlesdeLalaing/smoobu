@@ -865,13 +865,62 @@ const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
         );
 
         // Filter addons from price elements
-        const addons = (priceElementsResponse.data.priceElements || [])
-  .filter(element => 
-    element.type === 'addon' || 
-    (element.type !== 'basePrice' && 
-     element.type !== 'discount' && 
-     element.type !== 'cleaningFee')
-  );
+        const extraNames = [
+          "L'essentiel (pour 2) - Personne supplémentaire",
+          "Le détente gourmet (pour 2) - Personne supplémentaire",
+          "La raclette en détente (pour 2) - Personne supplémentaire",
+          "Le romantique gourmet (pour 2) - Personne supplémentaire",
+          "La raclette romantique (pour 2) - Personne supplémentaire", 
+          "Le barbecue détente (pour 2) - Personne supplémentaire",
+          "Le romantique barbecue (pour 2) - Personne supplémentaire",
+          "Formule petit-déjeuner (2 pers) - Personne supplémentaire",
+          "Formule gourmet (2 pers) - Personne supplémentaire", 
+          "Formule raclette (2 pers) - Personne supplémentaire",
+          "Formule barbecue (2 pers) - Personne supplémentaire",
+          "Formule SPA (2 pers) - Personne supplémentaire",
+          "Formule anniversaire (pour 2) - Personne supplémentaire",
+          "L'essentiel (pour 2)",
+          "Le détente gourmet (pour 2)",
+          "La raclette en détente (pour 2)", 
+          "Le romantique gourmet (pour 2)",
+          "La raclette romantique (pour 2)",
+          "Le barbecue détente (pour 2)",
+          "Le romantique barbecue (pour 2)",
+          "Formule planche apéro (2 pers)",
+          "Formule passion (pour 2)",
+          "Formule anniversaire (pour 2)",
+          "Formule petit-déjeuner (2 pers)",
+          "Formule gourmet (2 pers)",
+          "Formule raclette (2 pers)",
+          "Formule barbecue (2 pers)", 
+          "Formule SPA (2 pers)",
+          "Formule SPA + bouteille (2 pers)",
+          "Boulettes de viande sauce liégeoise",
+          "Boulette de viande sauce tomate",
+          "Waterzooi de volaille",
+          "Chili végétarien",
+          "Velouté de carotte et cumin",
+          "Brut de Bioul",
+          "Cortil Barco", 
+          "Terre Charlot",
+          "Houblonde Triple",
+          "Houblonde Blonde",
+          "Houblonde White IPA",
+          "Brune du Condroz",
+          "Ambrée du Condroz", 
+          "Blanche du Condroz",
+          "Jus de pomme « Pom d'Happy »",
+          "Ritchie Citron/Framboise",
+          "Ritchie Orange/Vanille",
+          "Ritchie Cola",
+          "Ritchie Cola Zéro"
+         ];
+         
+         const addons = (priceElementsResponse.data.priceElements || [])
+          .filter(element => 
+            element.type === 'addon' || 
+            extraNames.includes(element.name)
+          );
 
         if (addons.length > 0) {
           bookingsWithExtras++;
