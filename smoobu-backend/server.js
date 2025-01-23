@@ -832,7 +832,6 @@ const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
         arrivalTo: endDate,
         excludeBlocked: true,
         showCancellation: false,
-        status: 'BOOKED'
       }
     });
 
