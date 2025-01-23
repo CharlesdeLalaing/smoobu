@@ -31,11 +31,11 @@ const MonthlyExtrasReport = ({ apiKey, month, year }) => {
   }, [apiKey, month, year]);
 
   if (loading) {
-    return <div className="p-4">Loading report...</div>;
+    return <div className="p-4">Chargement du rapport...</div>;
   }
 
   if (error) {
-    return <div className="p-4 text-red-500">Error: {error}</div>;
+    return <div className="p-4 text-red-500">Erreur : {error}</div>;
   }
 
   return (
@@ -45,16 +45,16 @@ const MonthlyExtrasReport = ({ apiKey, month, year }) => {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Extra Name
+                Nom de l'extra
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Times Selected
+                Nombre de sélections
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Optional
+                Optionnel
               </th>
             </tr>
           </thead>
@@ -68,13 +68,13 @@ const MonthlyExtrasReport = ({ apiKey, month, year }) => {
                   {extra.count}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {extra.details.calculationType === 0 && 'Per Booking'}
-                  {extra.details.calculationType === 1 && 'Per Person'}
-                  {extra.details.calculationType === 2 && 'Per Night'}
-                  {extra.details.calculationType === 3 && 'Per Person/Night'}
+                  {extra.details.calculationType === 0 && 'Par Réservation'}
+                  {extra.details.calculationType === 1 && 'Par Personne'}
+                  {extra.details.calculationType === 2 && 'Par Nuit'}
+                  {extra.details.calculationType === 3 && 'Par Personne/Nuit'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {extra.details.optional ? 'Yes' : 'No'}
+                  {extra.details.optional ? 'Oui' : 'Non'}
                 </td>
               </tr>
             ))}

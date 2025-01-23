@@ -23,7 +23,7 @@ const ExtrasReport = () => {
     { length: 12 },
     (_, i) => ({
       value: i + 1,
-      label: new Date(2024, i).toLocaleString('default', { month: 'long' })
+      label: new Date(2024, i).toLocaleString('fr', { month: 'long' })
     })
   );
 
@@ -50,10 +50,10 @@ const ExtrasReport = () => {
           setReportData(response.data.data || []);
           setTotalBookings(response.data.totalBookings || 0);
         } else {
-          throw new Error('Empty response from server');
+          throw new Error('Réponse vide du serveur');
         }
       } catch (err) {
-        console.error('Error fetching report:', err);
+        console.error('Erreur lors de la récupération du rapport:', err);
         setError(err.response?.data?.error || err.message);
         setReportData([]);
       } finally {
@@ -90,7 +90,7 @@ const ExtrasReport = () => {
       <div className="p-8">
         <div className="flex items-center gap-2 mb-6">
           <Calendar className="w-6 h-6 text-blue-600" />
-          <h1 className="text-2xl font-bold">Extras Monthly Report</h1>
+          <h1 className="text-2xl font-bold">Rapport Mensuel des Extras</h1>
         </div>
         <div className="flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -103,14 +103,14 @@ const ExtrasReport = () => {
     <div className="p-8">
       <div className="flex items-center gap-2 mb-6">
         <Calendar className="w-6 h-6 text-blue-600" />
-        <h1 className="text-2xl font-bold">Extras Monthly Report</h1>
+        <h1 className="text-2xl font-bold">Rapport Mensuel des Extras</h1>
       </div>
       
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label htmlFor="month" className="block text-sm font-medium text-gray-700 mb-2">
-              Month
+              Mois
             </label>
             <select
               id="month"
@@ -128,7 +128,7 @@ const ExtrasReport = () => {
 
           <div>
             <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-2">
-              Year
+              Année
             </label>
             <select
               id="year"
@@ -146,13 +146,13 @@ const ExtrasReport = () => {
 
           <div>
             <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
-              Search Extras
+              Rechercher des extras
             </label>
             <input
               type="text"
               id="search"
               className="w-full p-2 border border-gray-300 rounded-md"
-              placeholder="Search by name..."
+              placeholder="Rechercher par nom..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -170,7 +170,7 @@ const ExtrasReport = () => {
         <div className="bg-white rounded-lg shadow-md">
           <div className="p-4 border-b">
             <p className="text-sm text-gray-600">
-              Total bookings for this period: {totalBookings}
+              Réservations totales pour cette période : {totalBookings}
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -181,25 +181,25 @@ const ExtrasReport = () => {
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('name')}
                   >
-                    Extra Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    Nom de l'extra {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th 
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('count')}
                   >
-                    Times Selected {sortField === 'count' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    Nombre de sélections {sortField === 'count' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th 
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('totalAmount')}
                   >
-                    Total Amount {sortField === 'totalAmount' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    Montant total {sortField === 'totalAmount' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Type
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Optional
+                    Optionnel
                   </th>
                 </tr>
               </thead>
@@ -217,20 +217,20 @@ const ExtrasReport = () => {
                         €{extra.totalAmount.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {extra.details.calculationType === 0 && 'Per Booking'}
-                        {extra.details.calculationType === 1 && 'Per Person'}
-                        {extra.details.calculationType === 2 && 'Per Night'}
-                        {extra.details.calculationType === 3 && 'Per Person/Night'}
+                        {extra.details.calculationType === 0 && 'Par Réservation'}
+                        {extra.details.calculationType === 1 && 'Par Personne'}
+                        {extra.details.calculationType === 2 && 'Par Nuit'}
+                        {extra.details.calculationType === 3 && 'Par Personne/Nuit'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {extra.details.optional ? 'Yes' : 'No'}
+                        {extra.details.optional ? 'Oui' : 'Non'}
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
                     <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
-                      No extras data available for this period
+                      Aucune donnée d'extras disponible pour cette période
                     </td>
                   </tr>
                 )}
