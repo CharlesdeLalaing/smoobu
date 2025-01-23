@@ -72,12 +72,12 @@ const MonthlyExtrasReport = ({ apiKey, month, year }) => {
               <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">
                 Sélections
               </th>
-              <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden lg:table-cell">
+              {/* <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden lg:table-cell">
                 Type
               </th>
               <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden md:table-cell">
                 Optionnel
-              </th>
+              </th> */}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -90,7 +90,7 @@ const MonthlyExtrasReport = ({ apiKey, month, year }) => {
                   <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm text-gray-500">
                     {extra.count}
                   </td>
-                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm text-gray-500 hidden lg:table-cell">
+                  {/* <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm text-gray-500 hidden lg:table-cell">
                     {extra.details.calculationType === 0 && 'Par Réservation'}
                     {extra.details.calculationType === 1 && 'Par Personne'}
                     {extra.details.calculationType === 2 && 'Par Nuit'}
@@ -102,7 +102,7 @@ const MonthlyExtrasReport = ({ apiKey, month, year }) => {
                     }`}>
                       {extra.details.optional ? 'Oui' : 'Non'}
                     </span>
-                  </td>
+                  </td> */}
                 </tr>
               ))
             ) : (

@@ -176,12 +176,12 @@ const ExtrasReport = () => {
                 >
                   Montant {sortField === 'totalAmount' && (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
-                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden lg:table-cell">
+                {/* <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden lg:table-cell">
                   Type
                 </th>
                 <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden sm:table-cell">
                   Optionnel
-                </th>
+                </th> */}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -197,7 +197,7 @@ const ExtrasReport = () => {
                     <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm text-gray-500 hidden md:table-cell">
                       €{extra.totalAmount.toFixed(2)}
                     </td>
-                    <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm text-gray-500 hidden lg:table-cell">
+                    {/* <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm text-gray-500 hidden lg:table-cell">
                       {extra.details.calculationType === 0 && 'Par Réservation'}
                       {extra.details.calculationType === 1 && 'Par Personne'}
                       {extra.details.calculationType === 2 && 'Par Nuit'}
@@ -209,7 +209,7 @@ const ExtrasReport = () => {
                       }`}>
                         {extra.details.optional ? 'Oui' : 'Non'}
                       </span>
-                    </td>
+                    </td> */}
                   </tr>
                 ))
               ) : (
