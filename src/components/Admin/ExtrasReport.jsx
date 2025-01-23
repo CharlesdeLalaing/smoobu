@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Search } from "lucide-react";
+import { Calendar, Search, Download } from "lucide-react";
 import axios from "axios";
+import * as XLSX from "xlsx";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "https://booking-9u8u.onrender.com";
@@ -96,6 +97,46 @@ const ExtrasReport = () => {
     }
   };
 
+  const handleExport = () => {
+    // Create worksheet data
+    const wsData = [
+      // Headers
+      ["Nom", "Nombre de sélections", "Montant total (€)"],
+      // Data rows
+      ...filteredAndSortedData.map((extra) => [
+        extra.name,
+        extra.count,
+        Number(extra.totalAmount.toFixed(2)),
+      ]),
+    ];
+
+    // Add total row
+    const totalAmount = filteredAndSortedData.reduce(
+      (sum, extra) => sum + extra.totalAmount,
+      0
+    );
+    wsData.push(["Total", "", totalAmount.toFixed(2)]);
+
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Set column widths
+    const colWidths = [{ wch: 40 }, { wch: 20 }, { wch: 20 }];
+    ws["!cols"] = colWidths;
+
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(wb, ws, "Rapport Extras");
+
+    // Generate filename with date range
+    const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
+    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
+    const fileName = `rapport-extras_${startDate}_${endDate}.xlsx`;
+
+    // Save the file
+    XLSX.writeFile(wb, fileName);
+  };
+
   const filteredAndSortedData = reportData
     .filter((extra) =>
       extra.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -117,9 +158,20 @@ const ExtrasReport = () => {
 
   return (
     <div className="w-full max-w-6xl p-3 mx-auto md:p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <Calendar className="w-6 h-6 text-[#678D73]" />
-        <h1 className="text-xl font-bold md:text-2xl">Rapport des Extras</h1>
+      <div className="flex items-center justify-between gap-2 mb-6">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-6 h-6 text-[#678D73]" />
+          <h1 className="text-xl font-bold md:text-2xl">Rapport des Extras</h1>
+        </div>
+
+        <button
+          onClick={handleExport}
+          className="flex items-center gap-2 px-4 py-2 bg-[#678D73] text-white rounded-lg hover:bg-[#4a6553] transition-colors"
+          disabled={filteredAndSortedData.length === 0}
+        >
+          <Download size={20} />
+          Exporter
+        </button>
       </div>
 
       <div className="p-4 mb-6 bg-white rounded-lg shadow">

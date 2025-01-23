@@ -24,7 +24,8 @@
     "react-i18next": "^15.2.0",
     "react-router-dom": "^6.28.0",
     "react-slick": "^0.30.2",
-    "slick-carousel": "^1.8.1"
+    "slick-carousel": "^1.8.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
