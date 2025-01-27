@@ -1095,6 +1095,18 @@ app.get("/api/bookings-report", async (req, res) => {
           );
         });
 
+        // Find commission from extras
+        const commissionExtra = extras.find(extra => 
+          extra.name?.toLowerCase().includes('commission')
+        );
+        const commission = commissionExtra ? commissionExtra.amount : 0;
+
+        // Remove commission from extras list if it exists
+        const nonCommissionExtras = extras.filter(extra => 
+          !extra.name?.toLowerCase().includes('commission')
+        );
+
+
         // Calculate totals - fix base price detection
         const basePrice = priceElements.find(el => 
           el.name?.toLowerCase().includes('base') ||
@@ -1107,6 +1119,7 @@ app.get("/api/bookings-report", async (req, res) => {
           .reduce((sum, discount) => sum + Math.abs(discount.amount), 0);
 
         // Log price elements breakdown for debugging
+        // Log price elements breakdown for debugging
         console.log('Price elements breakdown:', {
           bookingId: booking.id,
           allElements: priceElements.map(el => ({
@@ -1115,7 +1128,8 @@ app.get("/api/bookings-report", async (req, res) => {
             amount: el.amount
           })),
           basePrice,
-          filteredExtras: extras.map(ex => ({
+          commission,
+          filteredExtras: nonCommissionExtras.map(ex => ({
             name: ex.name,
             amount: ex.amount
           })),
@@ -1137,9 +1151,7 @@ app.get("/api/bookings-report", async (req, res) => {
 
         const processedBooking = {
           id: booking.id,
-          guest: booking.firstName && booking.lastName ? 
-                `${booking.firstName} ${booking.lastName}`.trim() : 
-                (booking.guestName || 'No name provided'),
+          guest: booking.guestName || `${booking.firstName || ''} ${booking.lastName || ''}`.trim() || 'No name provided',
           property: apartmentName,
           portal: booking.channel?.name || booking.channelId || 'Direct',
           created: createdDate,
@@ -1157,18 +1169,15 @@ app.get("/api/bookings-report", async (req, res) => {
             extrasTotal: parseFloat(extrasTotal),
             discounts: parseFloat(discounts),
             total: parseFloat(basePrice) + parseFloat(extrasTotal) - parseFloat(discounts),
-            elements: priceElements.filter(el => 
-              !el.name?.toLowerCase().includes('cancellation') && 
-              !el.name?.toLowerCase().includes('pass_through')
-            )
+            elements: nonCommissionExtras
           },
-          commission: parseFloat(booking.commission) || 0,
+          commission: parseFloat(commission),
           paid: booking.depositStatus === 1,
           prepayment: parseFloat(booking.deposit) || 0,
           prepaymentPaid: booking.depositStatus === 1,
           nights,
           status: booking.status || 'BOOKED',
-          extras: extras.map(extra => ({
+          extras: nonCommissionExtras.map(extra => ({
             name: extra.name || 'Unnamed extra',
             amount: parseFloat(extra.amount) || 0,
             quantity: parseInt(extra.quantity) || 1
