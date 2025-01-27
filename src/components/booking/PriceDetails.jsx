@@ -6,12 +6,18 @@ export const PriceDetails = ({
   priceDetails,
   selectedExtras,
   appliedCoupon,
+  formData // Add this prop to get access to guest numbers
 }) => {
   const { t } = useTranslation();
 
   if (!priceDetails) {
     return <div className="text-sm text-gray-500">{t('priceDetails.notAvailable')}</div>;
   }
+
+  // Calculate guest fees
+  const totalGuests = (parseInt(formData?.adults) || 0) + (parseInt(formData?.children) || 0);
+  const extraGuests = Math.max(0, totalGuests - priceDetails.settings.startingAtGuest);
+  const guestFees = extraGuests * priceDetails.settings.extraGuestsPerNight * priceDetails.numberOfNights;
 
   // Calculate selected extras details
   const selectedExtrasDetails = Object.entries(selectedExtras || {})
@@ -37,11 +43,11 @@ export const PriceDetails = ({
     })
     .filter(Boolean);
 
-  // Calculate initial total with extras
+  // Calculate initial total with extras and guest fees
   const extrasTotal = selectedExtrasDetails.reduce((sum, extra) => sum + extra.total, 0);
 
-  // Base price + extras before any discounts
-  const subtotalBeforeDiscounts = priceDetails.originalPrice + extrasTotal;
+  // Base price + extras + guest fees before any discounts
+  const subtotalBeforeDiscounts = priceDetails.originalPrice + extrasTotal + guestFees;
 
   // Calculate discounts
   const longStayDiscount = Math.abs(priceDetails.discount || 0);
@@ -59,6 +65,20 @@ export const PriceDetails = ({
         <span>{t('priceDetails.basePrice')}</span>
         <span>{priceDetails.originalPrice.toFixed(2)} EUR</span>
       </div>
+
+      {/* Guest Fees */}
+      {guestFees > 0 && (
+        <div className="flex items-center justify-between text-gray-600">
+          <span>
+            {t('priceDetails.guestFees', {
+              count: extraGuests,
+              nights: priceDetails.numberOfNights,
+              price: priceDetails.settings.extraGuestsPerNight
+            })}
+          </span>
+          <span>{guestFees.toFixed(2)} EUR</span>
+        </div>
+      )}
 
       {/* Extras */}
       {selectedExtrasDetails.map((extra, index) => (
@@ -83,15 +103,6 @@ export const PriceDetails = ({
       )}
 
       {/* Coupon discount */}
-      {/* {couponDiscount > 0 && (
-        <div className="flex items-center justify-between text-green-600">
-          <span>
-            {t('priceDetails.promoCode')} ({appliedCoupon.code})
-            {appliedCoupon.type === 'percentage' ? ` (${appliedCoupon.percentageValue}%)` : ''}
-          </span>
-          <span>-{couponDiscount.toFixed(2)} EUR</span>
-        </div>
-      )} */}
       {couponDiscount > 0 && (
         <div className="flex items-center justify-between text-green-600">
           <span>
