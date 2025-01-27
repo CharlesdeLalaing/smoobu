@@ -1083,6 +1083,7 @@ app.get("/api/bookings-report", async (req, res) => {
           if (
             name.includes('cancellation') || 
             name.includes('pass_through') ||
+            name.includes('prix de base') ||
             name.includes('base price') ||
             name === 'base' ||
             type === 'base'
