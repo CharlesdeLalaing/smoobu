@@ -20,6 +20,28 @@ export const PriceDetails = ({
   const guestFeePerNight = extraGuests * priceDetails.settings.extraGuestsPerNight;
   const totalGuestFees = guestFeePerNight * priceDetails.numberOfNights;
 
+  // Display the calculation
+console.log({
+  totalGuests,
+  startingAtGuest: priceDetails.settings.startingAtGuest,
+  extraGuests,
+  guestFeePerNight,
+  numberOfNights: priceDetails.numberOfNights,
+  totalGuestFees
+});
+
+console.log('Guest Fee Calculation:', {
+  adults: formData?.adults,
+  children: formData?.children,
+  totalGuests,
+  startingAtGuest: priceDetails.settings.startingAtGuest,
+  extraGuests,
+  feePerNight: priceDetails.settings.extraGuestsPerNight,
+  numberOfNights: priceDetails.numberOfNights,
+  guestFeePerNight,
+  totalGuestFees
+});
+
   // Calculate selected extras details
   const selectedExtrasDetails = Object.entries(selectedExtras || {})
     .filter(([_, quantity]) => quantity > 0)
@@ -52,6 +74,18 @@ export const PriceDetails = ({
   const longStayDiscount = Math.abs(priceDetails.discount || 0);
   const couponDiscount = appliedCoupon ? Math.abs(appliedCoupon.discount) : 0;
   const finalTotal = subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
+
+  console.log('Guest Fee Calculation:', {
+    adults: formData?.adults,
+    children: formData?.children,
+    totalGuests,
+    startingAtGuest: priceDetails.settings.startingAtGuest,
+    extraGuests,
+    feePerNight: priceDetails.settings.extraGuestsPerNight,
+    numberOfNights: priceDetails.numberOfNights,
+    guestFeePerNight,
+    totalGuestFees
+  });
 
   return (
     <div className="p-4 mt-4 rounded-lg bg-gray-50" style={{ height: "350px", overflow: "scroll" }}>
