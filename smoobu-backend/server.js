@@ -118,14 +118,13 @@ const sendBookingConfirmation = async (bookingData) => {
   }
 };
 
-// Discount settings
 const discountSettings = {
-  1946282: {
+  1946282: { // Le dôme de libellules
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
     extraGuestsPerNight: 20,
-    startingAtGuest: 3,
+    startingAtGuest: 2, // Extra fee starts from 3rd guest
     maxGuests: 4,
     extraChildPerNight: 20,
     lengthOfStayDiscount: {
@@ -133,11 +132,11 @@ const discountSettings = {
       discountPercentage: 0,
     },
   },
-  1644643: {
+  1644643: { // La Bulle du Ruisseau
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
+    extraGuestsPerNight: 0, // No extra fees
     startingAtGuest: 2,
     maxGuests: 2,
     extraChildPerNight: 0,
@@ -146,38 +145,38 @@ const discountSettings = {
       discountPercentage: 0,
     },
   },
-  1946279: {
+  1946279: { // Le Moulin
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
     extraGuestsPerNight: 20,
-    startingAtGuest: 2,
-    maxGuests: 4,
+    startingAtGuest: 2, // Extra fee starts from 3rd guest
+    maxGuests: 4, // This was correct but other settings need adjustment
     extraChildPerNight: 20,
     lengthOfStayDiscount: {
       minNights: 2,
       discountPercentage: 40,
     },
   },
-  1946276: {
+  1946276: { // La chambre de blé
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
     extraGuestsPerNight: 20,
-    startingAtGuest: 2,
-    maxGuests: 4,
+    startingAtGuest: 2, // Extra fee starts from 3rd guest
+    maxGuests: 4, // This was correct but other settings need adjustment
     extraChildPerNight: 20,
     lengthOfStayDiscount: {
       minNights: 2,
       discountPercentage: 40,
     },
   },
-  1946270: {
+  1946270: { // Le Logis
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
     extraGuestsPerNight: 20,
-    startingAtGuest: 5,
+    startingAtGuest: 4, // Extra fee starts from 5th guest
     maxGuests: 8,
     extraChildPerNight: 20,
     lengthOfStayDiscount: {

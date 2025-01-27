@@ -14,33 +14,10 @@ export const PriceDetails = ({
     return <div className="text-sm text-gray-500">{t('priceDetails.notAvailable')}</div>;
   }
 
-  // Calculate guest fees
+  // Calculate guest fees as a flat fee (not per night)
   const totalGuests = (parseInt(formData?.adults) || 0) + (parseInt(formData?.children) || 0);
   const extraGuests = Math.max(0, totalGuests - priceDetails.settings.startingAtGuest);
-  const guestFeePerNight = extraGuests * priceDetails.settings.extraGuestsPerNight;
-  const totalGuestFees = guestFeePerNight * priceDetails.numberOfNights;
-
-  // Display the calculation
-console.log({
-  totalGuests,
-  startingAtGuest: priceDetails.settings.startingAtGuest,
-  extraGuests,
-  guestFeePerNight,
-  numberOfNights: priceDetails.numberOfNights,
-  totalGuestFees
-});
-
-console.log('Guest Fee Calculation:', {
-  adults: formData?.adults,
-  children: formData?.children,
-  totalGuests,
-  startingAtGuest: priceDetails.settings.startingAtGuest,
-  extraGuests,
-  feePerNight: priceDetails.settings.extraGuestsPerNight,
-  numberOfNights: priceDetails.numberOfNights,
-  guestFeePerNight,
-  totalGuestFees
-});
+  const totalGuestFees = extraGuests * priceDetails.settings.extraGuestsPerNight;
 
   // Calculate selected extras details
   const selectedExtrasDetails = Object.entries(selectedExtras || {})
@@ -75,18 +52,6 @@ console.log('Guest Fee Calculation:', {
   const couponDiscount = appliedCoupon ? Math.abs(appliedCoupon.discount) : 0;
   const finalTotal = subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
 
-  console.log('Guest Fee Calculation:', {
-    adults: formData?.adults,
-    children: formData?.children,
-    totalGuests,
-    startingAtGuest: priceDetails.settings.startingAtGuest,
-    extraGuests,
-    feePerNight: priceDetails.settings.extraGuestsPerNight,
-    numberOfNights: priceDetails.numberOfNights,
-    guestFeePerNight,
-    totalGuestFees
-  });
-
   return (
     <div className="p-4 mt-4 rounded-lg bg-gray-50" style={{ height: "350px", overflow: "scroll" }}>
       <h3 className="mb-2 font-bold">{t('priceDetails.title')}</h3>
@@ -97,14 +62,13 @@ console.log('Guest Fee Calculation:', {
         <span>{priceDetails.originalPrice.toFixed(2)} EUR</span>
       </div>
 
-      {/* Guest fees */}
+      {/* Guest fees - flat fee */}
       {totalGuestFees > 0 && (
         <div className="flex items-center justify-between text-gray-600">
           <span>
             {t('priceDetails.guestFees', {
               count: extraGuests,
-              fee: priceDetails.settings.extraGuestsPerNight,
-              nights: priceDetails.numberOfNights
+              fee: priceDetails.settings.extraGuestsPerNight
             })}
           </span>
           <span>{totalGuestFees.toFixed(2)} EUR</span>

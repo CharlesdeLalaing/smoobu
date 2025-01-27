@@ -344,7 +344,7 @@
             "title": "Price details:",
             "basePrice": "Base price",
             "longStayDiscount": "Long stay discount",
-            "guestFees" : "{{count}} extra guest(s) × {{price}}€ × {{nights}} nights",
+            "guestFees" : "{{count}} extra guest(s) × {{fee}}€",
             "promoCode": {
                 "fixed": "Promo code",
                 "percentage": "Promo code"
