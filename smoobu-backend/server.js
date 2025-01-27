@@ -1011,13 +1011,6 @@ app.get("/api/bookings-report", async (req, res) => {
     let finalEndMonth = String(endMonth).padStart(2, "0");
     let finalEndYear = endYear;
 
-    // If end date is before start date, adjust it
-    if (parseInt(endYear) < parseInt(startYear) || 
-        (endYear === startYear && parseInt(endMonth) < parseInt(startMonth))) {
-      finalEndMonth = finalStartMonth;
-      finalEndYear = finalStartYear;
-    }
-
     const startDate = `${finalStartYear}-${finalStartMonth}-01`;
     const lastDay = new Date(finalEndYear, parseInt(finalEndMonth), 0).getDate();
     const endDate = `${finalEndYear}-${finalEndMonth}-${lastDay}`;
@@ -1029,7 +1022,6 @@ app.get("/api/bookings-report", async (req, res) => {
       endMonth: finalEndMonth,
       endYear: finalEndYear
     });
-    console.log("Calculated dates:", { startDate, endDate });
 
     // Fetch bookings for the period
     const bookingsResponse = await axios.get(
@@ -1042,7 +1034,7 @@ app.get("/api/bookings-report", async (req, res) => {
         params: {
           arrivalFrom: startDate,
           arrivalTo: endDate,
-          excludeBlocked: false,
+          excludeBlocked: true, // Change to true to exclude blocked bookings
           showCancellation: true,
         },
       }
@@ -1057,6 +1049,12 @@ app.get("/api/bookings-report", async (req, res) => {
       try {
         console.log(`Processing booking ${booking.id}`);
         
+        // Skip if it's a blocked booking
+        if (booking.channelId === 'Blocked') {
+          console.log(`Skipping blocked booking ${booking.id}`);
+          continue;
+        }
+
         // Fetch price elements for each booking
         const priceElementsResponse = await axios.get(
           `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`,
@@ -1069,15 +1067,17 @@ app.get("/api/bookings-report", async (req, res) => {
         );
 
         const priceElements = priceElementsResponse.data.priceElements || [];
+        console.log('Price elements for booking', booking.id, ':', priceElements);
         
         // Calculate nights
         const checkIn = new Date(booking.arrival);
         const checkOut = new Date(booking.departure);
         const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
 
-        // Process extras - no need for extraNames filtering
+        // Process extras - all non-base price elements
         const extras = priceElements.filter(element => 
-          element.type === "addon"
+          element.type === "addon" || 
+          (element.type !== "base" && element.type !== "discount")
         );
 
         // Calculate totals
@@ -1087,14 +1087,27 @@ app.get("/api/bookings-report", async (req, res) => {
           .filter(el => el.type === 'discount')
           .reduce((sum, discount) => sum + Math.abs(discount.amount), 0);
 
-        // Create processed booking object with proper null checks
+        // Format created date
+        let createdDate = null;
+        try {
+          if (booking.created) {
+            createdDate = new Date(booking.created).toISOString();
+          }
+        } catch (e) {
+          console.error('Error parsing created date:', e);
+        }
+
+        // Get apartment name
+        const apartmentName = booking.apartmentName || '';
+
         const processedBooking = {
           id: booking.id,
-          guest: booking.firstName || booking.lastName ? 
-                `${booking.firstName || ''} ${booking.lastName || ''}`.trim() : 
-                'No name provided',
+          guest: booking.firstName && booking.lastName ? 
+                `${booking.firstName} ${booking.lastName}`.trim() : 
+                (booking.guestName || 'No name provided'),
+          property: apartmentName,
           portal: booking.channelId || 'Direct',
-          created: booking.created ? new Date(booking.created).toISOString() : null,
+          created: createdDate,
           email: booking.email || '',
           phone: booking.phone || '',
           address: booking.address || '',
@@ -1115,7 +1128,7 @@ app.get("/api/bookings-report", async (req, res) => {
           prepayment: parseFloat(booking.deposit) || 0,
           prepaymentPaid: booking.depositStatus === 1,
           nights,
-          status: booking.status || 'Unknown',
+          status: booking.status || 'BOOKED',
           extras: extras.map(extra => ({
             name: extra.name || 'Unnamed extra',
             amount: parseFloat(extra.amount) || 0,
@@ -1123,11 +1136,22 @@ app.get("/api/bookings-report", async (req, res) => {
           }))
         };
 
-        // Log the processed booking for debugging
+        // Log raw booking data and processed result
+        console.log('Raw booking data:', {
+          id: booking.id,
+          firstName: booking.firstName,
+          lastName: booking.lastName,
+          guestName: booking.guestName,
+          channelId: booking.channelId,
+          status: booking.status,
+          created: booking.created
+        });
+
         console.log('Processed booking:', {
           id: processedBooking.id,
           guest: processedBooking.guest,
-          price: processedBooking.price
+          price: processedBooking.price,
+          extras: processedBooking.extras
         });
 
         processedBookings.push(processedBooking);
