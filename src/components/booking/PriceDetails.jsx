@@ -6,7 +6,7 @@ export const PriceDetails = ({
   priceDetails,
   selectedExtras,
   appliedCoupon,
-  formData // Add this prop to get access to guest numbers
+  formData
 }) => {
   const { t } = useTranslation();
 
@@ -17,7 +17,8 @@ export const PriceDetails = ({
   // Calculate guest fees
   const totalGuests = (parseInt(formData?.adults) || 0) + (parseInt(formData?.children) || 0);
   const extraGuests = Math.max(0, totalGuests - priceDetails.settings.startingAtGuest);
-  const guestFees = extraGuests * priceDetails.settings.extraGuestsPerNight * priceDetails.numberOfNights;
+  const guestFeePerNight = extraGuests * priceDetails.settings.extraGuestsPerNight;
+  const totalGuestFees = guestFeePerNight * priceDetails.numberOfNights;
 
   // Calculate selected extras details
   const selectedExtrasDetails = Object.entries(selectedExtras || {})
@@ -43,17 +44,13 @@ export const PriceDetails = ({
     })
     .filter(Boolean);
 
-  // Calculate initial total with extras and guest fees
+  // Calculate extras total
   const extrasTotal = selectedExtrasDetails.reduce((sum, extra) => sum + extra.total, 0);
 
-  // Base price + extras + guest fees before any discounts
-  const subtotalBeforeDiscounts = priceDetails.originalPrice + extrasTotal + guestFees;
-
-  // Calculate discounts
+  // Calculate totals
+  const subtotalBeforeDiscounts = priceDetails.originalPrice + extrasTotal + totalGuestFees;
   const longStayDiscount = Math.abs(priceDetails.discount || 0);
   const couponDiscount = appliedCoupon ? Math.abs(appliedCoupon.discount) : 0;
-
-  // Subtract both discounts from the subtotal
   const finalTotal = subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
 
   return (
@@ -66,17 +63,17 @@ export const PriceDetails = ({
         <span>{priceDetails.originalPrice.toFixed(2)} EUR</span>
       </div>
 
-      {/* Guest Fees */}
-      {guestFees > 0 && (
+      {/* Guest fees */}
+      {totalGuestFees > 0 && (
         <div className="flex items-center justify-between text-gray-600">
           <span>
             {t('priceDetails.guestFees', {
               count: extraGuests,
-              nights: priceDetails.numberOfNights,
-              price: priceDetails.settings.extraGuestsPerNight
+              fee: priceDetails.settings.extraGuestsPerNight,
+              nights: priceDetails.numberOfNights
             })}
           </span>
-          <span>{guestFees.toFixed(2)} EUR</span>
+          <span>{totalGuestFees.toFixed(2)} EUR</span>
         </div>
       )}
 
