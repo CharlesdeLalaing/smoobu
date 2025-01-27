@@ -85,6 +85,45 @@ export const SearchSection = ({
       <div className="p-6 mx-auto bg-[#fbfdfb] rounded-lg shadow">
         <div className="grid items-end grid-cols-1 gap-4 md:grid-cols-5">
           {/* Date pickers remain the same */}
+
+          {/* Date Selection Fields */}
+          <div className="md:col-span-1 w-full">
+            <label className="block mb-1 text-sm font-medium text-gray-600">
+              {t("search.arrival")}
+            </label>
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => handleDateSelect(date, true)}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              minDate={new Date().setHours(24, 0, 0, 0)}
+              locale="fr"
+              dateFormat="dd/MM/yyyy"
+              placeholderText={t("search.selectDate")}
+              className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
+              isClearable={true}
+            />
+          </div>
+
+          <div className="md:col-span-1 w-full">
+            <label className="block mb-1 text-sm font-medium text-gray-600">
+              {t("search.departure")}
+            </label>
+            <DatePicker
+              selected={endDate}
+              onChange={(date) => handleDateSelect(date, false)}
+              selectsEnd
+              startDate={startDate}
+              endDate={endDate}
+              minDate={startDate || new Date()}
+              dateFormat="dd/MM/yyyy"
+              placeholderText={t("search.selectDate")}
+              className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
+              isClearable={true}
+              disabled={!startDate}
+            />
+          </div>
           
           {/* Adults Selection */}
           <div className="md:col-span-1">
