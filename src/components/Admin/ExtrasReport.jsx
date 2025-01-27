@@ -35,8 +35,8 @@ const CombinedReport = () => {
         const endMonthStr = String(endMonth).padStart(2, '0');
 
         // Fetch both booking data and extras data
-        const [bookingsResponse, extrasResponse] = await Promise.all([
-          fetch('BookingList20250127.csv', { encoding: 'utf8' }),
+        const [csvBuffer, extrasResponse] = await Promise.all([
+          window.fs.readFile('BookingList20250127.csv'),
           axios.get(`${API_URL}/api/extras-report`, {
             params: {
               startMonth: startMonthStr,
@@ -47,8 +47,11 @@ const CombinedReport = () => {
           })
         ]);
 
+        // Convert buffer to text
+        const csvContent = new TextDecoder().decode(csvBuffer);
+
         // Parse CSV data
-        const parsedBookings = Papa.parse(bookingsResponse, {
+        const parsedBookings = Papa.parse(csvContent, {
           header: true,
           skipEmptyLines: true,
           dynamicTyping: true
@@ -62,6 +65,7 @@ const CombinedReport = () => {
 
         setReportData(combinedData);
       } catch (err) {
+        console.error('Error fetching data:', err);
         setError(err.message || 'An error occurred while fetching data');
       } finally {
         setLoading(false);
@@ -142,7 +146,10 @@ const CombinedReport = () => {
     )
     .sort((a, b) => {
       const multiplier = sortDirection === 'asc' ? 1 : -1;
-      return multiplier * (new Date(a[sortField]) - new Date(b[sortField]));
+      if (sortField === 'bookingDate') {
+        return multiplier * (new Date(a[sortField]) - new Date(b[sortField]));
+      }
+      return multiplier * (a[sortField] > b[sortField] ? 1 : -1);
     });
 
   if (loading) {
@@ -325,7 +332,7 @@ const CombinedReport = () => {
                         <div className="ml-8">
                           <h4 className="mb-2 text-sm font-medium text-gray-900">Extras:</h4>
                           {booking.extras && booking.extras.length > 0 ? (
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                               {booking.extras.map((extra, index) => (
                                 <div key={index} className="p-3 bg-white rounded-lg shadow-sm">
                                   <div className="text-sm font-medium text-gray-900">{extra.name}</div>
