@@ -16,7 +16,7 @@ const ExtrasReport = () => {
   const [error, setError] = useState(null);
   const [totalBookings, setTotalBookings] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState("count");
+  const [sortField, setSortField] = useState("bookingDate");
   const [sortDirection, setSortDirection] = useState("desc");
 
   const years = Array.from(
@@ -29,16 +29,6 @@ const ExtrasReport = () => {
   }));
 
   useEffect(() => {
-    if (
-      endYear < startYear ||
-      (endYear === startYear && endMonth < startMonth)
-    ) {
-      setEndYear(startYear);
-      setEndMonth(startMonth);
-    }
-  }, [startYear, startMonth, endYear, endMonth]);
-
-  useEffect(() => {
     const fetchReport = async () => {
       try {
         setLoading(true);
@@ -47,7 +37,8 @@ const ExtrasReport = () => {
         const startMonthStr = String(startMonth).padStart(2, "0");
         const endMonthStr = String(endMonth).padStart(2, "0");
 
-        const response = await axios.get(`${API_URL}/api/extras-report`, {
+        // Fetch detailed booking data including extras
+        const response = await axios.get(`${API_URL}/api/bookings`, {
           params: {
             startMonth: startMonthStr,
             startYear: startYear,
@@ -57,8 +48,31 @@ const ExtrasReport = () => {
         });
 
         if (response.data) {
-          setReportData(response.data.data || []);
-          setTotalBookings(response.data.totalBookings || 0);
+          // Transform the data to include all necessary information
+          const transformedData = response.data.bookings.map(booking => ({
+            id: booking.id,
+            referenceId: booking['reference-id'],
+            bookingDate: new Date(booking['created-at']).toLocaleDateString('fr'),
+            arrival: new Date(booking.arrival).toLocaleDateString('fr'),
+            departure: new Date(booking.departure).toLocaleDateString('fr'),
+            guestName: booking['guest-name'],
+            roomName: booking.apartment.name,
+            bookingPortal: booking.channel.name,
+            email: booking.email,
+            phone: booking.phone,
+            adults: booking.adults,
+            children: booking.children,
+            checkInTime: booking['check-in'],
+            notes: booking.notice,
+            basePrice: booking.price,
+            numberOfNights: Math.ceil((new Date(booking.departure) - new Date(booking.arrival)) / (1000 * 60 * 60 * 24)),
+            extras: booking.extras || [],
+            totalExtrasAmount: (booking.extras || []).reduce((sum, extra) => sum + extra.price, 0),
+            commission: booking.commission || 0,
+          }));
+
+          setReportData(transformedData);
+          setTotalBookings(transformedData.length);
         } else {
           throw new Error("Réponse vide du serveur");
         }
@@ -98,40 +112,171 @@ const ExtrasReport = () => {
   };
 
   const handleExport = () => {
-    // Create worksheet data
-    const wsData = [
+    // Helper function to format currency
+    const formatCurrency = (amount) => {
+      return typeof amount === 'number' ? `${amount.toFixed(2)} €` : '0.00 €';
+    };
+
+    // Helper function to format date
+    const formatDate = (dateStr) => {
+      if (!dateStr) return '';
+      return new Date(dateStr).toLocaleDateString('fr-FR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    };
+
+    // Create the main booking data worksheet
+    const bookingData = [
       // Headers
-      ["Nom", "Nombre de sélections", "Montant total (€)"],
+      [
+        "Informations de réservation",
+        "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""  // Empty cells for merging
+      ],
+      [
+        "N° Réservation",
+        "Référence externe",
+        "Date de réservation",
+        "Date d'arrivée",
+        "Date de départ",
+        "Chambre",
+        "Nom du client",
+        "Portal de réservation",
+        "Email",
+        "Téléphone",
+        "Adresse",
+        "Adultes",
+        "Enfants",
+        "Heure d'arrivée",
+        "Notes",
+        "Prix de base",
+        "Commission",
+        "Nuits réservées"
+      ],
       // Data rows
-      ...filteredAndSortedData.map((extra) => [
-        extra.name,
-        extra.count,
-        Number(extra.totalAmount.toFixed(2)),
-      ]),
+      ...filteredAndSortedData.map((booking) => [
+        booking.id,
+        booking.referenceId,
+        formatDate(booking.bookingDate),
+        formatDate(booking.arrival),
+        formatDate(booking.departure),
+        booking.roomName,
+        booking.guestName,
+        booking.bookingPortal,
+        booking.email,
+        booking.phone,
+        booking.address || '',
+        booking.adults,
+        booking.children,
+        booking.checkInTime,
+        booking.notes,
+        formatCurrency(booking.basePrice),
+        formatCurrency(booking.commission),
+        booking.numberOfNights
+      ])
     ];
 
-    // Add total row
-    const totalAmount = filteredAndSortedData.reduce(
-      (sum, extra) => sum + extra.totalAmount,
-      0
-    );
-    wsData.push(["Total", "", totalAmount.toFixed(2)]);
+    // Create a separate worksheet for extras details
+    const extrasData = [
+      ["Détails des extras"],
+      [
+        "N° Réservation",
+        "Nom du client",
+        "Extra",
+        "Quantité",
+        "Prix unitaire",
+        "Prix total"
+      ],
+      ...filteredAndSortedData.flatMap((booking) =>
+        booking.extras.length > 0
+          ? booking.extras.map((extra) => [
+              booking.id,
+              booking.guestName,
+              extra.name,
+              extra.quantity || 1,
+              formatCurrency(extra.price / (extra.quantity || 1)),
+              formatCurrency(extra.price)
+            ])
+          : [[booking.id, booking.guestName, "Aucun extra", "-", "-", "-"]]
+      )
+    ];
 
-    // Create workbook and worksheet
+    // Create summary worksheet
+    const summaryData = [
+      ["Résumé de la période"],
+      ["Période", `${formatDate(startYear + '-' + startMonth + '-01')} au ${formatDate(endYear + '-' + endMonth + '-31')}`],
+      ["Nombre total de réservations", totalBookings],
+      ["Total des prix de base", formatCurrency(filteredAndSortedData.reduce((sum, booking) => sum + booking.basePrice, 0))],
+      ["Total des extras", formatCurrency(filteredAndSortedData.reduce((sum, booking) => sum + booking.totalExtrasAmount, 0))],
+      ["Total des commissions", formatCurrency(filteredAndSortedData.reduce((sum, booking) => sum + booking.commission, 0))],
+      ["Nombre total de nuits", filteredAndSortedData.reduce((sum, booking) => sum + booking.numberOfNights, 0)]
+    ];
+
+    // Create workbook
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Add worksheets
+    const ws_bookings = XLSX.utils.aoa_to_sheet(bookingData);
+    const ws_extras = XLSX.utils.aoa_to_sheet(extrasData);
+    const ws_summary = XLSX.utils.aoa_to_sheet(summaryData);
+
+    // Style configurations
+    const headerStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" } },
+      fill: { fgColor: { rgb: "678D73" } },
+      alignment: { horizontal: "center" }
+    };
+
+    // Apply styles and merged cells
+    ws_bookings["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 17 } }]; // Merge first row
+    ws_extras["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }]; // Merge first row
 
     // Set column widths
-    const colWidths = [{ wch: 40 }, { wch: 20 }, { wch: 20 }];
-    ws["!cols"] = colWidths;
+    ws_bookings["!cols"] = [
+      { wch: 15 }, // N° Réservation
+      { wch: 15 }, // Référence externe
+      { wch: 15 }, // Date de réservation
+      { wch: 12 }, // Date d'arrivée
+      { wch: 12 }, // Date de départ
+      { wch: 20 }, // Chambre
+      { wch: 25 }, // Nom du client
+      { wch: 15 }, // Portal
+      { wch: 30 }, // Email
+      { wch: 15 }, // Téléphone
+      { wch: 40 }, // Adresse
+      { wch: 10 }, // Adultes
+      { wch: 10 }, // Enfants
+      { wch: 15 }, // Heure d'arrivée
+      { wch: 40 }, // Notes
+      { wch: 12 }, // Prix de base
+      { wch: 12 }, // Commission
+      { wch: 12 }  // Nuits réservées
+    ];
 
-    // Add the worksheet to the workbook
-    XLSX.utils.book_append_sheet(wb, ws, "Rapport Extras");
+    ws_extras["!cols"] = [
+      { wch: 15 }, // N° Réservation
+      { wch: 25 }, // Nom du client
+      { wch: 30 }, // Extra
+      { wch: 10 }, // Quantité
+      { wch: 12 }, // Prix unitaire
+      { wch: 12 }  // Prix total
+    ];
+
+    ws_summary["!cols"] = [
+      { wch: 25 }, // Label
+      { wch: 20 }  // Value
+    ];
+
+    // Add the worksheets to the workbook
+    XLSX.utils.book_append_sheet(wb, ws_summary, "Résumé");
+    XLSX.utils.book_append_sheet(wb, ws_bookings, "Réservations");
+    XLSX.utils.book_append_sheet(wb, ws_extras, "Extras");
 
     // Generate filename with date range
     const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
     const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
-    const fileName = `rapport-extras_${startDate}_${endDate}.xlsx`;
+    const fileName = `rapport-complet_${startDate}_${endDate}.xlsx`;
 
     // Save the file
     XLSX.writeFile(wb, fileName);
@@ -266,54 +411,58 @@ const ExtrasReport = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th
-                  onClick={() => handleSort("name")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
-                >
-                  Nom{" "}
-                  {sortField === "name" &&
-                    (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th
-                  onClick={() => handleSort("count")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
-                >
-                  Sélections{" "}
-                  {sortField === "count" &&
-                    (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th
-                  onClick={() => handleSort("totalAmount")}
-                  className="hidden px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm md:table-cell"
-                >
-                  Montant{" "}
-                  {sortField === "totalAmount" &&
-                    (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
+                {[
+                  { field: "id", label: "N° Réservation" },
+                  { field: "bookingDate", label: "Date réservation" },
+                  { field: "arrival", label: "Arrivée" },
+                  { field: "departure", label: "Départ" },
+                  { field: "roomName", label: "Chambre" },
+                  { field: "guestName", label: "Client" },
+                  { field: "bookingPortal", label: "Portal" },
+                  { field: "email", label: "Email" },
+                  { field: "phone", label: "Téléphone" },
+                  { field: "adults", label: "Adultes" },
+                  { field: "children", label: "Enfants" },
+                  { field: "basePrice", label: "Prix base" },
+                  { field: "totalExtrasAmount", label: "Total extras" },
+                  { field: "commission", label: "Commission" },
+                  { field: "numberOfNights", label: "Nuits" }
+                ].map(({ field, label }) => (
+                  <th
+                    key={field}
+                    onClick={() => handleSort(field)}
+                    className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm whitespace-nowrap"
+                  >
+                    {label} {sortField === field && (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredAndSortedData.length > 0 ? (
-                filteredAndSortedData.map((extra) => (
-                  <tr key={extra.name} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-xs font-medium text-gray-900 md:px-6 md:py-4 md:text-sm">
-                      {extra.name}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-gray-500 md:px-6 md:py-4 md:text-sm">
-                      {extra.count}
-                    </td>
-                    <td className="hidden px-4 py-3 text-xs text-gray-500 md:px-6 md:py-4 md:text-sm md:table-cell">
-                      €{extra.totalAmount.toFixed(2)}
-                    </td>
+                filteredAndSortedData.map((booking) => (
+                  <tr key={booking.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">{booking.id}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">{booking.bookingDate}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">{booking.arrival}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">{booking.departure}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">{booking.roomName}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">{booking.guestName}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">{booking.bookingPortal}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">{booking.email}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">{booking.phone}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">{booking.adults}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">{booking.children}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">€{booking.basePrice}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">€{booking.totalExtrasAmount}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">€{booking.commission}</td>
+                    <td className="px-4 py-3 text-xs md:px-6 md:text-sm">{booking.numberOfNights}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan="3"
-                    className="px-4 py-3 text-sm text-center text-gray-500 md:px-6 md:py-4"
-                  >
-                    Aucune donnée d'extras disponible pour cette période
+                  <td colSpan="15" className="px-4 py-3 text-sm text-center text-gray-500 md:px-6 md:py-4">
+                    Aucune réservation disponible pour cette période
                   </td>
                 </tr>
               )}
