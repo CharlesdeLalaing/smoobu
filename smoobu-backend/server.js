@@ -1001,6 +1001,143 @@ app.get("/api/extras-report", async (req, res) => {
   }
 });
 
+app.get("/api/bookings-report", async (req, res) => {
+  try {
+    const { startMonth, startYear, endMonth, endYear } = req.query;
+
+    const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}-01`;
+    const lastDay = new Date(endYear, parseInt(endMonth), 0).getDate();
+    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-${lastDay}`;
+
+    console.log("=== START OF BOOKINGS REPORT REQUEST ===");
+    console.log("Request params:", {
+      startMonth,
+      startYear,
+      endMonth,
+      endYear,
+    });
+    console.log("Calculated dates:", { startDate, endDate });
+
+    // Fetch bookings for the period
+    const bookingsResponse = await axios.get(
+      "https://login.smoobu.com/api/reservations",
+      {
+        headers: {
+          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+          "Cache-Control": "no-cache",
+        },
+        params: {
+          arrivalFrom: startDate,
+          arrivalTo: endDate,
+          excludeBlocked: false,
+          showCancellation: true,
+        },
+      }
+    );
+
+    const bookings = bookingsResponse.data.bookings || [];
+    console.log(`Found ${bookings.length} bookings for period ${startMonth}/${startYear} - ${endMonth}/${endYear}`);
+
+    // Process each booking to get price elements and extras
+    const processedBookings = [];
+    for (const booking of bookings) {
+      try {
+        console.log(`Processing booking ${booking.id}`);
+        
+        // Fetch price elements for each booking
+        const priceElementsResponse = await axios.get(
+          `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`,
+          {
+            headers: {
+              "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+              "Cache-Control": "no-cache",
+            },
+          }
+        );
+
+        const priceElements = priceElementsResponse.data.priceElements || [];
+        
+        // Calculate nights
+        const checkIn = new Date(booking.arrival);
+        const checkOut = new Date(booking.departure);
+        const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+
+        // Process extras
+        const extras = priceElements.filter(element => 
+          element.type === "addon" || 
+          extraNames.includes(element.name)
+        );
+
+        // Calculate totals
+        const basePrice = priceElements.find(el => el.type === 'base')?.amount || 0;
+        const extrasTotal = extras.reduce((sum, extra) => sum + extra.amount, 0);
+        const discounts = priceElements
+          .filter(el => el.type === 'discount')
+          .reduce((sum, discount) => sum + Math.abs(discount.amount), 0);
+
+        processedBookings.push({
+          id: booking.id,
+          guest: `${booking.firstName} ${booking.lastName}`,
+          portal: booking.channelId,
+          created: booking.created,
+          email: booking.email,
+          phone: booking.phone || '',
+          address: booking.address || '',
+          adults: booking.adults,
+          children: booking.children,
+          checkIn: booking.arrival,
+          checkOut: booking.departure,
+          notes: booking.notice || '',
+          price: booking.price,
+          priceDetails: {
+            basePrice,
+            extrasTotal,
+            discounts,
+            elements: priceElements
+          },
+          commission: booking.commission || 0,
+          paid: booking.depositStatus === 1,
+          prepayment: booking.deposit || 0,
+          prepaymentPaid: booking.depositStatus === 1,
+          nights,
+          status: booking.status,
+          extras: extras.map(extra => ({
+            name: extra.name,
+            amount: extra.amount,
+            quantity: extra.quantity || 1
+          }))
+        });
+
+      } catch (error) {
+        console.error(`Error processing booking ${booking.id}:`, error.message);
+      }
+    }
+
+    console.log("=== PROCESSING SUMMARY ===");
+    console.log({
+      period: `${startMonth}/${startYear} - ${endMonth}/${endYear}`,
+      totalBookings: bookings.length,
+      processedBookings: processedBookings.length,
+    });
+
+    res.json({
+      startMonth,
+      startYear,
+      endMonth,
+      endYear,
+      data: processedBookings
+    });
+
+  } catch (error) {
+    console.error("=== ERROR IN REQUEST ===");
+    console.error(error);
+    res.status(500).json({
+      error: "Failed to generate bookings report",
+      details: error.message,
+    });
+  }
+});
+
 app.get('/api/apartments', async (req, res) => {
   try {
     const response = await axios.get(

@@ -4,20 +4,19 @@ import axios from "axios";
 import * as XLSX from "xlsx";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://booking-9u8u.onrender.com";
-const SMOOBU_API_URL = "https://login.smoobu.com/api";
 
 const BookingsReport = () => {
   const [startMonth, setStartMonth] = useState(new Date().getMonth() + 1);
   const [startYear, setStartYear] = useState(new Date().getFullYear());
   const [endMonth, setEndMonth] = useState(new Date().getMonth() + 1);
   const [endYear, setEndYear] = useState(new Date().getFullYear());
-  const [bookings, setBookings] = useState([]);
+  const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState("arrival");
+  const [sortField, setSortField] = useState("checkIn");
   const [sortDirection, setSortDirection] = useState("desc");
-  const [expandedBookings, setExpandedBookings] = useState(new Set());
+  const [expandedBooking, setExpandedBooking] = useState(null);
 
   const years = Array.from({ length: 3 }, (_, i) => new Date().getFullYear() - i);
   const months = Array.from({ length: 12 }, (_, i) => ({
@@ -33,7 +32,7 @@ const BookingsReport = () => {
   }, [startYear, startMonth, endYear, endMonth]);
 
   useEffect(() => {
-    const fetchBookings = async () => {
+    const fetchReport = async () => {
       try {
         setLoading(true);
         setError(null);
@@ -41,60 +40,30 @@ const BookingsReport = () => {
         const startMonthStr = String(startMonth).padStart(2, "0");
         const endMonthStr = String(endMonth).padStart(2, "0");
 
-        // Fetch bookings for the selected period
-        const response = await axios.get(`${API_URL}/api/bookings`, {
+        const response = await axios.get(`${API_URL}/api/bookings-report`, {
           params: {
             startMonth: startMonthStr,
             startYear: startYear,
             endMonth: endMonthStr,
             endYear: endYear,
           },
-          headers: {
-            'Api-Key': process.env.SMOOBU_API_KEY
-          }
         });
 
         if (response.data) {
-          // Fetch extras for each booking
-          const bookingsWithExtras = await Promise.all(
-            response.data.map(async (booking) => {
-              try {
-                const extrasResponse = await axios.get(`${API_URL}/api/booking-extras/${booking.id}`);
-                return {
-                  ...booking,
-                  extras: extrasResponse.data || []
-                };
-              } catch (error) {
-                console.error(`Error fetching extras for booking ${booking.id}:`, error);
-                return {
-                  ...booking,
-                  extras: []
-                };
-              }
-            })
-          );
-          setBookings(bookingsWithExtras);
+          setReportData(response.data.data || []);
+        } else {
+          throw new Error("Réponse vide du serveur");
         }
       } catch (err) {
         setError(err.response?.data?.error || err.message);
-        setBookings([]);
+        setReportData([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBookings();
+    fetchReport();
   }, [startMonth, startYear, endMonth, endYear]);
-
-  const toggleBookingExpanded = (bookingId) => {
-    const newExpanded = new Set(expandedBookings);
-    if (newExpanded.has(bookingId)) {
-      newExpanded.delete(bookingId);
-    } else {
-      newExpanded.add(bookingId);
-    }
-    setExpandedBookings(newExpanded);
-  };
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -106,64 +75,85 @@ const BookingsReport = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("fr");
+    return new Date(dateString).toLocaleDateString("fr-FR");
+  };
+
+  const formatPrice = (price) => {
+    return `€${Number(price).toFixed(2)}`;
   };
 
   const handleExport = () => {
     const wsData = [
       [
         "ID",
-        "Date d'arrivée",
-        "Date de départ",
-        "Nom du client",
+        "Client",
+        "Portal",
+        "Créé le",
         "Email",
         "Téléphone",
+        "Adresse",
         "Adultes",
         "Enfants",
-        "Appartement",
+        "Arrivée",
+        "Départ",
+        "Notes",
         "Prix",
-        "Extras",
-        "Total"
-      ]
-    ];
-
-    filteredAndSortedData.forEach((booking) => {
-      const extrasTotal = booking.extras.reduce((sum, extra) => sum + extra.totalAmount, 0);
-      const extrasDetail = booking.extras.map(e => `${e.name}: €${e.totalAmount}`).join(", ");
-      
-      wsData.push([
+        "Commission",
+        "Payé",
+        "Acompte",
+        "Acompte payé",
+        "Nuits",
+        "Statut",
+        "Extras"
+      ],
+      ...filteredAndSortedData.map((booking) => [
         booking.id,
-        formatDate(booking.arrival),
-        formatDate(booking.departure),
-        booking["guest-name"],
+        booking.guest,
+        booking.portal,
+        formatDate(booking.created),
         booking.email,
         booking.phone,
+        booking.address,
         booking.adults,
         booking.children,
-        booking.apartment.name,
-        `€${booking.price}`,
-        extrasDetail,
-        `€${(parseFloat(booking.price) + extrasTotal).toFixed(2)}`
-      ]);
-    });
+        formatDate(booking.checkIn),
+        formatDate(booking.checkOut),
+        booking.notes,
+        booking.price,
+        booking.commission,
+        booking.paid ? "Oui" : "Non",
+        booking.prepayment,
+        booking.prepaymentPaid ? "Oui" : "Non",
+        booking.nights,
+        booking.status,
+        booking.extras.map(e => `${e.name} (${e.quantity}x)`).join(", ")
+      ]),
+    ];
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-    // Set column widths
     const colWidths = [
       { wch: 10 }, // ID
-      { wch: 15 }, // Arrival
-      { wch: 15 }, // Departure
-      { wch: 30 }, // Guest name
-      { wch: 30 }, // Email
-      { wch: 20 }, // Phone
+      { wch: 25 }, // Client
+      { wch: 15 }, // Portal
+      { wch: 15 }, // Created
+      { wch: 25 }, // Email
+      { wch: 15 }, // Phone
+      { wch: 30 }, // Address
       { wch: 10 }, // Adults
       { wch: 10 }, // Children
-      { wch: 30 }, // Apartment
-      { wch: 15 }, // Price
-      { wch: 50 }, // Extras
-      { wch: 15 }  // Total
+      { wch: 12 }, // Check-in
+      { wch: 12 }, // Check-out
+      { wch: 30 }, // Notes
+      { wch: 12 }, // Price
+      { wch: 12 }, // Commission
+      { wch: 8 },  // Paid
+      { wch: 12 }, // Prepayment
+      { wch: 15 }, // Prepayment paid
+      { wch: 8 },  // Nights
+      { wch: 12 }, // Status
+      { wch: 50 }  // Extras
     ];
     ws["!cols"] = colWidths;
 
@@ -176,20 +166,20 @@ const BookingsReport = () => {
     XLSX.writeFile(wb, fileName);
   };
 
-  const filteredAndSortedData = bookings
+  const filteredAndSortedData = reportData
     .filter((booking) =>
-      booking["guest-name"].toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.apartment.name.toLowerCase().includes(searchTerm.toLowerCase())
+      Object.values(booking).some(
+        (value) =>
+          value &&
+          value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      )
     )
     .sort((a, b) => {
       const multiplier = sortDirection === "asc" ? 1 : -1;
-      if (sortField === "guest-name") {
-        return multiplier * a["guest-name"].localeCompare(b["guest-name"]);
+      if (["checkIn", "checkOut", "created"].includes(sortField)) {
+        return multiplier * (new Date(a[sortField]) - new Date(b[sortField]));
       }
-      if (sortField === "price") {
-        return multiplier * (parseFloat(a.price) - parseFloat(b.price));
-      }
-      return multiplier * new Date(a[sortField]) - new Date(b[sortField]);
+      return multiplier * (String(a[sortField]).localeCompare(String(b[sortField])));
     });
 
   if (loading) {
@@ -218,7 +208,6 @@ const BookingsReport = () => {
         </button>
       </div>
 
-      {/* Filters Section */}
       <div className="p-4 mb-6 bg-white rounded-lg shadow">
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative flex-1 min-w-[200px]">
@@ -227,17 +216,16 @@ const BookingsReport = () => {
             </div>
             <input
               type="text"
-              placeholder="Rechercher une réservation..."
+              placeholder="Rechercher..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
             />
           </div>
 
-          {/* Date filters */}
-          <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[150px]">
             <select
-              className="px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
               value={startMonth}
               onChange={(e) => setStartMonth(parseInt(e.target.value))}
             >
@@ -247,9 +235,11 @@ const BookingsReport = () => {
                 </option>
               ))}
             </select>
+          </div>
 
+          <div className="flex-1 min-w-[150px]">
             <select
-              className="px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
               value={startYear}
               onChange={(e) => setStartYear(parseInt(e.target.value))}
             >
@@ -259,11 +249,11 @@ const BookingsReport = () => {
                 </option>
               ))}
             </select>
+          </div>
 
-            <span className="self-center">à</span>
-
+          <div className="flex-1 min-w-[150px]">
             <select
-              className="px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
               value={endMonth}
               onChange={(e) => setEndMonth(parseInt(e.target.value))}
             >
@@ -273,9 +263,11 @@ const BookingsReport = () => {
                 </option>
               ))}
             </select>
+          </div>
 
+          <div className="flex-1 min-w-[150px]">
             <select
-              className="px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
               value={endYear}
               onChange={(e) => setEndYear(parseInt(e.target.value))}
             >
@@ -295,45 +287,53 @@ const BookingsReport = () => {
         </div>
       )}
 
-      {/* Bookings Table */}
       <div className="overflow-hidden bg-white rounded-lg shadow">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="w-10 px-4 py-3"></th>
+                <th className="w-8 px-4 py-3"></th>
                 <th
-                  onClick={() => handleSort("arrival")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:text-sm"
+                  onClick={() => handleSort("id")}
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
                 >
-                  Arrivée {sortField === "arrival" && (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th
-                  onClick={() => handleSort("departure")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:text-sm"
-                >
-                  Départ {sortField === "departure" && (sortDirection === "asc" ? "↑" : "↓")}
+                  ID {sortField === "id" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
                 <th
-                  onClick={() => handleSort("guest-name")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:text-sm"
+                  onClick={() => handleSort("guest")}
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
                 >
-                  Client {sortField === "guest-name" && (sortDirection === "asc" ? "↑" : "↓")}
+                  Client {sortField === "guest" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:text-sm">
-                  Contact
+                <th
+                  onClick={() => handleSort("checkIn")}
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                >
+                  Arrivée {sortField === "checkIn" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-center text-gray-600 md:text-sm">
-                  Personnes
+                <th
+                  onClick={() => handleSort("checkOut")}
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                >
+                  Départ {sortField === "checkOut" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:text-sm">
-                  Appartement
+                <th
+                  onClick={() => handleSort("nights")}
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                >
+                  Nuits {sortField === "nights" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
                 <th
                   onClick={() => handleSort("price")}
-                  className="px-4 py-3 text-xs font-semibold text-right text-gray-600 cursor-pointer md:text-sm"
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
                 >
                   Prix {sortField === "price" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th
+                  onClick={() => handleSort("status")}
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                >
+                  Statut {sortField === "status" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
               </tr>
             </thead>
@@ -344,141 +344,82 @@ const BookingsReport = () => {
                     <tr className="hover:bg-gray-50">
                       <td className="px-4 py-3">
                         <button
-                          onClick={() => toggleBookingExpanded(booking.id)}
-                          className="text-gray-500 hover:text-gray-700"
+                          onClick={() => setExpandedBooking(expandedBooking === booking.id ? null : booking.id)}
+                          className="p-1 hover:bg-gray-100 rounded"
                         >
-                          {expandedBookings.has(booking.id) ? (
-                            <ChevronUp size={20} />
+                          {expandedBooking === booking.id ? (
+                            <ChevronUp size={16} />
                           ) : (
-                            <ChevronDown size={20} />
+                            <ChevronDown size={16} />
                           )}
                         </button>
                       </td>
-                      <td className="px-4 py-3 text-xs md:text-sm">
-                        {formatDate(booking.arrival)}
+                      <td className="px-4 py-3 text-xs font-medium text-gray-900">
+                        {booking.id}
                       </td>
-                      <td className="px-4 py-3 text-xs md:text-sm">
-                        {formatDate(booking.departure)}
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {booking.guest}
                       </td>
-                      <td className="px-4 py-3 text-xs font-medium md:text-sm">
-                        {booking["guest-name"]}
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {formatDate(booking.checkIn)}
                       </td>
-                      <td className="px-4 py-3 text-xs md:text-sm">
-                        <div className="flex flex-col">
-                          <span>{booking.email}</span>
-                          <span className="text-gray-500">{booking.phone}</span>
-                        </div>
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {formatDate(booking.checkOut)}
                       </td>
-                      <td className="px-4 py-3 text-xs text-center md:text-sm">
-                        <div className="flex flex-col">
-                          <span>{booking.adults} adultes</span>
-                          {booking.children > 0 && (
-                            <span className="text-gray-500">
-                              {booking.children} enfants
-                            </span>
-                          )}
-                        </div>
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {booking.nights}
                       </td>
-                      <td className="px-4 py-3 text-xs md:text-sm">
-                        {booking.apartment.name}
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {formatPrice(booking.price)}
                       </td>
-                      <td className="px-4 py-3 text-xs text-right md:text-sm">
-                        €{parseFloat(booking.price).toFixed(2)}
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {booking.status}
                       </td>
                     </tr>
-                    {expandedBookings.has(booking.id) && (
-                      <tr className="bg-gray-50">
-                        <td colSpan="8" className="px-4 py-3">
-                          <div className="ml-8">
-                            <div className="mb-2 text-sm font-medium text-gray-700">
-                              Détails supplémentaires :
+                    {expandedBooking === booking.id && (
+                      <tr>
+                        <td colSpan="8" className="px-4 py-4 bg-gray-50">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h3 className="font-semibold mb-2">Informations client</h3>
+                              <p className="text-sm">Email: {booking.email}</p>
+                              <p className="text-sm">Téléphone: {booking.phone}</p>
+                              <p className="text-sm">Adresse: {booking.address}</p>
+                              <p className="text-sm">Adultes: {booking.adults}</p>
+                              <p className="text-sm">Enfants: {booking.children}</p>
+                              <p className="text-sm">Portal: {booking.portal}</p>
+                              <p className="text-sm">Créé le: {formatDate(booking.created)}</p>
+                              {booking.notes && (
+                                <p className="text-sm mt-2">Notes: {booking.notes}</p>
+                              )}
                             </div>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                              <div>
-                                <p className="text-sm">
-                                  <span className="font-medium">Check-in:</span>{" "}
-                                  {booking["check-in"]}
-                                </p>
-                                <p className="text-sm">
-                                  <span className="font-medium">Check-out:</span>{" "}
-                                  {booking["check-out"]}
-                                </p>
-                                <p className="text-sm">
-                                  <span className="font-medium">Réservé via:</span>{" "}
-                                  {booking.channel.name}
-                                </p>
-                                <p className="text-sm">
-                                  <span className="font-medium">Date de réservation:</span>{" "}
-                                  {new Date(booking["created-at"]).toLocaleString("fr")}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-sm">
-                                  <span className="font-medium">Paiement:</span>{" "}
-                                  {booking["price-paid"] === "Yes" ? "Payé" : "Non payé"}
-                                </p>
-                                {booking.prepayment > 0 && (
-                                  <p className="text-sm">
-                                    <span className="font-medium">Acompte:</span>{" "}
-                                    €{booking.prepayment} - 
-                                    {booking["prepayment-paid"] === "Yes" ? " Payé" : " Non payé"}
-                                  </p>
-                                )}
-                                {booking.deposit > 0 && (
-                                  <p className="text-sm">
-                                    <span className="font-medium">Caution:</span>{" "}
-                                    €{booking.deposit} - 
-                                    {booking["deposit-paid"] === "Yes" ? " Payée" : " Non payée"}
-                                  </p>
-                                )}
-                              </div>
+                            <div>
+                              <h3 className="font-semibold mb-2">Détails de paiement</h3>
+                              <p className="text-sm">Prix de base: {formatPrice(booking.priceDetails.basePrice)}</p>
+                              {booking.priceDetails.extrasTotal > 0 && (
+                                <p className="text-sm">Extras: {formatPrice(booking.priceDetails.extrasTotal)}</p>
+                              )}
+                              {booking.priceDetails.discounts > 0 && (
+                                <p className="text-sm">Réductions: -{formatPrice(booking.priceDetails.discounts)}</p>
+                              )}
+                              <p className="text-sm">Total: {formatPrice(booking.price)}</p>
+                              <p className="text-sm">Commission: {formatPrice(booking.commission)}</p>
+                              <p className="text-sm">Acompte: {formatPrice(booking.prepayment)} ({booking.prepaymentPaid ? 'Payé' : 'Non payé'})</p>
+                              <p className="text-sm">Statut du paiement: {booking.paid ? 'Payé' : 'Non payé'}</p>
                             </div>
-                            
-                            {/* Extras Section */}
-                            {booking.extras && booking.extras.length > 0 && (
-                              <div className="mt-4">
-                                <div className="mb-2 text-sm font-medium text-gray-700">
-                                  Extras:
+                            {booking.extras.length > 0 && (
+                              <div className="md:col-span-2">
+                                <h3 className="font-semibold mb-2">Extras</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                  {booking.extras.map((extra, index) => (
+                                    <div key={index} className="bg-white p-3 rounded-lg shadow-sm">
+                                      <p className="text-sm font-medium">{extra.name}</p>
+                                      <p className="text-sm text-gray-500">
+                                        Quantité: {extra.quantity} • Prix: {formatPrice(extra.amount)}
+                                      </p>
+                                    </div>
+                                  ))}
                                 </div>
-                                <table className="w-full text-sm">
-                                  <thead className="bg-gray-100">
-                                    <tr>
-                                      <th className="px-4 py-2 text-left">Nom</th>
-                                      <th className="px-4 py-2 text-right">Montant</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {booking.extras.map((extra, index) => (
-                                      <tr key={index} className="border-t border-gray-200">
-                                        <td className="px-4 py-2">{extra.name}</td>
-                                        <td className="px-4 py-2 text-right">
-                                          €{extra.totalAmount.toFixed(2)}
-                                        </td>
-                                      </tr>
-                                    ))}
-                                    <tr className="border-t border-gray-200 font-medium">
-                                      <td className="px-4 py-2">Total avec extras</td>
-                                      <td className="px-4 py-2 text-right">
-                                        €{(
-                                          parseFloat(booking.price) +
-                                          booking.extras.reduce(
-                                            (sum, extra) => sum + extra.totalAmount,
-                                            0
-                                          )
-                                        ).toFixed(2)}
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
-                            
-                            {booking.notice && (
-                              <div className="mt-4">
-                                <div className="mb-2 text-sm font-medium text-gray-700">
-                                  Notes:
-                                </div>
-                                <p className="text-sm text-gray-600">{booking.notice}</p>
                               </div>
                             )}
                           </div>
