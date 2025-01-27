@@ -30,7 +30,9 @@
         "children": "Enfants",
         "search": "Rechercher",
         "selectDate": "Sélectionnez une date",
-        "selectNumber": "Sélectionnez un nombre"
+        "selectNumber": "Sélectionnez un nombre",
+        "maxGuestsExceeded": "Le nombre maximum de personnes est de {{max}}",
+        "select": "Sélectionner"
       },
       "rooms": {
         "types": {
@@ -370,7 +372,12 @@
         "selectDatePrompt": "Veuillez sélectionner une date",
         "selectRoom": "Sélectionner cette chambre",
         "unavailableForDates": "Non disponible pour ces dates",
-        "loading": "Chargement..."
+        "loading": "Chargement...",
+        "capacityExceeded": {
+          "title": "Capacité maximale dépassée",
+          "message": "Cette chambre peut accueillir un maximum de {{max}} personnes (vous avez sélectionné {{current}} personnes)"
+        },
+        "tooManyGuests": "Trop de personnes pour cette chambre"
       },
       "terms": {
         "accept": "J'accepte les ",

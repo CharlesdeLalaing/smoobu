@@ -442,7 +442,7 @@ const BookingForm = () => {
         {!showPayment ? (
           <form onSubmit={handleSubmit} className="mx-auto space-y-4">
             <div style={{ backgroundColor: "#668E73" }}>
-              <SearchSection {...searchSectionProps} />
+              <SearchSection {...searchSectionProps} discountSettings={discountSettings} />
               <RoomNavigation {...roomNavigationProps} />
             </div>
 
@@ -452,11 +452,12 @@ const BookingForm = () => {
                 <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
                   <div className="w-full h-full lg:w-1/2">
                     <div className="h-full overflow-auto">
-                      <PropertyDetails
-                        {...propertyDetailsProps}
-                        showOnlySelected={true}
-                        selectedRoomId={formData.apartmentId}
-                      />
+                    <PropertyDetails
+                      {...propertyDetailsProps}
+                      discountSettings={discountSettings}
+                      showOnlySelected={true}
+                      selectedRoomId={formData.apartmentId}
+                    />
                     </div>
                   </div>
 

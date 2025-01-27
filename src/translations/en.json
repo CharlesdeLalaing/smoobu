@@ -29,7 +29,9 @@
             "adults": "Adults",
             "children": "Children",
             "search": "Search",
-            "selectDate": "Select a date"
+            "selectDate": "Select a date",
+            "maxGuestsExceeded": "The maximum number of people is {{max}}",
+            "select": "Select"
         },
         "rooms": {
             "types": {
@@ -369,7 +371,12 @@
             "selectDatePrompt": "Please select a date",
             "selectRoom": "Select this room",
             "unavailableForDates": "Not available for these dates",
-            "loading": "Loading..."
+            "loading": "Loading...",
+            "capacityExceeded": {
+                "title": "Maximum capacity exceeded",
+                "message": "This room can accommodate a maximum of {{max}} people (you have selected {{current}} people)."
+                },
+            "tooManyGuests": "Too many people for this room"
         },
         "terms": {
             "accept": "I accept the ",

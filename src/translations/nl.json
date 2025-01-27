@@ -30,7 +30,9 @@
         "children": "Kinderen",
         "search": "Zoeken",
         "selectDate": "Selecteer een datum",
-        "selectNumber": "Selecteer een nummer"
+        "selectNumber": "Selecteer een nummer",
+        "maxGuestsExceeded": "Het maximum aantal mensen is {{max}}",
+        "select": "Selecteer"
         },
       "rooms": {
         "types": {
@@ -370,7 +372,12 @@
         "selectDatePrompt": "Selecteer een datum",
         "selectRoom": "Selecteer deze kamer",
         "unavailableForDates": "Niet beschikbaar voor deze data",
-        "loading": "Laden..."
+        "loading": "Laden...",
+        "capacityExceeded": {
+                "title": "Maximale capaciteit overschreden",
+                "message": "Deze kamer is geschikt voor maximaal {{max}} personen (je hebt {{current}} personen geselecteerd)."
+                },
+            "tooManyGuests": "Te veel mensen voor deze kamer"
       },
       "terms": {
         "accept": "Ik accepteer de ",
