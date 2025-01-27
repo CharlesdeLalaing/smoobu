@@ -790,7 +790,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: [
-      'https://reservation.fermedebasseilles.be',
+      'https://smoobu-test.vercel.app/',
       'http://localhost:5173',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

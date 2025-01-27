@@ -4,7 +4,7 @@ import axios from "axios";
 import * as XLSX from "xlsx";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://booking-9u8u.onrender.com";
+  import.meta.env.VITE_API_URL || "https://smoobu-test.onrender.com/";
 
 const ExtrasReport = () => {
   const [startMonth, setStartMonth] = useState(new Date().getMonth() + 1);
