@@ -43,7 +43,6 @@ import toilet from "../../assets/Chambres/icons8-toilet-50.png";
 import wifi from "../../assets/Chambres/icons8-wifi-50.png";
 
 export const roomsData = {
-
   1946282: {
     id: 1946282,
     type: "rooms.types.unusual",
@@ -76,8 +75,6 @@ export const roomsData = {
       }
     }
   },
-
-
   
   1644643: {
     id: 1644643,
@@ -124,7 +121,7 @@ export const roomsData = {
       quaternary: Moulin_img_4,
       quinary: Moulin_img_5,
     },
-    maxGuests: 2,
+    maxGuests: 4,  // Updated to match correct capacity (2 adults + 2 children)
     features: [
       { icon: people, title: "rooms.features.maxGuestsWithChildren", value: [2, 2] },
       { icon: bed, title: "rooms.features.bedQueen" },
@@ -157,7 +154,7 @@ export const roomsData = {
       quaternary: Ble_img_4,
       quinary: Ble_img_5,
     },
-    maxGuests: 2,
+    maxGuests: 4,  // Updated to match correct capacity (4 total)
     features: [
       { icon: people, title: "rooms.features.maxGuests", value: 4 },
       { icon: bed, title: "rooms.features.bedKingAndSingle" },
