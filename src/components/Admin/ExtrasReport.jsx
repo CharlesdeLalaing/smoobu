@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Search, Download, ChevronDown, ChevronUp } from 'lucide-react';
-import axios from 'axios';
-import * as XLSX from 'xlsx';
-import Papa from 'papaparse';
+import React, { useState, useEffect } from "react";
+import { Calendar, Search, Download } from "lucide-react";
+import axios from "axios";
+import * as XLSX from "xlsx";
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://booking-9u8u.onrender.com';
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://booking-9u8u.onrender.com";
 
-const CombinedReport = () => {
+const ExtrasReport = () => {
   const [startMonth, setStartMonth] = useState(new Date().getMonth() + 1);
   const [startYear, setStartYear] = useState(new Date().getFullYear());
   const [endMonth, setEndMonth] = useState(new Date().getMonth() + 1);
@@ -14,142 +14,138 @@ const CombinedReport = () => {
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState('bookingDate');
-  const [sortDirection, setSortDirection] = useState('desc');
-  const [expandedRows, setExpandedRows] = useState(new Set());
+  const [totalBookings, setTotalBookings] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState("count");
+  const [sortDirection, setSortDirection] = useState("desc");
 
-  const years = Array.from({ length: 3 }, (_, i) => new Date().getFullYear() - i);
+  const years = Array.from(
+    { length: 3 },
+    (_, i) => new Date().getFullYear() - i
+  );
   const months = Array.from({ length: 12 }, (_, i) => ({
     value: i + 1,
-    label: new Date(2024, i).toLocaleString('fr', { month: 'long' }),
+    label: new Date(2024, i).toLocaleString("fr", { month: "long" }),
   }));
 
   useEffect(() => {
-    const fetchCombinedData = async () => {
+    if (
+      endYear < startYear ||
+      (endYear === startYear && endMonth < startMonth)
+    ) {
+      setEndYear(startYear);
+      setEndMonth(startMonth);
+    }
+  }, [startYear, startMonth, endYear, endMonth]);
+
+  useEffect(() => {
+    const fetchReport = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const startMonthStr = String(startMonth).padStart(2, '0');
-        const endMonthStr = String(endMonth).padStart(2, '0');
+        const startMonthStr = String(startMonth).padStart(2, "0");
+        const endMonthStr = String(endMonth).padStart(2, "0");
 
-        // Fetch both booking data and extras data
-        const [csvBuffer, extrasResponse] = await Promise.all([
-          window.fs.readFile('BookingList20250127.csv'),
-          axios.get(`${API_URL}/api/extras-report`, {
-            params: {
-              startMonth: startMonthStr,
-              startYear: startYear,
-              endMonth: endMonthStr,
-              endYear: endYear,
-            },
-          })
-        ]);
+        const response = await axios.get(`${API_URL}/api/extras-report`, {
+          params: {
+            startMonth: startMonthStr,
+            startYear: startYear,
+            endMonth: endMonthStr,
+            endYear: endYear,
+          },
+        });
 
-        // Convert buffer to text
-        const csvContent = new TextDecoder().decode(csvBuffer);
-
-        // Parse CSV data
-        const parsedBookings = Papa.parse(csvContent, {
-          header: true,
-          skipEmptyLines: true,
-          dynamicTyping: true
-        }).data;
-
-        // Combine booking data with extras
-        const combinedData = parsedBookings.map(booking => ({
-          ...booking,
-          extras: extrasResponse.data.data.filter(extra => extra.bookingId === booking.id) || []
-        }));
-
-        setReportData(combinedData);
+        if (response.data) {
+          setReportData(response.data.data || []);
+          setTotalBookings(response.data.totalBookings || 0);
+        } else {
+          throw new Error("Réponse vide du serveur");
+        }
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(err.message || 'An error occurred while fetching data');
+        setError(err.response?.data?.error || err.message);
+        setReportData([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCombinedData();
+    fetchReport();
   }, [startMonth, startYear, endMonth, endYear]);
+
+  const handleStartYearChange = (year) => {
+    const newYear = parseInt(year);
+    setStartYear(newYear);
+    if (endYear < newYear) {
+      setEndYear(newYear);
+    }
+  };
+
+  const handleEndYearChange = (year) => {
+    const newYear = parseInt(year);
+    if (newYear >= startYear) {
+      setEndYear(newYear);
+    }
+  };
 
   const handleSort = (field) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection('desc');
+      setSortDirection("desc");
     }
-  };
-
-  const toggleRowExpansion = (bookingId) => {
-    const newExpandedRows = new Set(expandedRows);
-    if (expandedRows.has(bookingId)) {
-      newExpandedRows.delete(bookingId);
-    } else {
-      newExpandedRows.add(bookingId);
-    }
-    setExpandedRows(newExpandedRows);
   };
 
   const handleExport = () => {
-    const flattenedData = reportData.flatMap(booking => {
-      const baseBooking = {
-        'Date de réservation': booking.bookingDate,
-        'Nom du client': booking.clientName,
-        'Email': booking.email,
-        'Téléphone': booking.phone,
-        'Montant total': booking.totalAmount,
-        'Status': booking.status
-      };
+    // Create worksheet data
+    const wsData = [
+      // Headers
+      ["Nom", "Nombre de sélections", "Montant total (€)"],
+      // Data rows
+      ...filteredAndSortedData.map((extra) => [
+        extra.name,
+        extra.count,
+        Number(extra.totalAmount.toFixed(2)),
+      ]),
+    ];
 
-      if (booking.extras && booking.extras.length > 0) {
-        return booking.extras.map(extra => ({
-          ...baseBooking,
-          'Extra': extra.name,
-          'Prix extra': extra.amount,
-          'Quantité': extra.quantity
-        }));
-      }
-      return [baseBooking];
-    });
+    // Add total row
+    const totalAmount = filteredAndSortedData.reduce(
+      (sum, extra) => sum + extra.totalAmount,
+      0
+    );
+    wsData.push(["Total", "", totalAmount.toFixed(2)]);
 
+    // Create workbook and worksheet
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(flattenedData);
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
 
     // Set column widths
-    const colWidths = [
-      { wch: 15 }, // Date
-      { wch: 30 }, // Client Name
-      { wch: 35 }, // Email
-      { wch: 15 }, // Phone
-      { wch: 15 }, // Total Amount
-      { wch: 15 }, // Status
-      { wch: 30 }, // Extra
-      { wch: 15 }, // Extra Price
-      { wch: 10 }  // Quantity
-    ];
-    ws['!cols'] = colWidths;
+    const colWidths = [{ wch: 40 }, { wch: 20 }, { wch: 20 }];
+    ws["!cols"] = colWidths;
 
-    XLSX.utils.book_append_sheet(wb, ws, 'Rapport Complet');
-    
-    const fileName = `rapport-complet_${startYear}-${String(startMonth).padStart(2, '0')}_${endYear}-${String(endMonth).padStart(2, '0')}.xlsx`;
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(wb, ws, "Rapport Extras");
+
+    // Generate filename with date range
+    const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
+    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
+    const fileName = `rapport-extras_${startDate}_${endDate}.xlsx`;
+
+    // Save the file
     XLSX.writeFile(wb, fileName);
   };
 
   const filteredAndSortedData = reportData
-    .filter(booking => 
-      booking.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    .filter((extra) =>
+      extra.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
-      const multiplier = sortDirection === 'asc' ? 1 : -1;
-      if (sortField === 'bookingDate') {
-        return multiplier * (new Date(a[sortField]) - new Date(b[sortField]));
-      }
-      return multiplier * (a[sortField] > b[sortField] ? 1 : -1);
+      const multiplier = sortDirection === "asc" ? 1 : -1;
+      return sortField === "name"
+        ? multiplier * a.name.localeCompare(b.name)
+        : multiplier * (a[sortField] - b[sortField]);
     });
 
   if (loading) {
@@ -165,7 +161,7 @@ const CombinedReport = () => {
       <div className="flex items-center justify-between gap-2 mb-6">
         <div className="flex items-center gap-2">
           <Calendar className="w-6 h-6 text-[#678D73]" />
-          <h1 className="text-xl font-bold md:text-2xl">Rapport Complet des Réservations</h1>
+          <h1 className="text-xl font-bold md:text-2xl">Rapport des Extras</h1>
         </div>
 
         <button
@@ -178,7 +174,6 @@ const CombinedReport = () => {
         </button>
       </div>
 
-      {/* Search and Filter Controls */}
       <div className="p-4 mb-6 bg-white rounded-lg shadow">
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative flex-1 min-w-[200px]">
@@ -187,17 +182,16 @@ const CombinedReport = () => {
             </div>
             <input
               type="text"
-              placeholder="Rechercher une réservation..."
+              placeholder="Rechercher un extra..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
             />
           </div>
 
-          {/* Date filters */}
-          <div className="flex gap-4 flex-wrap">
+          <div className="flex-1 min-w-[150px]">
             <select
-              className="px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
               value={startMonth}
               onChange={(e) => setStartMonth(parseInt(e.target.value))}
             >
@@ -207,11 +201,13 @@ const CombinedReport = () => {
                 </option>
               ))}
             </select>
+          </div>
 
+          <div className="flex-1 min-w-[150px]">
             <select
-              className="px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
               value={startYear}
-              onChange={(e) => setStartYear(parseInt(e.target.value))}
+              onChange={(e) => handleStartYearChange(e.target.value)}
             >
               {years.map((year) => (
                 <option key={year} value={year}>
@@ -219,11 +215,11 @@ const CombinedReport = () => {
                 </option>
               ))}
             </select>
+          </div>
 
-            <span className="text-gray-500">à</span>
-
+          <div className="flex-1 min-w-[150px]">
             <select
-              className="px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
               value={endMonth}
               onChange={(e) => setEndMonth(parseInt(e.target.value))}
             >
@@ -233,17 +229,22 @@ const CombinedReport = () => {
                 </option>
               ))}
             </select>
+          </div>
 
+          <div className="flex-1 min-w-[150px]">
             <select
-              className="px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
               value={endYear}
-              onChange={(e) => setEndYear(parseInt(e.target.value))}
+              onChange={(e) => handleEndYearChange(e.target.value)}
+              disabled={endYear < startYear}
             >
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
+              {years
+                .filter((year) => year >= startYear)
+                .map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
             </select>
           </div>
         </div>
@@ -255,109 +256,64 @@ const CombinedReport = () => {
         </div>
       )}
 
-      {/* Data Table */}
       <div className="overflow-hidden bg-white rounded-lg shadow">
+        <div className="p-4 border-b">
+          <p className="text-sm text-gray-600">
+            Réservations totales pour cette période : {totalBookings}
+          </p>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="w-8 px-4 py-3"></th>
                 <th
-                  onClick={() => handleSort('bookingDate')}
+                  onClick={() => handleSort("name")}
                   className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
                 >
-                  Date {sortField === 'bookingDate' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  Nom{" "}
+                  {sortField === "name" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">
-                  Client
+                <th
+                  onClick={() => handleSort("count")}
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
+                >
+                  Sélections{" "}
+                  {sortField === "count" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="hidden px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm md:table-cell">
-                  Email
-                </th>
-                <th className="hidden px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm md:table-cell">
-                  Téléphone
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold text-right text-gray-600 md:px-6 md:text-sm">
-                  Montant
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold text-center text-gray-600 md:px-6 md:text-sm">
-                  Status
+                <th
+                  onClick={() => handleSort("totalAmount")}
+                  className="hidden px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm md:table-cell"
+                >
+                  Montant{" "}
+                  {sortField === "totalAmount" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredAndSortedData.map((booking) => (
-                <React.Fragment key={booking.id}>
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => toggleRowExpansion(booking.id)}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        {expandedRows.has(booking.id) ? (
-                          <ChevronUp size={20} />
-                        ) : (
-                          <ChevronDown size={20} />
-                        )}
-                      </button>
+              {filteredAndSortedData.length > 0 ? (
+                filteredAndSortedData.map((extra) => (
+                  <tr key={extra.name} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-xs font-medium text-gray-900 md:px-6 md:py-4 md:text-sm">
+                      {extra.name}
                     </td>
-                    <td className="px-4 py-3 text-xs font-medium text-gray-900 md:px-6 md:text-sm">
-                      {new Date(booking.bookingDate).toLocaleDateString('fr-FR')}
+                    <td className="px-4 py-3 text-xs text-gray-500 md:px-6 md:py-4 md:text-sm">
+                      {extra.count}
                     </td>
-                    <td className="px-4 py-3 text-xs font-medium text-gray-900 md:px-6 md:text-sm">
-                      {booking.clientName}
-                    </td>
-                    <td className="hidden px-4 py-3 text-xs text-gray-500 md:px-6 md:text-sm md:table-cell">
-                      {booking.email}
-                    </td>
-                    <td className="hidden px-4 py-3 text-xs text-gray-500 md:px-6 md:text-sm md:table-cell">
-                      {booking.phone}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-right text-gray-500 md:px-6 md:text-sm">
-                      €{booking.totalAmount?.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-center text-gray-500 md:px-6 md:text-sm">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                        booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {booking.status}
-                      </span>
+                    <td className="hidden px-4 py-3 text-xs text-gray-500 md:px-6 md:py-4 md:text-sm md:table-cell">
+                      €{extra.totalAmount.toFixed(2)}
                     </td>
                   </tr>
-                  {expandedRows.has(booking.id) && (
-                    <tr>
-                      <td colSpan="7" className="px-4 py-2 bg-gray-50">
-                        <div className="ml-8">
-                          <h4 className="mb-2 text-sm font-medium text-gray-900">Extras:</h4>
-                          {booking.extras && booking.extras.length > 0 ? (
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                              {booking.extras.map((extra, index) => (
-                                <div key={index} className="p-3 bg-white rounded-lg shadow-sm">
-                                  <div className="text-sm font-medium text-gray-900">{extra.name}</div>
-                                  <div className="text-sm text-gray-500">
-                                    Quantité: {extra.quantity}
-                                  </div>
-                                  <div className="text-sm text-gray-500">
-                                    Prix: €{extra.amount?.toFixed(2)}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-gray-500">Aucun extra pour cette réservation</p>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))}
-              {filteredAndSortedData.length === 0 && (
+                ))
+              ) : (
                 <tr>
-                  <td colSpan="7" className="px-4 py-3 text-sm text-center text-gray-500 md:px-6 md:py-4">
-                    Aucune réservation trouvée pour cette période
+                  <td
+                    colSpan="3"
+                    className="px-4 py-3 text-sm text-center text-gray-500 md:px-6 md:py-4"
+                  >
+                    Aucune donnée d'extras disponible pour cette période
                   </td>
                 </tr>
               )}
@@ -369,4 +325,4 @@ const CombinedReport = () => {
   );
 };
 
-export default CombinedReport;
+export default ExtrasReport;
