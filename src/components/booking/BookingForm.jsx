@@ -18,6 +18,76 @@ import { useNavigate } from "react-router-dom";
 import { isRoomAvailable } from "../hooks/roomUtils";  // Add this line
 import { roomsData } from "../hooks/roomsData";
 
+
+// Add this after your imports in BookingForm.jsx
+const discountSettings = {
+  1946282: {
+    cleaningFee: 0,
+    prepayment: 0,
+    minDaysBetweenBookingAndArrival: 1,
+    extraGuestsPerNight: 20,
+    startingAtGuest: 3,
+    maxGuests: 4,
+    extraChildPerNight: 20,
+    lengthOfStayDiscount: {
+      minNights: 0,
+      discountPercentage: 0,
+    },
+  },
+  1644643: {
+    cleaningFee: 0,
+    prepayment: 0,
+    minDaysBetweenBookingAndArrival: 1,
+    extraGuestsPerNight: 20,
+    startingAtGuest: 2,
+    maxGuests: 2,
+    extraChildPerNight: 0,
+    lengthOfStayDiscount: {
+      minNights: 0,
+      discountPercentage: 0,
+    },
+  },
+  1946279: {
+    cleaningFee: 0,
+    prepayment: 0,
+    minDaysBetweenBookingAndArrival: 1,
+    extraGuestsPerNight: 20,
+    startingAtGuest: 2,
+    maxGuests: 4,
+    extraChildPerNight: 20,
+    lengthOfStayDiscount: {
+      minNights: 2,
+      discountPercentage: 40,
+    },
+  },
+  1946276: {
+    cleaningFee: 0,
+    prepayment: 0,
+    minDaysBetweenBookingAndArrival: 1,
+    extraGuestsPerNight: 20,
+    startingAtGuest: 2,
+    maxGuests: 4,
+    extraChildPerNight: 20,
+    lengthOfStayDiscount: {
+      minNights: 2,
+      discountPercentage: 40,
+    },
+  },
+  1946270: {
+    cleaningFee: 0,
+    prepayment: 0,
+    minDaysBetweenBookingAndArrival: 1,
+    extraGuestsPerNight: 20,
+    startingAtGuest: 5,
+    maxGuests: 8,
+    extraChildPerNight: 20,
+    lengthOfStayDiscount: {
+      minNights: 3,
+      discountPercentage: 30,
+    },
+  },
+};
+
 const BookingForm = () => {
   const navigate = useNavigate();
   // const {
@@ -372,7 +442,8 @@ const BookingForm = () => {
     resetAvailability,
     setStartDate,  // Add this
     setEndDate,    // Add this
-    setFormData    // Add this
+    setFormData,    // Add this
+    discountSettings  // Add this
   };
 
   const propertyDetailsProps = {
@@ -387,6 +458,7 @@ const BookingForm = () => {
     availableDates,
     loading: availabilityLoading,
     hasSearched,
+    discountSettings
   };
 
   const extrasSectionProps = {
