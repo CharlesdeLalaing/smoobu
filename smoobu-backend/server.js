@@ -1005,16 +1005,29 @@ app.get("/api/bookings-report", async (req, res) => {
   try {
     const { startMonth, startYear, endMonth, endYear } = req.query;
 
-    const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}-01`;
-    const lastDay = new Date(endYear, parseInt(endMonth), 0).getDate();
-    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-${lastDay}`;
+    // Validate and fix date range
+    let finalStartMonth = String(startMonth).padStart(2, "0");
+    let finalStartYear = startYear;
+    let finalEndMonth = String(endMonth).padStart(2, "0");
+    let finalEndYear = endYear;
+
+    // If end date is before start date, adjust it
+    if (parseInt(endYear) < parseInt(startYear) || 
+        (endYear === startYear && parseInt(endMonth) < parseInt(startMonth))) {
+      finalEndMonth = finalStartMonth;
+      finalEndYear = finalStartYear;
+    }
+
+    const startDate = `${finalStartYear}-${finalStartMonth}-01`;
+    const lastDay = new Date(finalEndYear, parseInt(finalEndMonth), 0).getDate();
+    const endDate = `${finalEndYear}-${finalEndMonth}-${lastDay}`;
 
     console.log("=== START OF BOOKINGS REPORT REQUEST ===");
     console.log("Request params:", {
-      startMonth,
-      startYear,
-      endMonth,
-      endYear,
+      startMonth: finalStartMonth,
+      startYear: finalStartYear,
+      endMonth: finalEndMonth,
+      endYear: finalEndYear
     });
     console.log("Calculated dates:", { startDate, endDate });
 
@@ -1036,7 +1049,7 @@ app.get("/api/bookings-report", async (req, res) => {
     );
 
     const bookings = bookingsResponse.data.bookings || [];
-    console.log(`Found ${bookings.length} bookings for period ${startMonth}/${startYear} - ${endMonth}/${endYear}`);
+    console.log(`Found ${bookings.length} bookings for period ${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`);
 
     // Process each booking to get price elements and extras
     const processedBookings = [];
@@ -1062,10 +1075,9 @@ app.get("/api/bookings-report", async (req, res) => {
         const checkOut = new Date(booking.departure);
         const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
 
-        // Process extras
+        // Process extras - no need for extraNames filtering
         const extras = priceElements.filter(element => 
-          element.type === "addon" || 
-          extraNames.includes(element.name)
+          element.type === "addon"
         );
 
         // Calculate totals
@@ -1075,62 +1087,77 @@ app.get("/api/bookings-report", async (req, res) => {
           .filter(el => el.type === 'discount')
           .reduce((sum, discount) => sum + Math.abs(discount.amount), 0);
 
-        processedBookings.push({
+        // Create processed booking object with proper null checks
+        const processedBooking = {
           id: booking.id,
-          guest: `${booking.firstName} ${booking.lastName}`,
-          portal: booking.channelId,
-          created: booking.created,
-          email: booking.email,
+          guest: booking.firstName || booking.lastName ? 
+                `${booking.firstName || ''} ${booking.lastName || ''}`.trim() : 
+                'No name provided',
+          portal: booking.channelId || 'Direct',
+          created: booking.created ? new Date(booking.created).toISOString() : null,
+          email: booking.email || '',
           phone: booking.phone || '',
           address: booking.address || '',
-          adults: booking.adults,
-          children: booking.children,
+          adults: parseInt(booking.adults) || 0,
+          children: parseInt(booking.children) || 0,
           checkIn: booking.arrival,
           checkOut: booking.departure,
           notes: booking.notice || '',
-          price: booking.price,
+          price: parseFloat(booking.price) || 0,
           priceDetails: {
-            basePrice,
-            extrasTotal,
-            discounts,
+            basePrice: parseFloat(basePrice),
+            extrasTotal: parseFloat(extrasTotal),
+            discounts: parseFloat(discounts),
             elements: priceElements
           },
-          commission: booking.commission || 0,
+          commission: parseFloat(booking.commission) || 0,
           paid: booking.depositStatus === 1,
-          prepayment: booking.deposit || 0,
+          prepayment: parseFloat(booking.deposit) || 0,
           prepaymentPaid: booking.depositStatus === 1,
           nights,
-          status: booking.status,
+          status: booking.status || 'Unknown',
           extras: extras.map(extra => ({
-            name: extra.name,
-            amount: extra.amount,
-            quantity: extra.quantity || 1
+            name: extra.name || 'Unnamed extra',
+            amount: parseFloat(extra.amount) || 0,
+            quantity: parseInt(extra.quantity) || 1
           }))
+        };
+
+        // Log the processed booking for debugging
+        console.log('Processed booking:', {
+          id: processedBooking.id,
+          guest: processedBooking.guest,
+          price: processedBooking.price
         });
+
+        processedBookings.push(processedBooking);
 
       } catch (error) {
         console.error(`Error processing booking ${booking.id}:`, error.message);
+        console.error('Full error:', error);
       }
     }
 
     console.log("=== PROCESSING SUMMARY ===");
     console.log({
-      period: `${startMonth}/${startYear} - ${endMonth}/${endYear}`,
+      period: `${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`,
       totalBookings: bookings.length,
       processedBookings: processedBookings.length,
+      sampleBooking: processedBookings[0]
     });
 
     res.json({
-      startMonth,
-      startYear,
-      endMonth,
-      endYear,
+      startMonth: finalStartMonth,
+      startYear: finalStartYear,
+      endMonth: finalEndMonth,
+      endYear: finalEndYear,
       data: processedBookings
     });
 
   } catch (error) {
     console.error("=== ERROR IN REQUEST ===");
-    console.error(error);
+    console.error('Full error:', error);
+    console.error('Error response:', error.response?.data);
     res.status(500).json({
       error: "Failed to generate bookings report",
       details: error.message,
