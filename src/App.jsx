@@ -6,6 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Booking2 from "./components/booking/BookingForm";
 import CouponManagement from "./components/Admin/CouponManagement";
 import ExtrasReport from "./components/Admin/ExtrasReport"; // New import
+import BookingReport from "./components/Admin/BookingReport";
 import Login from "./components/Admin/Login";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
@@ -35,6 +36,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ExtrasReport />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/booking-report" 
+              element={
+                <ProtectedRoute>
+                  <BookingReport />
                 </ProtectedRoute>
               } 
             />

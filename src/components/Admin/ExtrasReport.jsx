@@ -266,59 +266,57 @@ const ExtrasReport = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Guest</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Booking Ref</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Portal</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Created</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Email</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Phone</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Adults</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Children</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Check-in</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Check-out</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Notes</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Price</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Paid</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Prepayment</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Nights</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Status</th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Extras</th>
+                <th
+                  onClick={() => handleSort("name")}
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
+                >
+                  Nom{" "}
+                  {sortField === "name" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th
+                  onClick={() => handleSort("count")}
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
+                >
+                  Sélections{" "}
+                  {sortField === "count" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th
+                  onClick={() => handleSort("totalAmount")}
+                  className="hidden px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm md:table-cell"
+                >
+                  Montant{" "}
+                  {sortField === "totalAmount" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredAndSortedData.map((booking) => (
-                <tr key={booking.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking['guest-name']}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking['reference-id']}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.channel?.name}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">
-                    {new Date(booking['created-at']).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.email}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.phone}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.adults}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.children}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking['check-in']}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking['check-out']}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.notice}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">€{booking.price}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">
-                    {booking['price-paid'] ? "Yes" : "No"}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">€{booking.prepayment}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">
-                    {Math.ceil((new Date(booking.departure) - new Date(booking.arrival)) / (1000 * 60 * 60 * 24))}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.status}</td>
-                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">
-                    {booking.extras?.map((extra, index) => (
-                      <div key={index} className="mb-1">
-                        {extra.name} (x{extra.count}) - €{extra.totalAmount.toFixed(2)}
-                      </div>
-                    )) || '-'}
+              {filteredAndSortedData.length > 0 ? (
+                filteredAndSortedData.map((extra) => (
+                  <tr key={extra.name} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-xs font-medium text-gray-900 md:px-6 md:py-4 md:text-sm">
+                      {extra.name}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500 md:px-6 md:py-4 md:text-sm">
+                      {extra.count}
+                    </td>
+                    <td className="hidden px-4 py-3 text-xs text-gray-500 md:px-6 md:py-4 md:text-sm md:table-cell">
+                      €{extra.totalAmount.toFixed(2)}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="3"
+                    className="px-4 py-3 text-sm text-center text-gray-500 md:px-6 md:py-4"
+                  >
+                    Aucune donnée d'extras disponible pour cette période
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
