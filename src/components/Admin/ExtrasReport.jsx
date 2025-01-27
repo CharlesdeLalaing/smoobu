@@ -36,7 +36,7 @@ const CombinedReport = () => {
 
         // Fetch both booking data and extras data
         const [bookingsResponse, extrasResponse] = await Promise.all([
-          window.fs.readFile('BookingList20250127.csv', { encoding: 'utf8' }),
+          fetch('BookingList20250127.csv', { encoding: 'utf8' }),
           axios.get(`${API_URL}/api/extras-report`, {
             params: {
               startMonth: startMonthStr,
