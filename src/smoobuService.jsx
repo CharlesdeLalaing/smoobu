@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://smoobu-test.onrender.com/";
+  import.meta.env.VITE_API_URL || "https://smoobu-test.onrender.com";
 
 export const fetchAvailability = async (apartmentId, startDate, endDate) => {
   try {
