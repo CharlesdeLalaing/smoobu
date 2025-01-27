@@ -1,3 +1,294 @@
+// import React from "react";
+// import { extraCategories } from "../extraCategories";
+
+// export const PriceDetails = ({
+//   priceDetails,
+//   selectedExtras,
+//   appliedCoupon,
+// }) => {
+//   if (!priceDetails) {
+//     return <div className="text-sm text-gray-500">Not available</div>;
+//   }
+
+//   // Calculate selected extras details
+//   // Calculate selected extras details
+//   const selectedExtrasDetails = Object.entries(selectedExtras || {})
+//     .filter(([_, quantity]) => quantity > 0)
+//     .map(([extraId, quantity]) => {
+//       const isExtraPerson = extraId.endsWith("-extra");
+//       const baseExtraId = isExtraPerson
+//         ? extraId.replace("-extra", "")
+//         : extraId;
+
+//       const extra = Object.values(extraCategories)
+//         .flatMap((category) => category.items)
+//         .find((item) => item.id === baseExtraId);
+
+//       if (!extra) return null;
+
+//       return {
+//         name: isExtraPerson
+//           ? `${extra.name} - Personne supplémentaire`
+//           : extra.name,
+//         quantity: quantity,
+//         price: isExtraPerson ? extra.extraPersonPrice : extra.price,
+//         total:
+//           (isExtraPerson ? extra.extraPersonPrice : extra.price) * quantity,
+//       };
+//     })
+//     .filter(Boolean);
+
+//   // Calculate initial total with extras
+//   const extrasTotal = selectedExtrasDetails.reduce(
+//     (sum, extra) => sum + extra.total,
+//     0
+//   );
+
+//   // Base price + extras before any discounts
+//   const subtotalBeforeDiscounts = priceDetails.originalPrice + extrasTotal;
+
+//   // Make sure discounts are treated as reductions
+//   const longStayDiscount = Math.abs(priceDetails.discount || 0);
+//   const couponDiscount = appliedCoupon ? Math.abs(appliedCoupon.discount) : 0;
+
+//   // Subtract both discounts from the subtotal
+//   const finalTotal =
+//     subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
+
+//   // If finalTotal is 0, display "Room not available"
+//   if (finalTotal === 0) {
+//     return (
+//       <div className="my-4 text-sm font-bold text-red-500">
+//         Cette chambre n'est malheureusement pas disponible pour les dates
+//         sélectionnées.
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div
+//       className="p-4 mt-4 rounded-lg bg-gray-50"
+//       style={{ height: "350px", overflow: "scroll" }}
+//     >
+//       <h3 className="mb-2 font-bold">Détail des prix:</h3>
+
+//       {/* Base price */}
+//       <div className="flex items-center justify-between">
+//         <span>Prix de base</span>
+//         <span>{priceDetails.originalPrice.toFixed(2)} EUR</span>
+//       </div>
+
+//       {/* Extras */}
+//       {/* Extras */}
+//       {selectedExtrasDetails.map((extra, index) => (
+//         <div
+//           key={index}
+//           className="flex items-center justify-between text-gray-600"
+//         >
+//           <span>
+//             {extra.name} ({extra.quantity}x)
+//           </span>
+//           <span>{extra.total.toFixed(2)} EUR</span>
+//         </div>
+//       ))}
+
+//       {/* Long stay discount */}
+//       {longStayDiscount > 0 && (
+//         <div className="flex items-center justify-between text-green-600">
+//           <span>
+//             Réduction long séjour (
+//             {priceDetails.settings?.lengthOfStayDiscount?.discountPercentage ||
+//               0}
+//             %)
+//           </span>
+//           <span>-{longStayDiscount.toFixed(2)} EUR</span>
+//         </div>
+//       )}
+
+//       {/* Coupon discount */}
+//       {couponDiscount > 0 && (
+//         <div className="flex items-center justify-between text-green-600">
+//           <span>Code promo ({appliedCoupon.code})</span>
+//           <span>-{couponDiscount.toFixed(2)} EUR</span>
+//         </div>
+//       )}
+
+//       {/* Subtotal before discounts */}
+//       <div className="flex items-center justify-between pt-2 mt-2 text-gray-600 border-t border-gray-200">
+//         <span>Sous-total</span>
+//         <span>{subtotalBeforeDiscounts.toFixed(2)} EUR</span>
+//       </div>
+
+//       {/* Total discounts */}
+//       {(longStayDiscount > 0 || couponDiscount > 0) && (
+//         <div className="flex items-center justify-between text-green-600">
+//           <span>Total des réductions</span>
+//           <span>-{(longStayDiscount + couponDiscount).toFixed(2)} EUR</span>
+//         </div>
+//       )}
+
+//       {/* Final total */}
+//       <div className="flex items-center justify-between pt-2 mt-2 font-bold border-t border-gray-200">
+//         <span>Total</span>
+//         <span>{finalTotal.toFixed(2)} EUR</span>
+//       </div>
+
+//       {/* Additional information about payment */}
+//       <div className="mt-4 text-sm text-gray-500">
+//         <p>* Prix total incluant toutes les taxes et frais</p>
+//         {priceDetails.settings?.deposit && (
+//           <p className="mt-1">
+//             Acompte requis : {priceDetails.settings.deposit.percentage}% (
+//             {(
+//               (finalTotal * priceDetails.settings.deposit.percentage) /
+//               100
+//             ).toFixed(2)}{" "}
+//             EUR)
+//           </p>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+
+// import React from "react";
+// import { useTranslation } from 'react-i18next';
+// import { extraCategories } from "../extraCategories";
+
+// export const PriceDetails = ({
+//   priceDetails,
+//   selectedExtras,
+//   appliedCoupon,
+// }) => {
+//   const { t } = useTranslation();
+
+//   if (!priceDetails) {
+//     return <div className="text-sm text-gray-500">{t('priceDetails.notAvailable')}</div>;
+//   }
+
+//   // Calculate selected extras details
+//   const selectedExtrasDetails = Object.entries(selectedExtras || {})
+//     .filter(([_, quantity]) => quantity > 0)
+//     .map(([extraId, quantity]) => {
+//       const isExtraPerson = extraId.endsWith("-extra");
+//       const baseExtraId = isExtraPerson ? extraId.replace("-extra", "") : extraId;
+
+//       const extra = Object.values(extraCategories)
+//         .flatMap((category) => category.items)
+//         .find((item) => item.id === baseExtraId);
+
+//       if (!extra) return null;
+
+//       return {
+//         name: isExtraPerson
+//           ? `${t(extra.name)} - ${t('priceDetails.additionalPerson')}`
+//           : t(extra.name),
+//         quantity: quantity,
+//         price: isExtraPerson ? extra.extraPersonPrice : extra.price,
+//         total: (isExtraPerson ? extra.extraPersonPrice : extra.price) * quantity,
+//       };
+//     })
+//     .filter(Boolean);
+
+//   // Calculate initial total with extras
+//   const extrasTotal = selectedExtrasDetails.reduce((sum, extra) => sum + extra.total, 0);
+
+//   // Base price + extras before any discounts
+//   const subtotalBeforeDiscounts = priceDetails.originalPrice + extrasTotal;
+
+//   // Make sure discounts are treated as reductions
+//   const longStayDiscount = Math.abs(priceDetails.discount || 0);
+//   const couponDiscount = appliedCoupon ? Math.abs(appliedCoupon.discount) : 0;
+
+//   // Subtract both discounts from the subtotal
+//   const finalTotal = subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
+
+//   // if (finalTotal === 0) {
+//   //   return (
+//   //     <div className="my-4 text-sm font-bold text-red-500">
+//   //       {t('priceDetails.roomNotAvailable')}
+//   //     </div>
+//   //   );
+//   // }
+
+//   return (
+//     <div className="p-4 mt-4 rounded-lg bg-gray-50" style={{ height: "350px", overflow: "scroll" }}>
+//       <h3 className="mb-2 font-bold">{t('priceDetails.title')}</h3>
+
+//       {/* Base price */}
+//       <div className="flex items-center justify-between">
+//         <span>{t('priceDetails.basePrice')}</span>
+//         <span>{priceDetails.originalPrice.toFixed(2)} EUR</span>
+//       </div>
+
+//       {/* Extras */}
+//       {selectedExtrasDetails.map((extra, index) => (
+//         <div key={index} className="flex items-center justify-between text-gray-600">
+//           <span>
+//             {extra.name} ({extra.quantity}x)
+//           </span>
+//           <span>{extra.total.toFixed(2)} EUR</span>
+//         </div>
+//       ))}
+
+//       {/* Long stay discount */}
+//       {longStayDiscount > 0 && (
+//         <div className="flex items-center justify-between text-green-600">
+//           <span>
+//             {t('priceDetails.longStayDiscount')} (
+//             {priceDetails.settings?.lengthOfStayDiscount?.discountPercentage || 0}
+//             %)
+//           </span>
+//           <span>-{longStayDiscount.toFixed(2)} EUR</span>
+//         </div>
+//       )}
+
+//       {/* Coupon discount */}
+//       {couponDiscount > 0 && (
+//         <div className="flex items-center justify-between text-green-600">
+//           <span>{t('priceDetails.promoCode')} ({appliedCoupon.code})</span>
+//           <span>-{couponDiscount.toFixed(2)} EUR</span>
+//         </div>
+//       )}
+
+//       {/* Subtotal before discounts */}
+//       <div className="flex items-center justify-between pt-2 mt-2 text-gray-600 border-t border-gray-200">
+//         <span>{t('priceDetails.subtotal')}</span>
+//         <span>{subtotalBeforeDiscounts.toFixed(2)} EUR</span>
+//       </div>
+
+//       {/* Total discounts */}
+//       {(longStayDiscount > 0 || couponDiscount > 0) && (
+//         <div className="flex items-center justify-between text-green-600">
+//           <span>{t('priceDetails.totalDiscounts')}</span>
+//           <span>-{(longStayDiscount + couponDiscount).toFixed(2)} EUR</span>
+//         </div>
+//       )}
+
+//       {/* Final total */}
+//       <div className="flex items-center justify-between pt-2 mt-2 font-bold border-t border-gray-200">
+//         <span>{t('priceDetails.total')}</span>
+//         <span>{finalTotal.toFixed(2)} EUR</span>
+//       </div>
+
+//       {/* Additional information about payment */}
+//       <div className="mt-4 text-sm text-gray-500">
+//         <p>{t('priceDetails.taxesIncluded')}</p>
+//         {priceDetails.settings?.deposit && (
+//           <p className="mt-1">
+//             {t('priceDetails.depositRequired', {
+//               percentage: priceDetails.settings.deposit.percentage,
+//               amount: ((finalTotal * priceDetails.settings.deposit.percentage) / 100).toFixed(2)
+//             })}
+//           </p>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+
 import React from "react";
 import { useTranslation } from 'react-i18next';
 import { extraCategories } from "../extraCategories";
@@ -6,21 +297,12 @@ export const PriceDetails = ({
   priceDetails,
   selectedExtras,
   appliedCoupon,
-  formData
 }) => {
   const { t } = useTranslation();
 
   if (!priceDetails) {
     return <div className="text-sm text-gray-500">{t('priceDetails.notAvailable')}</div>;
   }
-
-  // Calculate extra guest fees
-  const baseGuestCount = priceDetails.settings?.startingAtGuest || 1;
-  const extraAdults = Math.max(0, parseInt(formData.adults) - baseGuestCount);
-  const extraChildren = parseInt(formData.children);
-  
-  const extraAdultFees = extraAdults * priceDetails.settings?.extraGuestsPerNight * priceDetails.numberOfNights;
-  const extraChildFees = extraChildren * priceDetails.settings?.extraChildPerNight * priceDetails.numberOfNights;
 
   // Calculate selected extras details
   const selectedExtrasDetails = Object.entries(selectedExtras || {})
@@ -49,14 +331,14 @@ export const PriceDetails = ({
   // Calculate initial total with extras
   const extrasTotal = selectedExtrasDetails.reduce((sum, extra) => sum + extra.total, 0);
 
-  // Calculate total before discounts
-  const subtotalBeforeDiscounts = priceDetails.originalPrice + extrasTotal + extraAdultFees + extraChildFees;
+  // Base price + extras before any discounts
+  const subtotalBeforeDiscounts = priceDetails.originalPrice + extrasTotal;
 
   // Calculate discounts
   const longStayDiscount = Math.abs(priceDetails.discount || 0);
   const couponDiscount = appliedCoupon ? Math.abs(appliedCoupon.discount) : 0;
 
-  // Calculate final total
+  // Subtract both discounts from the subtotal
   const finalTotal = subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
 
   return (
@@ -69,32 +351,7 @@ export const PriceDetails = ({
         <span>{priceDetails.originalPrice.toFixed(2)} EUR</span>
       </div>
 
-      {/* Extra guest fees */}
-      {extraAdultFees > 0 && (
-        <div className="flex items-center justify-between text-gray-600">
-          <span>
-            {t('priceDetails.extraAdults', { 
-              count: extraAdults,
-              nights: priceDetails.numberOfNights
-            })}
-          </span>
-          <span>{extraAdultFees.toFixed(2)} EUR</span>
-        </div>
-      )}
-
-      {extraChildFees > 0 && (
-        <div className="flex items-center justify-between text-gray-600">
-          <span>
-            {t('priceDetails.extraChildren', { 
-              count: extraChildren,
-              nights: priceDetails.numberOfNights
-            })}
-          </span>
-          <span>{extraChildFees.toFixed(2)} EUR</span>
-        </div>
-      )}
-
-      {/* Selected extras */}
+      {/* Extras */}
       {selectedExtrasDetails.map((extra, index) => (
         <div key={index} className="flex items-center justify-between text-gray-600">
           <span>
@@ -108,26 +365,30 @@ export const PriceDetails = ({
       {longStayDiscount > 0 && (
         <div className="flex items-center justify-between text-green-600">
           <span>
-            {t('priceDetails.longStayDiscount', {
-              percentage: priceDetails.settings?.lengthOfStayDiscount?.discountPercentage
-            })}
+            {t('priceDetails.longStayDiscount')} (
+            {priceDetails.settings?.lengthOfStayDiscount?.discountPercentage || 0}
+            %)
           </span>
           <span>-{longStayDiscount.toFixed(2)} EUR</span>
         </div>
       )}
 
       {/* Coupon discount */}
+      {/* {couponDiscount > 0 && (
+        <div className="flex items-center justify-between text-green-600">
+          <span>
+            {t('priceDetails.promoCode')} ({appliedCoupon.code})
+            {appliedCoupon.type === 'percentage' ? ` (${appliedCoupon.percentageValue}%)` : ''}
+          </span>
+          <span>-{couponDiscount.toFixed(2)} EUR</span>
+        </div>
+      )} */}
       {couponDiscount > 0 && (
         <div className="flex items-center justify-between text-green-600">
           <span>
             {appliedCoupon.type === 'percentage' 
-              ? t('priceDetails.promoCode.percentage', { 
-                  code: appliedCoupon.code,
-                  percentage: appliedCoupon.percentageValue
-                })
-              : t('priceDetails.promoCode.fixed', { 
-                  code: appliedCoupon.code
-                })
+              ? `${t('priceDetails.promoCode.percentage')} (${appliedCoupon.code} - ${appliedCoupon.percentageValue}%)`
+              : `${t('priceDetails.promoCode.fixed')} (${appliedCoupon.code})`
             }
           </span>
           <span>-{couponDiscount.toFixed(2)} EUR</span>
@@ -154,15 +415,9 @@ export const PriceDetails = ({
         <span>{finalTotal.toFixed(2)} EUR</span>
       </div>
 
-      {/* Additional information */}
+      {/* Additional information about payment */}
       <div className="mt-4 text-sm text-gray-500">
         <p>{t('priceDetails.taxesIncluded')}</p>
-        {priceDetails.settings?.extraGuestsPerNight > 0 && (
-          <p>{t('priceDetails.extraGuestInfo', { 
-            price: priceDetails.settings.extraGuestsPerNight,
-            baseCount: priceDetails.settings.startingAtGuest
-          })}</p>
-        )}
         {priceDetails.settings?.deposit && (
           <p className="mt-1">
             {t('priceDetails.depositRequired', {

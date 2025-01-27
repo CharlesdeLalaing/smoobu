@@ -16,15 +16,6 @@ import Group from "../../assets/icons8-group-48.png";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-// Add this new helper function
-const canAccommodateGuests = (roomId, adults, children, discountSettings) => {
-  const settings = discountSettings[roomId];
-  if (!settings) return false;
-  
-  const totalGuests = parseInt(adults) + parseInt(children);
-  return totalGuests <= settings.maxGuests;
-};
-
 export const PropertyDetails = ({
   formData,
   startDate,
@@ -39,7 +30,6 @@ export const PropertyDetails = ({
   showOnlySelected = false,
   showOnlyUnselected = false,
   hasSearched,
-  discountSettings, // Add this prop
 }) => {
 
   const { t } = useTranslation(); // Add this hook
@@ -109,13 +99,9 @@ export const PropertyDetails = ({
     });
   };
 
-  // Modify the groupedRooms logic
   const groupedRooms = Object.values(roomsData).reduce(
     (acc, room) => {
-      const isAvailableForDates = isRoomAvailable(room.id, startDate, endDate, availableDates, hasSearched);
-      const canAccommodate = canAccommodateGuests(room.id, formData.adults, formData.children, discountSettings);
-  
-      if (isAvailableForDates && canAccommodate) {
+      if (isRoomAvailable(room.id, startDate, endDate, availableDates, hasSearched)) {
         acc.available.push(room);
       } else {
         acc.unavailable.push(room);
@@ -197,19 +183,7 @@ export const PropertyDetails = ({
         }`}
       >
         {/* {!isAvailable && getUnavailableDatesMessage(room.id)} */}
-        {hasSearched && !canAccommodateGuests(room.id, formData.adults, formData.children, discountSettings) && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-          <p className="text-red-600 font-medium">
-            {t('propertyDetails.capacityExceeded.title')}
-          </p>
-          <p className="text-sm text-gray-600 mt-2">
-            {t('propertyDetails.capacityExceeded.message', {
-              max: discountSettings[room.id]?.maxGuests,
-              current: parseInt(formData.adults) + parseInt(formData.children)
-            })}
-          </p>
-        </div>
-      )}
+
         {/* Always show unavailability message if dates are selected and room is not available */}
         {startDate && endDate && !isAvailable && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
@@ -344,7 +318,6 @@ export const PropertyDetails = ({
                     priceDetails={roomPriceDetails}
                     selectedExtras={selectedExtras}
                     appliedCoupon={appliedCoupon}
-                    formData={formData}  // Add this line
                   />
                 </div>
               )}
@@ -418,30 +391,25 @@ export const PropertyDetails = ({
               <button
                 type="button"
                 onClick={() => {
-                  if (hasSearched && 
-                      isAvailable && 
-                      canAccommodateGuests(room.id, formData.adults, formData.children, discountSettings)
-                  ) {
+                  if (hasSearched && isAvailable) {
                     onRoomSelect(room.id);
                     scrollTo(10);
                   }
                 }}
-                disabled={!hasSearched || !isAvailable || !canAccommodateGuests(room.id, formData.adults, formData.children, discountSettings)}
+                disabled={!hasSearched || !isAvailable}
                 className={`w-fit mt-5 py-2 px-5 rounded-full font-medium transition-colors ${
                   !hasSearched 
                     ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                    : isAvailable && canAccommodateGuests(room.id, formData.adults, formData.children, discountSettings)
+                    : isAvailable
                       ? "bg-[#668E73] text-white hover:bg-opacity-90"
                       : "bg-gray-300 text-gray-600 cursor-not-allowed"
                 }`}
               >
                 {!hasSearched
-                  ? t('propertyDetails.selectDatePrompt')
-                  : !isAvailable
-                    ? t('propertyDetails.unavailableForDates')
-                    : !canAccommodateGuests(room.id, formData.adults, formData.children, discountSettings)
-                      ? t('propertyDetails.tooManyGuests')
-                      : t('propertyDetails.selectRoom')}
+                ? t('propertyDetails.selectDatePrompt')
+                : isAvailable
+                  ? t('propertyDetails.selectRoom')
+                  : t('propertyDetails.unavailableForDates')}
               </button>
             </div>
           </div>

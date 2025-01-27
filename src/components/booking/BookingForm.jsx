@@ -18,76 +18,6 @@ import { useNavigate } from "react-router-dom";
 import { isRoomAvailable } from "../hooks/roomUtils";  // Add this line
 import { roomsData } from "../hooks/roomsData";
 
-
-// Add this after your imports in BookingForm.jsx
-const discountSettings = {
-  1946282: {
-    cleaningFee: 0,
-    prepayment: 0,
-    minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
-    startingAtGuest: 3,
-    maxGuests: 4,
-    extraChildPerNight: 20,
-    lengthOfStayDiscount: {
-      minNights: 0,
-      discountPercentage: 0,
-    },
-  },
-  1644643: {
-    cleaningFee: 0,
-    prepayment: 0,
-    minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
-    startingAtGuest: 2,
-    maxGuests: 2,
-    extraChildPerNight: 0,
-    lengthOfStayDiscount: {
-      minNights: 0,
-      discountPercentage: 0,
-    },
-  },
-  1946279: {
-    cleaningFee: 0,
-    prepayment: 0,
-    minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
-    startingAtGuest: 2,
-    maxGuests: 4,
-    extraChildPerNight: 20,
-    lengthOfStayDiscount: {
-      minNights: 2,
-      discountPercentage: 40,
-    },
-  },
-  1946276: {
-    cleaningFee: 0,
-    prepayment: 0,
-    minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
-    startingAtGuest: 2,
-    maxGuests: 4,
-    extraChildPerNight: 20,
-    lengthOfStayDiscount: {
-      minNights: 2,
-      discountPercentage: 40,
-    },
-  },
-  1946270: {
-    cleaningFee: 0,
-    prepayment: 0,
-    minDaysBetweenBookingAndArrival: 1,
-    extraGuestsPerNight: 20,
-    startingAtGuest: 5,
-    maxGuests: 8,
-    extraChildPerNight: 20,
-    lengthOfStayDiscount: {
-      minNights: 3,
-      discountPercentage: 30,
-    },
-  },
-};
-
 const BookingForm = () => {
   const navigate = useNavigate();
   // const {
@@ -442,8 +372,7 @@ const BookingForm = () => {
     resetAvailability,
     setStartDate,  // Add this
     setEndDate,    // Add this
-    setFormData,    // Add this
-    discountSettings  // Add this
+    setFormData    // Add this
   };
 
   const propertyDetailsProps = {
@@ -458,7 +387,6 @@ const BookingForm = () => {
     availableDates,
     loading: availabilityLoading,
     hasSearched,
-    discountSettings
   };
 
   const extrasSectionProps = {
@@ -514,7 +442,7 @@ const BookingForm = () => {
         {!showPayment ? (
           <form onSubmit={handleSubmit} className="mx-auto space-y-4">
             <div style={{ backgroundColor: "#668E73" }}>
-              <SearchSection {...searchSectionProps} discountSettings={discountSettings} />
+              <SearchSection {...searchSectionProps} />
               <RoomNavigation {...roomNavigationProps} />
             </div>
 
@@ -524,12 +452,11 @@ const BookingForm = () => {
                 <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
                   <div className="w-full h-full lg:w-1/2">
                     <div className="h-full overflow-auto">
-                    <PropertyDetails
-                      {...propertyDetailsProps}
-                      discountSettings={discountSettings}
-                      showOnlySelected={true}
-                      selectedRoomId={formData.apartmentId}
-                    />
+                      <PropertyDetails
+                        {...propertyDetailsProps}
+                        showOnlySelected={true}
+                        selectedRoomId={formData.apartmentId}
+                      />
                     </div>
                   </div>
 
