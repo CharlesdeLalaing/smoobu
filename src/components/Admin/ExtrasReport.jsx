@@ -29,6 +29,16 @@ const ExtrasReport = () => {
   }));
 
   useEffect(() => {
+    if (
+      endYear < startYear ||
+      (endYear === startYear && endMonth < startMonth)
+    ) {
+      setEndYear(startYear);
+      setEndMonth(startMonth);
+    }
+  }, [startYear, startMonth, endYear, endMonth]);
+
+  useEffect(() => {
     const fetchReport = async () => {
       try {
         setLoading(true);
@@ -37,55 +47,18 @@ const ExtrasReport = () => {
         const startMonthStr = String(startMonth).padStart(2, "0");
         const endMonthStr = String(endMonth).padStart(2, "0");
 
-        const startDate = `${startYear}-${startMonthStr}-01`;
-        const endDate = `${endYear}-${endMonthStr}-31`;
+        const response = await axios.get(`${API_URL}/api/extras-report`, {
+          params: {
+            startMonth: startMonthStr,
+            startYear: startYear,
+            endMonth: endMonthStr,
+            endYear: endYear,
+          },
+        });
 
-        // Get both extras and bookings data
-        const [extrasResponse, bookingsResponse] = await Promise.all([
-          axios.get(`${API_URL}/api/extras-report`, {
-            params: {
-              startMonth: startMonthStr,
-              startYear: startYear,
-              endMonth: endMonthStr,
-              endYear: endYear,
-            },
-          }),
-          axios.get(`${API_URL}/api/bookings`, {
-            params: { startDate, endDate }
-          })
-        ]);
-
-        if (extrasResponse.data && bookingsResponse.data) {
-          const bookings = bookingsResponse.data;
-          const extras = extrasResponse.data.data;
-
-          // Map extras to their bookings
-          const combinedData = extras.map(extra => {
-            const booking = bookings.find(b => b.id === extra.bookingId);
-            return {
-              ...extra,
-              guestName: booking?.['guest-name'] || '-',
-              referenceId: booking?.['reference-id'] || '-',
-              channel: booking?.channel?.name || '-',
-              createdAt: booking?.['created-at'] || null,
-              email: booking?.email || '-',
-              phone: booking?.phone || '-',
-              adults: booking?.adults || 0,
-              children: booking?.children || 0,
-              checkIn: booking?.['check-in'] || '-',
-              checkOut: booking?.['check-out'] || '-',
-              notes: booking?.notice || '-',
-              price: booking?.price || 0,
-              pricePaid: booking?.['price-paid'] || false,
-              prepayment: booking?.prepayment || 0,
-              prepaymentPaid: booking?.['prepayment-paid'] || false,
-              nights: booking ? Math.ceil((new Date(booking.departure) - new Date(booking.arrival)) / (1000 * 60 * 60 * 24)) : 0,
-              status: booking?.status || '-'
-            };
-          });
-
-          setReportData(combinedData);
-          setTotalBookings(bookingsResponse.data.length || 0);
+        if (response.data) {
+          setReportData(response.data.data || []);
+          setTotalBookings(response.data.totalBookings || 0);
         } else {
           throw new Error("Réponse vide du serveur");
         }
@@ -99,7 +72,6 @@ const ExtrasReport = () => {
 
     fetchReport();
   }, [startMonth, startYear, endMonth, endYear]);
-
 
   const handleStartYearChange = (year) => {
     const newYear = parseInt(year);
@@ -129,49 +101,28 @@ const ExtrasReport = () => {
     // Create worksheet data
     const wsData = [
       // Headers
-      [
-        "Guest", "Booking Ref", "Portal", "Created", "Email", "Phone",
-        "Adults", "Children", "Check-in", "Check-out", "Notes", "Price",
-        "Price Paid", "Prepayment", "Nights", "Status", "Extra Name",
-        "Selections", "Extra Amount (€)"
-      ],
+      ["Nom", "Nombre de sélections", "Montant total (€)"],
       // Data rows
-      ...filteredAndSortedData.map((item) => [
-        item.guestName,
-        item.referenceId,
-        item.channel,
-        item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-',
-        item.email,
-        item.phone,
-        item.adults,
-        item.children,
-        item.checkIn,
-        item.checkOut,
-        item.notes,
-        item.price,
-        item.pricePaid ? "Yes" : "No",
-        item.prepayment,
-        item.nights,
-        item.status,
-        item.name,
-        item.count,
-        Number(item.totalAmount.toFixed(2))
+      ...filteredAndSortedData.map((extra) => [
+        extra.name,
+        extra.count,
+        Number(extra.totalAmount.toFixed(2)),
       ]),
     ];
 
     // Add total row
     const totalAmount = filteredAndSortedData.reduce(
-      (sum, item) => sum + item.totalAmount,
+      (sum, extra) => sum + extra.totalAmount,
       0
     );
-    wsData.push(["Total", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", totalAmount.toFixed(2)]);
+    wsData.push(["Total", "", totalAmount.toFixed(2)]);
 
     // Create workbook and worksheet
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-    // Set column widths for all columns
-    const colWidths = Array(19).fill({ wch: 20 });
+    // Set column widths
+    const colWidths = [{ wch: 40 }, { wch: 20 }, { wch: 20 }];
     ws["!cols"] = colWidths;
 
     // Add the worksheet to the workbook
@@ -313,7 +264,7 @@ const ExtrasReport = () => {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-          <thead className="bg-gray-50">
+            <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Guest</th>
                 <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Booking Ref</th>
@@ -331,67 +282,43 @@ const ExtrasReport = () => {
                 <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Prepayment</th>
                 <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Nights</th>
                 <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Status</th>
-                <th
-                  onClick={() => handleSort("name")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
-                >
-                  Extra Name {sortField === "name" && (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th
-                  onClick={() => handleSort("count")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
-                >
-                  Selections {sortField === "count" && (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th
-                  onClick={() => handleSort("totalAmount")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm"
-                >
-                  Extra Amount {sortField === "totalAmount" && (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
+                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 md:px-6 md:text-sm">Extras</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredAndSortedData.length > 0 ? (
-                filteredAndSortedData.map((item) => (
-                  <tr key={`${item.bookingId}-${item.name}`} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.guestName}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.referenceId}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.channel}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">
-                      {new Date(item.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.email}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.phone}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.adults}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.children}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.checkIn}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.checkOut}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.notes}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">€{item.price}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">
-                      {item.pricePaid ? "Yes" : "No"}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">€{item.prepayment}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.nights}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.status}</td>
-                    <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{item.name}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500 md:px-6 md:py-4 md:text-sm">{item.count}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500 md:px-6 md:py-4 md:text-sm">
-                      €{item.totalAmount.toFixed(2)}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan="19"
-                    className="px-4 py-3 text-sm text-center text-gray-500 md:px-6 md:py-4"
-                  >
-                    Aucune donnée disponible pour cette période
+              {filteredAndSortedData.map((booking) => (
+                <tr key={booking.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking['guest-name']}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking['reference-id']}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.channel?.name}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">
+                    {new Date(booking['created-at']).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.email}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.phone}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.adults}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.children}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking['check-in']}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking['check-out']}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.notice}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">€{booking.price}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">
+                    {booking['price-paid'] ? "Yes" : "No"}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">€{booking.prepayment}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">
+                    {Math.ceil((new Date(booking.departure) - new Date(booking.arrival)) / (1000 * 60 * 60 * 24))}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">{booking.status}</td>
+                  <td className="px-4 py-3 text-xs text-gray-900 md:px-6 md:py-4 md:text-sm">
+                    {booking.extras?.map((extra, index) => (
+                      <div key={index} className="mb-1">
+                        {extra.name} (x{extra.count}) - €{extra.totalAmount.toFixed(2)}
+                      </div>
+                    )) || '-'}
                   </td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>
