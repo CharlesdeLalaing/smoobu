@@ -194,3 +194,24 @@ export const SearchSection = ({
     </div>
   );
 };
+
+
+export const RoomNavigation = ({ rooms, onRoomSelect }) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex flex-wrap justify-center gap-2 sm:gap-4 my-4 sm:my-8 pb-[40px] sm:pb-[60px] font-montserrat">
+      {rooms.map((room) => (
+        <button
+          key={room.id}
+          type="button"
+          onClick={() => onRoomSelect(room.id)}
+          className="px-3 sm:px-6 py-2 sm:py-4 mb-4 sm:mb-6 text-sm sm:text-base text-white transition-all rounded-full bg-[#ffffff30] hover:bg-white hover:text-[#668E73] border border-[#668E73]"
+        >
+          {t(room.nameKey)}
+        </button>
+      ))}
+      <p id="main-container"></p>
+    </div>
+  );
+};
