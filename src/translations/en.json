@@ -356,6 +356,7 @@
             "depositRequired": "** Deposit required: {{percentage}}% ({{amount}} EUR)"
         },
         "propertyDetails": {
+            
             "unavailableDates": "Unavailable dates: ",
             "roomUnavailable": {
             "title": "This accommodation is not available for the selected dates",
@@ -373,6 +374,7 @@
             "selectRoom": "Select this room",
             "unavailableForDates": "Not available for these dates",
             "loading": "Loading...",
+            "extraGuestFee": "Extra fee of {{fee}}€ per person after {{threshold}} guests ({{count}} extra guest(s))",
             "capacityExceeded": {
                 "title": "Maximum capacity exceeded",
                 "message": "This room can accommodate a maximum of {{max}} people (you have selected {{current}} people)."

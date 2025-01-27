@@ -151,7 +151,7 @@ export const PropertyDetails = ({
         return (
           <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
             <p className="text-red-600 font-medium">
-              {t('propertyDetails.overCapacity.title')}
+              {t('propertyDetails.capacityExceeded.title')}
             </p>
             <p className="text-sm text-gray-600 mt-2">
               {t('propertyDetails.overCapacity.message', {
