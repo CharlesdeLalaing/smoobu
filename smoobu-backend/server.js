@@ -1074,19 +1074,54 @@ app.get("/api/bookings-report", async (req, res) => {
         const checkOut = new Date(booking.departure);
         const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
 
-        // Process extras - all non-base price elements
-        const extras = priceElements.filter(element => 
-          element.type === "addon" || 
-          (element.type !== "base" && element.type !== "discount")
-        );
+        // Process extras - all non-base price elements, excluding cancellations
+        const extras = priceElements.filter(element => {
+          const name = element.name?.toLowerCase() || '';
+          const type = element.type?.toLowerCase() || '';
+          
+          // Skip cancellation-related items
+          if (
+            name.includes('cancellation') || 
+            name.includes('pass_through') ||
+            type.includes('cancellation')
+          ) {
+            return false;
+          }
 
-        // Calculate totals
-        const basePrice = priceElements.find(el => el.type === 'base')?.amount || 0;
+          // Include only addons and exclude base price
+          return (
+            element.type === "addon" || 
+            (element.type !== "base" && element.type !== "discount")
+          );
+        });
+
+        // Calculate totals - fix base price detection
+        const basePrice = priceElements.find(el => 
+          el.name?.toLowerCase().includes('base') ||
+          el.type?.toLowerCase() === 'base'
+        )?.amount || 0;
+
         const extrasTotal = extras.reduce((sum, extra) => sum + extra.amount, 0);
         const discounts = priceElements
           .filter(el => el.type === 'discount')
           .reduce((sum, discount) => sum + Math.abs(discount.amount), 0);
 
+        // Log price elements breakdown for debugging
+        console.log('Price elements breakdown:', {
+          bookingId: booking.id,
+          allElements: priceElements.map(el => ({
+            name: el.name,
+            type: el.type,
+            amount: el.amount
+          })),
+          basePrice,
+          filteredExtras: extras.map(ex => ({
+            name: ex.name,
+            amount: ex.amount
+          })),
+          extrasTotal,
+          discounts
+        });
         // Format created date
         let createdDate = null;
         try {
@@ -1106,7 +1141,7 @@ app.get("/api/bookings-report", async (req, res) => {
                 `${booking.firstName} ${booking.lastName}`.trim() : 
                 (booking.guestName || 'No name provided'),
           property: apartmentName,
-          portal: booking.channelId || 'Direct',
+          portal: booking.channel?.name || booking.channelId || 'Direct',
           created: createdDate,
           email: booking.email || '',
           phone: booking.phone || '',
@@ -1121,7 +1156,11 @@ app.get("/api/bookings-report", async (req, res) => {
             basePrice: parseFloat(basePrice),
             extrasTotal: parseFloat(extrasTotal),
             discounts: parseFloat(discounts),
-            elements: priceElements
+            total: parseFloat(basePrice) + parseFloat(extrasTotal) - parseFloat(discounts),
+            elements: priceElements.filter(el => 
+              !el.name?.toLowerCase().includes('cancellation') && 
+              !el.name?.toLowerCase().includes('pass_through')
+            )
           },
           commission: parseFloat(booking.commission) || 0,
           paid: booking.depositStatus === 1,
