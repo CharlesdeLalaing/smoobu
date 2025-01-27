@@ -1083,7 +1083,9 @@ app.get("/api/bookings-report", async (req, res) => {
           if (
             name.includes('cancellation') || 
             name.includes('pass_through') ||
-            type.includes('cancellation')
+            name.includes('base price') ||
+            name === 'base' ||
+            type === 'base'
           ) {
             return false;
           }
@@ -1172,9 +1174,9 @@ app.get("/api/bookings-report", async (req, res) => {
             elements: nonCommissionExtras
           },
           commission: parseFloat(commission),
-          paid: booking.depositStatus === 1,
-          prepayment: parseFloat(booking.deposit) || 0,
-          prepaymentPaid: booking.depositStatus === 1,
+          // paid: booking.depositStatus === 1,
+          // prepayment: parseFloat(booking.deposit) || 0,
+          // prepaymentPaid: booking.depositStatus === 1,
           nights,
           status: booking.status || 'BOOKED',
           extras: nonCommissionExtras.map(extra => ({

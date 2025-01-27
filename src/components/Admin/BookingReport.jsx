@@ -121,9 +121,9 @@ const BookingsReport = () => {
         booking.notes,
         booking.price,
         booking.commission,
-        booking.paid ? "Oui" : "Non",
-        booking.prepayment,
-        booking.prepaymentPaid ? "Oui" : "Non",
+        // booking.paid ? "Oui" : "Non",
+        // booking.prepayment,
+        // booking.prepaymentPaid ? "Oui" : "Non",
         booking.nights,
         booking.status,
         booking.extras.map(e => `${e.name} (${e.quantity}x)`).join(", ")
@@ -404,8 +404,8 @@ const BookingsReport = () => {
                               )}
                               <p className="text-sm">Total: {formatPrice(booking.price)}</p>
                               <p className="text-sm">Commission: {formatPrice(booking.commission)}</p>
-                              <p className="text-sm">Acompte: {formatPrice(booking.prepayment)} ({booking.prepaymentPaid ? 'Payé' : 'Non payé'})</p>
-                              <p className="text-sm">Statut du paiement: {booking.paid ? 'Payé' : 'Non payé'}</p>
+                              {/* <p className="text-sm">Acompte: {formatPrice(booking.prepayment)} ({booking.prepaymentPaid ? 'Payé' : 'Non payé'})</p>
+                              <p className="text-sm">Statut du paiement: {booking.paid ? 'Payé' : 'Non payé'}</p> */}
                             </div>
                             {booking.extras.length > 0 && (
                               <div className="md:col-span-2">
