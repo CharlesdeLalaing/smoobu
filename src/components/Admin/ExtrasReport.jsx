@@ -38,7 +38,7 @@ const ExtrasReport = () => {
         const endMonthStr = String(endMonth).padStart(2, "0");
 
         // Fetch detailed booking data including extras
-        const response = await axios.get(`${API_URL}/api/bookings`, {
+        const response = await axios.get(`${API_URL}/api/extras-report`, {
           params: {
             startMonth: startMonthStr,
             startYear: startYear,
