@@ -195,7 +195,7 @@ const BookingsReport = () => {
       <div className="flex items-center justify-between gap-2 mb-6">
         <div className="flex items-center gap-2">
           <Calendar className="w-6 h-6 text-[#678D73]" />
-          <h1 className="text-xl font-bold md:text-2xl">Rapport des Réservations</h1>
+          <h1 className="text-xl font-bold md:text-2xl">Rapport des Réservations Smoobu</h1>
         </div>
 
         <button
