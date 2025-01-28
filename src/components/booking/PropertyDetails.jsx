@@ -154,7 +154,7 @@ export const PropertyDetails = ({
               {t('propertyDetails.capacityExceeded.title')}
             </p>
             <p className="text-sm text-gray-600 mt-2">
-              {t('propertyDetails.overCapacity.message', {
+              {t('propertyDetails.capacityExceeded.message', {
                 maxGuests: room.maxGuests,
                 selectedGuests: totalGuests
               })}
@@ -444,7 +444,7 @@ export const PropertyDetails = ({
                 {!hasSearched
                   ? t('propertyDetails.selectDatePrompt')
                   : isOverCapacity
-                    ? t('propertyDetails.capacityExceeded')
+                    ? t('propertyDetails.capacityExceeded.title')
                     : isAvailable
                       ? t('propertyDetails.selectRoom')
                       : t('propertyDetails.unavailableForDates')}
