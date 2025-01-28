@@ -344,7 +344,7 @@
         "additionalPerson": "Personne supplémentaire",
         "title": "Détail des prix:",
         "basePrice": "Prix de base",
-        "guestFees": "{{count}} extra personnes × {{fee}}€",
+        "guestFees": "{{count}} personne(s) supplémentaire(s) × {{fee}}€",
         "longStayDiscount": "Réduction long séjour",
         "promoCode": {
           "fixed": "Code promo",
