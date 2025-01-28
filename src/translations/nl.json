@@ -344,6 +344,7 @@
         "additionalPerson": "Extra persoon",
         "title": "Prijsdetails:",
         "basePrice": "Basisprijs",
+        "guestFees": "{{count}} extra perso(o)n(en) × {{fee}}€",
         "longStayDiscount": "Korting voor lang verblijf",
         "promoCode": {
           "fixed": "Kortingscode",
@@ -372,6 +373,7 @@
         "selectDatePrompt": "Selecteer een datum",
         "selectRoom": "Selecteer deze kamer",
         "unavailableForDates": "Niet beschikbaar voor deze data",
+        
         "loading": "Laden...",
         "capacityExceeded": {
                 "title": "Maximale capaciteit overschreden",
