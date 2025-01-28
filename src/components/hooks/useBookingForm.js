@@ -9,7 +9,7 @@ import { VALID_COUPONS } from "../utils/coupons";
 import { calculateExtrasTotal } from "../utils/booking";
 import { extraCategories } from "../extraCategories"
 import { useNavigate } from "react-router-dom";
-
+import {roomsData} from "../hooks/roomsData";
 export const useBookingForm = () => {
   // Form State
 
