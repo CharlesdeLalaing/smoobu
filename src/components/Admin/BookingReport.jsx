@@ -351,7 +351,7 @@ const BookingsReport = () => {
                         {booking.guest}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
-                        {booking.portal}
+                        {booking.portal} 
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {booking.property}
