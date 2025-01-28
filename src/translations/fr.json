@@ -344,6 +344,7 @@
         "additionalPerson": "Personne supplémentaire",
         "title": "Détail des prix:",
         "basePrice": "Prix de base",
+        "guestFees" : "{{count}} personne(s) supplémentaire(s) × {{fee}}€",
         "longStayDiscount": "Réduction long séjour",
         "promoCode": {
           "fixed": "Code promo",
@@ -425,6 +426,7 @@
               "longStayDiscount": "Réduction long séjour ({{percentage}}%): -{{amount}}€",
               "promoCode": "Code promo ({{code}}): -{{amount}}€",
               "total": "Total: {{price}}€",
+              
               "termsAccepted": "Conditions générales: Acceptée",
               "promoCodeFixed": "Code promo ({{code}}): -{{amount}}€",
               "promoCodePercentage": "Code promo ({{code}} - {{value}}%): -{{amount}}€"

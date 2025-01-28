@@ -426,6 +426,7 @@
               "longStayDiscount": "Korting lang verblijf ({{percentage}}%): -{{amount}}€",
               "promoCode": "Promocode ({{code}}): -{{amount}}€",
               "total": "Totaal: {{price}}€",
+              "guestFees" : "{{count}} extra gast(en) × {{fee}}€",
               "termsAccepted": "Algemene voorwaarden: Geaccepteerd",
               "promoCodeFixed": "Kortingscode ({{code}}): -{{amount}}€",
               "promoCodePercentage": "Kortingscode ({{code}} - {{value}}%): -{{amount}}€"
