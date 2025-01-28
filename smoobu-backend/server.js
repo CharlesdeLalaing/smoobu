@@ -1151,8 +1151,7 @@ app.get("/api/bookings-report", async (req, res) => {
 
         // Add a portal name mapping
         const portalNames = {
-          'Homepage': 'Website',
-          'Direct booking': 'Website'
+          'Homepage': 'Site web'
         };
         // Get apartment name
         // In the processedBooking object creation
@@ -1164,7 +1163,7 @@ app.get("/api/bookings-report", async (req, res) => {
                 booking.email?.split('@')[0] ||
                 'Sans nom',
           property: roomNames[booking.apartmentId] || booking.apartment?.name || '',
-          portal: portalNames[booking.channel?.name] || booking.channel?.name || 'Website',
+          portal: portalNames[booking.channel?.name] || booking.channel?.name || 'Site web',
           created: booking['created-at'] || booking.created || new Date().toISOString(), // Fix the date
           email: booking.email || '',
           phone: booking.phone || '',
