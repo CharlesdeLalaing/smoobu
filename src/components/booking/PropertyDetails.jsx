@@ -33,6 +33,8 @@ export const PropertyDetails = ({
   const { t } = useTranslation();
   const totalGuests = (parseInt(formData.adults) || 0) + (parseInt(formData.children) || 0);
 
+  const testPush = "Vas-y marche ah"
+
   const scrollTo = () => {
     setTimeout(() => {
       const element = document.getElementById('main-container');
@@ -41,6 +43,9 @@ export const PropertyDetails = ({
       }
     }, 100);
   };
+
+
+
 
   const getUnavailableDatesMessage = (roomId) => {
     if (!availableDates || !availableDates[roomId] || !startDate || !endDate) return null;
