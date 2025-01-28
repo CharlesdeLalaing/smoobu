@@ -1150,6 +1150,7 @@ app.get("/api/bookings-report", async (req, res) => {
         }
 
         // Get apartment name
+        // In the processedBooking object creation
         const processedBooking = {
           id: booking.id,
           guest: booking.guestName || 
@@ -1172,16 +1173,28 @@ app.get("/api/bookings-report", async (req, res) => {
             basePrice: parseFloat(basePrice),
             extrasTotal: parseFloat(extrasTotal),
             discounts: parseFloat(discounts),
+            // Add promo code to payment details instead of extras
+            promoCode: priceElements.find(el => 
+              el.name?.toLowerCase().includes('code promo') || 
+              el.name?.toLowerCase().includes('coupon') ||
+              el.type === 'discount'
+            ),
             total: parseFloat(basePrice) + parseFloat(extrasTotal) - parseFloat(discounts),
           },
           commission: parseFloat(commission),
           nights,
-          portal: booking.channel?.name || 'Direct',
-          extras: nonCommissionExtras.map(extra => ({
-            name: extra.name || 'Extra sans nom',
-            amount: parseFloat(extra.amount) || 0,
-            quantity: parseInt(extra.quantity) || 1
-          })) || [] // Add a default empty array
+          // Filter out promo codes/coupons from extras
+          extras: nonCommissionExtras
+            .filter(extra => 
+              !extra.name?.toLowerCase().includes('code promo') && 
+              !extra.name?.toLowerCase().includes('coupon') &&
+              extra.type !== 'discount'
+            )
+            .map(extra => ({
+              name: extra.name || 'Extra sans nom',
+              amount: parseFloat(extra.amount) || 0,
+              quantity: parseInt(extra.quantity) || 1
+            })) || []
         };
         
         // Only add if not blocked booking
@@ -1192,10 +1205,10 @@ app.get("/api/bookings-report", async (req, res) => {
         // Log raw booking data and processed result
         console.log('Raw booking data:', {
           id: booking.id,
-          firstName: booking.firstName,
-          lastName: booking.lastName,
-          guestName: booking.guestName,
-          channelId: booking.channelId,
+          firstName: guests.firstName,
+          lastName: guests.lastName,
+          guestName: guests.guestName,
+          channelId: channel.name	,
           status: booking.status,
           created: booking.created
         });
