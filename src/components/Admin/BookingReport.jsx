@@ -313,6 +313,10 @@ const BookingsReport = () => {
                     className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer">
                   Arrivée {sortField === "checkIn" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
+                <th onClick={() => handleSort("arrivalTime")}  // Add this column
+                    className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer">
+                  Heure {sortField === "arrivalTime" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
                 <th onClick={() => handleSort("checkOut")}
                     className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer">
                   Départ {sortField === "checkOut" && (sortDirection === "asc" ? "↓" : "↑")}
@@ -354,6 +358,9 @@ const BookingsReport = () => {
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {formatDate(booking.checkIn)}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {booking.arrivalTime || '-'}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {formatDate(booking.checkOut)}

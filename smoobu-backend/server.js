@@ -1149,41 +1149,32 @@ app.get("/api/bookings-report", async (req, res) => {
           console.error('Error parsing created date:', e);
         }
 
+        // Add a portal name mapping
+        const portalNames = {
+          'Homepage': 'Website',
+          'Direct booking': 'Website'
+        };
         // Get apartment name
         // In the processedBooking object creation
         const processedBooking = {
           id: booking.id,
-          // Get guest name from various possible sources
           guest: booking["guest-name"] || 
                 `${booking.firstName || ''} ${booking.lastName || ''}`.trim() || 
                 (booking.notice?.match(/Message du client:?\s*([^\n]+)/) || [])[1] ||
-                booking.email?.split('@')[0] ||  // Use email username as fallback
+                booking.email?.split('@')[0] ||
                 'Sans nom',
-        
-          // Get property name
           property: roomNames[booking.apartmentId] || booking.apartment?.name || '',
-          
-          // Get portal info
-          portal: booking.channel?.name || 'Direct',  // Remove the channelId fallback since we don't want blocked
-          
-          // Rest of booking info
-          created: booking.created,
+          portal: portalNames[booking.channel?.name] || booking.channel?.name || 'Website',
+          created: booking['created-at'] || booking.created || new Date().toISOString(), // Fix the date
           email: booking.email || '',
           phone: booking.phone || '',
-          
-          // Get address from various sources
           address: booking.address || '',
-          street: booking.address?.street || booking.street || '',
-          postalCode: booking.address?.postalCode || booking.postalCode || '',
-          location: booking.address?.location || booking.location || booking.city || '',
-          country: booking.address?.country || booking.country || '',
-        
           adults: parseInt(booking.adults) || 0,
           children: parseInt(booking.children) || 0,
           checkIn: booking.arrival,
           checkOut: booking.departure,
-          arrivalTime: booking["check-in"] || booking.arrivalTime || '',
-          departureTime: booking["check-out"] || booking.departureTime || '',
+          arrivalTime: booking["check-in"] || '', // Use check-in from API
+          departureTime: booking["check-out"] || '',
           notes: booking.notice || '',
           price: parseFloat(booking.price) || 0,
           
@@ -1228,10 +1219,10 @@ app.get("/api/bookings-report", async (req, res) => {
           email: booking.email,
           address: booking.address,
           channel: booking.channel?.name,
-          created: booking.created,
-          arrivalTime: booking["check-in"] || booking.arrivalTime
+          created: booking['created-at'], // Log the correct created-at field
+          arrivalTime: booking["check-in"]
         });
-        
+
         console.log('Processed booking:', {
           id: processedBooking.id,
           guest: processedBooking.guest,
