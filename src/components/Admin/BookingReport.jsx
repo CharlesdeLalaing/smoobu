@@ -305,6 +305,10 @@ const BookingsReport = () => {
                 >
                   Client {sortField === "guest" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
+                <th onClick={() => handleSort("property")} 
+                    className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer">
+                  Hébergement {sortField === "property" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
                 <th
                   onClick={() => handleSort("checkIn")}
                   className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
@@ -360,6 +364,10 @@ const BookingsReport = () => {
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {booking.guest}
                       </td>
+                        {/* Add the property column right here, after the guest column */}
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {booking.property}
+                      </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {formatDate(booking.checkIn)}
                       </td>
@@ -376,56 +384,69 @@ const BookingsReport = () => {
                         {booking.status}
                       </td>
                     </tr>
-                    {expandedBooking === booking.id && (
-                      <tr>
-                        <td colSpan="8" className="px-4 py-4 bg-gray-50">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <h3 className="font-semibold mb-2">Informations client</h3>
-                              <p className="text-sm">Email: {booking.email}</p>
-                              <p className="text-sm">Téléphone: {booking.phone}</p>
-                              <p className="text-sm">Adresse: {booking.address}</p>
-                              <p className="text-sm">Adultes: {booking.adults}</p>
-                              <p className="text-sm">Enfants: {booking.children}</p>
-                              <p className="text-sm">Portal: {booking.portal}</p>
-                              <p className="text-sm">Créé le: {formatDate(booking.created)}</p>
-                              {booking.notes && (
-                                <p className="text-sm mt-2">Notes: {booking.notes}</p>
-                              )}
-                            </div>
-                            <div>
-                              <h3 className="font-semibold mb-2">Détails de paiement</h3>
-                              <p className="text-sm">Prix de base: {formatPrice(booking.priceDetails.basePrice)}</p>
-                              {booking.priceDetails.extrasTotal > 0 && (
-                                <p className="text-sm">Extras: {formatPrice(booking.priceDetails.extrasTotal)}</p>
-                              )}
-                              {booking.priceDetails.discounts > 0 && (
-                                <p className="text-sm">Réductions: -{formatPrice(booking.priceDetails.discounts)}</p>
-                              )}
-                              <p className="text-sm">Total: {formatPrice(booking.price)}</p>
-                              <p className="text-sm">Commission: {formatPrice(booking.commission)}</p>
-                              {/* <p className="text-sm">Acompte: {formatPrice(booking.prepayment)} ({booking.prepaymentPaid ? 'Payé' : 'Non payé'})</p>
-                              <p className="text-sm">Statut du paiement: {booking.paid ? 'Payé' : 'Non payé'}</p> */}
-                            </div>
-                            {booking.extras.length > 0 && (
-                              <div className="md:col-span-2">
-                                <h3 className="font-semibold mb-2">Extras</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                  {booking.extras.map((extra, index) => (
-                                    <div key={index} className="bg-white p-3 rounded-lg shadow-sm">
-                                      <p className="text-sm font-medium">{extra.name}</p>
-                                      <p className="text-sm text-gray-500">
-                                        Quantité: {extra.quantity} • Prix: {formatPrice(extra.amount)}
-                                      </p>
-                                    </div>
-                                  ))}
-                                </div>
+                      {expandedBooking === booking.id && (
+                        <tr>
+                          <td colSpan="8" className="px-4 py-4 bg-gray-50">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <h3 className="font-semibold mb-2">Informations client</h3>
+                                <p className="text-sm">Hébergement: {booking.property}</p>
+                                <p className="text-sm">Email: {booking.email}</p>
+                                <p className="text-sm">Téléphone: {booking.phone}</p>
+                                <p className="text-sm">Adresse: {booking.address}</p>
+                                <p className="text-sm">Adultes: {booking.adults}</p>
+                                <p className="text-sm">Enfants: {booking.children}</p>
+                                <p className="text-sm">Portal: {booking.portal}</p>
+                                <p className="text-sm">Créé le: {formatDate(booking.created)}</p>
+                                {booking.notes && (
+                                  <p className="text-sm mt-2">Notes: {booking.notes}</p>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
+                              <div>
+                                <h3 className="font-semibold mb-2">Détails de paiement</h3>
+                                <p className="text-sm">Prix de base: {formatPrice(booking.priceDetails.basePrice)}</p>
+                                {booking.priceDetails.extrasTotal > 0 && (
+                                  <p className="text-sm">Extras: {formatPrice(booking.priceDetails.extrasTotal)}</p>
+                                )}
+                                {booking.priceDetails.promoCode && (
+                                  <p className="text-sm text-green-600">
+                                    {booking.priceDetails.promoCode.name}: 
+                                    {formatPrice(-booking.priceDetails.promoCode.amount)}
+                                  </p>
+                                )}
+                                {booking.priceDetails.discounts > 0 && (
+                                  <p className="text-sm text-green-600">
+                                    Réductions: -{formatPrice(booking.priceDetails.discounts)}
+                                  </p>
+                                )}
+                                <p className="text-sm font-semibold mt-1">
+                                  Total: {formatPrice(booking.price)}
+                                </p>
+                                {booking.commission > 0 && (
+                                  <p className="text-sm text-gray-600 mt-2">
+                                    Commission: {formatPrice(booking.commission)}
+                                  </p>
+                                )}
+                              </div>
+                              {booking.extras.length > 0 && (
+                                <div className="md:col-span-2">
+                                  <h3 className="font-semibold mb-2">Extras</h3>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {booking.extras.map((extra, index) => (
+                                      <div key={index} className="bg-white p-3 rounded-lg shadow-sm">
+                                        <p className="text-sm font-medium">{extra.name}</p>
+                                        <p className="text-sm text-gray-500">
+                                          Quantité: {extra.quantity} • Prix: {formatPrice(extra.amount)}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                   </React.Fragment>
                 ))
               ) : (

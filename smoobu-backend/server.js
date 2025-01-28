@@ -1154,8 +1154,11 @@ app.get("/api/bookings-report", async (req, res) => {
 
         const processedBooking = {
           id: booking.id,
-          guest: booking.guestName || `${booking.firstName || ''} ${booking.lastName || ''}`.trim() || 'No name provided',
-          property: apartmentName,
+          guest: booking.guestName || 
+                `${booking.firstName || ''} ${booking.lastName || ''}`.trim() || 
+                (booking.notice?.match(/Message du client:?\s*([^\n]+)/) || [])[1] || // Try to extract name from notice
+                'Sans nom',
+          property: roomNames[booking.apartmentId] || booking.apartmentName || '',
           portal: booking.channel?.name || booking.channelId || 'Direct',
           created: createdDate,
           email: booking.email || '',
@@ -1170,22 +1173,29 @@ app.get("/api/bookings-report", async (req, res) => {
           priceDetails: {
             basePrice: parseFloat(basePrice),
             extrasTotal: parseFloat(extrasTotal),
+            promoCode: priceElements.find(el => 
+              el.name?.toLowerCase().includes('code promo') || 
+              el.name?.toLowerCase().includes('promotion')
+            ),
             discounts: parseFloat(discounts),
             total: parseFloat(basePrice) + parseFloat(extrasTotal) - parseFloat(discounts),
-            elements: nonCommissionExtras
           },
           commission: parseFloat(commission),
-          // paid: booking.depositStatus === 1,
-          // prepayment: parseFloat(booking.deposit) || 0,
-          // prepaymentPaid: booking.depositStatus === 1,
-          nights,
+          nights: nights,
           status: booking.status || 'BOOKED',
-          extras: nonCommissionExtras.map(extra => ({
-            name: extra.name || 'Unnamed extra',
-            amount: parseFloat(extra.amount) || 0,
-            quantity: parseInt(extra.quantity) || 1
-          }))
+          extras: nonCommissionExtras
+            .filter(extra => !extra.name?.toLowerCase().includes('code promo') && 
+                            !extra.name?.toLowerCase().includes('promotion'))
+            .map(extra => ({
+              name: extra.name || 'Extra sans nom',
+              amount: parseFloat(extra.amount) || 0,
+              quantity: parseInt(extra.quantity) || 1
+            }))
         };
+
+        if (booking.channelId !== 'Blocked') {
+          processedBookings.push(processedBooking);
+        }
 
         // Log raw booking data and processed result
         console.log('Raw booking data:', {
