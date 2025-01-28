@@ -1153,27 +1153,45 @@ app.get("/api/bookings-report", async (req, res) => {
         // In the processedBooking object creation
         const processedBooking = {
           id: booking.id,
-          guest: booking.guestName || 
+          // Get guest name from various possible sources
+          guest: booking["guest-name"] || 
                 `${booking.firstName || ''} ${booking.lastName || ''}`.trim() || 
-                (booking.notice?.match(/Message du client:?\s*([^\n]+)/) || [])[1] || 
+                (booking.notice?.match(/Message du client:?\s*([^\n]+)/) || [])[1] ||
+                booking.email?.split('@')[0] ||  // Use email username as fallback
                 'Sans nom',
+        
+          // Get property name
           property: roomNames[booking.apartmentId] || booking.apartment?.name || '',
-          portal: booking.channel?.name || booking.channelId || 'Direct',
-          created: createdDate,
+          
+          // Get portal info
+          portal: booking.channel?.name || 'Direct',  // Remove the channelId fallback since we don't want blocked
+          
+          // Rest of booking info
+          created: booking.created,
           email: booking.email || '',
           phone: booking.phone || '',
+          
+          // Get address from various sources
           address: booking.address || '',
+          street: booking.address?.street || booking.street || '',
+          postalCode: booking.address?.postalCode || booking.postalCode || '',
+          location: booking.address?.location || booking.location || booking.city || '',
+          country: booking.address?.country || booking.country || '',
+        
           adults: parseInt(booking.adults) || 0,
           children: parseInt(booking.children) || 0,
           checkIn: booking.arrival,
           checkOut: booking.departure,
+          arrivalTime: booking["check-in"] || booking.arrivalTime || '',
+          departureTime: booking["check-out"] || booking.departureTime || '',
           notes: booking.notice || '',
           price: parseFloat(booking.price) || 0,
+          
+          // Price details with promo code
           priceDetails: {
             basePrice: parseFloat(basePrice),
             extrasTotal: parseFloat(extrasTotal),
             discounts: parseFloat(discounts),
-            // Add promo code to payment details instead of extras
             promoCode: priceElements.find(el => 
               el.name?.toLowerCase().includes('code promo') || 
               el.name?.toLowerCase().includes('coupon') ||
@@ -1183,7 +1201,6 @@ app.get("/api/bookings-report", async (req, res) => {
           },
           commission: parseFloat(commission),
           nights,
-          // Filter out promo codes/coupons from extras
           extras: nonCommissionExtras
             .filter(extra => 
               !extra.name?.toLowerCase().includes('code promo') && 
@@ -1205,14 +1222,16 @@ app.get("/api/bookings-report", async (req, res) => {
         // Log raw booking data and processed result
         console.log('Raw booking data:', {
           id: booking.id,
-          firstName: guests.firstName,
-          lastName: guests.lastName,
-          guestName: guests.guestName,
-          channelId: channel.name	,
-          status: booking.status,
-          created: booking.created
+          guestName: booking["guest-name"],
+          firstName: booking.firstName,
+          lastName: booking.lastName,
+          email: booking.email,
+          address: booking.address,
+          channel: booking.channel?.name,
+          created: booking.created,
+          arrivalTime: booking["check-in"] || booking.arrivalTime
         });
-
+        
         console.log('Processed booking:', {
           id: processedBooking.id,
           guest: processedBooking.guest,
