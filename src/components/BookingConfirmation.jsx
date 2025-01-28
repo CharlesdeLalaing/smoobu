@@ -39,7 +39,7 @@ const BookingConfirmation = () => {
     }
   }, [paymentIntent]);
 
-  const API_URL = "https://smoobu-test.onrender.com/";
+  const API_URL = "http://localhost:3000'";
 
   // const fetchBookingDetails = async (paymentIntentId) => {
   //   try {
