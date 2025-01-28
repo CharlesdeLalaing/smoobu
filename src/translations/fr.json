@@ -372,6 +372,7 @@
         "selectDatePrompt": "Veuillez sélectionner une date",
         "selectRoom": "Sélectionner cette chambre",
         "unavailableForDates": "Non disponible pour ces dates",
+        "extraGuestFee": "Supplément de {{fee}}€ par personne au-delà de {{threshold}} personnes ({{count}} personne(s) supplémentaire(s))",
         "loading": "Chargement...",
         "capacityExceeded": {
           "title": "Capacité maximale dépassée",

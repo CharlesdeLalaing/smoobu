@@ -373,6 +373,7 @@
         "selectDatePrompt": "Selecteer een datum",
         "selectRoom": "Selecteer deze kamer",
         "unavailableForDates": "Niet beschikbaar voor deze data",
+        "extraGuestFee": "Extra toeslag van {{fee}}€ per persoon vanaf {{threshold}} gasten ({{count}} extra gast(en))",
         
         "loading": "Laden...",
         "capacityExceeded": {
