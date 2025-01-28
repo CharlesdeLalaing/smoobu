@@ -1044,14 +1044,15 @@ app.get("/api/bookings-report", async (req, res) => {
     console.log(`Found ${bookings.length} bookings for period ${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`);
 
     // Process each booking to get price elements and extras
+    // Process each booking to get price elements and extras
     const processedBookings = [];
     for (const booking of bookings) {
       try {
         console.log(`Processing booking ${booking.id}`);
         
-        // Skip if it's a blocked booking
-        if (booking.channelId === 'Blocked') {
-          console.log(`Skipping blocked booking ${booking.id}`);
+        // Skip if it's a blocked booking or cancelled booking
+        if (booking.channelId === 'Blocked' || booking.type === 'cancellation') {
+          console.log(`Skipping ${booking.channelId === 'Blocked' ? 'blocked' : 'cancelled'} booking ${booking.id}`);
           continue;
         }
 
@@ -1109,7 +1110,6 @@ app.get("/api/bookings-report", async (req, res) => {
           !extra.name?.toLowerCase().includes('commission')
         );
 
-
         // Calculate totals - fix base price detection
         const basePrice = priceElements.find(el => 
           el.name?.toLowerCase().includes('base') ||
@@ -1121,7 +1121,6 @@ app.get("/api/bookings-report", async (req, res) => {
           .filter(el => el.type === 'discount')
           .reduce((sum, discount) => sum + Math.abs(discount.amount), 0);
 
-        // Log price elements breakdown for debugging
         // Log price elements breakdown for debugging
         console.log('Price elements breakdown:', {
           bookingId: booking.id,
@@ -1139,22 +1138,13 @@ app.get("/api/bookings-report", async (req, res) => {
           extrasTotal,
           discounts
         });
-        // Format created date
-        let createdDate = null;
-        try {
-          if (booking.created) {
-            createdDate = new Date(booking.created).toISOString();
-          }
-        } catch (e) {
-          console.error('Error parsing created date:', e);
-        }
 
-        // Add a portal name mapping
+        // Add portal name mapping
         const portalNames = {
-          'Homepage': 'Site web'
+          'Homepage': 'Website',
+          'Direct booking': 'Website'
         };
-        // Get apartment name
-        // In the processedBooking object creation
+
         const processedBooking = {
           id: booking.id,
           guest: booking["guest-name"] || 
@@ -1163,8 +1153,8 @@ app.get("/api/bookings-report", async (req, res) => {
                 booking.email?.split('@')[0] ||
                 'Sans nom',
           property: roomNames[booking.apartmentId] || booking.apartment?.name || '',
-          portal: portalNames[booking.channel?.name] || booking.channel?.name || 'Site web',
-          created: booking['created-at'] || booking.created || new Date().toISOString(), // Fix the date
+          portal: portalNames[booking.channel?.name] || booking.channel?.name || 'Website',
+          created: booking['created-at'] || booking.created || new Date().toISOString(),
           email: booking.email || '',
           phone: booking.phone || '',
           address: booking.address || '',
@@ -1172,12 +1162,10 @@ app.get("/api/bookings-report", async (req, res) => {
           children: parseInt(booking.children) || 0,
           checkIn: booking.arrival,
           checkOut: booking.departure,
-          arrivalTime: booking["check-in"] || '', // Use check-in from API
+          arrivalTime: booking["check-in"] || '',
           departureTime: booking["check-out"] || '',
           notes: booking.notice || '',
           price: parseFloat(booking.price) || 0,
-          
-          // Price details with promo code
           priceDetails: {
             basePrice: parseFloat(basePrice),
             extrasTotal: parseFloat(extrasTotal),
@@ -1203,13 +1191,10 @@ app.get("/api/bookings-report", async (req, res) => {
               quantity: parseInt(extra.quantity) || 1
             })) || []
         };
-        
-        // Only add if not blocked booking
-        if (booking.channelId !== 'Blocked') {
-          processedBookings.push(processedBooking);
-        }
 
-        // Log raw booking data and processed result
+        processedBookings.push(processedBooking);
+
+        // Log raw booking data
         console.log('Raw booking data:', {
           id: booking.id,
           guestName: booking["guest-name"],
@@ -1218,15 +1203,8 @@ app.get("/api/bookings-report", async (req, res) => {
           email: booking.email,
           address: booking.address,
           channel: booking.channel?.name,
-          created: booking['created-at'], // Log the correct created-at field
+          created: booking['created-at'],
           arrivalTime: booking["check-in"]
-        });
-
-        console.log('Processed booking:', {
-          id: processedBooking.id,
-          guest: processedBooking.guest,
-          price: processedBooking.price,
-          extras: processedBooking.extras
         });
 
       } catch (error) {
