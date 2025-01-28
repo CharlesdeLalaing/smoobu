@@ -1153,9 +1153,9 @@ app.get("/api/bookings-report", async (req, res) => {
         const processedBooking = {
           id: booking.id,
           guest: booking.guestName || 
-            `${booking.firstName || ''} ${booking.lastName || ''}`.trim() || 
-            (booking.notice?.match(/Message du client:?\s*([^\n]+)/) || [])[1] || 
-            'Sans nom',
+                `${booking.firstName || ''} ${booking.lastName || ''}`.trim() || 
+                (booking.notice?.match(/Message du client:?\s*([^\n]+)/) || [])[1] || 
+                'Sans nom',
           property: roomNames[booking.apartmentId] || booking.apartment?.name || '',
           portal: booking.channel?.name || booking.channelId || 'Direct',
           created: createdDate,
@@ -1176,7 +1176,12 @@ app.get("/api/bookings-report", async (req, res) => {
           },
           commission: parseFloat(commission),
           nights,
-          portal: booking.channel?.name || 'Direct'
+          portal: booking.channel?.name || 'Direct',
+          extras: nonCommissionExtras.map(extra => ({
+            name: extra.name || 'Extra sans nom',
+            amount: parseFloat(extra.amount) || 0,
+            quantity: parseInt(extra.quantity) || 1
+          })) || [] // Add a default empty array
         };
         
         // Only add if not blocked booking
