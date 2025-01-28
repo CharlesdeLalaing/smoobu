@@ -293,51 +293,37 @@ const BookingsReport = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="w-8 px-4 py-3"></th>
-                <th
-                  onClick={() => handleSort("id")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                >
+                <th onClick={() => handleSort("id")} 
+                    className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer">
                   ID {sortField === "id" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th
-                  onClick={() => handleSort("guest")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                >
+                <th onClick={() => handleSort("guest")} 
+                    className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer">
                   Client {sortField === "guest" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th onClick={() => handleSort("property")} 
+                <th onClick={() => handleSort("portal")} 
+                    className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer">
+                  Portal {sortField === "portal" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th onClick={() => handleSort("property")}
                     className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer">
                   Hébergement {sortField === "property" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th
-                  onClick={() => handleSort("checkIn")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                >
+                <th onClick={() => handleSort("checkIn")}
+                    className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer">
                   Arrivée {sortField === "checkIn" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th
-                  onClick={() => handleSort("checkOut")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                >
-                  Départ {sortField === "checkOut" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th onClick={() => handleSort("checkOut")}
+                    className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer">
+                  Départ {sortField === "checkOut" && (sortDirection === "asc" ? "↓" : "↑")}
                 </th>
-                <th
-                  onClick={() => handleSort("nights")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                >
+                <th onClick={() => handleSort("nights")}
+                    className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer">
                   Nuits {sortField === "nights" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th
-                  onClick={() => handleSort("price")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                >
+                <th onClick={() => handleSort("price")}
+                    className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer">
                   Prix {sortField === "price" && (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th
-                  onClick={() => handleSort("status")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                >
-                  Statut {sortField === "status" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
               </tr>
             </thead>
@@ -351,11 +337,7 @@ const BookingsReport = () => {
                           onClick={() => setExpandedBooking(expandedBooking === booking.id ? null : booking.id)}
                           className="p-1 hover:bg-gray-100 rounded"
                         >
-                          {expandedBooking === booking.id ? (
-                            <ChevronUp size={16} />
-                          ) : (
-                            <ChevronDown size={16} />
-                          )}
+                          {expandedBooking === booking.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </button>
                       </td>
                       <td className="px-4 py-3 text-xs font-medium text-gray-900">
@@ -364,7 +346,9 @@ const BookingsReport = () => {
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {booking.guest}
                       </td>
-                        {/* Add the property column right here, after the guest column */}
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {booking.portal}
+                      </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {booking.property}
                       </td>
@@ -380,13 +364,10 @@ const BookingsReport = () => {
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {formatPrice(booking.price)}
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">
-                        {booking.status}
-                      </td>
                     </tr>
                       {expandedBooking === booking.id && (
                         <tr>
-                          <td colSpan="8" className="px-4 py-4 bg-gray-50">
+                          <td colSpan="9" className="px-4 py-4 bg-gray-50">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
                                 <h3 className="font-semibold mb-2">Informations client</h3>

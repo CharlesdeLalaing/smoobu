@@ -1150,15 +1150,13 @@ app.get("/api/bookings-report", async (req, res) => {
         }
 
         // Get apartment name
-        const apartmentName = booking.apartmentName || '';
-
         const processedBooking = {
           id: booking.id,
           guest: booking.guestName || 
-                `${booking.firstName || ''} ${booking.lastName || ''}`.trim() || 
-                (booking.notice?.match(/Message du client:?\s*([^\n]+)/) || [])[1] || // Try to extract name from notice
-                'Sans nom',
-          property: roomNames[booking.apartmentId] || booking.apartmentName || '',
+            `${booking.firstName || ''} ${booking.lastName || ''}`.trim() || 
+            (booking.notice?.match(/Message du client:?\s*([^\n]+)/) || [])[1] || 
+            'Sans nom',
+          property: roomNames[booking.apartmentId] || booking.apartment?.name || '',
           portal: booking.channel?.name || booking.channelId || 'Direct',
           created: createdDate,
           email: booking.email || '',
@@ -1173,26 +1171,15 @@ app.get("/api/bookings-report", async (req, res) => {
           priceDetails: {
             basePrice: parseFloat(basePrice),
             extrasTotal: parseFloat(extrasTotal),
-            promoCode: priceElements.find(el => 
-              el.name?.toLowerCase().includes('code promo') || 
-              el.name?.toLowerCase().includes('promotion')
-            ),
             discounts: parseFloat(discounts),
             total: parseFloat(basePrice) + parseFloat(extrasTotal) - parseFloat(discounts),
           },
           commission: parseFloat(commission),
-          nights: nights,
-          status: booking.status || 'BOOKED',
-          extras: nonCommissionExtras
-            .filter(extra => !extra.name?.toLowerCase().includes('code promo') && 
-                            !extra.name?.toLowerCase().includes('promotion'))
-            .map(extra => ({
-              name: extra.name || 'Extra sans nom',
-              amount: parseFloat(extra.amount) || 0,
-              quantity: parseInt(extra.quantity) || 1
-            }))
+          nights,
+          portal: booking.channel?.name || 'Direct'
         };
-
+        
+        // Only add if not blocked booking
         if (booking.channelId !== 'Blocked') {
           processedBookings.push(processedBooking);
         }
@@ -1214,8 +1201,6 @@ app.get("/api/bookings-report", async (req, res) => {
           price: processedBooking.price,
           extras: processedBooking.extras
         });
-
-        processedBookings.push(processedBooking);
 
       } catch (error) {
         console.error(`Error processing booking ${booking.id}:`, error.message);
