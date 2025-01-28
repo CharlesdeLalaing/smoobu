@@ -378,7 +378,7 @@
         "loading": "Laden...",
         "capacityExceeded": {
                 "title": "Maximale capaciteit overschreden",
-                "message": "Deze kamer is geschikt voor maximaal {{max}} personen (je hebt {{current}} personen geselecteerd)."
+                "message": "Deze kamer kan maximaal {{maxGuests}} personen accommoderen (u heeft {{selectedGuests}} personen geselecteerd)."
                 },
             "tooManyGuests": "Te veel mensen voor deze kamer"
       },

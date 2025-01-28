@@ -377,7 +377,7 @@
         "loading": "Chargement...",
         "capacityExceeded": {
           "title": "Capacité maximale dépassée",
-          "message": "Cette chambre peut accueillir un maximum de {{max}} personnes (vous avez sélectionné {{current}} personnes)"
+          "message": "Cette chambre peut accueillir au maximum {{maxGuests}} personnes (vous avez sélectionné {{selectedGuests}} personnes)."
         },
         "tooManyGuests": "Trop de personnes pour cette chambre"
       },

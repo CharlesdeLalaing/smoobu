@@ -377,7 +377,7 @@
             "extraGuestFee": "Extra fee of {{fee}}€ per person after {{threshold}} guests ({{count}} extra guest(s))",
             "capacityExceeded": {
                 "title": "Maximum capacity exceeded",
-                "message": "This room can accommodate a maximum of {{max}} people (you have selected {{current}} people)."
+                "message": "This room can accommodate a maximum of {{maxGuests}} people (you have selected {{selectedGuests}} people)."
                 },
             "tooManyGuests": "Too many people for this room"
         },
