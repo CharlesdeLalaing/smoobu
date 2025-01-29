@@ -461,19 +461,24 @@ const BookingsReport = () => {
                                     <div className="text-sm">
                                       <span className="font-medium block mb-2">Extras sélectionnés:</span>
                                       <ul className="space-y-2">
-                                        {booking.extras.map((extra, index) => (
-                                          <li key={index} className="break-words">
-                                            • {extra.name} ({extra.quantity}x)
-                                            <span className="block ml-3 text-gray-600">
-                                              {formatPrice(extra.amount)} / unité
-                                            </span>
-                                          </li>
-                                        ))}
+                                        {booking.extras.map((extra, index) => {
+                                          // Calculate unit price by dividing total amount by quantity
+                                          const unitPrice = extra.amount / extra.quantity;
+                                          
+                                          return (
+                                            <li key={index} className="break-words">
+                                              • {extra.name} ({extra.quantity}x)
+                                              <span className="block ml-3 text-gray-600">
+                                                {formatPrice(unitPrice)} / unité
+                                              </span>
+                                            </li>
+                                          );
+                                        })}
                                       </ul>
                                       <div className="mt-4 pt-2 border-t border-gray-200">
                                         <span className="font-medium">Total Extras:</span>
                                         <span className="block">
-                                          {formatPrice(booking.extras.reduce((sum, extra) => sum + (extra.amount * extra.quantity), 0))}
+                                          {formatPrice(booking.extras.reduce((sum, extra) => sum + extra.amount, 0))}
                                         </span>
                                       </div>
                                     </div>
