@@ -1117,9 +1117,21 @@ app.get("/api/bookings-report", async (req, res) => {
         )?.amount || 0;
 
         const extrasTotal = extras.reduce((sum, extra) => sum + extra.amount, 0);
-        const discounts = priceElements
-          .filter(el => el.type === 'discount')
+
+        // Change to:
+        const longStayDiscount = priceElements.find(el => 
+          el.name?.toLowerCase().includes('long stay') || 
+          el.name?.toLowerCase().includes('long-stay')
+        )?.amount || 0;
+
+        const otherDiscounts = priceElements
+          .filter(el => 
+            el.type === 'discount' && 
+            !el.name?.toLowerCase().includes('long stay') &&
+            !el.name?.toLowerCase().includes('long-stay')
+          )
           .reduce((sum, discount) => sum + Math.abs(discount.amount), 0);
+
 
         // Log price elements breakdown for debugging
         console.log('Price elements breakdown:', {
@@ -1167,16 +1179,19 @@ app.get("/api/bookings-report", async (req, res) => {
           notes: booking.notice || '',
           price: parseFloat(booking.price) || 0,
           priceDetails: {
-            basePrice: parseFloat(basePrice),
-            extrasTotal: parseFloat(extrasTotal),
-            discounts: parseFloat(discounts),
-            promoCode: priceElements.find(el => 
-              el.name?.toLowerCase().includes('code promo') || 
-              el.name?.toLowerCase().includes('coupon') ||
-              el.type === 'discount'
-            ),
-            total: parseFloat(basePrice) + parseFloat(extrasTotal) - parseFloat(discounts),
-          },
+          basePrice: parseFloat(basePrice),
+          extrasTotal: parseFloat(extrasTotal),
+          longStayDiscount: parseFloat(longStayDiscount),  // Add this
+          discounts: parseFloat(otherDiscounts),  // Change this
+          promoCode: priceElements.find(el => 
+            el.name?.toLowerCase().includes('code promo') || 
+            el.name?.toLowerCase().includes('coupon') ||
+            (el.type === 'discount' && 
+            !el.name?.toLowerCase().includes('long stay') &&
+            !el.name?.toLowerCase().includes('long-stay'))
+          ),
+          total: parseFloat(basePrice) + parseFloat(extrasTotal) - parseFloat(longStayDiscount) - parseFloat(otherDiscounts),
+        },
           commission: parseFloat(commission),
           nights,
           extras: nonCommissionExtras

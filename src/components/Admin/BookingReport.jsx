@@ -435,21 +435,30 @@ const BookingsReport = () => {
                               <div className="space-y-3">
                                 <h3 className="text-sm font-semibold text-gray-900">Détails de Prix</h3>
                                 <div className="space-y-2">
-                                  <div className="text-sm">
+                                  <p className="text-sm">
                                     <span className="font-medium block">Prix de base:</span>
                                     {formatPrice(booking.priceDetails.basePrice)}
-                                  </div>
+                                  </p>
+                                  
+                                  {booking.priceDetails.longStayDiscount && (
+                                    <p className="text-sm text-red-600">
+                                      <span className="font-medium block">Long stay discount:</span>
+                                      {formatPrice(-booking.priceDetails.longStayDiscount)}
+                                    </p>
+                                  )}
+
+                                  {booking.priceDetails.promoCode && (
+                                    <p className="text-sm text-green-600">
+                                      <span className="font-medium block">Code promo {booking.priceDetails.promoCode.name}:</span> 
+                                      {formatPrice(-booking.priceDetails.promoCode.amount)}
+                                    </p>
+                                  )}
+
                                   {booking.commission > 0 && (
-                                    <div className="text-sm">
+                                    <p className="text-sm">
                                       <span className="font-medium block">Commission:</span>
                                       {formatPrice(booking.commission)}
-                                    </div>
-                                  )}
-                                  {booking.priceDetails.promoCode && (
-                                    <div className="text-sm text-green-600">
-                                      <span className="font-medium block">Code promo {booking.priceDetails.promoCode.name}:</span>
-                                      {formatPrice(-booking.priceDetails.promoCode.amount)}
-                                    </div>
+                                    </p>
                                   )}
                                 </div>
                               </div>
