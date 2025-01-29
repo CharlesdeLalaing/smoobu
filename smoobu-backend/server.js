@@ -353,7 +353,7 @@ app.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        "whsec_sbVaa5obD8UFZ5hzg0iEZpLHozrHi4Z8"
+        "whsec_d9b86273072de6b319134fbc08752e2b4e66bae72aaa2cf4cb7db1411974c20a"
       );
 
       if (event.type === "payment_intent.succeeded") {

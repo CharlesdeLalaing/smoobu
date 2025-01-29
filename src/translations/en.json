@@ -427,6 +427,7 @@
                 "total": "Total: {{price}}€",
                 "termsAccepted": "General conditions: Accepted",
                 "promoCodeFixed": "Promo code ({{code}}): -{{amount}}€",
+                "guestFees": "Frais supplémentaires ({{extraGuests}} personne(s)): {{amount}}€",
                 "promoCodePercentage": "Promo code ({{code}} - {{value}}%): -{{amount}}€"
             },
             "address": {
