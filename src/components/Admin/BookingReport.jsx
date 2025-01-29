@@ -465,19 +465,21 @@ const BookingsReport = () => {
                                           <li key={index} className="break-words">
                                             • {extra.name} ({extra.quantity}x)
                                             <span className="block ml-3 text-gray-600">
-                                              {formatPrice(extra.amount)}
+                                              {formatPrice(extra.amount)} / unité
                                             </span>
                                           </li>
                                         ))}
                                       </ul>
                                       <div className="mt-4 pt-2 border-t border-gray-200">
-                                        <span className="font-medium block">Total Extras:</span>
-                                        {formatPrice(booking.extras.reduce((sum, extra) => sum + (extra.amount * extra.quantity), 0))}
+                                        <span className="font-medium">Total Extras:</span>
+                                        <span className="block">
+                                          {formatPrice(booking.extras.reduce((sum, extra) => sum + (extra.amount * extra.quantity), 0))}
+                                        </span>
                                       </div>
                                     </div>
                                   )}
                                   {(booking.portal === 'Airbnb' || booking.portal === 'Booking.com') && booking.linenFee > 0 && (
-                                    <div className="text-sm">
+                                    <div className="text-sm mt-2">
                                       <span className="font-medium block">Frais de linge:</span>
                                       {formatPrice(booking.linenFee)}
                                     </div>
