@@ -1334,7 +1334,7 @@ app.get("/api/bookings-report", async (req, res) => {
           el.name?.toLowerCase().includes('long-stay')
         )?.amount || 0;
 
-// Process extras - all non-base price elements, excluding cancellations and long stay discount
+        // Process extras - all non-base price elements, excluding cancellations and long stay discount
         const extras = priceElements.filter(element => {
           const name = element.name?.toLowerCase() || '';
           const type = element.type?.toLowerCase() || '';
@@ -1353,9 +1353,11 @@ app.get("/api/bookings-report", async (req, res) => {
             return false;
           }
 
-          // Include only addons and exclude base price
+          // Include addons, linen fees, and exclude base price and discounts
           return (
             element.type === "addon" || 
+            name.includes('linen fee') ||
+            name.includes('frais de linge') ||
             (element.type !== "base" && element.type !== "discount")
           );
         });

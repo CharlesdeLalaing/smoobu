@@ -449,7 +449,6 @@ const BookingsReport = () => {
 
                                   {booking.priceDetails.promoCode && (
                                     <p className="text-sm text-green-600">
-                                      <span className="font-medium block">Code promo:</span> 
                                       {booking.priceDetails.promoCode.name}: 
                                       {formatPrice(-booking.priceDetails.promoCode.amount)}
                                     </p>
