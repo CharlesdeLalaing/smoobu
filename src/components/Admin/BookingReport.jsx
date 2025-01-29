@@ -492,12 +492,6 @@ const BookingsReport = () => {
                                       </div>
                                     </div>
                                   )}
-                                  {(booking.portal === 'Airbnb' || booking.portal === 'Booking.com') && booking.linenFee > 0 && (
-                                    <div className="text-sm mt-2">
-                                      <span className="font-medium block">Frais de linge:</span>
-                                      {formatPrice(booking.linenFee)}
-                                    </div>
-                                  )}
                                 </div>
                               </div>
                             </div>
