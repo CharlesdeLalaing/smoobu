@@ -292,48 +292,49 @@ const BookingsReport = () => {
       <div className="bg-white rounded-lg shadow">
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
+            {/* Table Headers */}
             <thead className="bg-gray-50">
               <tr>
                 <th className="w-8 px-4 py-3"></th>
-                {/* Responsive column headers */}
-                <th className="hidden lg:table-cell px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
                     onClick={() => handleSort("id")}>
-                  ID {sortField === "id" && (sortDirection === "asc" ? "↑" : "↓")}
+                  ID de réservation {sortField === "id" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
                 <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
                     onClick={() => handleSort("guest")}>
-                  Client {sortField === "guest" && (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th className="hidden md:table-cell px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                    onClick={() => handleSort("portal")}>
-                  Portal {sortField === "portal" && (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th className="hidden sm:table-cell px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                    onClick={() => handleSort("property")}>
-                  Hébergement {sortField === "property" && (sortDirection === "asc" ? "↑" : "↓")}
+                  Nom du client {sortField === "guest" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
                 <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
                     onClick={() => handleSort("checkIn")}>
-                  Arrivée {sortField === "checkIn" && (sortDirection === "asc" ? "↑" : "↓")}
+                  Date d'arrivée {sortField === "checkIn" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="hidden xl:table-cell px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
                     onClick={() => handleSort("arrivalTime")}>
-                  Heure {sortField === "arrivalTime" && (sortDirection === "asc" ? "↑" : "↓")}
+                  Heure de check-in {sortField === "arrivalTime" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="hidden sm:table-cell px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
                     onClick={() => handleSort("checkOut")}>
-                  Départ {sortField === "checkOut" && (sortDirection === "asc" ? "↓" : "↑")}
+                  Date de départ {sortField === "checkOut" && (sortDirection === "asc" ? "↓" : "↑")}
                 </th>
-                <th className="hidden md:table-cell px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                    onClick={() => handleSort("property")}>
+                  Nom du logement {sortField === "property" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
                     onClick={() => handleSort("nights")}>
-                  Nuits {sortField === "nights" && (sortDirection === "asc" ? "↑" : "↓")}
+                  Nombre de nuits {sortField === "nights" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                    onClick={() => handleSort("portal")}>
+                  Portail de réservation {sortField === "portal" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
                 <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
                     onClick={() => handleSort("price")}>
-                  Prix {sortField === "price" && (sortDirection === "asc" ? "↑" : "↓")}
+                  Prix total {sortField === "price" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
               </tr>
             </thead>
+            {/* Table Body */}
             <tbody className="divide-y divide-gray-200">
               {filteredAndSortedData.length > 0 ? (
                 filteredAndSortedData.map((booking) => (
@@ -347,29 +348,29 @@ const BookingsReport = () => {
                           {expandedBooking === booking.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </button>
                       </td>
-                      <td className="hidden lg:table-cell px-4 py-3 text-xs font-medium text-gray-900">
+                      <td className="px-4 py-3 text-xs font-medium text-gray-900">
                         {booking.id}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {booking.guest}
                       </td>
-                      <td className="hidden md:table-cell px-4 py-3 text-xs text-gray-500">
-                        {booking.portal}
-                      </td>
-                      <td className="hidden sm:table-cell px-4 py-3 text-xs text-gray-500">
-                        {booking.property}
-                      </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {formatDate(booking.checkIn)}
                       </td>
-                      <td className="hidden xl:table-cell px-4 py-3 text-xs text-gray-500">
+                      <td className="px-4 py-3 text-xs text-gray-500">
                         {booking.arrivalTime || '-'}
                       </td>
-                      <td className="hidden sm:table-cell px-4 py-3 text-xs text-gray-500">
+                      <td className="px-4 py-3 text-xs text-gray-500">
                         {formatDate(booking.checkOut)}
                       </td>
-                      <td className="hidden md:table-cell px-4 py-3 text-xs text-gray-500">
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {booking.property}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">
                         {booking.nights}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {booking.portal}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {formatPrice(booking.price)}
