@@ -380,23 +380,27 @@ const BookingsReport = () => {
                       <tr>
                         <td colSpan="10" className="p-0">
                           <div className="p-4 bg-gray-50">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="w-[90%] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                               {/* Column 1: Information Client */}
                               <div className="space-y-3">
                                 <h3 className="text-sm font-semibold text-gray-900">Information Client</h3>
                                 <div className="space-y-2">
-                                  <p className="text-sm">
-                                    <span className="font-medium">Nom du client:</span> {booking.guest}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Mail du client:</span> {booking.email}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Téléphone du client:</span> {booking.phone}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Adresse complète:</span> {booking.address}
-                                  </p>
+                                  <div className="text-sm">
+                                    <span className="font-medium block">Nom du client:</span>
+                                    <span className="break-words">{booking.guest}</span>
+                                  </div>
+                                  <div className="text-sm">
+                                    <span className="font-medium block">Mail du client:</span>
+                                    <span className="break-words">{booking.email}</span>
+                                  </div>
+                                  <div className="text-sm">
+                                    <span className="font-medium block">Téléphone du client:</span>
+                                    <span className="break-words">{booking.phone}</span>
+                                  </div>
+                                  <div className="text-sm">
+                                    <span className="font-medium block">Adresse complète:</span>
+                                    <span className="break-words">{booking.address}</span>
+                                  </div>
                                 </div>
                               </div>
 
@@ -404,21 +408,26 @@ const BookingsReport = () => {
                               <div className="space-y-3">
                                 <h3 className="text-sm font-semibold text-gray-900">Information Réservation</h3>
                                 <div className="space-y-2">
-                                  <p className="text-sm">
-                                    <span className="font-medium">Nom du logement:</span> {booking.property}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Nombre d'adultes:</span> {booking.adults}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Nombre d'enfants:</span> {booking.children}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Date de création:</span> {formatDate(booking.created)}
-                                  </p>
-                                  <p className="text-sm">
-                                    <span className="font-medium">Portail de réservation:</span> {booking.portal}
-                                  </p>
+                                  <div className="text-sm">
+                                    <span className="font-medium block">Nom du logement:</span>
+                                    <span className="break-words">{booking.property}</span>
+                                  </div>
+                                  <div className="text-sm">
+                                    <span className="font-medium block">Nombre d'adultes:</span>
+                                    {booking.adults}
+                                  </div>
+                                  <div className="text-sm">
+                                    <span className="font-medium block">Nombre d'enfants:</span>
+                                    {booking.children}
+                                  </div>
+                                  <div className="text-sm">
+                                    <span className="font-medium block">Date de création:</span>
+                                    {formatDate(booking.created)}
+                                  </div>
+                                  <div className="text-sm">
+                                    <span className="font-medium block">Portail de réservation:</span>
+                                    {booking.portal}
+                                  </div>
                                 </div>
                               </div>
 
@@ -426,19 +435,21 @@ const BookingsReport = () => {
                               <div className="space-y-3">
                                 <h3 className="text-sm font-semibold text-gray-900">Détails de Prix</h3>
                                 <div className="space-y-2">
-                                  <p className="text-sm">
-                                    <span className="font-medium">Prix de base:</span> {formatPrice(booking.priceDetails.basePrice)}
-                                  </p>
+                                  <div className="text-sm">
+                                    <span className="font-medium block">Prix de base:</span>
+                                    {formatPrice(booking.priceDetails.basePrice)}
+                                  </div>
                                   {booking.commission > 0 && (
-                                    <p className="text-sm">
-                                      <span className="font-medium">Commission:</span> {formatPrice(booking.commission)}
-                                    </p>
+                                    <div className="text-sm">
+                                      <span className="font-medium block">Commission:</span>
+                                      {formatPrice(booking.commission)}
+                                    </div>
                                   )}
                                   {booking.priceDetails.promoCode && (
-                                    <p className="text-sm text-green-600">
-                                      <span className="font-medium">Code promo {booking.priceDetails.promoCode.name}:</span> 
+                                    <div className="text-sm text-green-600">
+                                      <span className="font-medium block">Code promo {booking.priceDetails.promoCode.name}:</span>
                                       {formatPrice(-booking.priceDetails.promoCode.amount)}
-                                    </p>
+                                    </div>
                                   )}
                                 </div>
                               </div>
@@ -449,18 +460,27 @@ const BookingsReport = () => {
                                 <div className="space-y-2">
                                   {booking.extras.length > 0 && (
                                     <div className="text-sm">
-                                      <span className="font-medium">Extras sélectionnés:</span>
-                                      <ul className="mt-1 space-y-1">
+                                      <span className="font-medium block mb-2">Extras sélectionnés:</span>
+                                      <ul className="space-y-2">
                                         {booking.extras.map((extra, index) => (
-                                          <li key={index}>• {extra.name} ({extra.quantity}x)</li>
+                                          <li key={index} className="break-words">
+                                            • {extra.name} ({extra.quantity}x)
+                                            <span className="block ml-3 text-gray-600">
+                                              {formatPrice(extra.amount)} / unité
+                                            </span>
+                                            <span className="block ml-3 font-medium">
+                                              Total: {formatPrice(extra.amount * extra.quantity)}
+                                            </span>
+                                          </li>
                                         ))}
                                       </ul>
                                     </div>
                                   )}
                                   {(booking.portal === 'Airbnb' || booking.portal === 'Booking.com') && booking.linenFee > 0 && (
-                                    <p className="text-sm">
-                                      <span className="font-medium">Frais de linge:</span> {formatPrice(booking.linenFee)}
-                                    </p>
+                                    <div className="text-sm">
+                                      <span className="font-medium block">Frais de linge:</span>
+                                      {formatPrice(booking.linenFee)}
+                                    </div>
                                   )}
                                 </div>
                               </div>
