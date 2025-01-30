@@ -85,84 +85,91 @@ const BookingsReport = () => {
   const handleExport = () => {
     const wsData = [
       [
-        "ID",
+        "ID de réservation",
         "Client",
-        "Portal",
-        "Créé le",
-        "Email",
-        "Téléphone",
-        "Adresse",
-        "Adultes",
-        "Enfants",
+        "Création de la réservation",
+        "Portail de réservation",
+        "Email du client",
+        "Téléphone du client",
+        "Adresse du client",
+        "Nombre d'adulte",
+        "Nombre d'enfant",
         "Arrivée",
+        "Check-in",
         "Départ",
-        "Notes",
-        "Prix",
+        "Nombre de nuits",
+        "Prix de base",
+        "Nom du coupon",
+        "Valeur du coupon",
+        "Frais de linge",
+        "Promotion de long séjour",
         "Commission",
-        "Payé",
-        "Acompte",
-        "Acompte payé",
-        "Nuits",
-        "Statut",
-        "Extras"
+        "Liste des extras",
+        "Total des extras",
+        "Prix total de la chambre"
       ],
       ...filteredAndSortedData.map((booking) => [
         booking.id,
         booking.guest,
-        booking.portal,
         formatDate(booking.created),
-        booking.email,
-        booking.phone,
-        booking.address,
+        booking.portal,
+        booking.email || '',
+        booking.phone || '',
+        booking.address || '',
         booking.adults,
         booking.children,
         formatDate(booking.checkIn),
+        booking.arrivalTime || '',
         formatDate(booking.checkOut),
-        booking.notes,
-        booking.price,
-        booking.commission,
-        // booking.paid ? "Oui" : "Non",
-        // booking.prepayment,
-        // booking.prepaymentPaid ? "Oui" : "Non",
         booking.nights,
-        booking.status,
-        booking.extras.map(e => `${e.name} (${e.quantity}x)`).join(", ")
+        booking.priceDetails.basePrice,
+        booking.priceDetails.promoCode?.name || '',
+        booking.priceDetails.promoCode?.amount || '',
+        booking.priceDetails.linenFee || '',
+        booking.priceDetails.longStayDiscount || '',
+        booking.commission || '',
+        booking.extras.map(e => `${e.name} (${e.quantity}x)`).join(", "),
+        booking.extras.reduce((sum, extra) => sum + extra.amount, 0),
+        booking.price
       ]),
     ];
-
+  
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(wsData);
-
+  
     const colWidths = [
-      { wch: 10 }, // ID
+      { wch: 15 }, // ID de réservation
       { wch: 25 }, // Client
-      { wch: 15 }, // Portal
-      { wch: 15 }, // Created
-      { wch: 25 }, // Email
-      { wch: 15 }, // Phone
-      { wch: 30 }, // Address
-      { wch: 10 }, // Adults
-      { wch: 10 }, // Children
-      { wch: 12 }, // Check-in
-      { wch: 12 }, // Check-out
-      { wch: 30 }, // Notes
-      { wch: 12 }, // Price
-      { wch: 12 }, // Commission
-      { wch: 8 },  // Paid
-      { wch: 12 }, // Prepayment
-      { wch: 15 }, // Prepayment paid
-      { wch: 8 },  // Nights
-      { wch: 12 }, // Status
-      { wch: 50 }  // Extras
+      { wch: 20 }, // Création de la réservation
+      { wch: 20 }, // Portail de réservation
+      { wch: 30 }, // Email du client
+      { wch: 20 }, // Téléphone du client
+      { wch: 35 }, // Adresse du client
+      { wch: 15 }, // Nombre d'adulte
+      { wch: 15 }, // Nombre d'enfant
+      { wch: 15 }, // Arrivée
+      { wch: 15 }, // Check-in
+      { wch: 15 }, // Départ
+      { wch: 15 }, // Nombre de nuits
+      { wch: 15 }, // Prix de base
+      { wch: 20 }, // Nom du coupon
+      { wch: 15 }, // Valeur du coupon
+      { wch: 15 }, // Frais de linge
+      { wch: 20 }, // Promotion de long séjour
+      { wch: 15 }, // Commission
+      { wch: 50 }, // Liste des extras
+      { wch: 15 }, // Total des extras
+      { wch: 15 }  // Prix total de la chambre
     ];
+    
     ws["!cols"] = colWidths;
-
+  
     XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
-
+  
     const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
     const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
     const fileName = `rapport-reservations_${startDate}_${endDate}.xlsx`;
-
+  
     XLSX.writeFile(wb, fileName);
   };
 
