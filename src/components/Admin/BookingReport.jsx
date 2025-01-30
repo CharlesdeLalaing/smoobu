@@ -440,7 +440,14 @@ const BookingsReport = () => {
                                     {formatPrice(booking.priceDetails.basePrice)}
                                   </p>
                                   
-                                  {booking.priceDetails.longStayDiscount && (
+                                  {booking.priceDetails.linenFee > 0 && (
+                                    <p className="text-sm">
+                                      <span className="font-medium block">Linen fee:</span>
+                                      {formatPrice(booking.priceDetails.linenFee)}
+                                    </p>
+                                  )}
+                                  
+                                  {booking.priceDetails.longStayDiscount > 0 && (
                                     <p className="text-sm text-red-600">
                                       <span className="font-medium block">Long stay discount:</span>
                                       {formatPrice(-booking.priceDetails.longStayDiscount)}
@@ -460,6 +467,16 @@ const BookingsReport = () => {
                                       {formatPrice(booking.commission)}
                                     </p>
                                   )}
+                                  
+                                  <div className="mt-4 pt-2 border-t border-gray-200">
+                                    <span className="font-medium block text-sm">Total:</span>
+                                    <span className="text-sm">
+                                      {formatPrice(booking.priceDetails.basePrice + 
+                                        (booking.priceDetails.linenFee || 0) - 
+                                        (booking.priceDetails.longStayDiscount || 0) - 
+                                        (booking.priceDetails.promoCode?.amount || 0))}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                               {/* Column 4: Détails Extras */}

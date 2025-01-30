@@ -1373,6 +1373,11 @@ app.get("/api/bookings-report", async (req, res) => {
           !extra.name?.toLowerCase().includes('commission')
         );
 
+        const linenFee = priceElements.find(el => 
+          el.name?.toLowerCase().includes('linen_fee') || 
+          el.name?.toLowerCase().includes('pass_through_linen_fee')
+        )?.amount || 0;
+
         // Calculate base price
         const basePrice = priceElements.find(el => 
           el.name?.toLowerCase().includes('base') ||
@@ -1419,6 +1424,7 @@ app.get("/api/bookings-report", async (req, res) => {
           price: parseFloat(booking.price) || 0,
           priceDetails: {
             basePrice: parseFloat(basePrice),
+            linenFee: parseFloat(linenFee),
             extrasTotal: parseFloat(extrasTotal),
             longStayDiscount: parseFloat(longStayDiscount),
             discounts: parseFloat(otherDiscounts),
@@ -1426,10 +1432,10 @@ app.get("/api/bookings-report", async (req, res) => {
               el.name?.toLowerCase().includes('code promo') || 
               el.name?.toLowerCase().includes('coupon') ||
               (el.type === 'discount' && 
-               !el.name?.toLowerCase().includes('long stay') &&
-               !el.name?.toLowerCase().includes('long-stay'))
+              !el.name?.toLowerCase().includes('long stay') &&
+              !el.name?.toLowerCase().includes('long-stay'))
             ),
-            total: parseFloat(basePrice) + parseFloat(extrasTotal) - parseFloat(longStayDiscount) - parseFloat(otherDiscounts),
+            total: parseFloat(basePrice) + parseFloat(linenFee) + parseFloat(extrasTotal) - parseFloat(longStayDiscount) - parseFloat(otherDiscounts),
           },
           commission: parseFloat(commission),
           nights,
