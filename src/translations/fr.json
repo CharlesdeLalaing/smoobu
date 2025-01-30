@@ -420,7 +420,6 @@
             },
             "priceDetails": {
               "title": "Détails du prix",
-              "guestFees": "{{count}} personne(s) supplémentaire(s) × {{fee}}€",
               "basePrice": "Prix de base: {{price}}€",
               "extraPerson": "Personne supplémentaire ({{quantity}}x): {{price}}€",
               "longStayDiscount": "Réduction long séjour ({{percentage}}%): -{{amount}}€",
