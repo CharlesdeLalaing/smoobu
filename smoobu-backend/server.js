@@ -1435,7 +1435,7 @@ app.get("/api/bookings-report", async (req, res) => {
               !el.name?.toLowerCase().includes('long stay') &&
               !el.name?.toLowerCase().includes('long-stay'))
             ),
-            total: parseFloat(basePrice) + parseFloat(linenFee) + parseFloat(extrasTotal) - parseFloat(longStayDiscount) - parseFloat(otherDiscounts),
+            total: parseFloat(basePrice) + parseFloat(linenFee) + parseFloat(extrasTotal) + parseFloat(longStayDiscount) - parseFloat(otherDiscounts),
           },
           commission: parseFloat(commission),
           nights,

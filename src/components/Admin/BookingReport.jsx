@@ -447,10 +447,10 @@ const BookingsReport = () => {
                                     </p>
                                   )}
                                   
-                                  {booking.priceDetails.longStayDiscount > 0 && (
+                                  {booking.priceDetails.longStayDiscount < 0 && ( // Changed to < 0 since it's negative
                                     <p className="text-sm text-red-600">
                                       <span className="font-medium block">Long stay discount:</span>
-                                      {formatPrice(-booking.priceDetails.longStayDiscount)}
+                                      {formatPrice(booking.priceDetails.longStayDiscount)} {/* No need for negative sign since it's already negative */}
                                     </p>
                                   )}
 
@@ -472,8 +472,8 @@ const BookingsReport = () => {
                                     <span className="font-medium block text-sm">Total:</span>
                                     <span className="text-sm">
                                       {formatPrice(booking.priceDetails.basePrice + 
-                                        (booking.priceDetails.linenFee || 0) - 
-                                        (booking.priceDetails.longStayDiscount || 0) - 
+                                        (booking.priceDetails.linenFee || 0) + 
+                                        (booking.priceDetails.longStayDiscount || 0) - // Add since it's already negative
                                         (booking.priceDetails.promoCode?.amount || 0))}
                                     </span>
                                   </div>
