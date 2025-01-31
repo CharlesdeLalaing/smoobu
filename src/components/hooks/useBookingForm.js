@@ -450,59 +450,53 @@ const handlePaymentSuccess = () => {
 
 const handleApplyCoupon = async (couponCode) => {
   try {
-    // Query Firebase for the coupon
-    const couponsRef = collection(db, 'coupons');
-    const q = query(
-      couponsRef, 
-      where('code', '==', couponCode.toUpperCase())
-    );
-    
+    const couponsRef = collection(db, "coupons");
+    const q = query(couponsRef, where("code", "==", couponCode.toUpperCase()));
+
     const querySnapshot = await getDocs(q);
-    
+
     if (querySnapshot.empty) {
-      return { error: 'not_found' };
+      return { error: "not_found" };
     }
 
     const couponDoc = querySnapshot.docs[0];
     const couponData = couponDoc.data();
-    
-    // Validate coupon
-    if (couponData.status !== 'active') {
-      return { error: 'inactive' };
+
+    // Common validation for all types of coupons
+    if (couponData.status !== "active") {
+      return { error: "inactive" };
     }
 
-    if (couponData.usedCount && couponData.usedCount > 0) {
-      return { error: 'used' };
+    if (
+      couponData.usedCount &&
+      couponData.usedCount > 0 &&
+      couponCode !== "POTES"
+    ) {
+      return { error: "used" };
     }
-    
-    // Check if coupon is expired
-    const expiryDate = couponData.expiryDate?.toDate();
+
+    const expiryDate =
+      couponData.expiryDate?.toDate?.() || new Date(couponData.expiryDate);
     if (expiryDate && expiryDate < new Date()) {
-      return { error: 'expired' };
+      return { error: "expired" };
     }
 
-    // Get the current total price before applying the coupon
+    // Get the current total price
     const currentRoomPrice = priceDetails?.[formData.apartmentId]?.finalPrice;
     if (!currentRoomPrice) {
-      return { error: 'invalid' };
+      return { error: "invalid" };
     }
 
-    // Calculate discount amount
-    let discountAmount = 0;
-    if (couponData.type === 'percentage') {
-      discountAmount = (currentRoomPrice * couponData.discount) / 100;
-    } else {
-      discountAmount = couponData.discount;
-    }
+    // Calculate discount - treat both types as fixed amount discounts
+    const discountAmount = couponData.amount || couponData.discount;
 
     // Apply the coupon
     setAppliedCoupon({
       id: couponDoc.id,
       code: couponCode.toUpperCase(),
-      type: couponData.type,
+      type: "fixed",
       discount: discountAmount,
-      percentageValue: couponData.type === 'percentage' ? couponData.discount : null,
-      currency: 'EUR'
+      currency: "EUR",
     });
 
     // Update price details
@@ -513,11 +507,11 @@ const handleApplyCoupon = async (couponCode) => {
       const updatedPriceElements = [
         ...(currentPriceDetails.priceElements || []),
         {
-          type: 'coupon',
-          name: `Coupon discount (${couponCode.toUpperCase()})`,
+          type: "discount",
+          name: `Code promo (${couponCode.toUpperCase()})`,
           amount: -discountAmount,
-          currencyCode: 'EUR'
-        }
+          currencyCode: "EUR",
+        },
       ];
 
       return {
@@ -525,19 +519,18 @@ const handleApplyCoupon = async (couponCode) => {
         [formData.apartmentId]: {
           ...currentPriceDetails,
           finalPrice: currentPriceDetails.finalPrice - discountAmount,
-          priceElements: updatedPriceElements
-        }
+          priceElements: updatedPriceElements,
+        },
       };
     });
 
     setCoupon("");
     return { success: true };
   } catch (error) {
-    console.error('Error applying coupon:', error);
-    return { error: 'invalid' };
+    console.error("Error applying coupon:", error);
+    return { error: "invalid" };
   }
 };
-
 
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
