@@ -3,7 +3,8 @@ import { Calendar, Search, Download } from "lucide-react";
 import axios from "axios";
 import * as XLSX from "xlsx";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000'";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://booking-9u8u.onrender.com";
 
 const ExtrasReport = () => {
   const [startMonth, setStartMonth] = useState(new Date().getMonth() + 1);

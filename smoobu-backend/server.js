@@ -794,12 +794,18 @@ app.use(express.json());
 app.use(
   cors({
     origin: [
-      'https://smoobu-test.vercel.app',
-      'http://localhost:5173',
+      "https://reservation.fermedebasseilles.be",
+      "http://localhost:5173",
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+    ],
   })
 );
 
@@ -820,7 +826,7 @@ app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
       .substr(2, 6)
       .toUpperCase()}`;
 
-    // Create voucher document in Firebase - FIXED Timestamp handling
+    // Create voucher document in Firebase
     const voucherData = {
       code: voucherCode,
       amount: Number(amount),
@@ -832,31 +838,17 @@ app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
       customerName,
       customerPhone,
       language,
-      dateCreated: new Date().toISOString(), // Changed to ISO string
+      dateCreated: new Date().toISOString(),
       expiryDate: new Date(
         Date.now() + 365 * 24 * 60 * 60 * 1000
-      ).toISOString(), // Changed to ISO string
+      ).toISOString(),
       usedCount: 0,
       usageHistory: [],
     };
 
     await db.collection("coupons").add(voucherData);
 
-    // Send confirmation email to customer based on language
-    const emailSubject =
-      {
-        fr: "Votre bon cadeau - Ferme de Basseilles",
-        en: "Your gift voucher - Ferme de Basseilles",
-        nl: "Uw cadeaubon - Ferme de Basseilles",
-      }[language] || "Votre bon cadeau - Ferme de Basseilles";
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: customerEmail,
-      subject: emailSubject,
-      html: generateGiftVoucherEmail(voucherData, language),
-    });
-
+    // Just return the success response, no email sending
     res.json({
       success: true,
       voucherCode,
