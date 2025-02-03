@@ -822,10 +822,8 @@ app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
     } = req.body;
 
     // Generate unique voucher code
-    const voucherCode = `GIFT-${Date.now()}-${Math.random()
-      .toString(36)
-      .substr(2, 6)
-      .toUpperCase()}`;
+    const voucherCode = `GIFT-${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
+
 
     // Create voucher document in Firebase
     const voucherData = {
