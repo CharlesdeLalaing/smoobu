@@ -184,27 +184,24 @@ const CouponManagement = () => {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">Chargement...</div>;
+    return <div className="flex items-center justify-center h-screen">Chargement...</div>;
   }
 
   return (
-    <div className="p-3 md:p-6 w-full max-w-6xl mx-auto">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div className="w-full max-w-7xl p-3 mx-auto md:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h1 className="text-xl md:text-2xl font-bold">Gestion des Coupons</h1>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#678D73] text-white px-4 py-2 rounded-lg hover:bg-[#678D73]"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-[#678D73] text-white rounded-lg hover:bg-[#4a6553] transition-colors w-full sm:w-auto"
         >
           <Plus size={20} />
           <span>Ajouter un Coupon</span>
         </button>
       </div>
 
-      {/* Filters Section */}
-      <div className="mb-6 bg-white p-3 md:p-4 rounded-lg shadow space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {/* Search */}
+      <div className="p-4 mb-6 bg-white rounded-lg shadow">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search size={20} className="text-gray-400" />
@@ -218,7 +215,6 @@ const CouponManagement = () => {
             />
           </div>
 
-          {/* Status Filter */}
           <div>
             <select
               value={statusFilter}
@@ -231,7 +227,6 @@ const CouponManagement = () => {
             </select>
           </div>
 
-          {/* Type Filter */}
           <div>
             <select
               value={typeFilter}
@@ -246,7 +241,6 @@ const CouponManagement = () => {
         </div>
       </div>
 
-      {/* Table Section */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -258,7 +252,6 @@ const CouponManagement = () => {
                 <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden lg:table-cell">Créé le</th>
                 <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden sm:table-cell">Expire le</th>
                 <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Statut</th>
-                {/* <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden sm:table-cell">Utilisé</th> */}
                 <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Actions</th>
               </tr>
             </thead>

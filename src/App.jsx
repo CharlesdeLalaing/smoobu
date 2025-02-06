@@ -1,9 +1,12 @@
 // App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import BookingConfirmation from "./components/BookingConfirmation";
 import "react-datepicker/dist/react-datepicker.css";
 import Booking2 from "./components/booking/BookingForm";
+import AdminDashboard from "./components/Admin/AdminDashboard";
+import ExtrasList from "./components/Admin/ExtrasNames";
 import CouponManagement from "./components/Admin/CouponManagement";
 import ExtrasReport from "./components/Admin/ExtrasReport"; // New import
 import BookingReport from "./components/Admin/BookingReport";
@@ -23,30 +26,13 @@ function App() {
             <Route path="/booking-confirmation" element={<BookingConfirmation />} />
             <Route path="/" element={<Booking2 />} />
             <Route path="/admin/login" element={<Login />} />
-            <Route 
-              path="/coupons" 
-              element={
-                <ProtectedRoute>
-                  <CouponManagement />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/extras-report" 
-              element={
-                <ProtectedRoute>
-                  <ExtrasReport />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/booking-report" 
-              element={
-                <ProtectedRoute>
-                  <BookingReport />
-                </ProtectedRoute>
-              } 
-            />
+            <Route element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>}>
+              <Route path="/extras-list" element={<ExtrasList />} />
+              <Route index path="/admin" element={<Navigate to="/booking-report" replace />} />
+              <Route path="/coupons" element={<CouponManagement />} />
+              <Route path="/extras-report" element={<ExtrasReport />} />
+              <Route path="/booking-report" element={<BookingReport />} />
+            </Route>
           </Routes>
         </Router>
       </I18nextProvider>

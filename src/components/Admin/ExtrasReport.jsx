@@ -148,151 +148,133 @@ const ExtrasReport = () => {
         : multiplier * (a[sortField] - b[sortField]);
     });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        Chargement...
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full max-w-6xl p-3 mx-auto md:p-6">
-      <div className="flex items-center justify-between gap-2 mb-6">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-6 h-6 text-[#678D73]" />
-          <h1 className="text-xl font-bold md:text-2xl">Rapport des Extras</h1>
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-screen">
+          Chargement...
         </div>
+      );
+    }
 
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2 bg-[#678D73] text-white rounded-lg hover:bg-[#4a6553] transition-colors"
-          disabled={filteredAndSortedData.length === 0}
-        >
-          <Download size={20} />
-          Exporter
-        </button>
-      </div>
-
-      <div className="p-4 mb-6 bg-white rounded-lg shadow">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="relative flex-1 min-w-[200px]">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <Search size={20} className="text-gray-400" />
+    return (
+      <div className="w-full max-w-7xl p-3 mx-auto md:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-6 h-6 text-[#678D73]" />
+            <h1 className="text-xl font-bold md:text-2xl">Rapport des Extras</h1>
+          </div>
+  
+          <button
+            onClick={handleExport}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-[#678D73] text-white rounded-lg hover:bg-[#4a6553] transition-colors w-full sm:w-auto"
+            disabled={filteredAndSortedData.length === 0}
+          >
+            <Download size={20} />
+            Exporter
+          </button>
+        </div>
+  
+        <div className="p-4 mb-6 bg-white rounded-lg shadow">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="relative lg:col-span-1">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Search size={20} className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Rechercher un extra..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Rechercher un extra..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-            />
-          </div>
-
-          <div className="flex-1 min-w-[150px]">
-            <select
-              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-              value={startMonth}
-              onChange={(e) => setStartMonth(parseInt(e.target.value))}
-            >
-              {months.map((month) => (
-                <option key={month.value} value={month.value}>
-                  {month.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex-1 min-w-[150px]">
-            <select
-              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-              value={startYear}
-              onChange={(e) => handleStartYearChange(e.target.value)}
-            >
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex-1 min-w-[150px]">
-            <select
-              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-              value={endMonth}
-              onChange={(e) => setEndMonth(parseInt(e.target.value))}
-            >
-              {months.map((month) => (
-                <option key={month.value} value={month.value}>
-                  {month.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex-1 min-w-[150px]">
-            <select
-              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-              value={endYear}
-              onChange={(e) => handleEndYearChange(e.target.value)}
-              disabled={endYear < startYear}
-            >
-              {years
-                .filter((year) => year >= startYear)
-                .map((year) => (
+  
+            <div className="sm:col-span-1">
+              <select
+                className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+                value={startMonth}
+                onChange={(e) => setStartMonth(parseInt(e.target.value))}
+              >
+                {months.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+  
+            <div className="sm:col-span-1">
+              <select
+                className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+                value={startYear}
+                onChange={(e) => setStartYear(parseInt(e.target.value))}
+              >
+                {years.map((year) => (
                   <option key={year} value={year}>
                     {year}
                   </option>
                 ))}
-            </select>
+              </select>
+            </div>
+  
+            <div className="sm:col-span-1">
+              <select
+                className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+                value={endMonth}
+                onChange={(e) => setEndMonth(parseInt(e.target.value))}
+              >
+                {months.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+  
+            <div className="sm:col-span-1">
+              <select
+                className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+                value={endYear}
+                onChange={(e) => setEndYear(parseInt(e.target.value))}
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
-      </div>
-
-      {error && (
-        <div className="px-4 py-3 mb-6 text-red-700 border border-red-200 rounded bg-red-50">
-          {error}
-        </div>
-      )}
-
-      <div className="overflow-hidden bg-white rounded-lg shadow">
-        <div className="p-4 border-b">
-          <p className="text-sm text-gray-600">
-            Réservations totales pour cette période : {totalBookings}
-          </p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  onClick={() => handleSort("name")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
-                >
-                  Nom{" "}
-                  {sortField === "name" &&
-                    (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th
-                  onClick={() => handleSort("count")}
-                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
-                >
-                  Sélections{" "}
-                  {sortField === "count" &&
-                    (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th
-                  onClick={() => handleSort("totalAmount")}
-                  className="hidden px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm md:table-cell"
-                >
-                  Montant{" "}
-                  {sortField === "totalAmount" &&
-                    (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
+  
+        {error && (
+          <div className="px-4 py-3 mb-6 text-red-700 border border-red-200 rounded bg-red-50">
+            {error}
+          </div>
+        )}
+  
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-4 border-b">
+            <p className="text-sm text-gray-600">
+              Réservations totales pour cette période : {totalBookings}
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm">
+                    Nom {sortField === "name" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm">
+                    Sélections {sortField === "count" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th className="hidden px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm md:table-cell">
+                    Montant {sortField === "totalAmount" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
               {filteredAndSortedData.length > 0 ? (
                 filteredAndSortedData.map((extra) => (
                   <tr key={extra.name} className="hover:bg-gray-50">

@@ -189,52 +189,49 @@ const BookingsReport = () => {
       return multiplier * (String(a[sortField]).localeCompare(String(b[sortField])));
     });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        Chargement...
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full max-w-full p-2 mx-auto sm:p-4 lg:p-6">
-      {/* Header Section */}
-      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-6 h-6 text-[#678D73]" />
-          <h1 className="text-xl font-bold md:text-2xl">Rapport des Réservations Smoobu 2</h1>
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-screen">
+          Chargement...
         </div>
+      );
+    }
 
-        <button
-          onClick={handleExport}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-[#678D73] text-white rounded-lg hover:bg-[#4a6553] transition-colors w-full sm:w-auto"
-          disabled={filteredAndSortedData.length === 0}
-        >
-          <Download size={20} />
-          Exporter
-        </button>
-      </div>
-
-      {/* Filters Section */}
-      <div className="p-4 mb-6 bg-white rounded-lg shadow">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="relative lg:col-span-1">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <Search size={20} className="text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Rechercher..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-            />
+    return (
+      <div className="w-full max-w-7xl p-3 mx-auto md:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-6 h-6 text-[#678D73]" />
+            <h1 className="text-xl font-bold md:text-2xl">Rapport des Réservations Smoobu</h1>
           </div>
-
-          {/* Date filters in a responsive grid */}
-          <div className="sm:col-span-1">
-            <select
+  
+          <button
+            onClick={handleExport}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-[#678D73] text-white rounded-lg hover:bg-[#4a6553] transition-colors w-full sm:w-auto"
+            disabled={filteredAndSortedData.length === 0}
+          >
+            <Download size={20} />
+            Exporter
+          </button>
+        </div>
+  
+        <div className="p-4 mb-6 bg-white rounded-lg shadow">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="relative lg:col-span-1">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Search size={20} className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Rechercher..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+              />
+            </div>
+  
+            <div className="sm:col-span-1">
+              <select
               className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
               value={startMonth}
               onChange={(e) => setStartMonth(parseInt(e.target.value))}
@@ -246,6 +243,7 @@ const BookingsReport = () => {
               ))}
             </select>
           </div>
+
           <div className="sm:col-span-1">
             <select
               className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
@@ -259,6 +257,7 @@ const BookingsReport = () => {
               ))}
             </select>
           </div>
+
           <div className="sm:col-span-1">
             <select
               className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
@@ -272,6 +271,7 @@ const BookingsReport = () => {
               ))}
             </select>
           </div>
+
           <div className="sm:col-span-1">
             <select
               className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
@@ -288,22 +288,20 @@ const BookingsReport = () => {
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="px-4 py-3 mb-6 text-red-700 border border-red-200 rounded bg-red-50">
           {error}
         </div>
       )}
 
-      {/* Table Section */}
       <div className="bg-white rounded-lg shadow">
         <div className="overflow-x-auto">
-          <table className="w-full table-auto">
-            {/* Table Headers */}
+          <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
                 <th className="w-8 px-4 py-3"></th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                {/* Table headers - keeping the existing ones */}
+                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
                     onClick={() => handleSort("id")}>
                   ID de réservation {sortField === "id" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
@@ -387,7 +385,7 @@ const BookingsReport = () => {
                       <tr>
                         <td colSpan="10" className="p-0">
                           <div className="p-4 bg-gray-50">
-                            <div className="w-[90%] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="w-[95%] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                               {/* Column 1: Information Client */}
                               <div className="space-y-3">
                                 <h3 className="text-sm font-semibold text-gray-900">Information Client</h3>
