@@ -7,9 +7,9 @@ const AdminDashboard = () => {
   const location = useLocation();
 
   const navigation = [
-    { name: 'Booking Report', href: '/booking-report', icon: Receipt },
-    { name: 'Extras List', href: '/extras-list', icon: List },
-    { name: 'Extras Report', href: '/extras-report', icon: FileText },
+    { name: 'Rapport réservation', href: '/booking-report', icon: Receipt },
+    { name: 'Liste extras', href: '/extras-list', icon: List },
+    { name: 'Rapport extras', href: '/extras-report', icon: FileText },
     { name: 'Coupons', href: '/coupons', icon: Tag },
   ];
 
@@ -26,7 +26,7 @@ const AdminDashboard = () => {
         isOpen ? 'w-64' : 'w-20'
       }`}>
         <div className="flex items-center justify-between p-4 border-b">
-          <h1 className={`font-bold text-xl ${!isOpen && 'hidden'}`}>Admin</h1>
+          <h1 className={`font-bold text-xl ${!isOpen && 'hidden'}`}>Dashboard - FdB</h1>
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="p-2 rounded-lg hover:bg-gray-100"
