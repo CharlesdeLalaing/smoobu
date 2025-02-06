@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
-import { Menu, ChevronLeft, Tag, FileText, Receipt } from 'lucide-react';
+import { Menu, ChevronLeft, Tag, FileText, Receipt, List } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [isOpen, setIsOpen] = useState(true);
@@ -8,8 +8,8 @@ const AdminDashboard = () => {
 
   const navigation = [
     { name: 'Booking Report', href: '/booking-report', icon: Receipt },
+    { name: 'Extras List', href: '/extras-list', icon: List },
     { name: 'Extras Report', href: '/extras-report', icon: FileText },
-    { name: 'Extras List', href: '/extras-list', icon: FileText },
     { name: 'Coupons', href: '/coupons', icon: Tag },
   ];
 
