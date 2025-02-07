@@ -97,6 +97,92 @@ const calculateGuestFees = (adults, children, settings) => {
   //   }));
   // };
 
+  // Add this helper function near the top of useBookingForm
+const validateCouponPeriod = (coupon, arrivalDate, departureDate) => {
+  if (!coupon || !coupon.validityStartDate || !coupon.validityEndDate) return true;
+  
+  const validityStart = new Date(coupon.validityStartDate);
+  const validityEnd = new Date(coupon.validityEndDate);
+  const bookingStart = new Date(arrivalDate);
+  const bookingEnd = new Date(departureDate);
+  
+  return bookingStart <= validityEnd && bookingEnd >= validityStart;
+};
+
+
+// const handleChange = async (e) => {
+//   const { name, value } = e.target;
+
+//   // Update form data without clearing room selection
+//   setFormData((prevData) => ({
+//     ...prevData,
+//     [name]: value,
+//   }));
+
+//   // Check if this is a date change and handle availability check
+//   if (name === "arrivalDate" || name === "departureDate") {
+//     setShowPriceDetails(false);
+
+//     const updatedFormData = {
+//       ...formData,
+//       [name]: value,
+//     };
+
+//     if (updatedFormData.arrivalDate && updatedFormData.departureDate) {
+//       try {
+//         setLoading(true);
+//         setError(null);
+
+//         const response = await api.get("/rates", {
+//           params: {
+//             apartments: updatedFormData.apartmentId || [
+//               "1946282",
+//               "1644643",
+//               "1946279",
+//               "1946276",
+//               "1946270",
+//             ],
+//             start_date: updatedFormData.arrivalDate,
+//             end_date: updatedFormData.departureDate,
+//             adults: updatedFormData.adults,
+//             children: updatedFormData.children,
+//           },
+//         });
+
+//         if (response.data.priceDetails) {
+//           setPriceDetails(response.data.priceDetails);
+//           setShowPriceDetails(true);
+//           setIsAvailable(true);
+
+//           if (
+//             updatedFormData.apartmentId &&
+//             response.data.priceDetails[updatedFormData.apartmentId]
+//           ) {
+//             setFormData((prev) => ({
+//               ...prev,
+//               price:
+//                 response.data.priceDetails[updatedFormData.apartmentId]
+//                   .finalPrice,
+//             }));
+//           }
+//         } else {
+//           setError("No rates available for selected dates");
+//           setShowPriceDetails(false);
+//           setIsAvailable(false);
+//         }
+//       } catch (error) {
+//         console.error("Error checking availability:", error);
+//         setError(error.response?.data?.error || "Unable to fetch rates");
+//         setShowPriceDetails(false);
+//         setIsAvailable(false);
+//       } finally {
+//         setLoading(false);
+//       }
+//     }
+//   }
+// };
+
+
 const handleChange = async (e) => {
   const { name, value } = e.target;
 
@@ -109,65 +195,92 @@ const handleChange = async (e) => {
   // Check if this is a date change and handle availability check
   if (name === "arrivalDate" || name === "departureDate") {
     setShowPriceDetails(false);
+    
+    // Validate coupon for new dates
+    if (appliedCoupon) {
+      const newDates = {
+        arrivalDate: name === "arrivalDate" ? value : formData.arrivalDate,
+        departureDate: name === "departureDate" ? value : formData.departureDate,
+      };
+      
+      if (!validateCouponPeriod(appliedCoupon, newDates.arrivalDate, newDates.departureDate)) {
+        setAppliedCoupon(null);
+        setCouponError("Le code promo n'est plus valable pour ces dates");
+        
+        // Reset price details to remove coupon discount
+        if (priceDetails?.[formData.apartmentId]) {
+          const currentPriceDetails = priceDetails[formData.apartmentId];
+          setPriceDetails({
+            ...priceDetails,
+            [formData.apartmentId]: {
+              ...currentPriceDetails,
+              priceElements: currentPriceDetails.priceElements.filter(
+                el => !el.name?.includes('Code promo')
+              ),
+              finalPrice: currentPriceDetails.finalPrice + (appliedCoupon.discount || 0)
+            }
+          });
+        }
+      }
+    }
 
     const updatedFormData = {
       ...formData,
       [name]: value,
     };
 
-    if (updatedFormData.arrivalDate && updatedFormData.departureDate) {
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-        const response = await api.get("/rates", {
-          params: {
-            apartments: updatedFormData.apartmentId || [
-              "1946282",
-              "1644643",
-              "1946279",
-              "1946276",
-              "1946270",
-            ],
-            start_date: updatedFormData.arrivalDate,
-            end_date: updatedFormData.departureDate,
-            adults: updatedFormData.adults,
-            children: updatedFormData.children,
-          },
-        });
+      const response = await api.get("/rates", {
+        params: {
+          apartments: updatedFormData.apartmentId || [
+            "1946282",
+            "1644643",
+            "1946279",
+            "1946276",
+            "1946270",
+          ],
+          start_date: updatedFormData.arrivalDate,
+          end_date: updatedFormData.departureDate,
+          adults: updatedFormData.adults,
+          children: updatedFormData.children,
+        },
+      });
 
-        if (response.data.priceDetails) {
-          setPriceDetails(response.data.priceDetails);
-          setShowPriceDetails(true);
-          setIsAvailable(true);
+      if (response.data.priceDetails) {
+        setPriceDetails(response.data.priceDetails);
+        setShowPriceDetails(true);
+        setIsAvailable(true);
 
-          if (
-            updatedFormData.apartmentId &&
-            response.data.priceDetails[updatedFormData.apartmentId]
-          ) {
-            setFormData((prev) => ({
-              ...prev,
-              price:
-                response.data.priceDetails[updatedFormData.apartmentId]
-                  .finalPrice,
-            }));
-          }
-        } else {
-          setError("No rates available for selected dates");
-          setShowPriceDetails(false);
-          setIsAvailable(false);
+        if (
+          updatedFormData.apartmentId &&
+          response.data.priceDetails[updatedFormData.apartmentId]
+        ) {
+          setFormData((prev) => ({
+            ...prev,
+            price:
+              response.data.priceDetails[updatedFormData.apartmentId]
+                .finalPrice,
+          }));
         }
-      } catch (error) {
-        console.error("Error checking availability:", error);
-        setError(error.response?.data?.error || "Unable to fetch rates");
+      } else {
+        setError("No rates available for selected dates");
         setShowPriceDetails(false);
         setIsAvailable(false);
-      } finally {
-        setLoading(false);
       }
+    } catch (error) {
+      console.error("Error checking availability:", error);
+      setError(error.response?.data?.error || "Unable to fetch rates");
+      setShowPriceDetails(false);
+      setIsAvailable(false);
+    } finally {
+      setLoading(false);
     }
   }
 };
+
 
   const handleExtraChange = (extraId, quantity) => {
     if (quantity < 0) return;
@@ -288,6 +401,13 @@ const handleChange = async (e) => {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
+
+  // Final validation check for coupon
+  if (appliedCoupon && !validateCouponPeriod(appliedCoupon, formData.arrivalDate, formData.departureDate)) {
+    setError("Le code promo n'est plus valable pour ces dates");
+    setAppliedCoupon(null);
+    return;
+  }
 
   // Check if we have a selected room and price details
   const selectedRoomPrice = priceDetails?.[formData.apartmentId];
@@ -485,14 +605,11 @@ const handleApplyCoupon = async (couponCode) => {
       return { error: "expired" };
     }
 
-    // Add after other validations (status, usedCount, expiryDate checks)
+    // Add date validation check
     if (couponData.validityStartDate && couponData.validityEndDate) {
-      const validityStart = couponData.validityStartDate?.toDate?.() || new Date(couponData.validityStartDate);
-      const validityEnd = couponData.validityEndDate?.toDate?.() || new Date(couponData.validityEndDate);
-      const bookingStart = new Date(formData.arrivalDate);
-      const bookingEnd = new Date(formData.departureDate);
-    
-      if (bookingStart > validityEnd || bookingEnd < validityStart) {
+      if (!validateCouponPeriod(couponData, formData.arrivalDate, formData.departureDate)) {
+        const validityStart = new Date(couponData.validityStartDate);
+        const validityEnd = new Date(couponData.validityEndDate);
         const formattedStart = validityStart.toLocaleDateString('fr-BE', {
           year: 'numeric',
           month: 'long',
@@ -503,7 +620,10 @@ const handleApplyCoupon = async (couponCode) => {
           month: 'long',
           day: 'numeric'
         });
-        return { error: "invalid_dates", message: `Ce code n'est valable que pour les séjours entre le ${formattedStart} et le ${formattedEnd}` };
+        return { 
+          error: "invalid_dates", 
+          message: `Ce code n'est valable que pour les séjours entre le ${formattedStart} et le ${formattedEnd}` 
+        };
       }
     }
 
