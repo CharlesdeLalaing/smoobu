@@ -48,36 +48,36 @@ const CouponManagement = () => {
 
   const filterCoupons = () => {
     let filtered = [...coupons];
-
+  
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(coupon => 
         coupon.code.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
+  
     // Apply status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(coupon => coupon.status === statusFilter);
     }
-
+  
     // Apply type filter
     if (typeFilter !== 'all') {
-      filtered = filtered.filter(coupon => coupon.type === typeFilter);
+      filtered = filtered.filter(coupon => 
+        typeFilter === 'gift' ? coupon.isGiftVoucher : !coupon.isGiftVoucher
+      );
     }
-
+  
     // Sort by used/unused and date
     filtered.sort((a, b) => {
-      // First sort by used status (unused first)
       if (a.usedCount === 0 && b.usedCount > 0) return -1;
       if (a.usedCount > 0 && b.usedCount === 0) return 1;
       
-      // Then sort by creation date (most recent first)
       const dateA = convertToDate(a.dateCreated);
       const dateB = convertToDate(b.dateCreated);
       return dateB - dateA;
     });
-
+  
     setFilteredCoupons(filtered);
   };
 
@@ -228,14 +228,14 @@ const CouponManagement = () => {
           </div>
 
           <div>
-            <select
+          <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
             >
               <option value="all">Tous les types</option>
-              <option value="fixed">Montant fixe</option>
-              <option value="percentage">Pourcentage</option>
+              <option value="regular">Codes promo</option>
+              <option value="gift">Bons cadeaux</option>
             </select>
           </div>
         </div>
@@ -244,49 +244,59 @@ const CouponManagement = () => {
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Code</th>
-                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Réduction</th>
-                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden md:table-cell">Type</th>
-                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden lg:table-cell">Créé le</th>
-                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600 hidden sm:table-cell">Expire le</th>
-                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Statut</th>
-                <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Actions</th>
-              </tr>
-            </thead>
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Code</th>
+              <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Type</th>
+              <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Montant</th>
+              <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Email</th>
+              <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Créé le</th>
+              <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Expire le</th>
+              <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Statut</th>
+              <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-600">Actions</th>
+            </tr>
+          </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredCoupons.map((coupon) => (
                 <tr key={coupon.id} className="hover:bg-gray-50">
                   <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm font-medium">{coupon.code}</td>
                   <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm">
-                    {coupon.discount} {coupon.currency}
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      coupon.isGiftVoucher ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"
+                    }`}>
+                      {coupon.isGiftVoucher ? "Bon cadeau" : "Code promo"}
+                    </span>
                   </td>
-                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm capitalize hidden md:table-cell">
-                    {coupon.type === 'fixed' ? 'Montant fixe' : 'Pourcentage'}
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm">
+                    {coupon.isGiftVoucher ? `${coupon.amount}€` : `${coupon.discount}${coupon.type === 'percentage' ? '%' : '€'}`}
                   </td>
-                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm hidden lg:table-cell">{formatDate(coupon.dateCreated)}</td>
-                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm hidden sm:table-cell">{formatDate(coupon.expiryDate)}</td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm">
+                    {coupon.isGiftVoucher ? coupon.customerEmail : coupon.lastUsedBy || '-'}
+                  </td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm">
+                    {formatDate(coupon.dateCreated)}
+                  </td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm">
+                    {formatDate(coupon.expiryDate)}
+                  </td>
                   <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm">
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       coupon.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      {coupon.status === 'active' ? 'Actif' : 'Inactif'}
+                      {coupon.status === 'active' ? 'Actif' : 'Utilisé'}
                     </span>
                   </td>
-                  {/* <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm hidden sm:table-cell">
-                    {coupon.usedCount || 0} fois
-                  </td> */}
                   <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm">
-                    <div className="flex gap-2 md:gap-3">
-                      <button
-                        onClick={() => handleEdit(coupon)}
-                        className="text-[#678D73] hover:text-[#678D73]"
-                        disabled={coupon.usedCount > 0}
-                        title="Modifier"
-                      >
-                        <Pencil size={16} />
-                      </button>
+                    <div className="flex gap-2">
+                      {!coupon.isGiftVoucher && (
+                        <button
+                          onClick={() => handleEdit(coupon)}
+                          className="text-[#678D73] hover:text-[#678D73]"
+                          title="Modifier"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDelete(coupon.id)}
                         className="text-red-600 hover:text-red-800"
