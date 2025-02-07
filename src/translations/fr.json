@@ -99,7 +99,8 @@
             "inactive": "Ce code promo n'est plus actif",
             "expired": "Ce code promo a expiré",
             "alreadyUsed": "Ce code promo a déjà été utilisé",
-            "notFound": "Code promo introuvable"
+            "notFound": "Code promo introuvable",
+            "invalid_dates": "Ce code n'est valable que pour les séjours entre {{start}} et {{end}}"
           },
           "applied": "Code promo {{code}}",
           "minusZero": "Les totaux inférieurs à 0€ ne seront pas acceptés à la caisse."

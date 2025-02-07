@@ -98,7 +98,8 @@
                 "inactive": "This promo code is no longer active",
                 "expired": "This promo code has expired",
                 "alreadyUsed": "This promo code has already been used",
-                "notFound": "Promo code not found"
+                "notFound": "Promo code not found",
+                "invalid_dates": "This code is only valid for stays between {{start}} and {{end}}"
             },
             "applied": "Promo code {{code}}",
             "minusZero": "Totals below 0€ will not be accepted for checkout"

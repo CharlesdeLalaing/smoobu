@@ -69,7 +69,7 @@ export const InfoSupSection = ({
 
       {/* Coupon Section */}
       <div className="pt-4 pb-4 mt-6 mb-6 border-t border-b border-gray-200">
-        <div className="flex items-end gap-4">
+        <div className="flex items-center gap-4">
           <div className="flex-grow">
             <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
               {t('extras.infoSup.promoCode.label')}

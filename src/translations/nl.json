@@ -99,7 +99,8 @@
             "inactive": "Deze promocode is niet meer actief",
             "expired": "Deze promocode is verlopen",
             "alreadyUsed": "Deze promocode is al gebruikt",
-            "notFound": "Promocode niet gevonden"
+            "notFound": "Promocode niet gevonden",
+            "invalid_dates": "Deze code is alleen geldig voor verblijven tussen {{start}} en {{end}}"
           },
           "applied": "Promocode {{code}}",
           "minusZero": "Totalen onder € 0 worden niet geaccepteerd bij het afrekenen."
