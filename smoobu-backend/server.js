@@ -77,51 +77,6 @@ const formatDate = (dateString) => {
   });
 };
 
-
-function generateGiftVoucherEmail(voucherData, language) {
-  const translations = {
-    fr: {
-      title: "Votre bon cadeau - Ferme de Basseilles",
-      code: "Code du bon cadeau",
-      amount: "Montant",
-      expiry: "Date d'expiration",
-      validityNote: "Valable un an à partir de la date d'achat",
-    },
-    en: {
-      title: "Your gift voucher - Ferme de Basseilles",
-      code: "Voucher code",
-      amount: "Amount",
-      expiry: "Expiry date",
-      validityNote: "Valid for one year from purchase date",
-    },
-    nl: {
-      title: "Uw cadeaubon - Ferme de Basseilles",
-      code: "Cadeaubon code",
-      amount: "Bedrag",
-      expiry: "Vervaldatum",
-      validityNote: "Geldig voor één jaar vanaf de aankoopdatum",
-    },
-  };
-
-  const t = translations[language] || translations.fr;
-
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h1>${t.title}</h1>
-      
-      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
-        <p><strong>${t.code}:</strong> ${voucherData.code}</p>
-        <p><strong>${t.amount}:</strong> ${voucherData.amount}€</p>
-        <p><strong>${t.expiry}:</strong> ${new Date(
-    voucherData.expiryDate
-  ).toLocaleDateString(language + "-BE")}</p>
-      </div>
-      
-      <p>${t.validityNote}</p>
-    </div>
-  `;
-}
-
 const sendBookingConfirmation = async (bookingData) => {
   try {
     const emailContent = `
