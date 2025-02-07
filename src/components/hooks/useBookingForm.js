@@ -335,17 +335,14 @@ const handleSubmit = async (e) => {
       basePrice: basePrice,
       guestFees: guestFees,
       extras: selectedExtrasArray,
-      couponApplied: appliedCoupon
-        ? {
-            code: appliedCoupon.code,
-            discount: appliedCoupon.discount,
-            type: appliedCoupon.type,
-            percentageValue:
-              appliedCoupon.type === "percentage"
-                ? appliedCoupon.percentageValue
-                : null,
-          }
-        : null,
+      couponApplied: appliedCoupon ? {
+        code: appliedCoupon.code,
+        discount: appliedCoupon.discount,
+        type: appliedCoupon.type,
+        percentageValue: appliedCoupon.type === "percentage" ? appliedCoupon.percentageValue : null,
+        validityStartDate: appliedCoupon.validityStartDate,
+        validityEndDate: appliedCoupon.validityEndDate
+      } : null,
       priceDetails: {
         ...selectedRoomPrice,
         guestFees,
@@ -488,6 +485,28 @@ const handleApplyCoupon = async (couponCode) => {
       return { error: "expired" };
     }
 
+    // Add after other validations (status, usedCount, expiryDate checks)
+    if (couponData.validityStartDate && couponData.validityEndDate) {
+      const validityStart = couponData.validityStartDate?.toDate?.() || new Date(couponData.validityStartDate);
+      const validityEnd = couponData.validityEndDate?.toDate?.() || new Date(couponData.validityEndDate);
+      const bookingStart = new Date(formData.arrivalDate);
+      const bookingEnd = new Date(formData.departureDate);
+    
+      if (bookingStart > validityEnd || bookingEnd < validityStart) {
+        const formattedStart = validityStart.toLocaleDateString('fr-BE', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        const formattedEnd = validityEnd.toLocaleDateString('fr-BE', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        return { error: "invalid_dates", message: `Ce code n'est valable que pour les séjours entre le ${formattedStart} et le ${formattedEnd}` };
+      }
+    }
+
     // Get the current total price
     const currentRoomPrice = priceDetails?.[formData.apartmentId]?.finalPrice;
     if (!currentRoomPrice) {
@@ -504,6 +523,8 @@ const handleApplyCoupon = async (couponCode) => {
       type: "fixed",
       discount: discountAmount,
       currency: "EUR",
+      validityStartDate: couponData.validityStartDate,
+      validityEndDate: couponData.validityEndDate
     });
 
     // Update price details
