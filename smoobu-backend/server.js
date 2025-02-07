@@ -805,168 +805,163 @@ app.use(
   })
 );
 
-app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
-  try {
-    const {
-      orderId,
-      amount,
-      customerEmail,
-      customerName,
-      customerPhone,
-      language,
-    } = req.body;
+// app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
+//   try {
+//     const {
+//       orderId,
+//       amount,
+//       customerEmail,
+//       customerName,
+//       customerPhone,
+//       language,
+//     } = req.body;
 
-    // Generate unique voucher code
-    const voucherCode = `GIFT-${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
-
-
-    // Create voucher document in Firebase
-    const voucherData = {
-      code: voucherCode,
-      amount: Number(amount),
-      type: "fixed",
-      isGiftVoucher: true,
-      status: "active",
-      orderId,
-      customerEmail,
-      customerName,
-      customerPhone,
-      language,
-      dateCreated: new Date().toISOString(),
-      expiryDate: new Date(
-        Date.now() + 365 * 24 * 60 * 60 * 1000
-      ).toISOString(),
-      usedCount: 0,
-      usageHistory: [],
-    };
-
-    await db.collection("coupons").add(voucherData);
-
-    // Just return the success response, no email sending
-    res.json({
-      success: true,
-      voucherCode,
-      amount,
-    });
-  } catch (error) {
-    console.error("Error creating gift voucher:", error);
-    res.status(500).json({
-      error: "Failed to create gift voucher",
-      details: error.message,
-    });
-  }
-});
-
-// Endpoint to validate gift voucher during booking
-app.post("/api/validate-voucher", async (req, res) => {
-  try {
-    const { code, amount } = req.body;
-    console.log("Validating voucher with code:", code, "for amount:", amount);
-
-    // Get voucher from Firebase
-    const voucherQuery = await getDocs(
-      query(collection(db, "coupons"), where("code", "==", code.toUpperCase()))
-    );
-
-    if (voucherQuery.empty) {
-      console.log("No voucher found with code:", code);
-      return res.status(404).json({
-        valid: false,
-        message: "Code invalide",
-      });
-    }
-
-    const voucherDoc = voucherQuery.docs[0];
-    const voucherData = voucherDoc.data();
-    console.log("Found voucher:", voucherData);
-
-    // If it's a gift voucher, perform specific validations
-    if (voucherData.isGiftVoucher) {
-      // Check if already used
-      if (voucherData.usedCount > 0) {
-        console.log("Gift voucher already used");
-        return res.status(400).json({
-          valid: false,
-          message: "Ce bon cadeau a déjà été utilisé",
-        });
-      }
-
-      // Check expiration - handle both Timestamp and regular date
-      const expiryDate =
-        voucherData.expiryDate?.toDate?.() || new Date(voucherData.expiryDate);
-      if (expiryDate < new Date()) {
-        console.log("Gift voucher expired");
-        return res.status(400).json({
-          valid: false,
-          message: "Ce bon cadeau a expiré",
-        });
-      }
-
-      // Check if booking amount is sufficient
-      if (amount < voucherData.amount) {
-        console.log("Booking amount insufficient");
-        return res.status(400).json({
-          valid: false,
-          message: `Le montant de la réservation doit être supérieur au montant du bon cadeau (${voucherData.amount}€)`,
-        });
-      }
-    }
-    // Regular coupon validation
-    else {
-      // Check status
-      if (voucherData.status !== "active" && code !== "POTES") {
-        console.log("Coupon not active");
-        return res.status(400).json({
-          valid: false,
-          message: "Ce code promo n'est plus valide",
-        });
-      }
-
-      // Check expiration if exists
-      if (voucherData.expiryDate) {
-        const expiryDate =
-          voucherData.expiryDate?.toDate?.() ||
-          new Date(voucherData.expiryDate);
-        if (expiryDate < new Date()) {
-          console.log("Coupon expired");
-          return res.status(400).json({
-            valid: false,
-            message: "Ce code promo a expiré",
-          });
-        }
-      }
-    }
-
-    // Calculate discount based on type
-    let discount = 0;
-    if (voucherData.type === "percentage") {
-      discount = (amount * voucherData.discount) / 100;
-    } else {
-      discount = voucherData.discount;
-    }
-
-    console.log("Voucher validated successfully");
-    res.json({
-      valid: true,
-      code: voucherData.code,
-      type: voucherData.type,
-      isGiftVoucher: voucherData.isGiftVoucher || false,
-      discount: discount,
-      amount: voucherData.amount,
-      percentageValue:
-        voucherData.type === "percentage" ? voucherData.discount : null,
-    });
-  } catch (error) {
-    console.error("Error validating voucher:", error);
-    res.status(500).json({
-      valid: false,
-      message: "Erreur lors de la validation du bon cadeau",
-    });
-  }
-});
+//     // Generate unique voucher code
+//     const voucherCode = `GIFT-${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
 
 
-// Helper function to generate email content
+//     // Create voucher document in Firebase
+//     const voucherData = {
+//       code: voucherCode,
+//       amount: Number(amount),
+//       type: "fixed",
+//       isGiftVoucher: true,
+//       status: "active",
+//       orderId,
+//       customerEmail,
+//       customerName,
+//       customerPhone,
+//       language,
+//       dateCreated: new Date().toISOString(),
+//       expiryDate: new Date(
+//         Date.now() + 365 * 24 * 60 * 60 * 1000
+//       ).toISOString(),
+//       usedCount: 0,
+//       usageHistory: [],
+//     };
+
+//     await db.collection("coupons").add(voucherData);
+
+//     // Just return the success response, no email sending
+//     res.json({
+//       success: true,
+//       voucherCode,
+//       amount,
+//     });
+//   } catch (error) {
+//     console.error("Error creating gift voucher:", error);
+//     res.status(500).json({
+//       error: "Failed to create gift voucher",
+//       details: error.message,
+//     });
+//   }
+// });
+// app.post("/api/validate-voucher", async (req, res) => {
+//   try {
+//     const { code, amount } = req.body;
+//     console.log("Validating voucher with code:", code, "for amount:", amount);
+
+//     // Get voucher from Firebase
+//     const voucherQuery = await getDocs(
+//       query(collection(db, "coupons"), where("code", "==", code.toUpperCase()))
+//     );
+
+//     if (voucherQuery.empty) {
+//       console.log("No voucher found with code:", code);
+//       return res.status(404).json({
+//         valid: false,
+//         message: "Code invalide",
+//       });
+//     }
+
+//     const voucherDoc = voucherQuery.docs[0];
+//     const voucherData = voucherDoc.data();
+//     console.log("Found voucher:", voucherData);
+
+//     // If it's a gift voucher, perform specific validations
+//     if (voucherData.isGiftVoucher) {
+//       // Check if already used
+//       if (voucherData.usedCount > 0) {
+//         console.log("Gift voucher already used");
+//         return res.status(400).json({
+//           valid: false,
+//           message: "Ce bon cadeau a déjà été utilisé",
+//         });
+//       }
+
+//       // Check expiration - handle both Timestamp and regular date
+//       const expiryDate =
+//         voucherData.expiryDate?.toDate?.() || new Date(voucherData.expiryDate);
+//       if (expiryDate < new Date()) {
+//         console.log("Gift voucher expired");
+//         return res.status(400).json({
+//           valid: false,
+//           message: "Ce bon cadeau a expiré",
+//         });
+//       }
+
+//       // Check if booking amount is sufficient
+//       if (amount < voucherData.amount) {
+//         console.log("Booking amount insufficient");
+//         return res.status(400).json({
+//           valid: false,
+//           message: `Le montant de la réservation doit être supérieur au montant du bon cadeau (${voucherData.amount}€)`,
+//         });
+//       }
+//     }
+//     // Regular coupon validation
+//     else {
+//       // Check status
+//       if (voucherData.status !== "active" && code !== "POTES") {
+//         console.log("Coupon not active");
+//         return res.status(400).json({
+//           valid: false,
+//           message: "Ce code promo n'est plus valide",
+//         });
+//       }
+
+//       // Check expiration if exists
+//       if (voucherData.expiryDate) {
+//         const expiryDate =
+//           voucherData.expiryDate?.toDate?.() ||
+//           new Date(voucherData.expiryDate);
+//         if (expiryDate < new Date()) {
+//           console.log("Coupon expired");
+//           return res.status(400).json({
+//             valid: false,
+//             message: "Ce code promo a expiré",
+//           });
+//         }
+//       }
+//     }
+
+//     // Calculate discount based on type
+//     let discount = 0;
+//     if (voucherData.type === "percentage") {
+//       discount = (amount * voucherData.discount) / 100;
+//     } else {
+//       discount = voucherData.discount;
+//     }
+
+//     console.log("Voucher validated successfully");
+//     res.json({
+//       valid: true,
+//       code: voucherData.code,
+//       type: voucherData.type,
+//       isGiftVoucher: voucherData.isGiftVoucher || false,
+//       discount: discount,
+//       amount: voucherData.amount,
+//       percentageValue:
+//         voucherData.type === "percentage" ? voucherData.discount : null,
+//     });
+//   } catch (error) {
+//     console.error("Error validating voucher:", error);
+//     res.status(500).json({
+//       valid: false,
+//       message: "Erreur lors de la validation du bon cadeau",
+//     });
+//   }
+// });
 
 app.get("/api/extras-report", async (req, res) => {
   try {
@@ -1170,260 +1165,6 @@ app.get("/api/extras-report", async (req, res) => {
     });
   }
 });
-
-// app.get("/api/bookings-report", async (req, res) => {
-//   try {
-//     const { startMonth, startYear, endMonth, endYear } = req.query;
-
-//     // Validate and fix date range
-//     let finalStartMonth = String(startMonth).padStart(2, "0");
-//     let finalStartYear = startYear;
-//     let finalEndMonth = String(endMonth).padStart(2, "0");
-//     let finalEndYear = endYear;
-
-//     const startDate = `${finalStartYear}-${finalStartMonth}-01`;
-//     const lastDay = new Date(finalEndYear, parseInt(finalEndMonth), 0).getDate();
-//     const endDate = `${finalEndYear}-${finalEndMonth}-${lastDay}`;
-
-//     console.log("=== START OF BOOKINGS REPORT REQUEST ===");
-//     console.log("Request params:", {
-//       startMonth: finalStartMonth,
-//       startYear: finalStartYear,
-//       endMonth: finalEndMonth,
-//       endYear: finalEndYear
-//     });
-
-//     // Fetch bookings for the period
-//     const bookingsResponse = await axios.get(
-//       "https://login.smoobu.com/api/reservations",
-//       {
-//         headers: {
-//           "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-//           "Cache-Control": "no-cache",
-//         },
-//         params: {
-//           arrivalFrom: startDate,
-//           arrivalTo: endDate,
-//           excludeBlocked: true, // Change to true to exclude blocked bookings
-//           showCancellation: true,
-//         },
-//       }
-//     );
-
-//     const bookings = bookingsResponse.data.bookings || [];
-//     console.log(`Found ${bookings.length} bookings for period ${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`);
-
-//     // Process each booking to get price elements and extras
-//     // Process each booking to get price elements and extras
-//     const processedBookings = [];
-//     for (const booking of bookings) {
-//       try {
-//         console.log(`Processing booking ${booking.id}`);
-        
-//         // Skip if it's a blocked booking or cancelled booking
-//         if (booking.channelId === 'Blocked' || booking.type === 'cancellation') {
-//           console.log(`Skipping ${booking.channelId === 'Blocked' ? 'blocked' : 'cancelled'} booking ${booking.id}`);
-//           continue;
-//         }
-
-//         // Fetch price elements for each booking
-//         const priceElementsResponse = await axios.get(
-//           `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`,
-//           {
-//             headers: {
-//               "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-//               "Cache-Control": "no-cache",
-//             },
-//           }
-//         );
-
-//         const priceElements = priceElementsResponse.data.priceElements || [];
-//         console.log('Price elements for booking', booking.id, ':', priceElements);
-        
-//         // Calculate nights
-//         const checkIn = new Date(booking.arrival);
-//         const checkOut = new Date(booking.departure);
-//         const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-
-//         // Process extras - all non-base price elements, excluding cancellations
-//         const extras = priceElements.filter(element => {
-//           const name = element.name?.toLowerCase() || '';
-//           const type = element.type?.toLowerCase() || '';
-          
-//           // Skip cancellation-related items
-//           if (
-//             name.includes('cancellation') || 
-//             name.includes('pass_through') ||
-//             name.includes('prix de base') ||
-//             name.includes('base price') ||
-//             name === 'base' ||
-//             type === 'base'
-//           ) {
-//             return false;
-//           }
-
-//           // Include only addons and exclude base price
-//           return (
-//             element.type === "addon" || 
-//             (element.type !== "base" && element.type !== "discount")
-//           );
-//         });
-
-//         // Find commission from extras
-//         const commissionExtra = extras.find(extra => 
-//           extra.name?.toLowerCase().includes('commission')
-//         );
-//         const commission = commissionExtra ? commissionExtra.amount : 0;
-
-//         // Remove commission from extras list if it exists
-//         const nonCommissionExtras = extras.filter(extra => 
-//           !extra.name?.toLowerCase().includes('commission')
-//         );
-
-//         // Calculate totals - fix base price detection
-//         const basePrice = priceElements.find(el => 
-//           el.name?.toLowerCase().includes('base') ||
-//           el.type?.toLowerCase() === 'base'
-//         )?.amount || 0;
-
-//         const extrasTotal = extras.reduce((sum, extra) => sum + extra.amount, 0);
-
-//         // Change to:
-//         const longStayDiscount = priceElements.find(el => 
-//           el.name?.toLowerCase().includes('long stay') || 
-//           el.name?.toLowerCase().includes('long-stay')
-//         )?.amount || 0;
-
-//         const otherDiscounts = priceElements
-//           .filter(el => 
-//             el.type === 'discount' && 
-//             !el.name?.toLowerCase().includes('long stay') &&
-//             !el.name?.toLowerCase().includes('long-stay')
-//           )
-//           .reduce((sum, discount) => sum + Math.abs(discount.amount), 0);
-
-
-//         // Log price elements breakdown for debugging
-//         console.log('Price elements breakdown:', {
-//           bookingId: booking.id,
-//           allElements: priceElements.map(el => ({
-//             name: el.name,
-//             type: el.type,
-//             amount: el.amount
-//           })),
-//           basePrice,
-//           commission,
-//           filteredExtras: nonCommissionExtras.map(ex => ({
-//             name: ex.name,
-//             amount: ex.amount
-//           })),
-//           extrasTotal,
-//           discounts
-//         });
-
-//         // Add portal name mapping
-//         const portalNames = {
-//           'Homepage': 'Website',
-//           'Direct booking': 'Website'
-//         };
-
-//         const processedBooking = {
-//           id: booking.id,
-//           guest: booking["guest-name"] || 
-//                 `${booking.firstName || ''} ${booking.lastName || ''}`.trim() || 
-//                 (booking.notice?.match(/Message du client:?\s*([^\n]+)/) || [])[1] ||
-//                 booking.email?.split('@')[0] ||
-//                 'Sans nom',
-//           property: roomNames[booking.apartmentId] || booking.apartment?.name || '',
-//           portal: portalNames[booking.channel?.name] || booking.channel?.name || 'Website',
-//           created: booking['created-at'] || booking.created || new Date().toISOString(),
-//           email: booking.email || '',
-//           phone: booking.phone || '',
-//           address: booking.address || '',
-//           adults: parseInt(booking.adults) || 0,
-//           children: parseInt(booking.children) || 0,
-//           checkIn: booking.arrival,
-//           checkOut: booking.departure,
-//           arrivalTime: booking["check-in"] || '',
-//           departureTime: booking["check-out"] || '',
-//           notes: booking.notice || '',
-//           price: parseFloat(booking.price) || 0,
-//           priceDetails: {
-//           basePrice: parseFloat(basePrice),
-//           extrasTotal: parseFloat(extrasTotal),
-//           longStayDiscount: parseFloat(longStayDiscount),  // Add this
-//           discounts: parseFloat(otherDiscounts),  // Change this
-//           promoCode: priceElements.find(el => 
-//             el.name?.toLowerCase().includes('code promo') || 
-//             el.name?.toLowerCase().includes('coupon') ||
-//             (el.type === 'discount' && 
-//             !el.name?.toLowerCase().includes('long stay') &&
-//             !el.name?.toLowerCase().includes('long-stay'))
-//           ),
-//           total: parseFloat(basePrice) + parseFloat(extrasTotal) - parseFloat(longStayDiscount) - parseFloat(otherDiscounts),
-//         },
-//           commission: parseFloat(commission),
-//           nights,
-//           extras: nonCommissionExtras
-//             .filter(extra => 
-//               !extra.name?.toLowerCase().includes('code promo') && 
-//               !extra.name?.toLowerCase().includes('coupon') &&
-//               extra.type !== 'discount'
-//             )
-//             .map(extra => ({
-//               name: extra.name || 'Extra sans nom',
-//               amount: parseFloat(extra.amount) || 0,
-//               quantity: parseInt(extra.quantity) || 1
-//             })) || []
-//         };
-
-//         processedBookings.push(processedBooking);
-
-//         // Log raw booking data
-//         console.log('Raw booking data:', {
-//           id: booking.id,
-//           guestName: booking["guest-name"],
-//           firstName: booking.firstName,
-//           lastName: booking.lastName,
-//           email: booking.email,
-//           address: booking.address,
-//           channel: booking.channel?.name,
-//           created: booking['created-at'],
-//           arrivalTime: booking["check-in"]
-//         });
-
-//       } catch (error) {
-//         console.error(`Error processing booking ${booking.id}:`, error.message);
-//         console.error('Full error:', error);
-//       }
-//     }
-
-//     console.log("=== PROCESSING SUMMARY ===");
-//     console.log({
-//       period: `${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`,
-//       totalBookings: bookings.length,
-//       processedBookings: processedBookings.length,
-//       sampleBooking: processedBookings[0]
-//     });
-
-//     res.json({
-//       startMonth: finalStartMonth,
-//       startYear: finalStartYear,
-//       endMonth: finalEndMonth,
-//       endYear: finalEndYear,
-//       data: processedBookings
-//     });
-
-//   } catch (error) {
-//     console.error("=== ERROR IN REQUEST ===");
-//     console.error('Full error:', error);
-//     console.error('Error response:', error.response?.data);
-//     res.status(500).json({
-//       error: "Failed to generate bookings report",
-//       details: error.message,
-//     });
-//   }
-// });
 
 app.get("/api/bookings-report", async (req, res) => {
   try {
@@ -1749,9 +1490,118 @@ app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
   }
 });
 
+// app.post("/api/validate-voucher", async (req, res) => {
+//   try {
+//     const { code, amount } = req.body;
+//     console.log("Validating voucher with code:", code, "for amount:", amount);
+
+//     // Get voucher from Firebase
+//     const voucherQuery = await getDocs(
+//       query(collection(db, "coupons"), where("code", "==", code.toUpperCase()))
+//     );
+
+//     if (voucherQuery.empty) {
+//       console.log("No voucher found with code:", code);
+//       return res.status(404).json({
+//         valid: false,
+//         message: "Code invalide",
+//       });
+//     }
+
+//     const voucherDoc = voucherQuery.docs[0];
+//     const voucherData = voucherDoc.data();
+//     console.log("Found voucher:", voucherData);
+
+//     // If it's a gift voucher, perform specific validations
+//     if (voucherData.isGiftVoucher) {
+//       // Check if already used
+//       if (voucherData.usedCount > 0) {
+//         console.log("Gift voucher already used");
+//         return res.status(400).json({
+//           valid: false,
+//           message: "Ce bon cadeau a déjà été utilisé",
+//         });
+//       }
+
+//       // Check expiration - handle both Timestamp and regular date
+//       const expiryDate =
+//         voucherData.expiryDate?.toDate?.() || new Date(voucherData.expiryDate);
+//       if (expiryDate < new Date()) {
+//         console.log("Gift voucher expired");
+//         return res.status(400).json({
+//           valid: false,
+//           message: "Ce bon cadeau a expiré",
+//         });
+//       }
+
+//       // Check if booking amount is sufficient
+//       if (amount < voucherData.amount) {
+//         console.log("Booking amount insufficient");
+//         return res.status(400).json({
+//           valid: false,
+//           message: `Le montant de la réservation doit être supérieur au montant du bon cadeau (${voucherData.amount}€)`,
+//         });
+//       }
+//     }
+//     // Regular coupon validation
+//     else {
+//       // Check status
+//       if (voucherData.status !== "active" && code !== "POTES") {
+//         console.log("Coupon not active");
+//         return res.status(400).json({
+//           valid: false,
+//           message: "Ce code promo n'est plus valide",
+//         });
+//       }
+
+//       // Check expiration if exists
+//       if (voucherData.expiryDate) {
+//         const expiryDate =
+//           voucherData.expiryDate?.toDate?.() ||
+//           new Date(voucherData.expiryDate);
+//         if (expiryDate < new Date()) {
+//           console.log("Coupon expired");
+//           return res.status(400).json({
+//             valid: false,
+//             message: "Ce code promo a expiré",
+//           });
+//         }
+//       }
+//     }
+
+//     // Calculate discount based on type
+//     let discount = 0;
+//     if (voucherData.type === "percentage") {
+//       discount = (amount * voucherData.discount) / 100;
+//     } else {
+//       discount = voucherData.discount;
+//     }
+
+//     console.log("Voucher validated successfully");
+//     res.json({
+//       valid: true,
+//       code: voucherData.code,
+//       type: voucherData.type,
+//       isGiftVoucher: voucherData.isGiftVoucher || false,
+//       discount: discount,
+//       amount: voucherData.amount,
+//       percentageValue:
+//         voucherData.type === "percentage" ? voucherData.discount : null,
+//     });
+//   } catch (error) {
+//     console.error("Error validating voucher:", error);
+//     res.status(500).json({
+//       valid: false,
+//       message: "Erreur lors de la validation du bon cadeau",
+//     });
+//   }
+// });
+
+// Replace your current /api/rates endpoint with this one
+
 app.post("/api/validate-voucher", async (req, res) => {
   try {
-    const { code, amount } = req.body;
+    const { code, amount, arrivalDate, departureDate } = req.body;
     console.log("Validating voucher with code:", code, "for amount:", amount);
 
     // Get voucher from Firebase
@@ -1813,11 +1663,38 @@ app.post("/api/validate-voucher", async (req, res) => {
         });
       }
 
-      // Check expiration if exists
+      // Check validity period if set
+      if (voucherData.validityStartDate && voucherData.validityEndDate && arrivalDate && departureDate) {
+        const validityStart = voucherData.validityStartDate?.toDate?.() || new Date(voucherData.validityStartDate);
+        const validityEnd = voucherData.validityEndDate?.toDate?.() || new Date(voucherData.validityEndDate);
+        const bookingStart = new Date(arrivalDate);
+        const bookingEnd = new Date(departureDate);
+
+        // Check if booking dates are within validity period
+        if (bookingStart > validityEnd || bookingEnd < validityStart) {
+          const formattedStart = validityStart.toLocaleDateString('fr-BE', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+          const formattedEnd = validityEnd.toLocaleDateString('fr-BE', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+          
+          console.log("Booking dates outside validity period");
+          return res.status(400).json({
+            valid: false,
+            message: `Ce code n'est valable que pour les séjours entre le ${formattedStart} et le ${formattedEnd}`,
+          });
+        }
+      }
+
+      // Check regular expiration if exists
       if (voucherData.expiryDate) {
         const expiryDate =
-          voucherData.expiryDate?.toDate?.() ||
-          new Date(voucherData.expiryDate);
+          voucherData.expiryDate?.toDate?.() || new Date(voucherData.expiryDate);
         if (expiryDate < new Date()) {
           console.log("Coupon expired");
           return res.status(400).json({
@@ -1855,8 +1732,6 @@ app.post("/api/validate-voucher", async (req, res) => {
     });
   }
 });
-
-// Replace your current /api/rates endpoint with this one
 app.get('/api/rates', async (req, res) => {
   try {
     const { apartments, start_date, end_date, adults, children } = req.query;

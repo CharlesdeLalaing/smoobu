@@ -15,14 +15,14 @@ const CouponManagement = () => {
     code: "",
     discount: "",
     type: "fixed",
-    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
+    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     status: "active",
     currency: "EUR",
     usedCount: 0,
     lastUsedDate: null,
     usedBy: [],
+    validityStartDate: "",
+    validityEndDate: ""
   });
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -323,9 +323,7 @@ const CouponManagement = () => {
           <div className="bg-white rounded-lg p-4 md:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold md:text-xl">
-                {editingCoupon
-                  ? "Modifier le Coupon"
-                  : "Ajouter un nouveau Coupon"}
+                {editingCoupon ? "Modifier le Coupon" : "Ajouter un nouveau Coupon"}
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -394,6 +392,35 @@ const CouponManagement = () => {
                   className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
                   required
                 />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Période de validité
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 text-xs text-gray-600">Date de début</label>
+                    <input
+                      type="date"
+                      value={formData.validityStartDate}
+                      onChange={(e) =>
+                        setFormData({ ...formData, validityStartDate: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-1 text-xs text-gray-600">Date de fin</label>
+                    <input
+                      type="date"
+                      value={formData.validityEndDate}
+                      onChange={(e) =>
+                        setFormData({ ...formData, validityEndDate: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+                    />
+                  </div>
+                </div>
               </div>
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
