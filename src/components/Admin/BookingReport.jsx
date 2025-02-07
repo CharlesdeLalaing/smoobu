@@ -475,7 +475,7 @@ const BookingsReport = () => {
                                     <span className="text-sm">
                                       {formatPrice(booking.priceDetails.basePrice + 
                                         (booking.priceDetails.linenFee || 0) + 
-                                        (booking.priceDetails.longStayDiscount || 0) - // Add since it's already negative
+                                        (booking.priceDetails.longStayDiscount || 0) + // Add since it's already negative
                                         (booking.priceDetails.promoCode?.amount || 0))}
                                     </span>
                                   </div>
