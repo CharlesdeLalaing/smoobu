@@ -1745,12 +1745,12 @@ app.get('/api/rates', async (req, res) => {
     // });
 
     // Validate required parameters
-    if (!start_date || !end_date) {
-      return res.status(400).json({
-        error: 'Missing dates',
-        details: 'Both start_date and end_date are required',
-      });
-    }
+    // if (!start_date || !end_date) {
+    //   return res.status(400).json({
+    //     error: 'Missing dates',
+    //     details: 'Both start_date and end_date are required',
+    //   });
+    // }
 
     if (!apartments) {
       return res.status(400).json({
