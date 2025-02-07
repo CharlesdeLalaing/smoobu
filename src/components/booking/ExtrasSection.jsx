@@ -1,5 +1,5 @@
 import React from "react";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 import { extraCategories } from "../extraCategories";
 
 export const ExtrasSection = ({
@@ -7,11 +7,31 @@ export const ExtrasSection = ({
   handleExtraChange,
   selectedCategory,
   setSelectedCategory,
+  formData,
+  selectedRoom,
 }) => {
   const { t } = useTranslation();
+  const totalGuests =
+    (parseInt(formData.adults) || 0) + (parseInt(formData.children) || 0);
+  const isOverCapacity = selectedRoom && totalGuests > selectedRoom.maxGuests;
 
   return (
     <div className="flex flex-col h-[300px] md:h-[500px] overflow-hidden">
+      {/* Capacity Warning Message */}
+      {isOverCapacity && (
+        <div className="p-4 mb-4 border border-red-200 rounded-md bg-red-50">
+          <p className="font-medium text-red-600">
+            {t("propertyDetails.capacityExceeded.title")}
+          </p>
+          <p className="mt-2 text-sm text-gray-600">
+            {t("propertyDetails.capacityExceeded.message", {
+              maxGuests: selectedRoom.maxGuests,
+              selectedGuests: totalGuests,
+            })}
+          </p>
+        </div>
+      )}
+
       {/* Categories */}
       <div className="mb-4 shrink-0">
         <div className="flex flex-wrap gap-3">
@@ -25,6 +45,7 @@ export const ExtrasSection = ({
                   ? "bg-[#668E73] text-white"
                   : "bg-[#668E73] bg-opacity-10 text-[#668E73] hover:bg-opacity-20"
               }`}
+              disabled={isOverCapacity}
             >
               {t(category.nameKey)}
             </button>
@@ -34,7 +55,9 @@ export const ExtrasSection = ({
 
       {/* Content */}
       <div
-        className="flex-1 min-h-0 overflow-y-auto"
+        className={`flex-1 min-h-0 overflow-y-auto ${
+          isOverCapacity ? "opacity-50 pointer-events-none" : ""
+        }`}
         style={{ height: "400px", overflow: "scroll" }}
       >
         {selectedCategory === "boissons" ? (
@@ -49,7 +72,7 @@ export const ExtrasSection = ({
   function renderGroupedBoissons() {
     const groupedBoissons = extraCategories.boissons.items.reduce(
       (groups, item) => {
-        const type = item.typeKey.split('.').pop(); // Get the last part of typeKey
+        const type = item.typeKey.split(".").pop();
         if (!groups[type]) {
           groups[type] = [];
         }
@@ -71,7 +94,6 @@ export const ExtrasSection = ({
     ));
   }
 
-
   function renderRegularExtras() {
     return extraCategories[selectedCategory].items.map((item) =>
       renderExtraItem(item)
@@ -80,7 +102,9 @@ export const ExtrasSection = ({
 
   function renderExtraItem(item) {
     const itemName = item.name ? t(item.name) : item.name;
-    const itemDescription = item.descriptionKey ? t(item.descriptionKey) : item.description;
+    const itemDescription = item.descriptionKey
+      ? t(item.descriptionKey)
+      : item.description;
 
     return (
       <div
@@ -108,6 +132,7 @@ export const ExtrasSection = ({
             item={item}
             selectedExtras={selectedExtras}
             handleExtraChange={handleExtraChange}
+            disabled={isOverCapacity}
           />
         </div>
       </div>
@@ -115,9 +140,14 @@ export const ExtrasSection = ({
   }
 };
 
-const QuantitySelector = ({ item, selectedExtras, handleExtraChange }) => {
+const QuantitySelector = ({
+  item,
+  selectedExtras,
+  handleExtraChange,
+  disabled,
+}) => {
   const { t } = useTranslation();
-  
+
   return (
     <>
       <div className="flex items-center gap-3">
@@ -127,7 +157,7 @@ const QuantitySelector = ({ item, selectedExtras, handleExtraChange }) => {
             const newQuantity = (selectedExtras[item.id] || 0) - 1;
             handleExtraChange(item.id, newQuantity);
           }}
-          disabled={(selectedExtras[item.id] || 0) === 0}
+          disabled={disabled || (selectedExtras[item.id] || 0) === 0}
           className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-[#668E73] text-[#668E73] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#668E73] hover:text-white transition-colors"
         >
           -
@@ -140,7 +170,8 @@ const QuantitySelector = ({ item, selectedExtras, handleExtraChange }) => {
           onClick={() =>
             handleExtraChange(item.id, (selectedExtras[item.id] || 0) + 1)
           }
-          className="w-8 h-8 flex items-center bg-[#668E73] justify-center rounded-full border-2 border-[#668E73] text-white hover:bg-opacity-90 transition-colors"
+          disabled={disabled}
+          className="w-8 h-8 flex items-center bg-[#668E73] justify-center rounded-full border-2 border-[#668E73] text-white hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           +
         </button>
@@ -149,7 +180,7 @@ const QuantitySelector = ({ item, selectedExtras, handleExtraChange }) => {
       {item.extraPersonPrice && (selectedExtras[item.id] || 0) > 0 && (
         <div className="mt-2">
           <p className="text-[14px] text-gray-600 mb-1">
-            {t('extras.additionalPerson', { price: item.extraPersonPrice })}
+            {t("extras.additionalPerson", { price: item.extraPersonPrice })}
           </p>
           <div className="flex items-center gap-3">
             <button
@@ -160,7 +191,9 @@ const QuantitySelector = ({ item, selectedExtras, handleExtraChange }) => {
                   (selectedExtras[`${item.id}-extra`] || 0) - 1
                 )
               }
-              disabled={(selectedExtras[`${item.id}-extra`] || 0) === 0}
+              disabled={
+                disabled || (selectedExtras[`${item.id}-extra`] || 0) === 0
+              }
               className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-[#668E73] text-[#668E73] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#668E73] hover:text-white transition-colors"
             >
               -
@@ -176,7 +209,8 @@ const QuantitySelector = ({ item, selectedExtras, handleExtraChange }) => {
                   (selectedExtras[`${item.id}-extra`] || 0) + 1
                 )
               }
-              className="w-8 h-8 flex items-center bg-[#668E73] justify-center rounded-full border-2 border-[#668E73] text-white hover:bg-opacity-90 transition-colors"
+              disabled={disabled}
+              className="w-8 h-8 flex items-center bg-[#668E73] justify-center rounded-full border-2 border-[#668E73] text-white hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               +
             </button>

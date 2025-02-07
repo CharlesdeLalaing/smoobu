@@ -9,7 +9,7 @@ import { VALID_COUPONS } from "../utils/coupons";
 import { calculateExtrasTotal } from "../utils/booking";
 import { extraCategories } from "../extraCategories"
 import { useNavigate } from "react-router-dom";
-
+import {roomsData} from "../hooks/roomsData";
 export const useBookingForm = () => {
   // Form State
 
@@ -61,11 +61,19 @@ export const useBookingForm = () => {
 const [startDate, setStartDate] = useState(null);
 const [endDate, setEndDate] = useState(null);
 
+
+
 const calculateNumberOfNights = (startDate, endDate) => {
   if (!startDate || !endDate) return 0;
   const start = new Date(startDate);
   const end = new Date(endDate);
   return Math.floor((end - start) / (1000 * 60 * 60 * 24));
+};
+
+const calculateGuestFees = (adults, children, settings) => {
+  const totalGuests = (parseInt(adults) || 0) + (parseInt(children) || 0);
+  const extraGuests = Math.max(0, totalGuests - settings.startingAtGuest);
+  return extraGuests * settings.extraGuestsPerNight; // Now treated as a flat fee
 };
 
   
@@ -89,35 +97,38 @@ const calculateNumberOfNights = (startDate, endDate) => {
   //   }));
   // };
 
-  // Replace your current handleChange function with this one
 const handleChange = async (e) => {
   const { name, value } = e.target;
 
-  // Update form data
+  // Update form data without clearing room selection
   setFormData((prevData) => ({
     ...prevData,
     [name]: value,
   }));
 
-  // Check if this is a date change
+  // Check if this is a date change and handle availability check
   if (name === "arrivalDate" || name === "departureDate") {
     setShowPriceDetails(false);
-    
-    // Check if both dates are set
+
     const updatedFormData = {
       ...formData,
-      [name]: value
+      [name]: value,
     };
 
     if (updatedFormData.arrivalDate && updatedFormData.departureDate) {
-      // console.log("Both dates set, checking availability automatically");
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await api.get("/rates", {
           params: {
-            apartments: updatedFormData.apartmentId || ["1946282", "1644643", "1946279", "1946276", "1946270"],
+            apartments: updatedFormData.apartmentId || [
+              "1946282",
+              "1644643",
+              "1946279",
+              "1946276",
+              "1946270",
+            ],
             start_date: updatedFormData.arrivalDate,
             end_date: updatedFormData.departureDate,
             adults: updatedFormData.adults,
@@ -130,11 +141,15 @@ const handleChange = async (e) => {
           setShowPriceDetails(true);
           setIsAvailable(true);
 
-          // If a room is already selected, update its price
-          if (updatedFormData.apartmentId && response.data.priceDetails[updatedFormData.apartmentId]) {
-            setFormData(prev => ({
+          if (
+            updatedFormData.apartmentId &&
+            response.data.priceDetails[updatedFormData.apartmentId]
+          ) {
+            setFormData((prev) => ({
               ...prev,
-              price: response.data.priceDetails[updatedFormData.apartmentId].finalPrice
+              price:
+                response.data.priceDetails[updatedFormData.apartmentId]
+                  .finalPrice,
             }));
           }
         } else {
@@ -271,438 +286,167 @@ const handleChange = async (e) => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    // Check if we have a selected room and price details
-    const selectedRoomPrice = priceDetails?.[formData.apartmentId];
+  // Check if we have a selected room and price details
+  const selectedRoomPrice = priceDetails?.[formData.apartmentId];
+  const settings = selectedRoomPrice?.settings;
 
-    if (!selectedRoomPrice) {
-      setError("Veuillez attendre le calcul du prix avant de continuer.");
-      return;
-    }
+  if (!selectedRoomPrice || !settings) {
+    setError("Veuillez attendre le calcul du prix avant de continuer.");
+    return;
+  }
 
-    setLoading(true);
-    try {
-      const selectedExtrasArray = Object.entries(selectedExtras)
-        .filter(([_, quantity]) => quantity > 0)
-        .map(([extraId, quantity]) => {
-          const isExtraPerson = extraId.endsWith("-extra");
-          const baseExtraId = isExtraPerson
-            ? extraId.replace("-extra", "")
-            : extraId;
-          const extra = Object.values(extraCategories)
-            .flatMap((category) => category.items)
-            .find((item) => item.id === baseExtraId);
+  setLoading(true);
+  try {
+    const selectedExtrasArray = createSelectedExtrasArray();
 
-          if (!extra) return null;
+    // Calculate flat guest fees
+    const guestFees = calculateGuestFees(
+      formData.adults,
+      formData.children,
+      settings
+    );
 
-          if (isExtraPerson) {
-            return {
-              type: "addon",
-              name: `${extra.name} - Personne supplémentaire`,
-              amount: extra.extraPersonPrice * quantity,
-              quantity: quantity,
-              currencyCode: "EUR",
-            };
-          }
+    // Calculate base price from price details
+    const basePrice = selectedRoomPrice.originalPrice;
 
-          return {
-            type: "addon",
-            name: extra.name,
-            amount: extra.price * quantity,
-            quantity: quantity,
-            currencyCode: "EUR",
-            extraPersonPrice: extra.extraPersonPrice,
-            extraPersonQuantity: selectedExtras[`${extraId}-extra`] || 0,
-          };
-        })
-        .filter(Boolean);
+    // Calculate extras total
+    const extrasTotal = selectedExtrasArray.reduce(
+      (sum, extra) => sum + extra.amount,
+      0
+    );
 
-      // Calculate extras total
-      const extrasTotal = selectedExtrasArray.reduce(
-        (sum, extra) => sum + extra.amount,
-        0
-      );
+    // Calculate all components of the final price
+    const subtotalBeforeDiscounts = basePrice + extrasTotal + guestFees;
+    const longStayDiscount = selectedRoomPrice.discount || 0;
+    const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
+    const finalTotal =
+      subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
 
-      // Get the base price from price details
-      const basePrice = selectedRoomPrice.originalPrice;
-      const subtotalBeforeDiscounts = basePrice + extrasTotal;
-
-      // Get discounts
-      const longStayDiscount = selectedRoomPrice.discount || 0;
-      const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-
-      // Calculate final total
-      const finalTotal =
-        subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
-
-      // console.log("Payment calculation:", {
-      //   basePrice,
-      //   extrasTotal,
-      //   subtotalBeforeDiscounts,
-      //   longStayDiscount,
-      //   couponDiscount,
-      //   finalTotal,
-      // });
-
-      const response = await api.post("/create-payment-intent", {
-        price: finalTotal,
-        bookingData: {
-          ...formData,
-          price: finalTotal,
-          basePrice: basePrice,
-          extras: selectedExtrasArray,
-          couponApplied: appliedCoupon ? {
+    // Prepare booking data with all price components
+    const bookingDataForPayment = {
+      ...formData,
+      price: finalTotal,
+      basePrice: basePrice,
+      guestFees: guestFees, // Include guest fees explicitly
+      extras: selectedExtrasArray,
+      couponApplied: appliedCoupon
+        ? {
             code: appliedCoupon.code,
             discount: appliedCoupon.discount,
-            type: appliedCoupon.type
-          } : null,
-          priceDetails: {
-            ...selectedRoomPrice,
-            finalPrice: finalTotal,
-            calculatedDiscounts: {
-              longStay: longStayDiscount,
-              coupon: appliedCoupon ? appliedCoupon.discount : 0
-            }
+            type: appliedCoupon.type,
+            percentageValue:
+              appliedCoupon.type === "percentage"
+                ? appliedCoupon.percentageValue
+                : null,
           }
-        }
-      });
+        : null,
+      priceDetails: {
+        ...selectedRoomPrice,
+        guestFees, // Include guest fees in price details
+        finalPrice: finalTotal,
+        calculatedDiscounts: {
+          longStay: longStayDiscount,
+          coupon: couponDiscount,
+        },
+      },
+    };
 
-      setClientSecret(response.data.clientSecret);
-      setShowPayment(true);
-      setError(null);
-    } catch (err) {
-      console.error("Error creating payment:", err);
-      setError(
-        err.response?.data?.error ||
-          "Une erreur s'est produite lors de la création du paiement"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Create payment intent
+    const response = await api.post("/create-payment-intent", {
+      price: finalTotal,
+      bookingData: bookingDataForPayment,
+    });
+
+    setClientSecret(response.data.clientSecret);
+    setShowPayment(true);
+    setError(null);
+  } catch (err) {
+    console.error("Error creating payment:", err);
+    setError(
+      err.response?.data?.error ||
+        "Une erreur s'est produite lors de la création du paiement"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
 
 
-  const handlePaymentSuccess = () => {
+const handlePaymentSuccess = () => {
   const selectedExtrasArray = createSelectedExtrasArray();
-  
-  // Get the base room price from priceDetails
   const selectedApartmentPriceDetails = priceDetails?.[formData.apartmentId];
-  // console.log("Selected apartment price details:", selectedApartmentPriceDetails);
-  
-  const roomBasePrice = selectedApartmentPriceDetails?.originalPrice || 0;
-  // console.log("Room base price:", roomBasePrice);
-  
-  // Calculate extras total
-  const extrasTotal = selectedExtrasArray.reduce((sum, extra) => 
-    sum + extra.amount + (extra.extraPersonAmount || 0), 0
+
+  if (!selectedApartmentPriceDetails) {
+    setError("Missing price details");
+    return;
+  }
+
+  const roomBasePrice = selectedApartmentPriceDetails.originalPrice || 0;
+
+  // Calculate guest fees
+  const guestFees = calculateGuestFees(
+    formData.adults,
+    formData.children,
+    selectedApartmentPriceDetails.settings
   );
-  // console.log("Extras total:", extrasTotal);
-  
+
+  // Calculate extras total
+  const extrasTotal = selectedExtrasArray.reduce(
+    (sum, extra) => sum + extra.amount + (extra.extraPersonAmount || 0),
+    0
+  );
+
   // Calculate total before discounts
-  const subtotalBeforeDiscounts = roomBasePrice + extrasTotal;
-  
+  const subtotalBeforeDiscounts = roomBasePrice + extrasTotal + guestFees;
+
   // Apply discounts
   const longStayDiscount = selectedApartmentPriceDetails?.discount || 0;
   const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-  
-  // Calculate final total
-  const finalTotal = subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
 
-   // Format coupon information
-  const couponInfo = appliedCoupon ? {
-    code: appliedCoupon.code,
-    discount: appliedCoupon.discount,
-    type: appliedCoupon.type // Include the type (percentage or fixed)
-  } : null;
+  // Calculate final total
+  const finalTotal =
+    subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
 
   const bookingData = {
     ...formData,
     extras: selectedExtrasArray,
+    guestFees, // Include guest fees
     priceBreakdown: {
       basePrice: roomBasePrice,
-      finalPrice: finalTotal,
+      guestFees, // Include guest fees in breakdown
       extrasTotal: extrasTotal,
-      couponDiscount: couponDiscount // Add explicit coupon discount to price breakdown
+      finalPrice: finalTotal,
+      couponDiscount: couponDiscount,
     },
     priceDetails: {
       ...selectedApartmentPriceDetails,
+      guestFees, // Include guest fees in price details
       discount: longStayDiscount,
-      settings: selectedApartmentPriceDetails?.settings || {
-        lengthOfStayDiscount: {
-          discountPercentage: 0
-        }
-      }
+      settings: selectedApartmentPriceDetails?.settings,
     },
     price: finalTotal,
-    couponApplied: appliedCoupon ? {
-      id: appliedCoupon.id,
-      code: appliedCoupon.code,
-      discount: appliedCoupon.discount,
-      type: appliedCoupon.type
-    } : null,
+    couponApplied: appliedCoupon
+      ? {
+          code: appliedCoupon.code,
+          discount: appliedCoupon.discount,
+          type: appliedCoupon.type,
+          percentageValue:
+            appliedCoupon.type === "percentage"
+              ? appliedCoupon.percentageValue
+              : null,
+        }
+      : null,
   };
-
-  // console.log('Final booking data:', bookingData);
-  // console.log('Booking data before storage:', bookingData);
 
   localStorage.setItem("bookingData", JSON.stringify(bookingData));
 
   const paymentIntent = clientSecret.split("_secret")[0];
   navigate(`/booking-confirmation?payment_intent=${paymentIntent}`);
 };
-
- // useBookingForm.js
-// const handleApplyCoupon = (couponCode) => {
-//   // console.log('handleApplyCoupon called with:', couponCode);
-//   setCouponError(null);
-
-//   if (!couponCode) {
-//     // console.log('No coupon code provided');
-//     setCouponError("Veuillez entrer un code promo");
-//     return;
-//   }
-
-//   const couponInfo = VALID_COUPONS[couponCode.toUpperCase()];
-//   // console.log('Found coupon info:', couponInfo);
-
-//   if (!couponInfo) {
-//     // console.log('Invalid coupon code');
-//     setCouponError("Code promo invalide");
-//     return;
-//   }
-
-//   setAppliedCoupon({
-//     code: couponCode.toUpperCase(),
-//     ...couponInfo,
-//   });
-//   // console.log('Applied coupon:', {
-//   //   code: couponCode.toUpperCase(),
-//   //   ...couponInfo,
-//   // });
-
-//   setPriceDetails((prev) => {
-//     const newPriceDetails = {
-//       ...prev,
-//       priceElements: [
-//         ...(prev?.priceElements || []),
-//         {
-//           type: "coupon",
-//           name: `Code promo ${couponCode.toUpperCase()}`,
-//           amount: -couponInfo.discount,
-//           currencyCode: couponInfo.currency,
-//         },
-//       ],
-//     };
-//     // console.log('Updated price details:', newPriceDetails);
-//     return newPriceDetails;
-//   });
-
-//   setCoupon("");
-// };
-
-
-// const handleApplyCoupon = async (couponCode) => {
-//   setCouponError(null);
-
-//   if (!couponCode) {
-//     setCouponError("Please enter a coupon code");
-//     return;
-//   }
-
-//   try {
-//     // Query Firebase for the coupon
-//     const couponsRef = collection(db, 'coupons');
-//     const q = query(
-//       couponsRef, 
-//       where('code', '==', couponCode.toUpperCase())
-//     );
-    
-//     const querySnapshot = await getDocs(q);
-    
-//     if (querySnapshot.empty) {
-//       setCouponError("Invalid or inactive coupon code");
-//       return;
-//     }
-
-//     const couponDoc = querySnapshot.docs[0];
-//     const couponData = couponDoc.data();
-    
-//     // Then check all conditions manually
-//     if (couponData.status !== 'active') {
-//       setCouponError("This coupon is not active");
-//       return;
-//     }
-
-//     if (couponData.usedCount && couponData.usedCount > 0) {
-//       setCouponError("This coupon has already been used");
-//       return;
-//     }
-    
-//     // Check if coupon is expired
-//     const expiryDate = couponData.expiryDate?.toDate();
-//     if (expiryDate && expiryDate < new Date()) {
-//       setCouponError("This coupon has expired");
-//       return;
-//     }
-
-//     // Calculate discount amount based on type
-//     let discountAmount = 0;
-//     if (couponData.type === 'percentage') {
-//       // If selected room price exists, calculate percentage discount
-//       if (priceDetails?.[formData.apartmentId]?.finalPrice) {
-//         discountAmount = (priceDetails[formData.apartmentId].finalPrice * couponData.discount) / 100;
-//       }
-//     } else {
-//       // Fixed amount discount
-//       discountAmount = couponData.discount;
-//     }
-
-//     // Apply the coupon
-//     setAppliedCoupon({
-//       id: couponDoc.id,
-//       code: couponCode.toUpperCase(),
-//       type: couponData.type,
-//       discount: discountAmount,
-//       currency: 'EUR'
-//     });
-
-//     // Update price details to include coupon discount
-//     setPriceDetails((prev) => {
-//       if (!prev || !prev[formData.apartmentId]) return prev;
-
-//       const currentPriceDetails = prev[formData.apartmentId];
-//       const updatedPriceElements = [
-//         ...(currentPriceDetails.priceElements || []),
-//         {
-//           type: 'coupon',
-//           name: `Coupon discount (${couponCode.toUpperCase()})`,
-//           amount: -discountAmount,
-//           currencyCode: 'EUR'
-//         }
-//       ];
-
-//       return {
-//         ...prev,
-//         [formData.apartmentId]: {
-//           ...currentPriceDetails,
-//           finalPrice: currentPriceDetails.finalPrice - discountAmount,
-//           priceElements: updatedPriceElements
-//         }
-//       };
-//     });
-
-//     setCoupon("");
-//   } catch (error) {
-//     console.error('Error applying coupon:', error);
-//     setCouponError("Error validating coupon");
-//   }
-// };
-
-
-// const handleApplyCoupon = async (couponCode) => {
-//   setCouponError(null);
-
-//   if (!couponCode) {
-//     setCouponError("Please enter a coupon code");
-//     return;
-//   }
-
-//   try {
-//     // Query Firebase for the coupon
-//     const couponsRef = collection(db, 'coupons');
-//     const q = query(
-//       couponsRef, 
-//       where('code', '==', couponCode.toUpperCase())
-//     );
-    
-//     const querySnapshot = await getDocs(q);
-    
-//     if (querySnapshot.empty) {
-//       setCouponError("Invalid or inactive coupon code");
-//       return;
-//     }
-
-//     const couponDoc = querySnapshot.docs[0];
-//     const couponData = couponDoc.data();
-    
-//     // Validate coupon
-//     if (couponData.status !== 'active') {
-//       setCouponError("This coupon is not active");
-//       return;
-//     }
-
-//     if (couponData.usedCount && couponData.usedCount > 0) {
-//       setCouponError("This coupon has already been used");
-//       return;
-//     }
-    
-//     // Check if coupon is expired
-//     const expiryDate = couponData.expiryDate?.toDate();
-//     if (expiryDate && expiryDate < new Date()) {
-//       setCouponError("This coupon has expired");
-//       return;
-//     }
-
-//     // Get the current total price before applying the coupon
-//     const currentRoomPrice = priceDetails?.[formData.apartmentId]?.finalPrice;
-//     if (!currentRoomPrice) {
-//       setCouponError("Please select a room and dates first");
-//       return;
-//     }
-
-//     // Calculate discount amount based on type
-//     let discountAmount = 0;
-//     if (couponData.type === 'percentage') {
-//       discountAmount = (currentRoomPrice * couponData.discount) / 100;
-//     } else {
-//       // Fixed amount discount
-//       discountAmount = couponData.discount;
-//     }
-
-//     // Apply the coupon
-//     setAppliedCoupon({
-//       id: couponDoc.id,
-//       code: couponCode.toUpperCase(),
-//       type: couponData.type,
-//       discount: discountAmount,
-//       percentageValue: couponData.type === 'percentage' ? couponData.discount : null,
-//       currency: 'EUR'
-//     });
-
-//     // Update price details to include coupon discount
-//     setPriceDetails((prev) => {
-//       if (!prev || !prev[formData.apartmentId]) return prev;
-
-//       const currentPriceDetails = prev[formData.apartmentId];
-//       const updatedPriceElements = [
-//         ...(currentPriceDetails.priceElements || []),
-//         {
-//           type: 'coupon',
-//           name: `Coupon discount (${couponCode.toUpperCase()})`,
-//           amount: -discountAmount,
-//           currencyCode: 'EUR'
-//         }
-//       ];
-
-//       return {
-//         ...prev,
-//         [formData.apartmentId]: {
-//           ...currentPriceDetails,
-//           finalPrice: currentPriceDetails.finalPrice - discountAmount,
-//           priceElements: updatedPriceElements
-//         }
-//       };
-//     });
-
-//     setCoupon("");
-//   } catch (error) {
-//     console.error('Error applying coupon:', error);
-//     setCouponError("Error validating coupon");
-//   }
-// };
 
 const handleApplyCoupon = async (couponCode) => {
   try {
@@ -787,7 +531,6 @@ const handleApplyCoupon = async (couponCode) => {
     return { error: "invalid" };
   }
 };
-
 
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));

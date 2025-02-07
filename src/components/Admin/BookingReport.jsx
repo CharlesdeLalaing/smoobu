@@ -243,7 +243,6 @@ const BookingsReport = () => {
               ))}
             </select>
           </div>
-
           <div className="sm:col-span-1">
             <select
               className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
@@ -257,7 +256,6 @@ const BookingsReport = () => {
               ))}
             </select>
           </div>
-
           <div className="sm:col-span-1">
             <select
               className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
@@ -271,7 +269,6 @@ const BookingsReport = () => {
               ))}
             </select>
           </div>
-
           <div className="sm:col-span-1">
             <select
               className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"

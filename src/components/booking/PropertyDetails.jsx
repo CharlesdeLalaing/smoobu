@@ -9,7 +9,6 @@ import { CalendarRoom } from "./CalendarRoom";
 import Squirell from '../../assets/GlobalImg/squirrel.webp';
 import Fox from '../../assets/GlobalImg/fox.webp';
 
-
 import Calendar from "../../assets/icons8-calendar-50.png";
 import Group from "../../assets/icons8-group-48.png";
 
@@ -31,24 +30,21 @@ export const PropertyDetails = ({
   showOnlyUnselected = false,
   hasSearched,
 }) => {
+  const { t } = useTranslation();
+  const totalGuests = (parseInt(formData.adults) || 0) + (parseInt(formData.children) || 0);
 
-  const { t } = useTranslation(); // Add this hook
+  const testPush = "Vas-y marche ah"
 
-  // console.log("PropertyDetails render:", { 
-  //   startDate, 
-  //   endDate, 
-  //   hasSearched, 
-  //   hasAvailableDates: !!availableDates 
-  // });
-  
   const scrollTo = () => {
     setTimeout(() => {
-      const element = document.getElementById('main-container'); // Add this ID to your main container
+      const element = document.getElementById('main-container');
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 100);
   };
+
+
 
 
   const getUnavailableDatesMessage = (roomId) => {
@@ -83,15 +79,12 @@ export const PropertyDetails = ({
   };
 
   const sortRooms = (rooms) => {
-    // Define the desired order of room IDs
     const customOrder = [1946282, 1644643, 1946279, 1946276, 1946270];
     
     return [...rooms].sort((a, b) => {
-      // First priority: selected room
       if (a.id === formData.apartmentId) return -1;
       if (b.id === formData.apartmentId) return 1;
       
-      // Second priority: custom order
       const indexA = customOrder.indexOf(a.id);
       const indexB = customOrder.indexOf(b.id);
       
@@ -101,10 +94,22 @@ export const PropertyDetails = ({
 
   const groupedRooms = Object.values(roomsData).reduce(
     (acc, room) => {
-      if (isRoomAvailable(room.id, startDate, endDate, availableDates, hasSearched)) {
+      // First check if room can accommodate the group size
+      const canAccommodateGuests = totalGuests <= room.maxGuests;
+      
+      // Then check availability
+      if (!canAccommodateGuests) {
+        acc.unavailable.push({
+          ...room,
+          unavailableReason: 'capacity'
+        });
+      } else if (isRoomAvailable(room.id, startDate, endDate, availableDates, hasSearched)) {
         acc.available.push(room);
       } else {
-        acc.unavailable.push(room);
+        acc.unavailable.push({
+          ...room,
+          unavailableReason: 'dates'
+        });
       }
       return acc;
     },
@@ -114,8 +119,7 @@ export const PropertyDetails = ({
   groupedRooms.available = sortRooms(groupedRooms.available);
   groupedRooms.unavailable = sortRooms(groupedRooms.unavailable);
 
-   // Modified filtering logic to prevent duplicate display
-   const filteredAvailableRooms = (() => {
+  const filteredAvailableRooms = (() => {
     if (showOnlySelected && formData.apartmentId) {
       const selectedRoom = [...groupedRooms.available, ...groupedRooms.unavailable]
         .find(room => room.id === formData.apartmentId);
@@ -126,15 +130,12 @@ export const PropertyDetails = ({
       return groupedRooms.available.filter(room => room.id !== formData.apartmentId);
     }
 
-    // For normal view, show only available rooms that are not selected
     return groupedRooms.available.filter(room => room.id !== formData.apartmentId);
   })();
 
-  // Filter unavailable rooms to exclude selected room
   const filteredUnavailableRooms = groupedRooms.unavailable.filter(
     room => room.id !== formData.apartmentId
   );
-  
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -145,13 +146,50 @@ export const PropertyDetails = ({
   };
 
   const RoomCard = ({ room, isAvailable }) => {
-
-    const { t } = useTranslation(); // Add translation hook here too
-
-    const roomPriceDetails = priceDetails && priceDetails[room.id];
     const [sliderRef, setSliderRef] = useState(null);
     const [activeTab, setActiveTab] = useState("priceDetails");
-  
+    const roomPriceDetails = priceDetails && priceDetails[room.id];
+    const isOverCapacity = totalGuests > room.maxGuests;
+
+    const getCapacityMessage = () => {
+      if (isOverCapacity) {
+        return (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+            <p className="text-red-600 font-medium">
+              {t('propertyDetails.capacityExceeded.title')}
+            </p>
+            <p className="text-sm text-gray-600 mt-2">
+              {t('propertyDetails.capacityExceeded.message', {
+                maxGuests: room.maxGuests,
+                selectedGuests: totalGuests
+              })}
+            </p>
+          </div>
+        );
+      }
+      return null;
+    };
+
+    const getGuestFeeInfo = () => {
+      if (!roomPriceDetails?.settings) return null;
+      
+      const settings = roomPriceDetails.settings;
+      const extraGuests = Math.max(0, totalGuests - settings.startingAtGuest);
+      
+      if (extraGuests > 0) {
+        return (
+          <div className="text-sm text-gray-600 mt-2">
+            {t('propertyDetails.extraGuestFee', {
+              count: extraGuests,
+              fee: settings.extraGuestsPerNight,
+              threshold: settings.startingAtGuest
+            })}
+          </div>
+        );
+      }
+      return null;
+    };
+
     const sliderSettings = {
       dots: false,
       infinite: true,
@@ -160,7 +198,7 @@ export const PropertyDetails = ({
       slidesToScroll: 1,
       asNavFor: sliderRef,
     };
-  
+
     const thumbnailSettings = {
       slidesToShow: 3,
       slidesToScroll: 1,
@@ -168,7 +206,7 @@ export const PropertyDetails = ({
       infinite: false,
       asNavFor: sliderRef,
     };
-  
+
     return (
       <div
         id={`room-${room.id}`}
@@ -182,10 +220,9 @@ export const PropertyDetails = ({
             : 'h-fit '
         }`}
       >
-        {/* {!isAvailable && getUnavailableDatesMessage(room.id)} */}
+        {getCapacityMessage()}
 
-        {/* Always show unavailability message if dates are selected and room is not available */}
-        {startDate && endDate && !isAvailable && (
+        {startDate && endDate && !isAvailable && room.unavailableReason === 'dates' && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
             <p className="text-red-600 font-medium">
               {t('propertyDetails.roomUnavailable.title')}
@@ -195,30 +232,30 @@ export const PropertyDetails = ({
             </p>
           </div>
         )}
-  
+
         {formData.apartmentId === room.id ? (
           <div className="flex flex-col h-full">
-            <div className="flex justify-around border-b border-grey-300 mb-4 ">
-            <button
-              type="button"
-              className={`py-2 px-4 ${
-                activeTab === "priceDetails" ? "text-[#668E73] border-b-2 border-[#668E73]" : ""
-              }`}
-              onClick={() => setActiveTab("priceDetails")}
-            >
-              {t('propertyDetails.tabs.bookingDetails')}
-            </button>
-            <button
-              type="button"
-              className={`py-2 px-4 ${
-                activeTab === "roomInfo" ? "text-[#668E73] border-b-2 border-[#668E73]" : ""
-              }`}
-              onClick={() => setActiveTab("roomInfo")}
-            >
-              {t('propertyDetails.tabs.roomInfo')}
-            </button>
+            <div className="flex justify-around border-b border-grey-300 mb-4">
+              <button
+                type="button"
+                className={`py-2 px-4 ${
+                  activeTab === "priceDetails" ? "text-[#668E73] border-b-2 border-[#668E73]" : ""
+                }`}
+                onClick={() => setActiveTab("priceDetails")}
+              >
+                {t('propertyDetails.tabs.bookingDetails')}
+              </button>
+              <button
+                type="button"
+                className={`py-2 px-4 ${
+                  activeTab === "roomInfo" ? "text-[#668E73] border-b-2 border-[#668E73]" : ""
+                }`}
+                onClick={() => setActiveTab("roomInfo")}
+              >
+                {t('propertyDetails.tabs.roomInfo')}
+              </button>
             </div>
-  
+
             <div className="flex-1 overflow-y-none">
               {activeTab === "roomInfo" && (
                 <div className="h-full">
@@ -232,7 +269,7 @@ export const PropertyDetails = ({
                       />
                     ))}
                   </Slider>
-      
+
                   <div className="mt-4">
                     <Slider {...thumbnailSettings}>
                       {Object.values(room.images).map((image, index) => (
@@ -246,16 +283,15 @@ export const PropertyDetails = ({
                       ))}
                     </Slider>
                   </div>
-      
+
                   <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
-                    <div className="features-list flex w-full ">
+                    <div className="features-list flex w-full">
                       {room.features.map((feature, index) => {
-                        // Handle dynamic values for features like maxGuests
                         let translatedTitle = feature.value ? 
-                        Array.isArray(feature.value) ?
-                          t(feature.title, { value: feature.value[0], value2: feature.value[1] }) :
-                          t(feature.title, { value: feature.value }) :
-                        t(feature.title);
+                          Array.isArray(feature.value) ?
+                            t(feature.title, { value: feature.value[0], value2: feature.value[1] }) :
+                            t(feature.title, { value: feature.value }) :
+                          t(feature.title);
 
                         return (
                           <div
@@ -280,26 +316,29 @@ export const PropertyDetails = ({
                   </div>
                 </div>
               )}
-  
+
               {activeTab === "priceDetails" && roomPriceDetails && (
                 <div className="h-full overflow-y-auto sm:overflow-visible md:overflow-y-auto relative">
-                    {/* Squirrel Image */}
                   <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[130px] xl:left-[450px]">
-                      <img 
-                        src={Fox}
-                        alt="Squirrel"
-                        className="w-24 md:w-32 lg:w-40 h-auto"
-                      />
+                    <img 
+                      src={Fox}
+                      alt="Squirrel"
+                      className="w-24 md:w-32 lg:w-40 h-auto"
+                    />
                   </div>
                   <div className="my-5">
-                  <p className="text-lg sm:text-base md:text-lg font-montserrat text-[#D3B574]">{t(room.type)}</p>
-                  <h2 className="text-lg sm:text-base md:text-[25px] font-medium uppercase sm:mb-2 md:mb-10 sm:my-3 md:my-4 font-cormorant">{t(room.nameKey)}</h2>
+                    <p className="text-lg sm:text-base md:text-lg font-montserrat text-[#D3B574]">
+                      {t(room.type)}
+                    </p>
+                    <h2 className="text-lg sm:text-base md:text-[25px] font-medium uppercase sm:mb-2 md:mb-10 sm:my-3 md:my-4 font-cormorant">
+                      {t(room.nameKey)}
+                    </h2>
                   </div>
                   <div className="flex items-center justify-left sm:mb-2 md:mb-4 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
                     <img src={Group} alt="Profile Icon" className="w-6 h-6 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-4" />
                     <span className="text-[18px] sm:text-sm md:text-base font-light text-black">
-                      {Number(formData.adults) + Number(formData.children)}{" "}
-                      {Number(formData.adults) + Number(formData.children) > 1 
+                      {totalGuests}{" "}
+                      {totalGuests > 1 
                         ? t('propertyDetails.guests.plural') 
                         : t('propertyDetails.guests.singular')}
                     </span>
@@ -313,11 +352,14 @@ export const PropertyDetails = ({
                       {endDate && <span>{formatDate(endDate)}</span>}
                     </div>
                   </div>
-  
+
+                  {getGuestFeeInfo()}
+
                   <PriceDetails
                     priceDetails={roomPriceDetails}
                     selectedExtras={selectedExtras}
                     appliedCoupon={appliedCoupon}
+                    formData={formData}
                   />
                 </div>
               )}
@@ -326,7 +368,6 @@ export const PropertyDetails = ({
         ) : (
           <div className="flex flex-col xl:flex-row gap-10 w-[90%] mx-auto">
             <div className="w-full xl:w-2/5">
-  
               <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
                 {Object.values(room.images).map((image, index) => (
                   <img
@@ -337,7 +378,7 @@ export const PropertyDetails = ({
                   />
                 ))}
               </Slider>
-  
+
               <div className="mt-4">
                 <Slider {...thumbnailSettings}>
                   {Object.values(room.images).map((image, index) => (
@@ -351,16 +392,15 @@ export const PropertyDetails = ({
                   ))}
                 </Slider>
               </div>
-  
+
               <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
                 <div className="features-list flex w-full">
                   {room.features.map((feature, index) => {
-                    // Handle dynamic values for features like maxGuests
                     let translatedTitle = feature.value ? 
-                    Array.isArray(feature.value) ?
-                          t(feature.title, { value: feature.value[0], value2: feature.value[1] }) :
-                          t(feature.title, { value: feature.value }) :
-                        t(feature.title);
+                      Array.isArray(feature.value) ?
+                        t(feature.title, { value: feature.value[0], value2: feature.value[1] }) :
+                        t(feature.title, { value: feature.value }) :
+                      t(feature.title);
 
                     return (
                       <div
@@ -384,32 +424,35 @@ export const PropertyDetails = ({
                 </div>
               </div>
             </div>
-  
-            <div className="w-full xl:w-3/5">  
+
+            <div className="w-full xl:w-3/5">
               <CalendarRoom roomId={room.id} />
               <p className="text-gray-600 my-4 font-cormorant">{t(room.description)}</p>
+              {getGuestFeeInfo()}
               <button
                 type="button"
                 onClick={() => {
-                  if (hasSearched && isAvailable) {
+                  if (hasSearched && isAvailable && !isOverCapacity) {
                     onRoomSelect(room.id);
                     scrollTo(10);
                   }
                 }}
-                disabled={!hasSearched || !isAvailable}
+                disabled={!hasSearched || !isAvailable || isOverCapacity}
                 className={`w-fit mt-5 py-2 px-5 rounded-full font-medium transition-colors ${
                   !hasSearched 
                     ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                    : isAvailable
+                    : isAvailable && !isOverCapacity
                       ? "bg-[#668E73] text-white hover:bg-opacity-90"
                       : "bg-gray-300 text-gray-600 cursor-not-allowed"
                 }`}
               >
                 {!hasSearched
-                ? t('propertyDetails.selectDatePrompt')
-                : isAvailable
-                  ? t('propertyDetails.selectRoom')
-                  : t('propertyDetails.unavailableForDates')}
+                  ? t('propertyDetails.selectDatePrompt')
+                  : isOverCapacity
+                    ? t('propertyDetails.capacityExceeded.title')
+                    : isAvailable
+                      ? t('propertyDetails.selectRoom')
+                      : t('propertyDetails.unavailableForDates')}
               </button>
             </div>
           </div>
@@ -433,15 +476,14 @@ export const PropertyDetails = ({
                 {formData.apartmentId !== room.id && (
                   <div className="text-left mb-4">
                     <h4 className="font-montserrat text-xl md:text-1xl lg:text-2xl mb-4 text-[#D3B574]">
-                    {t(room.type)}
+                      {t(room.type)}
                     </h4>
                     <h3 className="font-cormorant text-3xl text-gray-800 mb-2 md:text-2xl lg:text-[40px] font-light">
-                    {t(room.nameKey)}
+                      {t(room.nameKey)}
                     </h3>
                   </div>
                 )}
                 <RoomCard 
-                  key={room.id} 
                   room={room} 
                   isAvailable={isRoomAvailable(room.id, startDate, endDate, availableDates, hasSearched)} 
                 />
@@ -458,10 +500,10 @@ export const PropertyDetails = ({
               <div key={room.id} className="space-y-4">
                 <div className="text-left mb-4">
                   <h4 className="font-montserrat text-xl text-[#D3B574] md:text-xl lg:text-2xl mb-4">
-                  {t(room.type)}
+                    {t(room.type)}
                   </h4>
                   <h3 className="font-cormorant text-3xl text-gray-800 mb-2 md:text-2xl lg:text-[40px] font-light">
-                  {t(room.nameKey)}
+                    {t(room.nameKey)}
                   </h3>
                 </div>
                 <RoomCard room={room} isAvailable={false} />

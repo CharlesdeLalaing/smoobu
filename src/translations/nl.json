@@ -344,6 +344,7 @@
         "additionalPerson": "Extra persoon",
         "title": "Prijsdetails:",
         "basePrice": "Basisprijs",
+        "guestFees": "{{count}} extra perso(o)n(en) × {{fee}}€",
         "longStayDiscount": "Korting voor lang verblijf",
         "promoCode": {
           "fixed": "Kortingscode",
@@ -372,10 +373,12 @@
         "selectDatePrompt": "Selecteer een datum",
         "selectRoom": "Selecteer deze kamer",
         "unavailableForDates": "Niet beschikbaar voor deze data",
+        "extraGuestFee": "Extra toeslag van {{fee}}€ per persoon vanaf {{threshold}} gasten ({{count}} extra gast(en))",
+        
         "loading": "Laden...",
         "capacityExceeded": {
                 "title": "Maximale capaciteit overschreden",
-                "message": "Deze kamer is geschikt voor maximaal {{max}} personen (je hebt {{current}} personen geselecteerd)."
+                "message": "Deze kamer kan maximaal {{maxGuests}} personen accommoderen (u heeft {{selectedGuests}} personen geselecteerd)."
                 },
             "tooManyGuests": "Te veel mensen voor deze kamer"
       },
@@ -425,6 +428,7 @@
               "total": "Totaal: {{price}}€",
               "termsAccepted": "Algemene voorwaarden: Geaccepteerd",
               "promoCodeFixed": "Kortingscode ({{code}}): -{{amount}}€",
+              "guestFees": "Extra gastentoeslag ({{extraGuests}} perso(o)n(en)): €{{amount}}",
               "promoCodePercentage": "Kortingscode ({{code}} - {{value}}%): -{{amount}}€"
             },
             "address": {

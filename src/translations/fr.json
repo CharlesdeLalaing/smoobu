@@ -344,6 +344,7 @@
         "additionalPerson": "Personne supplémentaire",
         "title": "Détail des prix:",
         "basePrice": "Prix de base",
+        "guestFees": "{{count}} personne(s) supplémentaire(s) × {{fee}}€",
         "longStayDiscount": "Réduction long séjour",
         "promoCode": {
           "fixed": "Code promo",
@@ -372,10 +373,11 @@
         "selectDatePrompt": "Veuillez sélectionner une date",
         "selectRoom": "Sélectionner cette chambre",
         "unavailableForDates": "Non disponible pour ces dates",
+        "extraGuestFee": "Supplément de {{fee}}€ par personne au-delà de {{threshold}} personnes ({{count}} personne(s) supplémentaire(s))",
         "loading": "Chargement...",
         "capacityExceeded": {
           "title": "Capacité maximale dépassée",
-          "message": "Cette chambre peut accueillir un maximum de {{max}} personnes (vous avez sélectionné {{current}} personnes)"
+          "message": "Cette chambre peut accueillir au maximum {{maxGuests}} personnes (vous avez sélectionné {{selectedGuests}} personnes)."
         },
         "tooManyGuests": "Trop de personnes pour cette chambre"
       },
@@ -422,7 +424,9 @@
               "extraPerson": "Personne supplémentaire ({{quantity}}x): {{price}}€",
               "longStayDiscount": "Réduction long séjour ({{percentage}}%): -{{amount}}€",
               "promoCode": "Code promo ({{code}}): -{{amount}}€",
+              "guestFees": "Frais supplémentaires ({{extraGuests}} personne(s)): {{amount}}€",
               "total": "Total: {{price}}€",
+
               "termsAccepted": "Conditions générales: Acceptée",
               "promoCodeFixed": "Code promo ({{code}}): -{{amount}}€",
               "promoCodePercentage": "Code promo ({{code}} - {{value}}%): -{{amount}}€"

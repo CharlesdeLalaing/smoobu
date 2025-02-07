@@ -394,6 +394,7 @@ const BookingForm = () => {
     handleExtraChange,
     currentStep,
     selectedCategory,
+    formData,
     setSelectedCategory,
   };
 
@@ -447,7 +448,6 @@ const BookingForm = () => {
             </div>
 
             <div className="space-y-8 px-[2%] md:px-[5%] py-[1%]">
-
               {formData.apartmentId && (
                 <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
                   <div className="w-full h-full lg:w-1/2">
@@ -462,33 +462,47 @@ const BookingForm = () => {
 
                   <div className="w-full h-full lg:w-1/2">
                     <div className="border border-[#668E73] p-4 rounded h-full flex flex-col">
-                      <h2 className="text-xl font-semibold text-[#668E73] mb-6" id="extra_top">
-                      {t('booking.sections.extras.title')}
+                      <h2
+                        className="text-xl font-semibold text-[#668E73] mb-6"
+                        id="extra_top"
+                      >
+                        {t("booking.sections.extras.title")}
                       </h2>
-                      <BookingSteps currentStep={currentStep} />
+                      <BookingSteps
+                        currentStep={currentStep}
+                        formData={formData}
+                        selectedRoom={roomsData[formData.apartmentId]}
+                        setCurrentStep={setCurrentStep}
+                      />
                       <div className="flex-1 mt-4 overflow-y-auto">
                         {!isSelectedRoomAvailable() ? (
-                          <div className="flex flex-col items-center justify-center h-full text-center p-6">
-                            <div className="bg-red-50 border border-red-200 rounded-md p-6 w-full max-w-md">
-                              <p className="text-red-600 font-medium mb-2">
-                              {t('booking.errors.roomUnavailable.title')}
+                          <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                            <div className="w-full max-w-md p-6 border border-red-200 rounded-md bg-red-50">
+                              <p className="mb-2 font-medium text-red-600">
+                                {t("booking.errors.roomUnavailable.title")}
                               </p>
                               <p className="text-sm text-gray-600">
-                              {t('booking.errors.roomUnavailable.message')}
+                                {t("booking.errors.roomUnavailable.message")}
                               </p>
                             </div>
                           </div>
                         ) : (
                           <>
-                            {currentStep === 1 && <ExtrasSection {...extrasSectionProps} />}
-                            {currentStep === 2 && <InfoSupSection {...infoSupSectionProps} />}
-                            {currentStep === 3 && <ContactSection {...contactSectionProps} />}
+                            {currentStep === 1 && (
+                              <ExtrasSection {...extrasSectionProps} />
+                            )}
+                            {currentStep === 2 && (
+                              <InfoSupSection {...infoSupSectionProps} />
+                            )}
+                            {currentStep === 3 && (
+                              <ContactSection {...contactSectionProps} />
+                            )}
                           </>
                         )}
                       </div>
                       <div className="pt-4 mt-4 border-t border-gray-200">
-                        <NavigationButtons 
-                          {...navigationButtonsProps} 
+                        <NavigationButtons
+                          {...navigationButtonsProps}
                           disabled={!isSelectedRoomAvailable()}
                         />
                       </div>
@@ -508,7 +522,7 @@ const BookingForm = () => {
           <div className="fixed inset-0 flex items-center justify-center">
             <div className="w-full p-5 mx-auto md:w-1/2">
               <h3 className="mb-4 text-lg font-medium">
-              {t('booking.payment.title')}
+                {t("booking.payment.title")}
               </h3>
               {clientSecret && (
                 <StripeWrapper

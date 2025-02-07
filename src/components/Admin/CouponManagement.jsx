@@ -8,21 +8,27 @@ const CouponManagement = () => {
   const [filteredCoupons, setFilteredCoupons] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [formData, setFormData] = useState({
-    code: '',
-    discount: '',
-    type: 'fixed',
-    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default to 1 year from now
-    status: 'active',
-    currency: 'EUR',
+    code: "",
+    discount: "",
+    type: "fixed",
+    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    status: "active",
+    currency: "EUR",
     usedCount: 0,
     lastUsedDate: null,
-    usedBy: []
+    usedBy: [],
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    status: "all",
+    type: "all", // 'all', 'regular', 'gift'
+  });
 
   useEffect(() => {
     fetchCoupons();
@@ -37,7 +43,7 @@ const CouponManagement = () => {
     if (timestamp?.toDate) {
       return timestamp.toDate();
     }
-    if (typeof timestamp === 'string') {
+    if (typeof timestamp === "string") {
       return new Date(timestamp);
     }
     if (timestamp instanceof Date) {
@@ -51,14 +57,14 @@ const CouponManagement = () => {
   
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(coupon => 
+      filtered = filtered.filter((coupon) =>
         coupon.code.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
   
     // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(coupon => coupon.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((coupon) => coupon.status === statusFilter);
     }
   
     // Apply type filter
@@ -83,18 +89,18 @@ const CouponManagement = () => {
 
   const fetchCoupons = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'coupons'));
-      const couponsData = querySnapshot.docs.map(doc => ({
+      const querySnapshot = await getDocs(collection(db, "coupons"));
+      const couponsData = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         dateCreated: convertToDate(doc.data().dateCreated),
         expiryDate: convertToDate(doc.data().expiryDate),
-        lastUsedDate: convertToDate(doc.data().lastUsedDate)
+        lastUsedDate: convertToDate(doc.data().lastUsedDate),
       }));
-      
+
       setCoupons(couponsData);
     } catch (error) {
-      console.error('Erreur lors du chargement des coupons:', error);
+      console.error("Erreur lors du chargement des coupons:", error);
     } finally {
       setIsLoading(false);
     }
@@ -103,56 +109,53 @@ const CouponManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Set expiration date to one year from now if not editing
-      const defaultExpiryDate = !editingCoupon ? 
-        new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) : 
-        new Date(formData.expiryDate);
-
       const data = {
         ...formData,
         code: formData.code.toUpperCase(),
         discount: Number(formData.discount),
         dateCreated: editingCoupon ? formData.dateCreated : Timestamp.now(),
-        expiryDate: Timestamp.fromDate(defaultExpiryDate),
+        expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
         usedCount: editingCoupon ? formData.usedCount : 0,
         lastUsedDate: null,
         usedBy: editingCoupon ? formData.usedBy || [] : [],
-        currency: 'EUR',
-        type: formData.type || 'fixed',
-        status: formData.status || 'active'
+        currency: "EUR",
+        type: formData.type || "fixed",
+        status: formData.status || "active",
       };
-      
+
       if (editingCoupon) {
-        await updateDoc(doc(db, 'coupons', editingCoupon.id), data);
+        await updateDoc(doc(db, "coupons", editingCoupon.id), data);
       } else {
-        await addDoc(collection(db, 'coupons'), data);
+        await addDoc(collection(db, "coupons"), data);
       }
-      
+
       await fetchCoupons();
       handleCloseModal();
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde du coupon:', error);
+      console.error("Erreur lors de la sauvegarde du coupon:", error);
     }
   };
 
   const handleEdit = (coupon) => {
+    if (coupon.isGiftVoucher) return; // Prevent editing gift vouchers
     setEditingCoupon(coupon);
     setFormData({
       ...coupon,
-      expiryDate: coupon.expiryDate instanceof Date 
-        ? coupon.expiryDate.toISOString().split('T')[0]
-        : new Date(coupon.expiryDate).toISOString().split('T')[0]
+      expiryDate:
+        coupon.expiryDate instanceof Date
+          ? coupon.expiryDate.toISOString().split("T")[0]
+          : new Date(coupon.expiryDate).toISOString().split("T")[0],
     });
     setIsModalOpen(true);
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce coupon ?')) {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce coupon ?")) {
       try {
-        await deleteDoc(doc(db, 'coupons', id));
+        await deleteDoc(doc(db, "coupons", id));
         await fetchCoupons();
       } catch (error) {
-        console.error('Erreur lors de la suppression du coupon:', error);
+        console.error("Erreur lors de la suppression du coupon:", error);
       }
     }
   };
@@ -160,26 +163,27 @@ const CouponManagement = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingCoupon(null);
-    // Reset form with default expiry date of one year from now
     setFormData({
-      code: '',
-      discount: '',
-      type: 'fixed',
-      expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      status: 'active',
-      currency: 'EUR',
+      code: "",
+      discount: "",
+      type: "fixed",
+      expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
+      status: "active",
+      currency: "EUR",
       usedCount: 0,
       lastUsedDate: null,
-      usedBy: []
+      usedBy: [],
     });
   };
 
   const formatDate = (date) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    if (!date) return "N/A";
+    return new Date(date).toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -203,7 +207,7 @@ const CouponManagement = () => {
       <div className="p-4 mb-6 bg-white rounded-lg shadow">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <Search size={20} className="text-gray-400" />
             </div>
             <input
@@ -315,48 +319,62 @@ const CouponManagement = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 p-4 flex items-center justify-center">
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg p-4 md:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg md:text-xl font-semibold">
-                {editingCoupon ? 'Modifier le Coupon' : 'Ajouter un nouveau Coupon'}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold md:text-xl">
+                {editingCoupon
+                  ? "Modifier le Coupon"
+                  : "Ajouter un nouveau Coupon"}
               </h2>
-              <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700">
+              <button
+                onClick={handleCloseModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   Code du Coupon
                 </label>
                 <input
                   type="text"
                   value={formData.code}
-                  onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      code: e.target.value.toUpperCase(),
+                    })
+                  }
                   className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   Montant de la réduction
                 </label>
                 <input
                   type="number"
                   value={formData.discount}
-                  onChange={(e) => setFormData({...formData, discount: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, discount: e.target.value })
+                  }
                   className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   Type
                 </label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData({...formData, type: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, type: e.target.value })
+                  }
                   className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
                 >
                   <option value="fixed">Montant fixe</option>
@@ -364,35 +382,39 @@ const CouponManagement = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   Date d'expiration
                 </label>
                 <input
                   type="date"
                   value={formData.expiryDate}
-                  onChange={(e) => setFormData({...formData, expiryDate: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, expiryDate: e.target.value })
+                  }
                   className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   Statut
                 </label>
                 <select
                   value={formData.status}
-                  onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                  }
                   className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
                 >
                   <option value="active">Actif</option>
                   <option value="inactive">Inactif</option>
                 </select>
               </div>
-              <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+              <div className="flex flex-col justify-end gap-3 mt-6 sm:flex-row">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="w-full sm:w-auto px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-50"
+                  className="w-full px-4 py-2 text-gray-700 border rounded-lg sm:w-auto hover:bg-gray-50"
                 >
                   Annuler
                 </button>
@@ -400,7 +422,7 @@ const CouponManagement = () => {
                   type="submit"
                   className="w-full sm:w-auto px-4 py-2 bg-[#678D73] text-white rounded-lg hover:bg-[#678D73]"
                 >
-                  {editingCoupon ? 'Mettre à jour' : 'Créer'}
+                  {editingCoupon ? "Mettre à jour" : "Créer"}
                 </button>
               </div>
             </form>

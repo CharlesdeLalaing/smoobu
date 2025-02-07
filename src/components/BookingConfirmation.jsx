@@ -12,17 +12,14 @@ const BookingConfirmation = () => {
   const paymentIntent = searchParams.get("payment_intent");
 
   useEffect(() => {
-    // console.log("Payment Intent:", paymentIntent);
     const storedBookingData = localStorage.getItem("bookingData");
-    // console.log("Initial stored data:", storedBookingData);
 
     if (storedBookingData) {
       try {
         const parsedData = JSON.parse(storedBookingData);
-        // console.log("Parsed booking data:", parsedData);
-        // console.log("Parsed booking data:", parsedData);
-        // console.log("Coupon info:", parsedData.couponApplied);
-        // console.log("Price breakdown:", parsedData.priceBreakdown);
+        console.log("Parsed booking data:", parsedData);
+        console.log("Guest fees:", parsedData.guestFees);
+        console.log("Price breakdown:", parsedData.priceBreakdown);
         setBookingDetails(parsedData);
         setStatus("success");
         if (parsedData) {
@@ -39,45 +36,32 @@ const BookingConfirmation = () => {
     }
   }, [paymentIntent]);
 
-  const API_URL = "https://booking-9u8u.onrender.com";
-
-  // const fetchBookingDetails = async (paymentIntentId) => {
-  //   try {
-  //     const response = await fetch(
-  //       `${API_URL}/api/bookings/${paymentIntentId}`
-  //     );
-  //     const data = await response.json();
-  //     if (data.error) throw new Error(data.error);
-  //     setBookingDetails(data);
-  //     setStatus("success");
-  //   } catch (error) {
-  //     console.error("Error fetching booking details:", error);
-  //     setStatus("error");
-  //   }
-  // };
+  const API_URL = "https://smoobu-test.onrender.com";
 
   const fetchBookingDetails = async (paymentIntentId) => {
     try {
       console.log("Starting to fetch booking details");
       console.log("API URL:", `${API_URL}/api/bookings/${paymentIntentId}`);
-      
+
       const response = await fetch(
-        `${API_URL}/api/bookings/${paymentIntentId}`, {
-          method: 'GET',
+        `${API_URL}/api/bookings/${paymentIntentId}`,
+        {
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-      });
-      
+        }
+      );
+
       console.log("Response status:", response.status);
       const data = await response.json();
       console.log("Response data:", data);
-  
+
       if (data.error) {
         console.error("API returned error:", data.error);
         throw new Error(data.error);
       }
-      
+
       setBookingDetails(data);
       setStatus("success");
     } catch (error) {
@@ -95,27 +79,31 @@ const BookingConfirmation = () => {
     }).format(date);
   };
 
-  // Update the renderExtraName function in BookingConfirmation.js
   const renderExtraName = (extra) => {
-    // Handle both direct translation keys and nested translation keys
     if (extra.name) {
-      // If it's a translation key (starts with 'extras.')
-      if (typeof extra.name === 'string' && extra.name.startsWith('extras.')) {
+      if (typeof extra.name === "string" && extra.name.startsWith("extras.")) {
         return t(extra.name);
       }
-      // For direct names (like drinks)
       return extra.name;
     }
-    return '';
+    return "";
   };
 
-  // const formatPrice = (price) => {
-  //   return typeof price === "number" ? price.toFixed(2) : "0.00";
-  // };
-  {/* Update the formatPrice function to handle string values */}
   const formatPrice = (price) => {
     const numberPrice = typeof price === "string" ? parseFloat(price) : price;
     return typeof numberPrice === "number" ? numberPrice.toFixed(2) : "0.00";
+  };
+
+  const calculateExtraGuests = () => {
+    if (!bookingDetails) return 0;
+    const totalGuests =
+      (parseInt(bookingDetails.adults) || 0) +
+      (parseInt(bookingDetails.children) || 0);
+    return Math.max(
+      0,
+      totalGuests -
+        (bookingDetails.priceDetails?.settings?.startingAtGuest || 2)
+    );
   };
 
   if (status === "loading") {
@@ -237,6 +225,8 @@ const BookingConfirmation = () => {
             <h2 className="titleConfirmation">
               {t("bookingConfirmation.success.sections.priceDetails.title")}
             </h2>
+
+            {/* Base Price */}
             <p>
               {t(
                 "bookingConfirmation.success.sections.priceDetails.basePrice",
@@ -246,33 +236,32 @@ const BookingConfirmation = () => {
               )}
             </p>
 
-            {/* For the extras, we use the translation keys from extras section */}
-            {/* {bookingDetails?.extras?.map((extra, index) => (
-              <p key={index}>
-                {renderExtraName(extra)} (x{extra.quantity}):{" "}
-                {formatPrice(
-                  (extra.amount || 0) + (extra.extraPersonAmount || 0)
-                )}
-                €
-                {extra.extraPersonQuantity > 0 && (
-                  <span className="text-sm text-gray-600">
-                    {` (${t("extras.additionalPerson")}: ${
-                      extra.extraPersonQuantity
-                    })`}
-                  </span>
+            {/* Guest Fees */}
+            {bookingDetails?.guestFees > 0 && (
+              <p>
+                {t(
+                  "bookingConfirmation.success.sections.priceDetails.guestFees",
+                  {
+                    amount: formatPrice(bookingDetails.guestFees),
+                    extraGuests: calculateExtraGuests(),
+                  }
                 )}
               </p>
-            ))} */}
+            )}
 
+            {/* Extras */}
             {bookingDetails?.extras?.map((extra, index) => {
               const hasExtraPerson = extra.extraPersonQuantity > 0;
-              
+
               return (
                 <p key={index}>
-                  {renderExtraName(extra)} (x{extra.quantity}): {formatPrice(extra.amount)}€
+                  {renderExtraName(extra)} (x{extra.quantity}):{" "}
+                  {formatPrice(extra.amount)}€
                   {hasExtraPerson && (
                     <span className="text-sm text-gray-600">
-                      {` (${t("extras.additionalPerson")} (x${extra.extraPersonQuantity}) : ${formatPrice(extra.extraPersonAmount)}€)`}
+                      {` (${t("extras.additionalPerson")} (x${
+                        extra.extraPersonQuantity
+                      }) : ${formatPrice(extra.extraPersonAmount)}€)`}
                     </span>
                   )}
                 </p>
@@ -295,33 +284,29 @@ const BookingConfirmation = () => {
             )}
 
             {/* Promo code */}
-            {/* {bookingDetails?.couponApplied && (
-              <p className="discount-text">
-                {t(
-                  "bookingConfirmation.success.sections.priceDetails.promoCode",
-                  {
-                    code: bookingDetails.couponApplied.code,
-                    amount: formatPrice(bookingDetails.couponApplied.discount),
-                  }
-                )}
-              </p>
-            )} */}
-            {/* Promo code */}
             {bookingDetails?.couponApplied && (
-              <p className="discount-text" style={{ color: '#22c55e' }}> {/* Add green color for discounts */}
-                {bookingDetails.couponApplied.type === 'percentage' 
-                  ? t("bookingConfirmation.success.sections.priceDetails.promoCode", {
-                      code: bookingDetails.couponApplied.code,
-                      amount: formatPrice(Number(bookingDetails.priceBreakdown.couponDiscount))
-                    })
-                  : t("bookingConfirmation.success.sections.priceDetails.promoCode", {
-                      code: bookingDetails.couponApplied.code,
-                      amount: formatPrice(Number(bookingDetails.priceBreakdown.couponDiscount))
-                    })
-                }
+              <p className="discount-text" style={{ color: "#22c55e" }}>
+                {bookingDetails.couponApplied.type === "percentage"
+                  ? t(
+                      "bookingConfirmation.success.sections.priceDetails.promoCode",
+                      {
+                        code: bookingDetails.couponApplied.code,
+                        amount: formatPrice(
+                          Number(bookingDetails.priceBreakdown.couponDiscount)
+                        ),
+                      }
+                    )
+                  : t(
+                      "bookingConfirmation.success.sections.priceDetails.promoCode",
+                      {
+                        code: bookingDetails.couponApplied.code,
+                        amount: formatPrice(
+                          Number(bookingDetails.priceBreakdown.couponDiscount)
+                        ),
+                      }
+                    )}
               </p>
             )}
-            
 
             {/* Total */}
             <div className="total-section">
