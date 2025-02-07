@@ -314,7 +314,7 @@ const handleSubmit = async (e) => {
 
     // Calculate extras total
     const extrasTotal = selectedExtrasArray.reduce(
-      (sum, extra) => sum + extra.amount,
+      (sum, extra) => sum + extra.amount + (extra.extraPersonAmount || 0),
       0
     );
 
@@ -322,15 +322,18 @@ const handleSubmit = async (e) => {
     const subtotalBeforeDiscounts = basePrice + extrasTotal + guestFees;
     const longStayDiscount = selectedRoomPrice.discount || 0;
     const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-    const finalTotal =
-      subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
+
+    const finalTotal = Math.max(
+      subtotalBeforeDiscounts - longStayDiscount - couponDiscount,
+      0
+    );
 
     // Prepare booking data with all price components
     const bookingDataForPayment = {
       ...formData,
       price: finalTotal,
       basePrice: basePrice,
-      guestFees: guestFees, // Include guest fees explicitly
+      guestFees: guestFees,
       extras: selectedExtrasArray,
       couponApplied: appliedCoupon
         ? {
@@ -345,7 +348,7 @@ const handleSubmit = async (e) => {
         : null,
       priceDetails: {
         ...selectedRoomPrice,
-        guestFees, // Include guest fees in price details
+        guestFees,
         finalPrice: finalTotal,
         calculatedDiscounts: {
           longStay: longStayDiscount,
@@ -354,15 +357,19 @@ const handleSubmit = async (e) => {
       },
     };
 
-    // Create payment intent
-    const response = await api.post("/create-payment-intent", {
-      price: finalTotal,
-      bookingData: bookingDataForPayment,
-    });
+    // Create payment intent only if final total is greater than 0
+    if (finalTotal > 0) {
+      const response = await api.post("/create-payment-intent", {
+        price: finalTotal,
+        bookingData: bookingDataForPayment,
+      });
 
-    setClientSecret(response.data.clientSecret);
-    setShowPayment(true);
-    setError(null);
+      setClientSecret(response.data.clientSecret);
+      setShowPayment(true);
+      setError(null);
+    } else {
+      setError("Le montant total ne peut pas être négatif ou nul.");
+    }
   } catch (err) {
     console.error("Error creating payment:", err);
     setError(
