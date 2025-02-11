@@ -62,7 +62,7 @@
 }
 
 .react-datepicker-popper {
-  z-index: 9999;
+  z-index: 99;
   line-height: 0;
 }
 .react-datepicker-popper .react-datepicker__triangle {
