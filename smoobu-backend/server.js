@@ -151,6 +151,19 @@ const discountSettings = {
       discountPercentage: 0,
     },
   },
+  2565753: { // Le dôme de libellules
+    cleaningFee: 0,
+    prepayment: 0,
+    minDaysBetweenBookingAndArrival: 1,
+    extraGuestsPerNight: 0, // No extra fees
+    startingAtGuest: 2,
+    maxGuests: 2,
+    extraChildPerNight: 0,
+    lengthOfStayDiscount: {
+      minNights: 0,
+      discountPercentage: 0,
+    },
+  },
   1644643: { // La Bulle du Ruisseau
     cleaningFee: 0,
     prepayment: 0,
@@ -243,6 +256,7 @@ const extrasFrenchNames = {
 // Add this near your other constants at the top of server.js
 const roomNames = {
   '1946282': 'Le Dôme des Libellules',
+  '2565753': 'La Cabane du Chêne',
   '1644643': 'La Bulle du Ruisseau',
   '1946279': 'Le Moulin',
   '1946276': 'La Chambre de Blé',

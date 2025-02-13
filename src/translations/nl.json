@@ -41,6 +41,7 @@
         },
         "names": {
           "bulle": "De Bulle du Ruisseau",
+          "cabane": "De cabane du Chêne",
           "dome": "De Dôme des Libellules",
           "moulin": "De Moulin",
           "ble": "De Chambre de Blé",
@@ -48,6 +49,7 @@
         },
         "descriptions": {
           "bulle": "Dompel jezelf onder in de rustgevende intimiteit van de Streambubbel - een unieke cocon genesteld tussen aarde en water, gewiegd door het gezang van de beek en de fluisteringen van de natuur. Met zijn Crusoe-fauteuil en kingsize bed biedt deze ruimte verfijnd comfort in het hart van de natuur. Geniet ook van de vuurkorf voor gezellige avonden onder de sterren, perfect voor het roosteren van marshmallows en het delen van onvergetelijke momenten. Boek nu en laat je betoveren door de magische sereniteit van de Streambubbel.",
+          "cabane": "Ontdek de Cabane du Chêne - een oase van rust op 7 meter hoogte in het bladerdak van een majestueuze eik. Gelegen in het hart van het landgoed, biedt het een adembenemend panoramisch uitzicht over de regio. De hut is verdeeld over twee verdiepingen en heeft een gezellig salon, een knusse slaapkamer en een droog toilet, waar comfort en ontsnapping hand in hand gaan. Profiteer van het grote terras boven op de boom om te ontspannen in de buitenlucht. Onder de boom staat een kleine tuin met een vuurplaats en BBQ tot je beschikking. Boek nu je verblijf in de Cabane du Chêne en geniet van een unieke ervaring in het hart van de natuur.",
           "dome": "Dompel jezelf onder in de magische intimiteit van de Libellendome – een uniek toevluchtsoord in het hart van de natuur, ontworpen voor een romantisch uitje. Uitgerust met een verwarmd kingsize bed en privéterras biedt deze ruimte luxe en sereniteit. Genesteld in een hoekje van het bos is deze geïsoleerde plek perfect voor een totale ontkoppeling. Je brengt een onvergetelijke nacht door onder de sterren, gewiegd door de magie van de natuur. Er is een stapelbed beschikbaar in het kleine huisje ernaast, ideaal voor kinderen. Geniet ook van de vuurkorf-BBQ voor gezellige avonden. Boek nu en laat je meevoeren door de rust van de Libellendome.",
           "moulin": "Dompel jezelf onder in de betoverende sfeer van de Molen - een romantische studio ontworpen voor twee personen waar modern comfort en charme uit het verleden zich vermengen. Met zijn queensize bed op de mezzanine, een gezellige slaapbank die plaats biedt aan kinderen, biedt deze ruimte je een intieme en comfortabele ontsnapping. Voeg daar een volledig uitgeruste keuken aan toe voor gezellige momenten. Boek nu en laat je verleiden door de onweerstaanbare charme van de Molen.",
           "ble": "Dompel jezelf onder in de intimiteit van de Tarwekamer - een gezellig toevluchtsoord in het hart van een zorgvuldig gerestaureerde schuur. Ontworpen om plaats te bieden aan twee volwassenen en maximaal twee kinderen, combineert deze rustieke kamer op harmonieuze wijze de charme van vroeger met moderne voorzieningen. Ideaal voor een romantisch uitje of familievakantie, boek nu en laat je verleiden door de warme sfeer van de Tarwekamer.",
@@ -66,6 +68,7 @@
           "twoBathrooms": "2 badkamers en 2 toiletten",
           "brazier": "Vuurkorf",
           "heater": "Elektrische verwarming",
+          "gasheater": "gasverwarming",
           "kitchen": "Uitgeruste keuken",
           "wifi": "WiFi"
         },

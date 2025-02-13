@@ -41,6 +41,7 @@
         },
         "names": {
           "bulle": "La Bulle du Ruisseau",
+          "cabane": "La Cabane du Chêne",
           "dome": "Le Dôme des Libellules",
           "moulin": "Le Moulin",
           "ble": "La Chambre de Blé",
@@ -48,6 +49,7 @@
         },
         "descriptions": {
           "bulle": "Plongez dans l'intimité apaisante de la Bulle du Ruisseau - un cocon insolite niché entre terre et eau, bercé par le chant du ruisseau et les murmures de la nature. Avec son fauteuil Crusoé et son lit king-size, cet espace vous offre un confort raffiné au cœur de la nature. Profitez également du braséro pour des soirées conviviales sous les étoiles, parfaites pour griller des guimauves et partager des moments inoubliables. Réservez dès maintenant et laissez-vous envoûter par la sérénité magique de la Bulle du Ruisseau.",
+          "cabane": "Découvrez la Cabane du Chêne – un havre de paix perché à 7 mètres de hauteur dans la canopée d’un majestueux chêne. Située au cœur du domaine, elle offre une vue panoramique imprenable sur la région. Répartie sur deux étages, la cabane dispose d’un petit salon confortable, d’une chambre douillette et de toilettes sèches, alliant confort et évasion. Profitez de la grande terrasse, perchée à la cime de l'arbre, pour vous détendre en plein air. En dessous de l’arbre, un petit jardin avec un braséro - BBQ est à votre disposition. Réservez dès maintenant votre séjour à la Cabane du Chêne et vivez une expérience unique en pleine nature.",
           "dome": "Plongez dans l'intimité magique du Dôme des Libellules – un refuge insolite au cœur de la nature, conçu pour une escapade romantique. Doté d'un lit King size chauffant et d'une terrasse privée, cet espace offre luxe et sérénité. Niché au coin d'un bois, le site isolé est parfait pour une déconnexion totale. Vous passerez une nuit inoubliable sous les étoiles, bercés par la magie de la nature. Un lit superposé est disponible dans le petit cabanon à côté, idéal pour accueillir des enfants. Profitez également du braséro – BBQ pour des soirées conviviales. Réservez dès maintenant et laissez-vous emporter par la tranquillité du Dôme des Libellules.",
           "moulin": "Immergez-vous dans l'atmosphère envoûtante du Moulin- un studio romantique conçu pour deux personnes où confort moderne et charme passé s'entremêlent. Avec son lit Queen size en mezzanine, un canapé-lit douillet pouvant accueillir des enfants, cet espace vous offre une escapade intime et confortable. Ajoutez à cela une cuisine équipée pour des moments conviviaux. Réservez dès maintenant et laissez-vous séduire par le charme irrésistible du Moulin.",
           "ble": "Plongez-vous dans l'intimité de la Chambre de Blé - un refuge douillet au cœur d'une grange restaurée avec soin. Conçue pour accueillir deux adultes et jusqu'à deux enfants, cette chambre rustique allie harmonieusement le charme d'antan et les commodités modernes. Idéale pour une escapade en amoureux ou des vacances en famille, réservez dès maintenant et laissez-vous séduire par l'ambiance chaleureuse de la Chambre de Blé.",
@@ -66,6 +68,7 @@
           "twoBathrooms": "2 salles de bains et 2 toilettes",
           "brazier": "Braséro",
           "heater": "Chauffage électrique",
+          "gasheater": "Chauffage au gas",
           "kitchen": "Cuisine équipée",
           "wifi": "WiFi"
         },

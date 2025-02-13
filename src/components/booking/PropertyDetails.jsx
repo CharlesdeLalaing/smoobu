@@ -79,7 +79,7 @@ export const PropertyDetails = ({
   };
 
   const sortRooms = (rooms) => {
-    const customOrder = [1946282, 1644643, 1946279, 1946276, 1946270];
+    const customOrder = [1946282, 2565753, 1644643, 1946279, 1946276, 1946270];
     
     return [...rooms].sort((a, b) => {
       if (a.id === formData.apartmentId) return -1;

@@ -17,6 +17,13 @@ import Moulin_img_3 from "../../assets/Chambres/Le Moulin/Moulin_3.webp";
 import Moulin_img_4 from "../../assets/Chambres/Le Moulin/Moulin_4.webp";
 import Moulin_img_5 from "../../assets/Chambres/Le Moulin/Moulin_5.webp";
 
+import Cabane_img_1 from "../../assets/Chambres/La Cabane/Cabane_1.jpeg";
+import Cabane_img_2 from "../../assets/Chambres/La Cabane/Cabane_2.jpeg";
+import Cabane_img_3 from "../../assets/Chambres/La Cabane/Cabane_3.jpeg";
+import Cabane_img_4 from "../../assets/Chambres/La Cabane/Cabane_4.jpeg";
+import Cabane_img_5 from "../../assets/Chambres/La Cabane/Cabane_5.jpeg";
+import Cabane_img_6 from "../../assets/Chambres/La Cabane/Cabane_.6jpeg";
+
 import Ble_img_1 from "../../assets/Chambres/De Blé/blé_1.webp";
 import Ble_img_2 from "../../assets/Chambres/De Blé/blé_2.webp";
 import Ble_img_3 from "../../assets/Chambres/De Blé/blé_3.webp";
@@ -108,6 +115,41 @@ export const roomsData = {
       }
     }
   },
+
+  2565753: {
+    id: 2565753,
+    type: "rooms.types.unusual",
+    nameKey: "rooms.names.cabane",
+    description: "rooms.descriptions.cabane",
+    images: {
+      main: Cabane_img_1,
+      secondary: Cabane_img_2,
+      tertiary: Cabane_img_3,
+      quaternary: Cabane_img_4,
+      quinary: Cabane_img_5,
+      senary: Cabane_img_6
+    },
+    maxGuests: 2,
+    features: [
+      { icon: people, title: "rooms.features.maxGuests", value: 2 },
+      { icon: bed, title: "rooms.features.bedQueen" },
+      { icon: dog, title: "rooms.features.pets" },
+      { icon: toilet, title: "rooms.features.dryToilet" },
+      { icon: heater, title: "rooms.features.gasheater" },
+      { icon: fire, title: "rooms.features.brazier" },
+    ],
+    size: "30m²",
+    calendarData: {
+      id: "2565753",
+      verification: "7dacb43460304922d9b25a6d2da973d40c738de66652a429ccaf65412e95be86",
+      urls: {
+        en: "https://login.smoobu.com/en/cockpit/widget/single-calendar/2565753",
+        fr: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/2565753",
+        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/2565753"
+      }
+    }
+  },
+
 
   1946279: {
     id: 1946279,
