@@ -5,6 +5,25 @@ import * as XLSX from "xlsx";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://booking-9u8u.onrender.com";
 
+
+
+const portalNames = {
+  'Homepage': 'Website',
+  'Direct booking': 'Direct booking',
+  'Homepage direct': 'Website',
+  'Direct': 'Direct booking',
+  'Airbnb': 'Airbnb',
+  'airbnb': 'Airbnb',
+  'Booking.com': 'Booking.com',
+  'booking.com': 'Booking.com',
+  'Expedia': 'Expedia',
+  'blocked': 'Blocked',
+  'Blocked': 'Blocked',
+  'Partenariat': 'Partenariat',
+  'partenariat': 'Partenariat'
+};
+
+
 const BookingsReport = () => {
   const [startMonth, setStartMonth] = useState(new Date().getMonth() + 1);
   const [startYear, setStartYear] = useState(new Date().getFullYear());
@@ -17,6 +36,11 @@ const BookingsReport = () => {
   const [sortField, setSortField] = useState("checkIn");
   const [sortDirection, setSortDirection] = useState("desc");
   const [expandedBooking, setExpandedBooking] = useState(null);
+
+  const getPortalName = (portal) => {
+    return portalNames[portal] || portal || 'Unknown';
+  };
+
 
   const years = Array.from({ length: 3 }, (_, i) => new Date().getFullYear() - i);
   const months = Array.from({ length: 12 }, (_, i) => ({
@@ -372,7 +396,7 @@ const BookingsReport = () => {
                         {booking.nights}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
-                        {booking.portal}
+                        {getPortalName(booking.portal)}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {formatPrice(booking.price)}
@@ -427,8 +451,8 @@ const BookingsReport = () => {
                                     {formatDate(booking.created)}
                                   </div>
                                   <div className="text-sm">
-                                    <span className="font-medium block">Portai:</span>
-                                    {booking.portal}
+                                    <span className="font-medium block">Portail:</span>
+                                    {getPortalName(booking.portal)}
                                   </div>
                                 </div>
                               </div>
