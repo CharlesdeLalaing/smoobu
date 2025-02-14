@@ -1433,8 +1433,8 @@ app.get("/api/bookings-report", async (req, res) => {
           "Cache-Control": "no-cache",
         },
         params: {
-          created_from,
-          created_to,
+          arrivalFrom: created_from,  // Changed from startDate
+          arrivalTo: created_to, 
           excludeBlocked: false,
           showCancellation: true,
           pageSize: 100 
@@ -1598,15 +1598,15 @@ app.get("/api/bookings-report", async (req, res) => {
 
     console.log("=== PROCESSING SUMMARY ===");
     console.log({
-      period: `${startDate} - ${endDate}`,
+      period: `${created_from} - ${created_to}`,  // Changed from startDate/endDate
       totalBookings: bookings.length,
       processedBookings: processedBookings.length,
       sampleBooking: processedBookings[0]
     });
 
     res.json({
-      startDate,
-      endDate,
+      created_from,       // Changed from startDate
+      created_to,         // Changed from endDate
       data: processedBookings
     });
 
