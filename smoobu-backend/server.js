@@ -1213,9 +1213,8 @@ app.get("/api/bookings-report", async (req, res) => {
         params: {
           arrivalFrom: startDate,
           arrivalTo: endDate,
-          excludeBlocked: false,
+          excludeBlocked: true,
           showCancellation: true,
-          pageSize: 100 
         },
       }
     );
