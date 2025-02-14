@@ -1230,10 +1230,10 @@ app.get("/api/bookings-report", async (req, res) => {
         console.log(`Processing booking ${booking.id}`);
         
         // Skip if it's a blocked booking or cancelled booking
-        if (booking.channelId === 'Blocked' || booking.type === 'cancellation') {
-          console.log(`Skipping ${booking.channelId === 'Blocked' ? 'blocked' : 'cancelled'} booking ${booking.id}`);
-          continue;
-        }
+        // if (booking.channelId === 'Blocked' || booking.type === 'cancellation') {
+        //   console.log(`Skipping ${booking.channelId === 'Blocked' ? 'blocked' : 'cancelled'} booking ${booking.id}`);
+        //   continue;
+        // }
 
         // Fetch price elements for each booking
         const priceElementsResponse = await axios.get(
