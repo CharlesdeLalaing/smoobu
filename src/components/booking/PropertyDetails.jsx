@@ -258,34 +258,43 @@ export const PropertyDetails = ({
 
             <div className="flex-1 overflow-y-none">
               {activeTab === "roomInfo" && (
-                <div className="h-full">
-                  <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
-                    {Object.values(room.images).map((image, index) => (
-                      <img
-                        key={index}
-                        src={image}
-                        alt={`${room.name} ${index + 1}`}
-                        className="w-full h-[400px] object-cover"
-                      />
-                    ))}
-                  </Slider>
-
-                  <div className="mt-4">
-                    <Slider {...thumbnailSettings}>
+                <div className="h-full flex flex-col">
+                  {/* Main Image Slider */}
+                  <div className="w-full">
+                    <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
                       {Object.values(room.images).map((image, index) => (
-                        <div key={index} className="px-2">
+                        <div key={index} className="relative w-full">
                           <img
                             src={image}
-                            alt={`${room.name} Thumbnail ${index + 1}`}
-                            className="object-cover cursor-pointer h-[57px] w-full"
+                            alt={`${room.name} ${index + 1}`}
+                            className="w-full h-[250px] md:h-[300px] lg:h-[350px] object-cover"
                           />
                         </div>
                       ))}
                     </Slider>
                   </div>
 
-                  <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
-                    <div className="features-list flex w-full">
+                  {/* Thumbnails */}
+                  <div className="mt-2 md:mt-3">
+                    <Slider {...{
+                      ...thumbnailSettings,
+                      slidesToShow: window.innerWidth < 768 ? 2 : 3,
+                    }}>
+                      {Object.values(room.images).map((image, index) => (
+                        <div key={index} className="px-1 md:px-2">
+                          <img
+                            src={image}
+                            alt={`${room.name} Thumbnail ${index + 1}`}
+                            className="object-cover cursor-pointer h-[45px] md:h-[50px] w-full"
+                          />
+                        </div>
+                      ))}
+                    </Slider>
+                  </div>
+
+                  {/* Features */}
+                  <div className="features-container mt-3 md:mt-4">
+                    <div className="features-list grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                       {room.features.map((feature, index) => {
                         let translatedTitle = feature.value ? 
                           Array.isArray(feature.value) ?
@@ -296,17 +305,17 @@ export const PropertyDetails = ({
                         return (
                           <div
                             key={index}
-                            className="feature-item flex flex-col items-center justify-center text-center p-3 bg-[#668E73] min-w-auto"
+                            className="feature-item flex flex-col items-center justify-center text-center p-2 md:p-3 bg-[#668E73] rounded"
                           >
                             <img
                               src={feature.icon}
                               alt={translatedTitle}
-                              className="w-6 h-6"
+                              className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6"
                               style={{
                                 filter: "invert(100%)"
                               }}
                             />
-                            <span className="text-sm mt-2 text-white whitespace-nowrap">
+                            <span className="text-xs md:text-sm mt-1 md:mt-2 text-white">
                               {translatedTitle}
                             </span>
                           </div>
