@@ -333,8 +333,8 @@ const handleChange = async (e) => {
         const response = await api.get("/rates", {
           params: {
             apartments: updatedFormData.apartmentId || [
-              "1946282",
               "2565753",
+              "1946282",
               "1644643",
               "1946279",
               "1946276",
@@ -465,7 +465,7 @@ const handleChange = async (e) => {
   
       const response = await api.get("/rates", {
         params: {
-          apartments: formData.apartmentId || ["1946282", "2565753", "1644643", "1946279", "1946276", "1946270"],
+          apartments: formData.apartmentId || ["2565753", "1946282", "1644643", "1946279", "1946276", "1946270"],
           start_date: formData.arrivalDate,
           end_date: formData.departureDate,
           adults: formData.adults,
