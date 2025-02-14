@@ -1413,26 +1413,15 @@ app.get("/api/extras-report", async (req, res) => {
 //   }
 // });
 
+
 app.get("/api/bookings-report", async (req, res) => {
   try {
-    const { startMonth, startYear, endMonth, endYear } = req.query;
-
-    // Validate and fix date range
-    let finalStartMonth = String(startMonth).padStart(2, "0");
-    let finalStartYear = startYear;
-    let finalEndMonth = String(endMonth).padStart(2, "0");
-    let finalEndYear = endYear;
-
-    const startDate = `${finalStartYear}-${finalStartMonth}-01`;
-    const lastDay = new Date(finalEndYear, parseInt(finalEndMonth), 0).getDate();
-    const endDate = `${finalEndYear}-${finalEndMonth}-${lastDay}`;
+    const { startDate, endDate } = req.query;
 
     console.log("=== START OF BOOKINGS REPORT REQUEST ===");
     console.log("Request params:", {
-      startMonth: finalStartMonth,
-      startYear: finalStartYear,
-      endMonth: finalEndMonth,
-      endYear: finalEndYear
+      startDate,
+      endDate
     });
 
     // Fetch bookings for the period
@@ -1454,7 +1443,7 @@ app.get("/api/bookings-report", async (req, res) => {
     );
 
     const bookings = bookingsResponse.data.bookings || [];
-    console.log(`Found ${bookings.length} bookings for period ${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`);
+    console.log(`Found ${bookings.length} bookings for period ${startDate} - ${endDate}`);
 
     // Process each booking to get price elements and extras
     const processedBookings = [];
@@ -1462,12 +1451,6 @@ app.get("/api/bookings-report", async (req, res) => {
       try {
         console.log(`Processing booking ${booking.id}`);
         
-        // Skip if it's a blocked booking or cancelled booking
-        // if (booking.channelId === 'Blocked' || booking.type === 'cancellation') {
-        //   console.log(`Skipping ${booking.channelId === 'Blocked' ? 'blocked' : 'cancelled'} booking ${booking.id}`);
-        //   continue;
-        // }
-
         // Fetch price elements for each booking
         const priceElementsResponse = await axios.get(
           `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`,
@@ -1615,17 +1598,15 @@ app.get("/api/bookings-report", async (req, res) => {
 
     console.log("=== PROCESSING SUMMARY ===");
     console.log({
-      period: `${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`,
+      period: `${startDate} - ${endDate}`,
       totalBookings: bookings.length,
       processedBookings: processedBookings.length,
       sampleBooking: processedBookings[0]
     });
 
     res.json({
-      startMonth: finalStartMonth,
-      startYear: finalStartYear,
-      endMonth: finalEndMonth,
-      endYear: finalEndYear,
+      startDate,
+      endDate,
       data: processedBookings
     });
 
