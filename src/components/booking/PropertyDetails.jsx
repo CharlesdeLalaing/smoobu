@@ -265,7 +265,7 @@ export const PropertyDetails = ({
                         key={index}
                         src={image}
                         alt={`${room.name} ${index + 1}`}
-                        className="w-full h-auto object-cover"
+                        className="w-full h-[60vh] object-cover"
                       />
                     ))}
                   </Slider>
@@ -277,14 +277,14 @@ export const PropertyDetails = ({
                           <img
                             src={image}
                             alt={`${room.name} Thumbnail ${index + 1}`}
-                            className="object-cover cursor-pointer h-[57px] w-full"
+                            className="object-cover cursor-pointer h-[20vh] w-full"
                           />
                         </div>
                       ))}
                     </Slider>
                   </div>
 
-                  <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
+                  <div className="features-container overflow-x-auto w-full h-[20vh] mt-4 font-cormorant">
                     <div className="features-list flex w-full">
                       {room.features.map((feature, index) => {
                         let translatedTitle = feature.value ? 
