@@ -5,8 +5,6 @@ import * as XLSX from "xlsx";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://booking-9u8u.onrender.com";
 
-
-
 const portalNames = {
   'Homepage': 'Website',
   'Direct booking': 'Direct booking',
@@ -23,7 +21,6 @@ const portalNames = {
   'partenariat': 'Partenariat'
 };
 
-
 const BookingsReport = () => {
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -39,12 +36,11 @@ const BookingsReport = () => {
     return portalNames[portal] || portal || 'Unknown';
   };
 
-
-  const years = Array.from({ length: 3 }, (_, i) => new Date().getFullYear() - i);
-  const months = Array.from({ length: 12 }, (_, i) => ({
-    value: i + 1,
-    label: new Date(2024, i).toLocaleString("fr", { month: "long" }),
-  }));
+  useEffect(() => {
+    if (new Date(endDate) < new Date(startDate)) {
+      setEndDate(startDate);
+    }
+  }, [startDate, endDate]);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -74,40 +70,6 @@ const BookingsReport = () => {
 
     fetchReport();
   }, [startDate, endDate]);
-
-  useEffect(() => {
-    const fetchReport = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const startMonthStr = String(startMonth).padStart(2, "0");
-        const endMonthStr = String(endMonth).padStart(2, "0");
-
-        const response = await axios.get(`${API_URL}/api/bookings-report`, {
-          params: {
-            startMonth: startMonthStr,
-            startYear: startYear,
-            endMonth: endMonthStr,
-            endYear: endYear,
-          },
-        });
-
-        if (response.data) {
-          setReportData(response.data.data || []);
-        } else {
-          throw new Error("Réponse vide du serveur");
-        }
-      } catch (err) {
-        setError(err.response?.data?.error || err.message);
-        setReportData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReport();
-  }, [startMonth, startYear, endMonth, endYear]);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -210,10 +172,7 @@ const BookingsReport = () => {
   
     XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
   
-    const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
-    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
     const fileName = `rapport-reservations_${startDate}_${endDate}.xlsx`;
-  
     XLSX.writeFile(wb, fileName);
   };
 
@@ -233,36 +192,35 @@ const BookingsReport = () => {
       return multiplier * (String(a[sortField]).localeCompare(String(b[sortField])));
     });
 
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center h-screen">
-          Chargement...
-        </div>
-      );
-    }
-
+  if (loading) {
     return (
-      <div className="w-full max-w-7xl p-3 mx-auto md:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-6 h-6 text-[#678D73]" />
-            <h1 className="text-xl font-bold md:text-2xl">Rapport des Réservations Smoobu</h1>
-          </div>
-  
-          <button
-            onClick={handleExport}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-[#678D73] text-white rounded-lg hover:bg-[#4a6553] transition-colors w-full sm:w-auto"
-            disabled={filteredAndSortedData.length === 0}
-          >
-            <Download size={20} />
-            Exporter
-          </button>
+      <div className="flex items-center justify-center h-screen">
+        Chargement...
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-7xl p-3 mx-auto md:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-6 h-6 text-[#678D73]" />
+          <h1 className="text-xl font-bold md:text-2xl">Rapport des Réservations Smoobu</h1>
         </div>
-  
-        {/* Filter section with date pickers */}
+
+        <button
+          onClick={handleExport}
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-[#678D73] text-white rounded-lg hover:bg-[#4a6553] transition-colors w-full sm:w-auto"
+          disabled={filteredAndSortedData.length === 0}
+        >
+          <Download size={20} />
+          Exporter
+        </button>
+      </div>
+
       <div className="p-4 mb-6 bg-white rounded-lg shadow">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="relative">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="relative lg:col-span-1">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <Search size={20} className="text-gray-400" />
             </div>
@@ -275,31 +233,29 @@ const BookingsReport = () => {
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date de début
-              </label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-              />
-            </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Date de début
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+            />
+          </div>
 
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date de fin
-              </label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-              />
-            </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Date de fin
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              min={startDate}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+            />
           </div>
         </div>
       </div>
@@ -316,7 +272,6 @@ const BookingsReport = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="w-8 px-4 py-3"></th>
-                {/* Table headers - keeping the existing ones */}
                 <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
                     onClick={() => handleSort("id")}>
                   ID de réservation {sortField === "id" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -355,7 +310,6 @@ const BookingsReport = () => {
                 </th>
               </tr>
             </thead>
-            {/* Table Body */}
             <tbody className="divide-y divide-gray-200">
               {filteredAndSortedData.length > 0 ? (
                 filteredAndSortedData.map((booking) => (
@@ -468,10 +422,10 @@ const BookingsReport = () => {
                                     </p>
                                   )}
                                   
-                                  {booking.priceDetails.longStayDiscount < 0 && ( // Changed to < 0 since it's negative
+                                  {booking.priceDetails.longStayDiscount < 0 && (
                                     <p className="text-sm text-red-600">
                                       <span className="font-medium block">Réduction long séjour:</span>
-                                      {formatPrice(booking.priceDetails.longStayDiscount)} {/* No need for negative sign since it's already negative */}
+                                      {formatPrice(booking.priceDetails.longStayDiscount)}
                                     </p>
                                   )}
 
@@ -494,12 +448,13 @@ const BookingsReport = () => {
                                     <span className="text-sm">
                                       {formatPrice(booking.priceDetails.basePrice + 
                                         (booking.priceDetails.linenFee || 0) + 
-                                        (booking.priceDetails.longStayDiscount || 0) + // Add since it's already negative
+                                        (booking.priceDetails.longStayDiscount || 0) +
                                         (booking.priceDetails.promoCode?.amount || 0))}
                                     </span>
                                   </div>
                                 </div>
                               </div>
+                              
                               {/* Column 4: Détails Extras */}
                               <div className="space-y-3">
                                 <h3 className="text-sm font-semibold text-gray-900">Détails Extras</h3>
@@ -509,7 +464,6 @@ const BookingsReport = () => {
                                       <span className="font-medium block mb-2">Extras sélectionnés:</span>
                                       <ul className="space-y-2">
                                         {booking.extras.map((extra, index) => {
-                                          // Calculate unit price by dividing total amount by quantity
                                           const unitPrice = extra.amount / extra.quantity;
                                           
                                           return (
