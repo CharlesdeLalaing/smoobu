@@ -1232,12 +1232,22 @@ app.get("/api/bookings-report", async (req, res) => {
     // Process each booking to get price elements and extras
     const processedBookings = [];
     for (const booking of bookings) {
+
+      console.log("Raw booking data:", {
+        id: booking.id,
+        channel: booking.channelId,
+        type: booking.type,
+        arrival: booking.arrival,
+        departure: booking.departure
+      });
+
+
       try {
         console.log(`Processing booking ${booking.id}`);
         
         // Skip if it's a blocked booking or cancelled booking
-        if (booking.channelId === 'Blocked' || booking.type === 'cancellation') {
-          console.log(`Skipping ${booking.channelId === 'Blocked' ? 'blocked' : 'cancelled'} booking ${booking.id}`);
+        if (booking.type === 'cancellation') {
+          console.log(`Skipping cancelled booking ${booking.id}`);
           continue;
         }
 
