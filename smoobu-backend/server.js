@@ -1538,6 +1538,24 @@ app.get("/api/bookings-report", async (req, res) => {
 
         const extrasTotal = extras.reduce((sum, extra) => sum + extra.amount, 0);
 
+        // Add portal name mapping
+        const portalNames = {
+          'Homepage': 'Website',
+          'Direct booking': 'Direct booking',
+          'Homepage direct': 'Website',
+          'Direct': 'Direct booking',
+          'Airbnb': 'Airbnb',
+          'airbnb': 'Airbnb',
+          'Booking.com': 'Booking.com',
+          'booking.com': 'Booking.com',
+          'Expedia': 'Expedia',
+          'blocked': 'Blocked',
+          'Blocked': 'Blocked',
+          'Partenariat': 'Partenariat',
+          'partenariat': 'Partenariat'
+        };
+        
+
         const processedBooking = {
           id: booking.id,
           guest: booking["guest-name"] || 
