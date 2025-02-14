@@ -25,10 +25,8 @@ const portalNames = {
 
 
 const BookingsReport = () => {
-  const [startMonth, setStartMonth] = useState(new Date().getMonth() + 1);
-  const [startYear, setStartYear] = useState(new Date().getFullYear());
-  const [endMonth, setEndMonth] = useState(new Date().getMonth() + 1);
-  const [endYear, setEndYear] = useState(new Date().getFullYear());
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -49,11 +47,33 @@ const BookingsReport = () => {
   }));
 
   useEffect(() => {
-    if (endYear < startYear || (endYear === startYear && endMonth < startMonth)) {
-      setEndYear(startYear);
-      setEndMonth(startMonth);
-    }
-  }, [startYear, startMonth, endYear, endMonth]);
+    const fetchReport = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await axios.get(`${API_URL}/api/bookings-report`, {
+          params: {
+            startDate,
+            endDate
+          },
+        });
+
+        if (response.data) {
+          setReportData(response.data.data || []);
+        } else {
+          throw new Error("Réponse vide du serveur");
+        }
+      } catch (err) {
+        setError(err.response?.data?.error || err.message);
+        setReportData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReport();
+  }, [startDate, endDate]);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -239,72 +259,47 @@ const BookingsReport = () => {
           </button>
         </div>
   
-        <div className="p-4 mb-6 bg-white rounded-lg shadow">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="relative lg:col-span-1">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Search size={20} className="text-gray-400" />
-              </div>
+        {/* Filter section with date pickers */}
+      <div className="p-4 mb-6 bg-white rounded-lg shadow">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <Search size={20} className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Rechercher..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date de début
+              </label>
               <input
-                type="text"
-                placeholder="Rechercher..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
               />
             </div>
-  
-            <div className="sm:col-span-1">
-              <select
-              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-              value={startMonth}
-              onChange={(e) => setStartMonth(parseInt(e.target.value))}
-            >
-              {months.map((month) => (
-                <option key={month.value} value={month.value}>
-                  {month.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="sm:col-span-1">
-            <select
-              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-              value={startYear}
-              onChange={(e) => setStartYear(parseInt(e.target.value))}
-            >
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="sm:col-span-1">
-            <select
-              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-              value={endMonth}
-              onChange={(e) => setEndMonth(parseInt(e.target.value))}
-            >
-              {months.map((month) => (
-                <option key={month.value} value={month.value}>
-                  {month.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="sm:col-span-1">
-            <select
-              className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
-              value={endYear}
-              onChange={(e) => setEndYear(parseInt(e.target.value))}
-            >
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date de fin
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
+              />
+            </div>
           </div>
         </div>
       </div>
