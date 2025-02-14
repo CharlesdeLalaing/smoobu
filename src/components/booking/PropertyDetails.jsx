@@ -258,7 +258,7 @@ export const PropertyDetails = ({
 
             <div className="flex-1 overflow-y-none">
               {activeTab === "roomInfo" && (
-                <div className="h-full">
+                <div className="h-full flex flex-col">
                   <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
                     {Object.values(room.images).map((image, index) => (
                       <img
