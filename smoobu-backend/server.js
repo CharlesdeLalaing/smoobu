@@ -1211,9 +1211,10 @@ app.get("/api/bookings-report", async (req, res) => {
           "Cache-Control": "no-cache",
         },
         params: {
-          departureFrom: startDate,  // Add this to include bookings that end during the period
-          arrivalTo: endDate,
-          excludeBlocked: false,     // Change to false if you want to see blocked bookings
+          modifiedFrom: startDate,  // This will get all bookings modified since the start of the month
+          departureFrom: startDate, // This gets bookings ending in our range
+          departureTo: endDate,     // Up to the end of our range
+          excludeBlocked: false,
           showCancellation: true,
         },
       }
