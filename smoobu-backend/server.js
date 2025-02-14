@@ -1211,12 +1211,12 @@ app.get("/api/bookings-report", async (req, res) => {
           "Cache-Control": "no-cache",
         },
         params: {
-          arrivalFrom: "2025-01-01",  // Try from beginning of the year
+          modifiedFrom: startDate,
+          departureFrom: startDate,
           departureTo: endDate,
-          modifiedFrom: "2025-01-01",
           excludeBlocked: false,
-          showCancellation: true,
-        },
+          showCancellation: false,
+        }
       }
     );
 
