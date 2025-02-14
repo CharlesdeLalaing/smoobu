@@ -22,6 +22,12 @@ const portalNames = {
 };
 
 const BookingsReport = () => {
+
+  const formatDateForAPI = (date) => {
+    return new Date(date).toISOString().split('T')[0];
+  };
+
+
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [reportData, setReportData] = useState([]);
@@ -50,8 +56,8 @@ const BookingsReport = () => {
 
         const response = await axios.get(`${API_URL}/api/bookings-report`, {
           params: {
-            startDate,
-            endDate
+            created_from: formatDateForAPI(startDate),
+            created_to: formatDateForAPI(endDate)
           },
         });
 

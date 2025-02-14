@@ -1416,12 +1416,12 @@ app.get("/api/extras-report", async (req, res) => {
 
 app.get("/api/bookings-report", async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const { created_from, created_to } = req.query;
 
     console.log("=== START OF BOOKINGS REPORT REQUEST ===");
     console.log("Request params:", {
-      startDate,
-      endDate
+      created_from,
+      created_to
     });
 
     // Fetch bookings for the period
@@ -1433,8 +1433,8 @@ app.get("/api/bookings-report", async (req, res) => {
           "Cache-Control": "no-cache",
         },
         params: {
-          created_from: startDate,
-          created_to: endDate,
+          created_from,
+          created_to,
           excludeBlocked: false,
           showCancellation: true,
           pageSize: 100 
