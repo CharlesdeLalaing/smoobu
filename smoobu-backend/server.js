@@ -1443,7 +1443,8 @@ app.get("/api/bookings-report", async (req, res) => {
     );
 
     const bookings = bookingsResponse.data.bookings || [];
-    console.log(`Found ${bookings.length} bookings for period ${startDate} - ${endDate}`);
+    console.log(`Found ${bookings.length} bookings for period ${created_from} - ${created_to}`);
+
 
     // Process each booking to get price elements and extras
     const processedBookings = [];
