@@ -264,6 +264,9 @@
           "bruneCondroz": {
             "description": "Cette bière brune, brassée avec des fèves de cacao, offrant une rondeur en bouche et une légère amertume."
           },
+          "tripleCondroz": {
+            "description": "La Triple du Condroz enchante par ses arômes de houblon au nez, avant d'offrir une expérience gustative intense typique des bières triple."
+          },
           "ambreeCondroz": {
             "description": "Cette bière ambrée, au profil rond et épicé, vous surprendra par son caractère et son amertume prononcée."
           },

@@ -30,6 +30,7 @@ import babrecue from "../assets/Repas/barbecue.webp";
 import ambreeCondroz from "../assets/Boissons/ambreeCondroz.webp";
 import blancheCondroz from "../assets/Boissons/Blanche-du-Condroz.webp";
 import bruneCondroz from "../assets/Boissons/bruneCondroz.webp";
+import tripleCondroz from "../assets/Boissons/tripleCondroz.webp";
 import brutBioul from "../assets/Boissons/brutBioul.webp";
 import cortilBarco from "../assets/Boissons/cortilBarco.webp";
 import houblondeBlonde from "../assets/Boissons/Houblonde-Blonde.webp";
@@ -278,30 +279,30 @@ export const extraCategories = {
         typeKey: "extras.drinkTypes.wine",
       },
       // Beers
-      {
-        id: "houblondeTriple",
-        name: "Houblonde Triple",
-        descriptionKey: "extras.drinks.houblondeTriple.description",
-        price: 4,
-        image: houblondeTriple,
-        typeKey: "extras.drinkTypes.beer",
-      },
-      {
-        id: "houblondeBlonde",
-        name: "Houblonde Blonde",
-        descriptionKey: "extras.drinks.houblondeBlonde.description",
-        price: 4,
-        image: houblondeBlonde,
-        typeKey: "extras.drinkTypes.beer",
-      },
-      {
-        id: "houblondeWhite",
-        name: "Houblonde White IPA",
-        descriptionKey: "extras.drinks.houblondeWhite.description",
-        price: 4,
-        image: houblondeWhite,
-        typeKey: "extras.drinkTypes.beer",
-      },
+      // {
+      //   id: "houblondeTriple",
+      //   name: "Houblonde Triple",
+      //   descriptionKey: "extras.drinks.houblondeTriple.description",
+      //   price: 4,
+      //   image: houblondeTriple,
+      //   typeKey: "extras.drinkTypes.beer",
+      // },
+      // {
+      //   id: "houblondeBlonde",
+      //   name: "Houblonde Blonde",
+      //   descriptionKey: "extras.drinks.houblondeBlonde.description",
+      //   price: 4,
+      //   image: houblondeBlonde,
+      //   typeKey: "extras.drinkTypes.beer",
+      // },
+      // {
+      //   id: "houblondeWhite",
+      //   name: "Houblonde White IPA",
+      //   descriptionKey: "extras.drinks.houblondeWhite.description",
+      //   price: 4,
+      //   image: houblondeWhite,
+      //   typeKey: "extras.drinkTypes.beer",
+      // },
       {
         id: "bruneCondroz",
         name: "Brune du Condroz",
@@ -316,6 +317,14 @@ export const extraCategories = {
         descriptionKey: "extras.drinks.ambreeCondroz.description",
         price: 4,
         image: ambreeCondroz,
+        typeKey: "extras.drinkTypes.beer",
+      },
+      {
+        id: "tripleCondroz",
+        name: "Triple du Condroz",
+        descriptionKey: "extras.drinks.tripleCondroz.description",
+        price: 4,
+        image: tripleCondroz,
         typeKey: "extras.drinkTypes.beer",
       },
       {

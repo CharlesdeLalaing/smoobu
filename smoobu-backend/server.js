@@ -1098,6 +1098,7 @@ app.get("/api/extras-report", async (req, res) => {
           "Brune du Condroz",
           "Ambrée du Condroz",
           "Blanche du Condroz",
+          "Triple du Condroz",
           "Jus de pomme « Pom d'Happy »",
           "Ritchie Citron/Framboise",
           "Ritchie Orange/Vanille",
