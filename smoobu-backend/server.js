@@ -1211,8 +1211,8 @@ app.get("/api/bookings-report", async (req, res) => {
           "Cache-Control": "no-cache",
         },
         params: {
-          arrivalFrom: startDate,
-          arrivalTo: endDate,
+          departureFrom: startDate,
+          departureTo: endDate,
           excludeBlocked: false,
           showCancellation: true,
           pageSize: 100 
