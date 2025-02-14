@@ -1211,46 +1211,29 @@ app.get("/api/bookings-report", async (req, res) => {
           "Cache-Control": "no-cache",
         },
         params: {
-          modifiedFrom: startDate,
-          departureFrom: startDate,
-          departureTo: endDate,
+          arrivalFrom: startDate,
+          arrivalTo: endDate,
           excludeBlocked: false,
           showCancellation: true,
-        }
+          pageSize: 100 
+        },
       }
     );
 
     const bookings = bookingsResponse.data.bookings || [];
-
-    console.log("=== BOOKINGS DEBUG ===");
-    bookings.forEach(booking => {
-      console.log(`Booking ${booking.id}: arrival=${booking.arrival}, departure=${booking.departure}, channel=${booking.channel?.name}`);
-    });
-
-
     console.log(`Found ${bookings.length} bookings for period ${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`);
 
     // Process each booking to get price elements and extras
     const processedBookings = [];
     for (const booking of bookings) {
-
-      console.log("Raw booking data:", {
-        id: booking.id,
-        channel: booking.channelId,
-        type: booking.type,
-        arrival: booking.arrival,
-        departure: booking.departure
-      });
-
-
       try {
         console.log(`Processing booking ${booking.id}`);
         
         // Skip if it's a blocked booking or cancelled booking
-        if (booking.type === 'cancellation') {
-          console.log(`Skipping cancelled booking ${booking.id}`);
-          continue;
-        }
+        // if (booking.channelId === 'Blocked' || booking.type === 'cancellation') {
+        //   console.log(`Skipping ${booking.channelId === 'Blocked' ? 'blocked' : 'cancelled'} booking ${booking.id}`);
+        //   continue;
+        // }
 
         // Fetch price elements for each booking
         const priceElementsResponse = await axios.get(
