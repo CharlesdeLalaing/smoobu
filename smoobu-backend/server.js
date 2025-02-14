@@ -1211,15 +1211,22 @@ app.get("/api/bookings-report", async (req, res) => {
           "Cache-Control": "no-cache",
         },
         params: {
-          arrivalFrom: startDate,
+          departureFrom: startDate,  // Add this to include bookings that end during the period
           arrivalTo: endDate,
-          excludeBlocked: true,
+          excludeBlocked: false,     // Change to false if you want to see blocked bookings
           showCancellation: true,
         },
       }
     );
 
     const bookings = bookingsResponse.data.bookings || [];
+
+    console.log("=== BOOKINGS DEBUG ===");
+    bookings.forEach(booking => {
+      console.log(`Booking ${booking.id}: arrival=${booking.arrival}, departure=${booking.departure}, channel=${booking.channel?.name}`);
+    });
+
+
     console.log(`Found ${bookings.length} bookings for period ${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`);
 
     // Process each booking to get price elements and extras
