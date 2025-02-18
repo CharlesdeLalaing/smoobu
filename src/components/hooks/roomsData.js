@@ -10,6 +10,7 @@ import dome_img_2 from "../../assets/Chambres/Le Dôme/dome_2.webp";
 import dome_img_3 from "../../assets/Chambres/Le Dôme/dome_3.webp";
 import dome_img_4 from "../../assets/Chambres/Le Dôme/dome_4.webp";
 import dome_img_5 from "../../assets/Chambres/Le Dôme/dome_5.webp";
+import dome_img_6 from "../../assets/Chambres/Le Dôme/dome_6.webp";
 
 import Moulin_img_1 from "../../assets/Chambres/Le Moulin/Moulin_1.webp";
 import Moulin_img_2 from "../../assets/Chambres/Le Moulin/Moulin_2.webp";
@@ -60,7 +61,8 @@ export const roomsData = {
       secondary: dome_img_2,
       tertiary: dome_img_3,
       quaternary: dome_img_4,
-      quinary: dome_img_5
+      quinary: dome_img_5,
+      senary: dome_img_6
     },
     maxGuests: 4,
     features: [
