@@ -116,14 +116,85 @@ const fetchFromFirebase = async () => {
 
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      console.log(
+        `Processing booking ${data.smoobuId || data.smoobuReservationId}:`,
+        data
+      );
+
       const smoobuId = data.smoobuId || data.smoobuReservationId;
 
       // Only add if we don't already have this booking
       if (!bookingMap.has(smoobuId)) {
-        bookingMap.set(smoobuId, {
+        // Get linen fee - check all possible field locations
+        const linenFee =
+          parseFloat(data.priceDetails?.cleaningFee) ||
+          parseFloat(data.priceDetails?.linenFee) ||
+          parseFloat(data.linenFee) ||
+          0;
+
+        // Get commission - check all possible field locations
+        const commission =
+          parseFloat(data.priceDetails?.commission) ||
+          parseFloat(data.commission) ||
+          0;
+
+        // Get base price
+        const rawBasePrice =
+          parseFloat(data.basePrice) ||
+          parseFloat(data.priceDetails?.basePrice) ||
+          0;
+
+        // Calculate price components
+        const totalPrice = parseFloat(data.price) || 0;
+
+        // Calculate total for extras
+        const extrasTotal =
+          data.extras?.reduce(
+            (sum, extra) => sum + parseFloat(extra.amount || 0),
+            0
+          ) ||
+          parseFloat(data.priceDetails?.extrasTotal) ||
+          0;
+
+        // Calculate discounts
+        const longStayDiscount =
+          parseFloat(data.priceDetails?.calculatedDiscounts?.longStay) ||
+          parseFloat(data.priceDetails?.discount) ||
+          parseFloat(data.priceDetails?.longStayDiscount) ||
+          0;
+
+        const promoCodeDiscount =
+          parseFloat(data.priceDetails?.calculatedDiscounts?.coupon) ||
+          (data.appliedCoupon
+            ? parseFloat(data.appliedCoupon.discount || 0)
+            : 0);
+
+        // Process promo code data for consistent structure
+        let promoCode = null;
+        if (data.appliedCoupon) {
+          promoCode = {
+            name: data.appliedCoupon.code || "",
+            amount: parseFloat(data.appliedCoupon.discount || 0),
+          };
+        } else if (data.priceDetails?.promoCode) {
+          promoCode = {
+            name:
+              data.priceDetails.promoCode.code ||
+              data.priceDetails.promoCode.name ||
+              "",
+            amount: parseFloat(
+              data.priceDetails.promoCode.discount ||
+                data.priceDetails.promoCode.amount ||
+                0
+            ),
+          };
+        }
+
+        // Calculate and normalize data
+        const normalizedBooking = {
           id: smoobuId,
           guest:
-            `${data.firstName} ${data.lastName}`.trim() ||
+            `${data.firstName || ""} ${data.lastName || ""}`.trim() ||
             data.guestName ||
             "Unknown",
           property:
@@ -132,45 +203,61 @@ const fetchFromFirebase = async () => {
             getPortalName(data.portalName) ||
             getPortalName(data.channelName) ||
             getPortalName(String(data.channelId)) ||
-            "Website", // Default to Website instead of Unknown
+            "Website",
           created: data.createdAt,
           email: data.email,
           phone: data.phone,
           address: data.street
-            ? `${data.street}, ${data.postalCode} ${data.location}, ${data.country}`
-            : "",
-          adults: data.adults,
-          children: data.children,
+            ? `${data.street}, ${data.postalCode || ""} ${
+                data.location || ""
+              }, ${data.country || ""}`
+            : data.address || "",
+          adults: parseInt(data.adults) || 0,
+          children: parseInt(data.children) || 0,
           checkIn: data.arrivalDate,
           checkOut: data.departureDate,
           arrivalTime: data.arrivalTime || data.checkInTime,
           departureTime: data.departureTime || data.checkOutTime,
           notes: data.notice,
-          price: data.price,
+          price: totalPrice,
+
+          // Normalized price details structure
           priceDetails: {
-            basePrice: data.basePrice || 0,
-            linenFee: data.priceDetails?.cleaningFee || data.linenFee || 0,
-            extrasTotal:
-              data.extras?.reduce(
-                (sum, extra) => sum + Number(extra.amount),
-                0
-              ) || 0,
-            longStayDiscount:
-              data.priceDetails?.calculatedDiscounts?.longStay || 0,
-            discounts: data.priceDetails?.calculatedDiscounts?.coupon || 0,
-            promoCode: data.appliedCoupon,
-            total: data.priceDetails?.finalPrice || data.price,
+            basePrice: rawBasePrice,
+            linenFee: linenFee,
+            extrasTotal: extrasTotal,
+            longStayDiscount: longStayDiscount,
+            promoCode: promoCode,
+            total: totalPrice,
           },
-          commission: data.commission || data.priceDetails?.commission || 0,
-          linenFee: data.linenFee || data.priceDetails?.cleaningFee || 0,
+
+          // Keep these fields for backward compatibility
+          commission: commission,
+          linenFee: linenFee,
+
           nights:
-            data.priceDetails?.numberOfNights ||
+            parseInt(data.priceDetails?.numberOfNights) ||
+            parseInt(data.nights) ||
             Math.ceil(
               (new Date(data.departureDate) - new Date(data.arrivalDate)) /
                 (1000 * 60 * 60 * 24)
             ),
-          extras: data.extras || [],
+          extras: Array.isArray(data.extras)
+            ? data.extras.map((extra) => ({
+                name: extra.name || "Extra",
+                amount: parseFloat(extra.amount) || 0,
+                quantity: parseInt(extra.quantity) || 1,
+              }))
+            : [],
+        };
+
+        console.log(`Normalized booking ${smoobuId}:`, {
+          basePrice: normalizedBooking.priceDetails.basePrice,
+          linenFee: normalizedBooking.priceDetails.linenFee,
+          commission: normalizedBooking.commission,
         });
+
+        bookingMap.set(smoobuId, normalizedBooking);
       }
     });
 
@@ -249,120 +336,100 @@ const fetchFromFirebase = async () => {
     return `€${Number(price).toFixed(2)}`;
   };
 
-  const handleExport = () => {
-    const wsData = [
-      [
-        "ID",
-        "Client",
-        "Création",
-        "Portail",
-        "Email",
-        "Téléphone",
-        "Adresse",
-        "Adulte",
-        "Enfant",
-        "Arrivée",
-        "Check-in",
-        "Départ",
-        "Nombre de nuits",
-        "Prix de base",
-        "Nom coupon",
-        "Valeur coupon",
-        "Frais de linge",
-        "Promotion long séjour",
-        "Commission",
-        "Liste des extras",
-        "Total des extras",
-        "Prix total",
-      ],
-      ...filteredAndSortedData.map((booking) => [
-        booking.id,
-        booking.guest,
-        formatDate(booking.created),
-        booking.portal,
-        booking.email,
-        booking.phone,
-        booking.address,
-        booking.adults,
-        booking.children,
-        formatDate(booking.checkIn),
-        booking.arrivalTime,
-        formatDate(booking.checkOut),
-        booking.nights,
-        booking.priceDetails.basePrice,
-        booking.priceDetails.promoCode?.code || "",
-        booking.priceDetails.promoCode?.discount || "",
-        booking.priceDetails.linenFee,
-        booking.priceDetails.longStayDiscount,
-        booking.commission,
-        booking.extras.map((e) => `${e.name} (${e.quantity}x)`).join(", "),
-        booking.priceDetails.extrasTotal,
-        booking.price,
-      ]),
-    ];
+const handleExport = () => {
+  const wsData = [
+    [
+      "ID",
+      "Client",
+      "Création",
+      "Portail",
+      "Email",
+      "Téléphone",
+      "Adresse",
+      "Adulte",
+      "Enfant",
+      "Arrivée",
+      "Check-in",
+      "Départ",
+      "Nombre de nuits",
+      "Prix de base",
+      "Nom coupon",
+      "Valeur coupon",
+      "Frais de linge",
+      "Promotion long séjour",
+      "Commission",
+      "Liste des extras",
+      "Total des extras",
+      "Prix total",
+    ],
+    ...filteredAndSortedData.map((booking) => [
+      booking.id,
+      booking.guest,
+      formatDate(booking.created),
+      booking.portal,
+      booking.email || "",
+      booking.phone || "",
+      booking.address || "",
+      booking.adults,
+      booking.children,
+      formatDate(booking.checkIn),
+      booking.arrivalTime || "",
+      formatDate(booking.checkOut),
+      booking.nights,
+      booking.priceDetails.basePrice,
+      booking.priceDetails.promoCode?.name || "",
+      booking.priceDetails.promoCode?.amount || "",
+      booking.priceDetails.linenFee || "",
+      booking.priceDetails.longStayDiscount || "",
+      booking.commission || "",
+      booking.extras.map((e) => `${e.name} (${e.quantity}x)`).join(", "),
+      booking.extras.reduce(
+        (sum, extra) => sum + parseFloat(extra.amount || 0),
+        0
+      ),
+      booking.price,
+    ]),
+  ];
 
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-    const colWidths = [
-      { wch: 15 }, // ID
-      { wch: 25 }, // Client
-      { wch: 20 }, // Création
-      { wch: 20 }, // Portail
-      { wch: 30 }, // Email
-      { wch: 20 }, // Téléphone
-      { wch: 35 }, // Adresse
-      { wch: 15 }, // Adultes
-      { wch: 15 }, // Enfants
-      { wch: 15 }, // Arrivée
-      { wch: 15 }, // Check-in
-      { wch: 15 }, // Départ
-      { wch: 15 }, // Nuits
-      { wch: 15 }, // Prix base
-      { wch: 20 }, // Nom coupon
-      { wch: 15 }, // Valeur coupon
-      { wch: 15 }, // Frais linge
-      { wch: 20 }, // Promo long séjour
-      { wch: 15 }, // Commission
-      { wch: 50 }, // Liste extras
-      { wch: 15 }, // Total extras
-      { wch: 15 }, // Prix total
-    ];
+  const colWidths = [
+    { wch: 15 }, // ID de réservation
+    { wch: 25 }, // Client
+    { wch: 20 }, // Création de la réservation
+    { wch: 20 }, // Portail de réservation
+    { wch: 30 }, // Email du client
+    { wch: 20 }, // Téléphone du client
+    { wch: 35 }, // Adresse du client
+    { wch: 15 }, // Nombre d'adulte
+    { wch: 15 }, // Nombre d'enfant
+    { wch: 15 }, // Arrivée
+    { wch: 15 }, // Check-in
+    { wch: 15 }, // Départ
+    { wch: 15 }, // Nombre de nuits
+    { wch: 15 }, // Prix de base
+    { wch: 20 }, // Nom du coupon
+    { wch: 15 }, // Valeur du coupon
+    { wch: 15 }, // Frais de linge
+    { wch: 20 }, // Promotion de long séjour
+    { wch: 15 }, // Commission
+    { wch: 50 }, // Liste des extras
+    { wch: 15 }, // Total des extras
+    { wch: 15 }, // Prix total de la chambre
+  ];
 
-    ws["!cols"] = colWidths;
+  ws["!cols"] = colWidths;
 
-    XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
+  XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
 
-    const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
-    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
-    const fileName = `rapport-reservations_${startDate}_${endDate}.xlsx`;
+  const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
+  const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
+  const fileName = `rapport-reservations_${startDate}_${endDate}.xlsx`;
 
-    XLSX.writeFile(wb, fileName);
-  };
-
-const handleSync = async () => {
-  try {
-    setLoading(true);
-    console.log("Starting sync...");
-    const response = await axios.get("http://localhost:3000/sync-reservations");
-    console.log("Sync response:", response.data);
-
-    if (response.data.success) {
-      alert(
-        `Sync completed successfully!\nProcessed: ${response.data.stats.total}\nSuccessful: ${response.data.stats.successful}\nFailed: ${response.data.stats.failed}`
-      );
-      // Simply reload the page to get fresh data
-      window.location.reload();
-    } else {
-      throw new Error("Sync failed");
-    }
-  } catch (error) {
-    console.error("Error syncing reservations:", error);
-    alert(`Failed to sync reservations: ${error.message}`);
-  } finally {
-    setLoading(false);
-  }
+  XLSX.writeFile(wb, fileName);
 };
+
   const filteredAndSortedData = reportData
     .filter((booking) =>
       Object.values(booking).some(
@@ -709,7 +776,7 @@ const handleSync = async () => {
                                 </div>
                               </div>
 
-                              {/* Column 3: Détails de Prix */}
+                              {/* Column 3: Détails de Prix with improved display logic */}
                               <div className="space-y-3">
                                 <h3 className="text-sm font-semibold text-gray-900">
                                   Détails de Prix
@@ -735,29 +802,29 @@ const handleSync = async () => {
                                     </p>
                                   )}
 
-                                  {booking.priceDetails.longStayDiscount >
-                                    0 && ( // Changed to < 0 since it's negative
+                                  {booking.priceDetails.longStayDiscount <
+                                    0 && (
                                     <p className="text-sm text-red-600">
                                       <span className="block font-medium">
                                         Réduction long séjour:
                                       </span>
                                       {formatPrice(
                                         booking.priceDetails.longStayDiscount
-                                      )}{" "}
-                                      {/* No need for negative sign since it's already negative */}
+                                      )}
                                     </p>
                                   )}
 
                                   {booking.priceDetails.promoCode &&
-                                    !isNaN(
-                                      booking.priceDetails.promoCode.discount
-                                    ) && (
+                                    booking.priceDetails.promoCode.amount >
+                                      0 && (
                                       <p className="text-sm text-green-600">
-                                        Code promo (
-                                        {booking.priceDetails.promoCode.code}):
+                                        <span className="block font-medium">
+                                          {booking.priceDetails.promoCode
+                                            .name || "Code promo"}
+                                          :
+                                        </span>
                                         {formatPrice(
-                                          -booking.priceDetails.promoCode
-                                            .discount
+                                          -booking.priceDetails.promoCode.amount
                                         )}
                                       </p>
                                     )}
@@ -778,14 +845,11 @@ const handleSync = async () => {
                                     <span className="text-sm">
                                       {formatPrice(
                                         booking.priceDetails.basePrice +
-                                          (booking.priceDetails.linenFee || 0) +
-                                          (booking.commission || 0) -
-                                          Math.abs(
-                                            booking.priceDetails
-                                              .longStayDiscount || 0
-                                          ) -
+                                          booking.priceDetails.linenFee +
+                                          (booking.priceDetails
+                                            .longStayDiscount || 0) -
                                           (booking.priceDetails.promoCode
-                                            ?.discount || 0)
+                                            ?.amount || 0)
                                       )}
                                     </span>
                                   </div>
