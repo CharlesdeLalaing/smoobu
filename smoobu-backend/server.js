@@ -1109,6 +1109,8 @@ app.use(
   })
 );
 
+
+
 app.get("/sync-reservations", async (req, res) => {
   try {
     console.log("Starting reservation sync...");
@@ -1120,6 +1122,235 @@ app.get("/sync-reservations", async (req, res) => {
     res.status(500).json({
       error: "Failed to sync reservations",
       details: error.message,
+    });
+  }
+});
+
+
+// In your server.js
+app.get("/api/fetch-and-sync", async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    // Step 1: Fetch from Smoobu with complete data
+    console.log("🟦 Fetching bookings from Smoobu...", { startDate, endDate });
+    const response = await axios.get(
+      "https://login.smoobu.com/api/reservations",
+      {
+        headers: {
+          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+          "Cache-Control": "no-cache",
+        },
+        params: {
+          arrivalFrom: startDate,
+          arrivalTo: endDate,
+          showCancellation: false,
+          excludeBlocked: false,
+          pageSize: 100,
+          includePriceElements: true, // Add this to get price elements
+        },
+      }
+    );
+
+    const bookings = response.data.bookings || [];
+    console.log(`🟦 Fetched ${bookings.length} bookings from Smoobu`);
+
+    // Improved channel mapping
+    const channelMapping = {
+      // Channel IDs - these are the most reliable
+      2323525: "Website",
+      2323516: "Blocked",
+      2323543: "Airbnb",
+
+      // Channel Names
+      Homepage: "Website",
+      "Direct booking": "Website",
+      "Homepage direct": "Website",
+      Direct: "Website",
+      Airbnb: "Airbnb",
+      airbnb: "Airbnb",
+      "Booking.com": "Booking.com",
+      "booking.com": "Booking.com",
+      Expedia: "Expedia",
+      blocked: "Blocked",
+      Blocked: "Blocked",
+      "Blocked channel": "Blocked",
+      Partenariat: "Partenariat",
+      partenariat: "Partenariat",
+    };
+
+    // Step 2: Sync to Firebase with improved data extraction
+    let syncedCount = 0;
+    for (const booking of bookings) {
+      try {
+        // Fetch price elements for each booking
+        const priceElementsResponse = await axios.get(
+          `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`,
+          {
+            headers: {
+              "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+              "Cache-Control": "no-cache",
+            },
+          }
+        );
+
+        const priceElements = priceElementsResponse.data.priceElements || [];
+
+        // Extract commission and other price details
+        const basePrice =
+          priceElements.find((el) => el.type === "base")?.amount ||
+          booking.price;
+        const getLinenFee = (priceElements) => {
+          return (
+            priceElements.find(
+              (el) =>
+                el.name?.toLowerCase().includes("linen") ||
+                el.name?.toLowerCase().includes("linge") ||
+                el.name?.toLowerCase().includes("nettoyage") ||
+                el.name?.toLowerCase().includes("cleaning")
+            )?.amount || 0
+          );
+        };
+
+        const getCommission = (priceElements) => {
+          return (
+            priceElements.find((el) =>
+              el.name?.toLowerCase().includes("commission")
+            )?.amount || 0
+          );
+        };
+
+        // Calculate nights
+        const checkIn = new Date(booking.arrival);
+        const checkOut = new Date(booking.departure);
+        const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+
+        // Properly get the guest name
+        const guestName =
+          booking["guest-name"] ||
+          `${booking.firstName || ""} ${booking.lastName || ""}`.trim();
+
+        // Get the correct portal name
+        const portalName = booking.channel
+          ? channelMapping[booking.channel.id] ||
+            channelMapping[booking.channel.name] ||
+            booking.channel.name ||
+            "Website"
+          : "Website";
+
+          const linenFee = parseFloat(getLinenFee(priceElements));
+          const commission = parseFloat(getCommission(priceElements));
+
+        // Prepare booking document with complete data
+        const bookingDoc = {
+          smoobuId: booking.id,
+          createdAt: booking["created-at"] || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+
+          // Guest information with fallbacks
+          firstName: booking.firstName || guestName.split(" ")[0] || "",
+          lastName:
+            booking.lastName || guestName.split(" ").slice(1).join(" ") || "",
+          guestName: guestName,
+          email: booking.email || "",
+          phone: booking.phone || "",
+          address: booking.address || "",
+
+          // Booking details
+          adults: parseInt(booking.adults) || 0,
+          children: parseInt(booking.children) || 0,
+          arrivalDate: booking.arrival,
+          departureDate: booking.departure,
+          checkInTime: booking["check-in"] || "",
+          checkOutTime: booking["check-out"] || "",
+          nights: nights,
+
+          // Property information
+          apartmentId: booking.apartment?.id,
+          property: roomNames[booking.apartment?.id] || booking.apartment?.name,
+
+          // Channel information
+          channelId: booking.channel?.id,
+          channelName: booking.channel?.name || "",
+          portalName: portalName,
+
+          // Price information with extracted elements
+          price: parseFloat(booking.price) || 0,
+          linenFee: linenFee,
+          commission: commission,
+          priceElements: priceElements,
+
+          // Additional data
+          notice: booking.notice || "",
+          lastSyncedAt: new Date().toISOString(),
+
+          // Price details structure for the UI
+          priceDetails: {
+            basePrice: parseFloat(basePrice) || 0,
+            linenFee: linenFee,
+            commission: commission,
+            finalPrice: parseFloat(booking.price) || 0,
+            calculatedDiscounts: {
+              longStay: 0,
+              coupon: 0,
+            },
+
+            priceElements: priceElements.map((element) => ({
+              type: element.type,
+              name: element.name,
+              amount: parseFloat(element.amount) || 0,
+              quantity: parseInt(element.quantity) || 1,
+            })),
+          },
+        };
+
+        // Check if booking already exists
+        const bookingsSnapshot = await db
+          .collection("bookings")
+          .where("smoobuId", "==", booking.id.toString())
+          .get();
+
+        if (bookingsSnapshot.empty) {
+          // Add new booking
+          await db.collection("bookings").add(bookingDoc);
+          console.log(
+            `🟩 Added new booking ${booking.id} (${portalName}): ${guestName}`
+          );
+        } else {
+          // Update existing booking
+          const docId = bookingsSnapshot.docs[0].id;
+          await db
+            .collection("bookings")
+            .doc(docId)
+            .update({
+              ...bookingDoc,
+              updatedAt: new Date().toISOString(),
+            });
+          console.log(
+            `🟩 Updated existing booking ${booking.id} (${portalName}): ${guestName}`
+          );
+        }
+
+        syncedCount++;
+      } catch (error) {
+        console.error(`🟥 Error syncing booking ${booking.id}:`, error);
+      }
+    }
+
+    res.json({
+      success: true,
+      stats: {
+        fetched: bookings.length,
+        synced: syncedCount,
+      },
+      message: "Fetch and sync completed successfully",
+    });
+  } catch (error) {
+    console.error("🟥 Error in fetch and sync:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch and sync bookings",
+      message: error.message,
     });
   }
 });
@@ -2140,49 +2371,6 @@ app.get("/api/bookings/:paymentIntentId", async (req, res) => {
   }
 });
 
-function generateGiftVoucherEmail(voucherData, language) {
-  const translations = {
-    fr: {
-      title: "Votre bon cadeau - Ferme de Basseilles",
-      code: "Code du bon cadeau",
-      amount: "Montant",
-      expiry: "Date d'expiration",
-      validityNote: "Valable un an à partir de la date d'achat",
-    },
-    en: {
-      title: "Your gift voucher - Ferme de Basseilles",
-      code: "Voucher code",
-      amount: "Amount",
-      expiry: "Expiry date",
-      validityNote: "Valid for one year from purchase date",
-    },
-    nl: {
-      title: "Uw cadeaubon - Ferme de Basseilles",
-      code: "Cadeaubon code",
-      amount: "Bedrag",
-      expiry: "Vervaldatum",
-      validityNote: "Geldig voor één jaar vanaf de aankoopdatum",
-    },
-  };
-
-  const t = translations[language] || translations.fr;
-
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h1>${t.title}</h1>
-      
-      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
-        <p><strong>${t.code}:</strong> ${voucherData.code}</p>
-        <p><strong>${t.amount}:</strong> ${voucherData.amount}€</p>
-        <p><strong>${t.expiry}:</strong> ${new Date(
-    voucherData.expiryDate
-  ).toLocaleDateString(language + "-BE")}</p>
-      </div>
-      
-      <p>${t.validityNote}</p>
-    </div>
-  `;
-}
 
 // Debug endpoint to check pending bookings
 app.get("/api/pending-bookings", (req, res) => {

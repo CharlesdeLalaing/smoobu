@@ -29,9 +29,28 @@ const portalNames = {
 };
 
 const getPortalName = (portal) => {
-  return portalNames[portal] || portal || "Unknown";
-};
+  // Handle null/undefined
+  if (!portal) return "Website";
 
+  // Check if it's already a mapped portal
+  if (portalNames[portal]) return portalNames[portal];
+
+  // Check channel IDs
+  if (portal === "2323525" || portal === 2323525) return "Website";
+  if (portal === "2323543" || portal === 2323543) return "Airbnb";
+
+  // Special case for unknown channels from Smoobu that should be Website
+  if (
+    portal.includes("Homepage") ||
+    portal === "Direct" ||
+    portal === "Direct booking"
+  ) {
+    return "Website";
+  }
+
+  // Return the original or default to Website
+  return portal || "Website";
+};
 const roomNames = {
   1946282: "Le dôme de libellules",
   2565753: "La Cabane du Chêne",
@@ -73,91 +92,145 @@ const BookingsReport = () => {
     }
   }, [startYear, startMonth, endYear, endMonth]);
 
-  useEffect(() => {
-    const fetchDirectFromSmoobu = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  
+const fetchFromFirebase = async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
-        // Calculate date range
-        const startDate = new Date(startYear, startMonth - 1, 1)
-          .toISOString()
-          .split("T")[0];
-        const endDate = new Date(endYear, endMonth, 0, 23, 59, 59)
-          .toISOString()
-          .split("T")[0];
+    // Create date range for query
+    const startDate = new Date(startYear, startMonth - 1, 1);
+    const endDate = new Date(endYear, endMonth, 0, 23, 59, 59);
 
-        // Call your backend endpoint that will proxy to Smoobu
-        const response = await axios.get(
-          "http://localhost:3000/api/direct-bookings",
-          {
-            params: {
-              startDate,
-              endDate,
-              showCancellation: true,
-              excludeBlocked: false,
-            },
-          }
-        );
+    // Create Firebase query
+    const bookingsRef = collection(db, "bookings");
+    const q = query(
+      bookingsRef,
+      where("arrivalDate", ">=", startDate.toISOString().split("T")[0]),
+      where("arrivalDate", "<=", endDate.toISOString().split("T")[0]),
+      orderBy("arrivalDate", "desc")
+    );
 
-        if (response.data && response.data.bookings) {
-          // Transform the Smoobu data directly
-          const bookings = response.data.bookings.map((booking) => ({
-            id: booking.id,
-            guest:
-              booking["guest-name"] ||
-              `${booking.firstName || ""} ${booking.lastName || ""}`.trim(),
-            property:
-              roomNames[booking.apartment?.id] || booking.apartment?.name || "",
-            portal:
-              getPortalName(booking.channel?.name) ||
-              booking.channel?.name ||
-              "Unknown",
-            portalId: booking.channel?.id || "Unknown",
-            created: booking["created-at"] || new Date().toISOString(),
-            email: booking.email || "",
-            phone: booking.phone || "",
-            address: "",
-            adults: parseInt(booking.adults) || 0,
-            children: parseInt(booking.children) || 0,
-            checkIn: booking.arrival,
-            checkOut: booking.departure,
-            arrivalTime: booking["check-in"] || "",
-            departureTime: booking["check-out"] || "",
-            notes: booking.notice || "",
-            price: parseFloat(booking.price) || 0,
-            priceDetails: {
-              basePrice: parseFloat(booking.price) || 0,
-              linenFee: 0,
-              extrasTotal: 0,
-              longStayDiscount: 0,
-              discounts: 0,
-              promoCode: null,
-              total: parseFloat(booking.price) || 0,
-            },
-            commission: 0,
-            nights: Math.ceil(
-              (new Date(booking.departure) - new Date(booking.arrival)) /
+    const querySnapshot = await getDocs(q);
+    const bookingMap = new Map(); // Use a map to deduplicate by smoobuId
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const smoobuId = data.smoobuId || data.smoobuReservationId;
+
+      // Only add if we don't already have this booking
+      if (!bookingMap.has(smoobuId)) {
+        bookingMap.set(smoobuId, {
+          id: smoobuId,
+          guest:
+            `${data.firstName} ${data.lastName}`.trim() ||
+            data.guestName ||
+            "Unknown",
+          property:
+            roomNames[data.apartmentId] || data.property || data.apartmentId,
+          portal:
+            getPortalName(data.portalName) ||
+            getPortalName(data.channelName) ||
+            getPortalName(String(data.channelId)) ||
+            "Website", // Default to Website instead of Unknown
+          created: data.createdAt,
+          email: data.email,
+          phone: data.phone,
+          address: data.street
+            ? `${data.street}, ${data.postalCode} ${data.location}, ${data.country}`
+            : "",
+          adults: data.adults,
+          children: data.children,
+          checkIn: data.arrivalDate,
+          checkOut: data.departureDate,
+          arrivalTime: data.arrivalTime || data.checkInTime,
+          departureTime: data.departureTime || data.checkOutTime,
+          notes: data.notice,
+          price: data.price,
+          priceDetails: {
+            basePrice: data.basePrice || 0,
+            linenFee: data.priceDetails?.cleaningFee || data.linenFee || 0,
+            extrasTotal:
+              data.extras?.reduce(
+                (sum, extra) => sum + Number(extra.amount),
+                0
+              ) || 0,
+            longStayDiscount:
+              data.priceDetails?.calculatedDiscounts?.longStay || 0,
+            discounts: data.priceDetails?.calculatedDiscounts?.coupon || 0,
+            promoCode: data.appliedCoupon,
+            total: data.priceDetails?.finalPrice || data.price,
+          },
+          commission: data.commission || data.priceDetails?.commission || 0,
+          linenFee: data.linenFee || data.priceDetails?.cleaningFee || 0,
+          nights:
+            data.priceDetails?.numberOfNights ||
+            Math.ceil(
+              (new Date(data.departureDate) - new Date(data.arrivalDate)) /
                 (1000 * 60 * 60 * 24)
             ),
-            extras: [],
-          }));
-
-          setReportData(bookings);
-          console.log("Direct bookings:", bookings);
-        } else {
-          throw new Error("No booking data received");
-        }
-      } catch (err) {
-        console.error("Error fetching direct bookings:", err);
-        setError("Failed to fetch bookings: " + err.message);
-      } finally {
-        setLoading(false);
+          extras: data.extras || [],
+        });
       }
-    };
+    });
 
-    fetchDirectFromSmoobu();
+    // Convert map values to array
+    const bookings = Array.from(bookingMap.values());
+    setReportData(bookings);
+  } catch (err) {
+    console.error("Error fetching bookings from Firebase:", err);
+    setError("Failed to fetch bookings: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  const handleFetchAndSync = async () => {
+    try {
+      setLoading(true);
+      console.log("Starting fetch and sync...");
+
+      // Step 1: Fetch from Smoobu and sync to Firebase
+      const response = await axios.get(
+        "http://localhost:3000/api/fetch-and-sync",
+        {
+          params: {
+            startDate: new Date(startYear - 1, startMonth - 1, 1)
+              .toISOString()
+              .split("T")[0],
+            endDate: new Date(endYear, endMonth, 0).toISOString().split("T")[0],
+          },
+        }
+      );
+
+      console.log("Fetch and sync response:", response.data);
+
+      if (response.data.success) {
+        alert(
+          `Fetch and sync completed successfully!\nFetched: ${response.data.stats.fetched}\nSynced: ${response.data.stats.synced}`
+        );
+
+        // Step 2: Now fetch from Firebase to display
+        fetchFromFirebase();
+      } else {
+        throw new Error("Fetch and sync failed");
+      }
+    } catch (error) {
+      console.error("Error in fetch and sync:", error);
+      alert(`Failed to fetch and sync: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Separate function to fetch from Firebase
+
+  // Use fetchFromFirebase in the initial load
+  useEffect(() => {
+    fetchFromFirebase();
   }, [startMonth, startYear, endMonth, endYear]);
+  
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -335,7 +408,7 @@ const handleSync = async () => {
           Exporter
         </button>
         <button
-          onClick={handleSync}
+          onClick={handleFetchAndSync}
           className="flex items-center justify-center w-full gap-2 px-4 py-2 text-white transition-colors bg-blue-500 rounded-lg hover:bg-blue-600 sm:w-auto"
         >
           <RefreshCw size={20} />
