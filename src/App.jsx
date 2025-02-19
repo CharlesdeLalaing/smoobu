@@ -35,7 +35,7 @@ function App() {
               path="/extras-report" 
               element={
                 <ProtectedRoute>
-                  <ExtrasReport />
+                  <BookingReport />
                 </ProtectedRoute>
               } 
             />

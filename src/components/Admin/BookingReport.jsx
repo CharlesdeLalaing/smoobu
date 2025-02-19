@@ -1,9 +1,45 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Search, Download, ChevronDown, ChevronUp } from "lucide-react";
-import axios from "axios";
+import {
+  Calendar,
+  Search,
+  Download,
+  ChevronDown,
+  ChevronUp,
+  RefreshCw,
+} from "lucide-react";
+import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { db } from "../../firebase";
 import * as XLSX from "xlsx";
+import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://booking-9u8u.onrender.com";
+const portalNames = {
+  "Homepage": "Website",
+  "Direct booking": "Direct booking",
+  "Homepage direct": "Website",
+  "Direct": "Direct booking",
+  "Airbnb": "Airbnb",
+  "airbnb": "Airbnb",
+  "Booking.com": "Booking.com",
+  "booking.com": "Booking.com",
+  "Expedia": "Expedia",
+  "blocked": "Blocked",
+  "Blocked": "Blocked",
+  "Partenariat": "Partenariat",
+  "partenariat": "Partenariat",
+};
+
+const getPortalName = (portal) => {
+  return portalNames[portal] || portal || "Unknown";
+};
+
+const roomNames = {
+  1946282: "Le dôme de libellules",
+  2565753: "La Cabane du Chêne",
+  1644643: "La Bulle du Ruisseau",
+  1946279: "Le Moulin",
+  1946276: "La Chambre de Blé",
+  1946270: "Le Logis",
+};
 
 const BookingsReport = () => {
   const [startMonth, setStartMonth] = useState(new Date().getMonth() + 1);
@@ -18,51 +54,109 @@ const BookingsReport = () => {
   const [sortDirection, setSortDirection] = useState("desc");
   const [expandedBooking, setExpandedBooking] = useState(null);
 
-  const years = Array.from({ length: 3 }, (_, i) => new Date().getFullYear() - i);
+  const years = Array.from(
+    { length: 3 },
+    (_, i) => new Date().getFullYear() - i
+  );
   const months = Array.from({ length: 12 }, (_, i) => ({
     value: i + 1,
     label: new Date(2024, i).toLocaleString("fr", { month: "long" }),
   }));
 
   useEffect(() => {
-    if (endYear < startYear || (endYear === startYear && endMonth < startMonth)) {
+    if (
+      endYear < startYear ||
+      (endYear === startYear && endMonth < startMonth)
+    ) {
       setEndYear(startYear);
       setEndMonth(startMonth);
     }
   }, [startYear, startMonth, endYear, endMonth]);
 
   useEffect(() => {
-    const fetchReport = async () => {
+    const fetchDirectFromSmoobu = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const startMonthStr = String(startMonth).padStart(2, "0");
-        const endMonthStr = String(endMonth).padStart(2, "0");
+        // Calculate date range
+        const startDate = new Date(startYear, startMonth - 1, 1)
+          .toISOString()
+          .split("T")[0];
+        const endDate = new Date(endYear, endMonth, 0, 23, 59, 59)
+          .toISOString()
+          .split("T")[0];
 
-        const response = await axios.get(`${API_URL}/api/bookings-report`, {
-          params: {
-            startMonth: startMonthStr,
-            startYear: startYear,
-            endMonth: endMonthStr,
-            endYear: endYear,
-          },
-        });
+        // Call your backend endpoint that will proxy to Smoobu
+        const response = await axios.get(
+          "http://localhost:3000/api/direct-bookings",
+          {
+            params: {
+              startDate,
+              endDate,
+              showCancellation: true,
+              excludeBlocked: false,
+            },
+          }
+        );
 
-        if (response.data) {
-          setReportData(response.data.data || []);
+        if (response.data && response.data.bookings) {
+          // Transform the Smoobu data directly
+          const bookings = response.data.bookings.map((booking) => ({
+            id: booking.id,
+            guest:
+              booking["guest-name"] ||
+              `${booking.firstName || ""} ${booking.lastName || ""}`.trim(),
+            property:
+              roomNames[booking.apartment?.id] || booking.apartment?.name || "",
+            portal:
+              getPortalName(booking.channel?.name) ||
+              booking.channel?.name ||
+              "Unknown",
+            portalId: booking.channel?.id || "Unknown",
+            created: booking["created-at"] || new Date().toISOString(),
+            email: booking.email || "",
+            phone: booking.phone || "",
+            address: "",
+            adults: parseInt(booking.adults) || 0,
+            children: parseInt(booking.children) || 0,
+            checkIn: booking.arrival,
+            checkOut: booking.departure,
+            arrivalTime: booking["check-in"] || "",
+            departureTime: booking["check-out"] || "",
+            notes: booking.notice || "",
+            price: parseFloat(booking.price) || 0,
+            priceDetails: {
+              basePrice: parseFloat(booking.price) || 0,
+              linenFee: 0,
+              extrasTotal: 0,
+              longStayDiscount: 0,
+              discounts: 0,
+              promoCode: null,
+              total: parseFloat(booking.price) || 0,
+            },
+            commission: 0,
+            nights: Math.ceil(
+              (new Date(booking.departure) - new Date(booking.arrival)) /
+                (1000 * 60 * 60 * 24)
+            ),
+            extras: [],
+          }));
+
+          setReportData(bookings);
+          console.log("Direct bookings:", bookings);
         } else {
-          throw new Error("Réponse vide du serveur");
+          throw new Error("No booking data received");
         }
       } catch (err) {
-        setError(err.response?.data?.error || err.message);
-        setReportData([]);
+        console.error("Error fetching direct bookings:", err);
+        setError("Failed to fetch bookings: " + err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchReport();
+    fetchDirectFromSmoobu();
   }, [startMonth, startYear, endMonth, endYear]);
 
   const handleSort = (field) => {
@@ -106,73 +200,96 @@ const BookingsReport = () => {
         "Commission",
         "Liste des extras",
         "Total des extras",
-        "Prix total"
+        "Prix total",
       ],
       ...filteredAndSortedData.map((booking) => [
         booking.id,
         booking.guest,
         formatDate(booking.created),
         booking.portal,
-        booking.email || '',
-        booking.phone || '',
-        booking.address || '',
+        booking.email,
+        booking.phone,
+        booking.address,
         booking.adults,
         booking.children,
         formatDate(booking.checkIn),
-        booking.arrivalTime || '',
+        booking.arrivalTime,
         formatDate(booking.checkOut),
         booking.nights,
         booking.priceDetails.basePrice,
-        booking.priceDetails.promoCode?.name || '',
-        booking.priceDetails.promoCode?.amount || '',
-        booking.priceDetails.linenFee || '',
-        booking.priceDetails.longStayDiscount || '',
-        booking.commission || '',
-        booking.extras.map(e => `${e.name} (${e.quantity}x)`).join(", "),
-        booking.extras.reduce((sum, extra) => sum + extra.amount, 0),
-        booking.price
+        booking.priceDetails.promoCode?.code || "",
+        booking.priceDetails.promoCode?.discount || "",
+        booking.priceDetails.linenFee,
+        booking.priceDetails.longStayDiscount,
+        booking.commission,
+        booking.extras.map((e) => `${e.name} (${e.quantity}x)`).join(", "),
+        booking.priceDetails.extrasTotal,
+        booking.price,
       ]),
     ];
-  
+
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(wsData);
-  
+
     const colWidths = [
-      { wch: 15 }, // ID de réservation
+      { wch: 15 }, // ID
       { wch: 25 }, // Client
-      { wch: 20 }, // Création de la réservation
-      { wch: 20 }, // Portail de réservation
-      { wch: 30 }, // Email du client
-      { wch: 20 }, // Téléphone du client
-      { wch: 35 }, // Adresse du client
-      { wch: 15 }, // Nombre d'adulte
-      { wch: 15 }, // Nombre d'enfant
+      { wch: 20 }, // Création
+      { wch: 20 }, // Portail
+      { wch: 30 }, // Email
+      { wch: 20 }, // Téléphone
+      { wch: 35 }, // Adresse
+      { wch: 15 }, // Adultes
+      { wch: 15 }, // Enfants
       { wch: 15 }, // Arrivée
       { wch: 15 }, // Check-in
       { wch: 15 }, // Départ
-      { wch: 15 }, // Nombre de nuits
-      { wch: 15 }, // Prix de base
-      { wch: 20 }, // Nom du coupon
-      { wch: 15 }, // Valeur du coupon
-      { wch: 15 }, // Frais de linge
-      { wch: 20 }, // Promotion de long séjour
+      { wch: 15 }, // Nuits
+      { wch: 15 }, // Prix base
+      { wch: 20 }, // Nom coupon
+      { wch: 15 }, // Valeur coupon
+      { wch: 15 }, // Frais linge
+      { wch: 20 }, // Promo long séjour
       { wch: 15 }, // Commission
-      { wch: 50 }, // Liste des extras
-      { wch: 15 }, // Total des extras
-      { wch: 15 }  // Prix total de la chambre
+      { wch: 50 }, // Liste extras
+      { wch: 15 }, // Total extras
+      { wch: 15 }, // Prix total
     ];
-    
+
     ws["!cols"] = colWidths;
-  
+
     XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
-  
+
     const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
     const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
     const fileName = `rapport-reservations_${startDate}_${endDate}.xlsx`;
-  
+
     XLSX.writeFile(wb, fileName);
   };
 
+const handleSync = async () => {
+  try {
+    setLoading(true);
+    console.log("Starting sync...");
+    const response = await axios.get("http://localhost:3000/sync-reservations");
+    console.log("Sync response:", response.data);
+
+    if (response.data.success) {
+      alert(
+        `Sync completed successfully!\nProcessed: ${response.data.stats.total}\nSuccessful: ${response.data.stats.successful}\nFailed: ${response.data.stats.failed}`
+      );
+      // Simply reload the page to get fresh data
+      window.location.reload();
+    } else {
+      throw new Error("Sync failed");
+    }
+  } catch (error) {
+    console.error("Error syncing reservations:", error);
+    alert(`Failed to sync reservations: ${error.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
   const filteredAndSortedData = reportData
     .filter((booking) =>
       Object.values(booking).some(
@@ -186,7 +303,9 @@ const BookingsReport = () => {
       if (["checkIn", "checkOut", "created"].includes(sortField)) {
         return multiplier * (new Date(a[sortField]) - new Date(b[sortField]));
       }
-      return multiplier * (String(a[sortField]).localeCompare(String(b[sortField])));
+      return (
+        multiplier * String(a[sortField]).localeCompare(String(b[sortField]))
+      );
     });
 
   if (loading) {
@@ -198,12 +317,13 @@ const BookingsReport = () => {
   }
 
   return (
-    <div className="w-full max-w-full p-2 mx-auto sm:p-4 lg:p-6">
-      {/* Header Section */}
+    <div className="w-full p-3 mx-auto max-w-7xl md:p-6">
       <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <Calendar className="w-6 h-6 text-[#678D73]" />
-          <h1 className="text-xl font-bold md:text-2xl">Rapport des Réservations Smoobu 2</h1>
+          <h1 className="text-xl font-bold md:text-2xl">
+            Rapport des Réservations Smoobu
+          </h1>
         </div>
 
         <button
@@ -214,9 +334,15 @@ const BookingsReport = () => {
           <Download size={20} />
           Exporter
         </button>
+        <button
+          onClick={handleSync}
+          className="flex items-center justify-center w-full gap-2 px-4 py-2 text-white transition-colors bg-blue-500 rounded-lg hover:bg-blue-600 sm:w-auto"
+        >
+          <RefreshCw size={20} />
+          Sync Réservations
+        </button>
       </div>
 
-      {/* Filters Section */}
       <div className="p-4 mb-6 bg-white rounded-lg shadow">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="relative lg:col-span-1">
@@ -232,7 +358,6 @@ const BookingsReport = () => {
             />
           </div>
 
-          {/* Date filters in a responsive grid */}
           <div className="sm:col-span-1">
             <select
               className="w-full px-3 py-2 border rounded-lg focus:ring-[#678D73] focus:border-[#678D73]"
@@ -288,71 +413,112 @@ const BookingsReport = () => {
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="px-4 py-3 mb-6 text-red-700 border border-red-200 rounded bg-red-50">
           {error}
         </div>
       )}
 
-      {/* Table Section */}
       <div className="bg-white rounded-lg shadow">
         <div className="overflow-x-auto">
-          <table className="w-full table-auto">
-            {/* Table Headers */}
+          <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
                 <th className="w-8 px-4 py-3"></th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                    onClick={() => handleSort("id")}>
-                  ID de réservation {sortField === "id" && (sortDirection === "asc" ? "↑" : "↓")}
+                {/* Table headers - keeping the existing ones */}
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer md:px-6 md:text-sm"
+                  onClick={() => handleSort("id")}
+                >
+                  ID de réservation{" "}
+                  {sortField === "id" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                    onClick={() => handleSort("guest")}>
-                  Nom du client {sortField === "guest" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                  onClick={() => handleSort("guest")}
+                >
+                  Nom du client{" "}
+                  {sortField === "guest" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                    onClick={() => handleSort("checkIn")}>
-                  Date d'arrivée {sortField === "checkIn" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                  onClick={() => handleSort("checkIn")}
+                >
+                  Date d&apos;arrivée{" "}
+                  {sortField === "checkIn" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                    onClick={() => handleSort("arrivalTime")}>
-                  Heure de check-in {sortField === "arrivalTime" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                  onClick={() => handleSort("arrivalTime")}
+                >
+                  Heure de check-in{" "}
+                  {sortField === "arrivalTime" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                    onClick={() => handleSort("checkOut")}>
-                  Date de départ {sortField === "checkOut" && (sortDirection === "asc" ? "↓" : "↑")}
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                  onClick={() => handleSort("checkOut")}
+                >
+                  Date de départ{" "}
+                  {sortField === "checkOut" &&
+                    (sortDirection === "asc" ? "↓" : "↑")}
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                    onClick={() => handleSort("property")}>
-                  Nom du logement {sortField === "property" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                  onClick={() => handleSort("property")}
+                >
+                  Nom du logement{" "}
+                  {sortField === "property" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                    onClick={() => handleSort("nights")}>
-                  Nombre de nuits {sortField === "nights" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                  onClick={() => handleSort("nights")}
+                >
+                  Nombre de nuits{" "}
+                  {sortField === "nights" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                    onClick={() => handleSort("portal")}>
-                  Portail de réservation {sortField === "portal" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                  onClick={() => handleSort("portal")}
+                >
+                  Portail de réservation{" "}
+                  {sortField === "portal" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
-                    onClick={() => handleSort("price")}>
-                  Prix total {sortField === "price" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                  onClick={() => handleSort("price")}
+                >
+                  Prix total{" "}
+                  {sortField === "price" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
               </tr>
             </thead>
             {/* Table Body */}
             <tbody className="divide-y divide-gray-200">
               {filteredAndSortedData.length > 0 ? (
-                filteredAndSortedData.map((booking) => (
-                  <React.Fragment key={booking.id}>
-                    <tr className="hover:bg-gray-50">
+                filteredAndSortedData.map((booking, index) => (
+                  <React.Fragment key={`booking-${booking.id}-${index}`}>
+                    <tr key={`row-${booking.id}`} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
                         <button
-                          onClick={() => setExpandedBooking(expandedBooking === booking.id ? null : booking.id)}
-                          className="p-1 hover:bg-gray-100 rounded"
+                          onClick={() =>
+                            setExpandedBooking(
+                              expandedBooking === booking.id ? null : booking.id
+                            )
+                          }
+                          className="p-1 rounded hover:bg-gray-100"
                         >
-                          {expandedBooking === booking.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          {expandedBooking === booking.id ? (
+                            <ChevronUp key={`up-${booking.id}`} size={16} />
+                          ) : (
+                            <ChevronDown key={`down-${booking.id}`} size={16} />
+                          )}
                         </button>
                       </td>
                       <td className="px-4 py-3 text-xs font-medium text-gray-900">
@@ -365,7 +531,7 @@ const BookingsReport = () => {
                         {formatDate(booking.checkIn)}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
-                        {booking.arrivalTime || '-'}
+                        {booking.arrivalTime || "-"}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {formatDate(booking.checkOut)}
@@ -377,141 +543,236 @@ const BookingsReport = () => {
                         {booking.nights}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
-                        {booking.portal}
+                        {getPortalName(booking.portal)}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {formatPrice(booking.price)}
                       </td>
                     </tr>
                     {expandedBooking === booking.id && (
-                      <tr>
+                      <tr key={`expanded-${booking.id}`}>
                         <td colSpan="10" className="p-0">
                           <div className="p-4 bg-gray-50">
-                            <div className="w-[90%] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="w-[95%] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                               {/* Column 1: Information Client */}
                               <div className="space-y-3">
-                                <h3 className="text-sm font-semibold text-gray-900">Information Client</h3>
+                                <h3 className="text-sm font-semibold text-gray-900">
+                                  Information Client
+                                </h3>
                                 <div className="space-y-2">
                                   <div className="text-sm">
-                                    <span className="font-medium block">Nom:</span>
-                                    <span className="break-words">{booking.guest}</span>
+                                    <span className="block font-medium">
+                                      Nom:
+                                    </span>
+                                    <span className="break-words">
+                                      {booking.guest}
+                                    </span>
                                   </div>
                                   <div className="text-sm">
-                                    <span className="font-medium block">Mail:</span>
-                                    <span className="break-words">{booking.email}</span>
+                                    <span className="block font-medium">
+                                      Mail:
+                                    </span>
+                                    <span className="break-words">
+                                      {booking.email}
+                                    </span>
                                   </div>
                                   <div className="text-sm">
-                                    <span className="font-medium block">Téléphone:</span>
-                                    <span className="break-words">{booking.phone}</span>
+                                    <span className="block font-medium">
+                                      Téléphone:
+                                    </span>
+                                    <span className="break-words">
+                                      {booking.phone}
+                                    </span>
                                   </div>
                                   <div className="text-sm">
-                                    <span className="font-medium block">Adresse:</span>
-                                    <span className="break-words">{booking.address}</span>
+                                    <span className="block font-medium">
+                                      Adresse:
+                                    </span>
+                                    <span className="break-words">
+                                      {booking.address}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
 
                               {/* Column 2: Information Reservation */}
                               <div className="space-y-3">
-                                <h3 className="text-sm font-semibold text-gray-900">Information Réservation</h3>
+                                <h3 className="text-sm font-semibold text-gray-900">
+                                  Information Réservation
+                                </h3>
                                 <div className="space-y-2">
                                   <div className="text-sm">
-                                    <span className="font-medium block">Logement:</span>
-                                    <span className="break-words">{booking.property}</span>
+                                    <span className="block font-medium">
+                                      Logement:
+                                    </span>
+                                    <span className="break-words">
+                                      {booking.property}
+                                    </span>
                                   </div>
                                   <div className="text-sm">
-                                    <span className="font-medium block">Adultes:</span>
+                                    <span className="block font-medium">
+                                      Adultes:
+                                    </span>
                                     {booking.adults}
                                   </div>
                                   <div className="text-sm">
-                                    <span className="font-medium block">Enfants:</span>
+                                    <span className="block font-medium">
+                                      Enfants:
+                                    </span>
                                     {booking.children}
                                   </div>
                                   <div className="text-sm">
-                                    <span className="font-medium block">Création:</span>
+                                    <span className="block font-medium">
+                                      Création:
+                                    </span>
                                     {formatDate(booking.created)}
                                   </div>
                                   <div className="text-sm">
-                                    <span className="font-medium block">Portai:</span>
-                                    {booking.portal}
+                                    <span className="block font-medium">
+                                      Portail:
+                                    </span>
+                                    {getPortalName(booking.portal)}
                                   </div>
                                 </div>
                               </div>
 
                               {/* Column 3: Détails de Prix */}
                               <div className="space-y-3">
-                                <h3 className="text-sm font-semibold text-gray-900">Détails de Prix</h3>
+                                <h3 className="text-sm font-semibold text-gray-900">
+                                  Détails de Prix
+                                </h3>
                                 <div className="space-y-2">
                                   <p className="text-sm">
-                                    <span className="font-medium block">Prix de base:</span>
-                                    {formatPrice(booking.priceDetails.basePrice)}
+                                    <span className="block font-medium">
+                                      Prix de base:
+                                    </span>
+                                    {formatPrice(
+                                      booking.priceDetails.basePrice
+                                    )}
                                   </p>
-                                  
+
                                   {booking.priceDetails.linenFee > 0 && (
                                     <p className="text-sm">
-                                      <span className="font-medium block">Frais de linge:</span>
-                                      {formatPrice(booking.priceDetails.linenFee)}
-                                    </p>
-                                  )}
-                                  
-                                  {booking.priceDetails.longStayDiscount < 0 && ( // Changed to < 0 since it's negative
-                                    <p className="text-sm text-red-600">
-                                      <span className="font-medium block">Réduction long séjour:</span>
-                                      {formatPrice(booking.priceDetails.longStayDiscount)} {/* No need for negative sign since it's already negative */}
+                                      <span className="block font-medium">
+                                        Frais de linge:
+                                      </span>
+                                      {formatPrice(
+                                        booking.priceDetails.linenFee
+                                      )}
                                     </p>
                                   )}
 
-                                  {booking.priceDetails.promoCode && (
-                                    <p className="text-sm text-green-600">
-                                      {booking.priceDetails.promoCode.name}: 
-                                      {formatPrice(-booking.priceDetails.promoCode.amount)}
+                                  {booking.priceDetails.longStayDiscount >
+                                    0 && ( // Changed to < 0 since it's negative
+                                    <p className="text-sm text-red-600">
+                                      <span className="block font-medium">
+                                        Réduction long séjour:
+                                      </span>
+                                      {formatPrice(
+                                        booking.priceDetails.longStayDiscount
+                                      )}{" "}
+                                      {/* No need for negative sign since it's already negative */}
                                     </p>
                                   )}
+
+                                  {booking.priceDetails.promoCode &&
+                                    !isNaN(
+                                      booking.priceDetails.promoCode.discount
+                                    ) && (
+                                      <p className="text-sm text-green-600">
+                                        Code promo (
+                                        {booking.priceDetails.promoCode.code}):
+                                        {formatPrice(
+                                          -booking.priceDetails.promoCode
+                                            .discount
+                                        )}
+                                      </p>
+                                    )}
 
                                   {booking.commission > 0 && (
                                     <p className="text-sm">
-                                      <span className="font-medium block">Commission:</span>
+                                      <span className="block font-medium">
+                                        Commission:
+                                      </span>
                                       {formatPrice(booking.commission)}
                                     </p>
                                   )}
-                                  
-                                  <div className="mt-4 pt-2 border-t border-gray-200">
-                                    <span className="font-medium block text-sm">Total chambre:</span>
+
+                                  <div className="pt-2 mt-4 border-t border-gray-200">
+                                    <span className="block text-sm font-medium">
+                                      Total chambre:
+                                    </span>
                                     <span className="text-sm">
-                                      {formatPrice(booking.priceDetails.basePrice + 
-                                        (booking.priceDetails.linenFee || 0) + 
-                                        (booking.priceDetails.longStayDiscount || 0) - // Add since it's already negative
-                                        (booking.priceDetails.promoCode?.amount || 0))}
+                                      {formatPrice(
+                                        booking.priceDetails.basePrice +
+                                          (booking.priceDetails.linenFee || 0) +
+                                          (booking.commission || 0) -
+                                          Math.abs(
+                                            booking.priceDetails
+                                              .longStayDiscount || 0
+                                          ) -
+                                          (booking.priceDetails.promoCode
+                                            ?.discount || 0)
+                                      )}
                                     </span>
                                   </div>
                                 </div>
                               </div>
                               {/* Column 4: Détails Extras */}
                               <div className="space-y-3">
-                                <h3 className="text-sm font-semibold text-gray-900">Détails Extras</h3>
+                                <h3 className="text-sm font-semibold text-gray-900">
+                                  Détails Extras
+                                </h3>
                                 <div className="space-y-2">
                                   {booking.extras.length > 0 && (
                                     <div className="text-sm">
-                                      <span className="font-medium block mb-2">Extras sélectionnés:</span>
+                                      <span className="block mb-2 font-medium">
+                                        Extras sélectionnés:
+                                      </span>
                                       <ul className="space-y-2">
-                                        {booking.extras.map((extra, index) => {
-                                          // Calculate unit price by dividing total amount by quantity
-                                          const unitPrice = extra.amount / extra.quantity;
-                                          
-                                          return (
-                                            <li key={index} className="break-words">
+                                        {booking.extras.map((extra, index) => (
+                                          <React.Fragment
+                                            key={`${booking.id}-extra-${index}-${extra.name}`}
+                                          >
+                                            <li className="break-words">
                                               • {extra.name} ({extra.quantity}x)
                                               <span className="block ml-3 text-gray-600">
-                                                {formatPrice(unitPrice)} / unité
+                                                €
+                                                {(
+                                                  extra.amount / extra.quantity
+                                                ).toFixed(2)}{" "}
+                                                / unité
                                               </span>
+                                              {extra.extraPersonQuantity >
+                                                0 && (
+                                                <div className="ml-6 text-sm text-gray-600">
+                                                  + Personne supplémentaire (
+                                                  {extra.extraPersonQuantity}x)
+                                                  <span className="block ml-3">
+                                                    €
+                                                    {extra.extraPersonPrice.toFixed(
+                                                      2
+                                                    )}{" "}
+                                                    / personne
+                                                  </span>
+                                                </div>
+                                              )}
                                             </li>
-                                          );
-                                        })}
+                                          </React.Fragment>
+                                        ))}
                                       </ul>
-                                      <div className="mt-4 pt-2 border-t border-gray-200">
-                                        <span className="font-medium">Total Extras:</span>
+                                      <div className="pt-2 mt-4 border-t border-gray-200">
+                                        <span className="font-medium">
+                                          Total Extras:
+                                        </span>
                                         <span className="block">
-                                          {formatPrice(booking.extras.reduce((sum, extra) => sum + extra.amount, 0))}
+                                          {formatPrice(
+                                            booking.extras.reduce(
+                                              (sum, extra) =>
+                                                sum + extra.amount,
+                                              0
+                                            )
+                                          )}
                                         </span>
                                       </div>
                                     </div>
@@ -527,7 +788,10 @@ const BookingsReport = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="10" className="px-4 py-3 text-sm text-center text-gray-500">
+                  <td
+                    colSpan="10"
+                    className="px-4 py-3 text-sm text-center text-gray-500"
+                  >
                     Aucune réservation trouvée pour cette période
                   </td>
                 </tr>

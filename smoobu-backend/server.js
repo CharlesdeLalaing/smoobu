@@ -1,33 +1,261 @@
-import express from 'express';
-import cors from 'cors';
-import axios from 'axios';
-import Stripe from 'stripe';
-import nodemailer from 'nodemailer';
-import * as dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import express from "express";
+import cors from "cors";
+import axios from "axios";
+import Stripe from "stripe";
+import nodemailer from "nodemailer";
+import * as dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import cron from "node-cron";
 
-
-import { 
-  doc, 
-  updateDoc, 
-  increment, 
+import {
+  doc,
+  updateDoc,
+  increment,
   arrayUnion,
   collection,
   query,
   where,
-  getDocs 
-} from 'firebase/firestore';
+  getDocs,
+} from "firebase/firestore";
 
 import { Timestamp } from "firebase/firestore";
 
-import { db, FieldValue } from './firebase-config.js';
-
+import { db, FieldValue } from "./firebase-config.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const roomNames = {
+  1946282: "Le Dôme des Libellules",
+  1644643: "La Bulle du Ruisseau",
+  1946279: "Le Moulin",
+  1946276: "La Chambre de Blé",
+  1946270: "Le Logis",
+};
+
+
+
 
 dotenv.config();
+
+async function syncReservations() {
+  try {
+    console.log("🟦 Starting reservation sync...", new Date().toISOString());
+
+    const channelMapping = {
+      // Channel IDs
+      2323525: "Website",
+      2323516: "Blocked",
+      2323543: "Airbnb",
+
+      // Channel Names
+      Homepage: "Website",
+      "Direct booking": "Website",
+      "Homepage direct": "Website",
+      Direct: "Website",
+      Airbnb: "Airbnb",
+      airbnb: "Airbnb",
+      "booking.com": "Booking.com",
+      "Booking.com": "Booking.com",
+      "Blocked channel": "Blocked",
+      Blocked: "Blocked",
+    };
+
+    const endDate = new Date().toISOString().split("T")[0];
+    const startDate = new Date(Date.now() - 730 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
+
+    const response = await axios.get(
+      "https://login.smoobu.com/api/reservations",
+      {
+        headers: {
+          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+          "Cache-Control": "no-cache",
+        },
+        params: {
+          arrivalFrom: startDate,
+          arrivalTo: endDate,
+          showCancellation: true,
+          excludeBlocked: false,
+          pageSize: 100,
+        },
+      }
+    );
+
+    console.log(
+      "Full booking details:",
+      response.data.bookings?.map((booking) => ({
+        id: booking.id,
+        channel: booking.channel,
+        channelId: booking.channel?.id,
+        channelName: booking.channel?.name,
+        arrival: booking.arrival,
+        guest: booking["guest-name"],
+      }))
+    );
+
+
+
+    const reservations = response.data.bookings || [];
+    console.log(`🟦 Found ${reservations.length} reservations to process`);
+    
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const reservation of reservations) {
+      try {
+         console.log(
+           `🟦 Processing reservation ${reservation.id} from channel:`,
+           {
+             rawChannelName: reservation.channel?.name,
+             mappedChannelName:
+               channelMapping[reservation.channel?.name] || "Website",
+           }
+         );
+
+
+        // Get price elements
+        const priceElementsResponse = await axios.get(
+          `https://login.smoobu.com/api/reservations/${reservation.id}/price-elements`,
+          {
+            headers: {
+              "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+              "Cache-Control": "no-cache",
+            },
+          }
+        );
+
+        const priceElements = priceElementsResponse.data.priceElements || [];
+
+        // Calculate all the necessary price details...
+        const basePrice =
+          priceElements.find(
+            (el) =>
+              el.type === "base" ||
+              el.name?.toLowerCase().includes("prix de base")
+          )?.amount || 0;
+
+        const extras = priceElements.filter((element) => {
+          const name = element.name?.toLowerCase() || "";
+          return (
+            element.type === "addon" &&
+            !name.includes("commission") &&
+            !name.includes("cleaning fee")
+          );
+        });
+
+        // Map the channel correctly
+        const channelName = reservation.channel?.name || "Website";
+        const mappedChannel = channelMapping[channelName] || channelName;
+
+  console.log("Channel mapping for reservation " + reservation.id, {
+    rawChannelName: reservation.channel?.name,
+    rawChannelId: reservation.channel?.id,
+    mappedChannel: reservation.channel
+      ? channelMapping[reservation.channel.name] ||
+        channelMapping[reservation.channel.id] ||
+        reservation.channel.name ||
+        "Unknown"
+      : "Unknown",
+  });
+
+        // Prepare document with correct channel mapping
+        const bookingDoc = {
+          smoobuId: reservation.id,
+          firstName: reservation.firstName || "",
+          lastName: reservation.lastName || "",
+          guestName:
+            reservation["guest-name"] ||
+            `${reservation.firstName || ""} ${
+              reservation.lastName || ""
+            }`.trim() ||
+            "Sans nom",
+          email: reservation.email || "",
+          phone: reservation.phone || "",
+          address: reservation.address || "",
+          adults: parseInt(reservation.adults) || 0,
+          children: parseInt(reservation.children) || 0,
+          arrivalDate: reservation.arrival,
+          departureDate: reservation.departure,
+          checkInTime: reservation["check-in"] || "",
+          checkOutTime: reservation["check-out"] || "",
+          apartmentId: reservation.apartment?.id,
+          apartmentName:
+            roomNames[reservation.apartment?.id] || reservation.apartment?.name,
+          channelObject: reservation.channel,
+          channelId: reservation.channel?.id,
+          channelName: reservation.channel?.name,
+          notice: reservation.notice || "",
+          status:
+            reservation.type === "cancellation" ? "cancelled" : "confirmed",
+          basePrice: parseFloat(basePrice),
+          price: parseFloat(reservation.price),
+          priceDetails: {
+            basePrice: parseFloat(basePrice),
+            extrasTotal: extras.reduce((sum, extra) => sum + extra.amount, 0),
+            extras: extras.map((extra) => ({
+              name: extra.name,
+              amount: parseFloat(extra.amount),
+              quantity: parseInt(extra.quantity) || 1,
+            })),
+          },
+          portalName: reservation.channel
+            ? channelMapping[reservation.channel.id] ||
+              channelMapping[reservation.channel.name] ||
+              reservation.channel.name
+            : "Website",
+          createdAt: reservation["created-at"] || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastSyncedAt: new Date().toISOString(),
+        };
+
+        // Save to the "bookings" collection (not "reservations")
+        await db
+          .collection("bookings")
+          .doc(reservation.id.toString())
+          .set(bookingDoc, { merge: true });
+
+        console.log(
+          `🟩 Successfully processed ${mappedChannel} booking ${reservation.id}`
+        );
+        successCount++;
+
+        // Add delay between requests
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      } catch (reservationError) {
+        console.error(
+          `🟥 Error processing reservation ${reservation.id}:`,
+          reservationError
+        );
+        errorCount++;
+        continue;
+      }
+    }
+
+    console.log("🟦 Sync Summary:", {
+      totalReservations: reservations.length,
+      successfullyProcessed: successCount,
+      errors: errorCount,
+      completedAt: new Date().toISOString(),
+    });
+
+    return {
+      success: true,
+      message: "Sync completed successfully",
+      stats: {
+        total: reservations.length,
+        successful: successCount,
+        failed: errorCount,
+      },
+    };
+  } catch (error) {
+    console.error("🟥 Error in syncReservations:", error);
+    throw error;
+  }
+}
+
 
 const app = express();
 
@@ -37,8 +265,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.options('/webhook', cors());
-
+app.options("/webhook", cors());
 
 const verifyWordPressAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -56,31 +283,29 @@ const verifyWordPressAuth = (req, res, next) => {
   next();
 };
 
-
-
-
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const pendingBookings = new Map();
 
 // After imports, with other configurations
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
+    pass: process.env.EMAIL_PASSWORD,
+  },
 });
 
 // Add this function near the top with other helpers
 const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString('fr-BE', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
+  return new Date(dateString).toLocaleDateString("fr-BE", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 };
+
+
 
 const sendBookingConfirmation = async (bookingData) => {
   try {
@@ -90,36 +315,69 @@ const sendBookingConfirmation = async (bookingData) => {
         
         <div style="margin: 20px 0;">
           <h2>Détails du séjour</h2>
-          <p>Arrivée: ${formatDate(bookingData.arrivalDate)} à ${bookingData.arrivalTime}</p>
+          <p>Arrivée: ${formatDate(bookingData.arrivalDate)} à ${
+      bookingData.arrivalTime
+    }</p>
           <p>Départ: ${formatDate(bookingData.departureDate)}</p>
-          <p>Voyageurs: ${bookingData.adults} adultes${bookingData.children ? `, ${bookingData.children} enfants` : ''}</p>
+          <p>Voyageurs: ${bookingData.adults} adultes${
+      bookingData.children ? `, ${bookingData.children} enfants` : ""
+    }</p>
         </div>
 
         <div style="margin: 20px 0;">
           <h2>Détails des prix</h2>
           <p>Prix de base: ${bookingData.basePrice.toFixed(2)} EUR</p>
-          ${bookingData.extras?.map(extra => `
-            <p>${extra.name} (x${extra.quantity}): ${extra.amount.toFixed(2)} EUR</p>
-            ${extra.extraPersonQuantity ? `<p>Personne supplémentaire (x${extra.extraPersonQuantity}): ${extra.extraPersonAmount.toFixed(2)} EUR</p>` : ''}
-          `).join('')}
-          ${bookingData.priceDetails?.discount ? 
-            `<p style="color: #22c55e;">Réduction long séjour (${bookingData.priceDetails.settings.lengthOfStayDiscount.discountPercentage}%): -${bookingData.priceDetails.discount.toFixed(2)} EUR</p>` 
-            : ''}
-          ${bookingData.couponApplied ? 
-            `<p style="color: #22c55e;">
-              ${bookingData.couponApplied.type === 'percentage' 
-                ? `Code promo (${bookingData.couponApplied.code} - ${bookingData.couponApplied.percentageValue}%): -${(bookingData.couponApplied.discount || 0).toFixed(2)} EUR`
-                : `Code promo (${bookingData.couponApplied.code}): -${(bookingData.couponApplied.discount || 0).toFixed(2)} EUR`}
-            </p>` 
-            : ''}
-          <p style="font-weight: bold; margin-top: 10px;">Total: ${bookingData.price.toFixed(2)} EUR</p>
+          ${bookingData.extras
+            ?.map(
+              (extra) => `
+            <p>${extra.name} (x${extra.quantity}): ${extra.amount.toFixed(
+                2
+              )} EUR</p>
+            ${
+              extra.extraPersonQuantity
+                ? `<p>Personne supplémentaire (x${
+                    extra.extraPersonQuantity
+                  }): ${extra.extraPersonAmount.toFixed(2)} EUR</p>`
+                : ""
+            }
+          `
+            )
+            .join("")}
+          ${
+            bookingData.priceDetails?.discount
+              ? `<p style="color: #22c55e;">Réduction long séjour (${
+                  bookingData.priceDetails.settings.lengthOfStayDiscount
+                    .discountPercentage
+                }%): -${bookingData.priceDetails.discount.toFixed(2)} EUR</p>`
+              : ""
+          }
+          ${
+            bookingData.couponApplied
+              ? `<p style="color: #22c55e;">
+              ${
+                bookingData.couponApplied.type === "percentage"
+                  ? `Code promo (${bookingData.couponApplied.code} - ${
+                      bookingData.couponApplied.percentageValue
+                    }%): -${(bookingData.couponApplied.discount || 0).toFixed(
+                      2
+                    )} EUR`
+                  : `Code promo (${bookingData.couponApplied.code}): -${(
+                      bookingData.couponApplied.discount || 0
+                    ).toFixed(2)} EUR`
+              }
+            </p>`
+              : ""
+          }
+          <p style="font-weight: bold; margin-top: 10px;">Total: ${bookingData.price.toFixed(
+            2
+          )} EUR</p>
         </div>
 
         <div style="margin: 20px 0;">
           <h2>Coordonnées</h2>
           <p>${bookingData.firstName} ${bookingData.lastName}</p>
           <p>Email: ${bookingData.email}</p>
-          ${bookingData.phone ? `<p>Téléphone: ${bookingData.phone}</p>` : ''}
+          ${bookingData.phone ? `<p>Téléphone: ${bookingData.phone}</p>` : ""}
         </div>
 
         <div style="margin-top: 30px;">
@@ -132,18 +390,19 @@ const sendBookingConfirmation = async (bookingData) => {
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: bookingData.email,
-      subject: 'Confirmation de réservation - Ferme de Basseilles',
-      html: emailContent
+      subject: "Confirmation de réservation - Ferme de Basseilles",
+      html: emailContent,
     });
 
-    console.log('Confirmation email sent to:', bookingData.email);
+    console.log("Confirmation email sent to:", bookingData.email);
   } catch (error) {
-    console.error('Error sending confirmation email:', error);
+    console.error("Error sending confirmation email:", error);
   }
 };
 
 const discountSettings = {
-  1946282: { // Le dôme de libellules
+  1946282: {
+    // Le dôme de libellules
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
@@ -156,7 +415,8 @@ const discountSettings = {
       discountPercentage: 0,
     },
   },
-  1644643: { // La Bulle du Ruisseau
+  1644643: {
+    // La Bulle du Ruisseau
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
@@ -169,7 +429,8 @@ const discountSettings = {
       discountPercentage: 0,
     },
   },
-  1946279: { // Le Moulin
+  1946279: {
+    // Le Moulin
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
@@ -182,7 +443,8 @@ const discountSettings = {
       discountPercentage: 40,
     },
   },
-  1946276: { // La chambre de blé
+  1946276: {
+    // La chambre de blé
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
@@ -195,7 +457,8 @@ const discountSettings = {
       discountPercentage: 40,
     },
   },
-  1946270: { // Le Logis
+  1946270: {
+    // Le Logis
     cleaningFee: 0,
     prepayment: 0,
     minDaysBetweenBookingAndArrival: 1,
@@ -213,51 +476,45 @@ const discountSettings = {
 // Create a mapping of translation keys to French names
 const extrasFrenchNames = {
   // Packs
-  'extras.packs.essential.name': "L'essentiel (pour 2)",
-  'extras.packs.relaxGourmet.name': 'Le détente gourmet (pour 2)',
-  'extras.packs.racletteRelax.name': 'La raclette en détente (pour 2)',
-  'extras.packs.romanticGourmet.name': 'Le romantique gourmet (pour 2)',
-  'extras.packs.racletteRomantic.name': 'La raclette romantique (pour 2)',
-  'extras.packs.bbqRelax.name': 'Le barbecue détente (pour 2)',
-  'extras.packs.bbqRomantic.name': 'Le romantique barbecue (pour 2)',
-  'extras.formulesDecouverte.passion.name': 'Formule passion (pour 2)',
-  'extras.formulesDecouverte.birthday.name': 'Formule anniversaire (pour 2)',
+  "extras.packs.essential.name": "L'essentiel (pour 2)",
+  "extras.packs.relaxGourmet.name": "Le détente gourmet (pour 2)",
+  "extras.packs.racletteRelax.name": "La raclette en détente (pour 2)",
+  "extras.packs.romanticGourmet.name": "Le romantique gourmet (pour 2)",
+  "extras.packs.racletteRomantic.name": "La raclette romantique (pour 2)",
+  "extras.packs.bbqRelax.name": "Le barbecue détente (pour 2)",
+  "extras.packs.bbqRomantic.name": "Le romantique barbecue (pour 2)",
+  "extras.formulesDecouverte.passion.name": "Formule passion (pour 2)",
+  "extras.formulesDecouverte.birthday.name": "Formule anniversaire (pour 2)",
 
   // Spa
-  'extras.spa.basic.name': 'Formule SPA (2 pers)',
-  'extras.spa.withBottle.name': 'Formule SPA + bouteille (2 pers)',
+  "extras.spa.basic.name": "Formule SPA (2 pers)",
+  "extras.spa.withBottle.name": "Formule SPA + bouteille (2 pers)",
 
   // Meals
-  'extras.meals.meatballsLiege.name': 'Boulettes de viande sauce liégeoise',
-  'extras.meals.meatballsTomato.name': 'Boulette de viande sauce tomate',
-  'extras.meals.waterzooi.name': 'Waterzooi de volaille',
-  'extras.meals.chiliVeg.name': 'Chili végétarien',
-  'extras.meals.carrotSoup.name': 'Velouté de carotte et cumin',
+  "extras.meals.meatballsLiege.name": "Boulettes de viande sauce liégeoise",
+  "extras.meals.meatballsTomato.name": "Boulette de viande sauce tomate",
+  "extras.meals.waterzooi.name": "Waterzooi de volaille",
+  "extras.meals.chiliVeg.name": "Chili végétarien",
+  "extras.meals.carrotSoup.name": "Velouté de carotte et cumin",
 
   // Meal Formulas
-  'extras.formulesRepas.breakfast.name': 'Formule petit-déjeuner (2 pers)',
-  'extras.formulesRepas.gourmet.name': 'Formule gourmet (2 pers)',
-  'extras.formulesRepas.raclette.name': 'Formule raclette (2 pers)',
-  'extras.formulesRepas.bbq.name': 'Formule barbecue (2 pers)',
-  'extras.formulesRepas.apero.name': 'Formule planche apéro (2 pers)',
+  "extras.formulesRepas.breakfast.name": "Formule petit-déjeuner (2 pers)",
+  "extras.formulesRepas.gourmet.name": "Formule gourmet (2 pers)",
+  "extras.formulesRepas.raclette.name": "Formule raclette (2 pers)",
+  "extras.formulesRepas.bbq.name": "Formule barbecue (2 pers)",
+  "extras.formulesRepas.apero.name": "Formule planche apéro (2 pers)",
 
   // Additional Person translation
-  'extras.additionalPerson': 'Personne supplémentaire',
+  "extras.additionalPerson": "Personne supplémentaire",
 };
 
 // Add this near your other constants at the top of server.js
-const roomNames = {
-  '1946282': 'Le Dôme des Libellules',
-  '1644643': 'La Bulle du Ruisseau',
-  '1946279': 'Le Moulin',
-  '1946276': 'La Chambre de Blé',
-  '1946270': 'Le Logis'
-};
+
 
 // Modified processExtraName function
 const processExtraName = (extra) => {
   // If the name is a translation key (starts with "extras.")
-  if (extra.name && extra.name.startsWith('extras.')) {
+  if (extra.name && extra.name.startsWith("extras.")) {
     return {
       nameKey: extra.name, // Store the original translation key for frontend
       name: extrasFrenchNames[extra.name] || extra.name, // Use French name for Smoobu
@@ -286,10 +543,10 @@ const calculatePriceWithSettings = (
 
   // Calculate base room price
   while (currentDate <= endDateTime) {
-    const dateStr = currentDate.toISOString().split('T')[0];
-    if (dateStr !== endDateTime.toISOString().split('T')[0]) {
+    const dateStr = currentDate.toISOString().split("T")[0];
+    if (dateStr !== endDateTime.toISOString().split("T")[0]) {
       const dayRate = rates[dateStr];
-      if (dayRate && (dayRate.available === 1)) {
+      if (dayRate && dayRate.available === 1) {
         totalPrice += dayRate.price;
         numberOfNights++;
       }
@@ -300,7 +557,8 @@ const calculatePriceWithSettings = (
   // Calculate long stay discount only on the base room price
   let discount = 0;
   if (numberOfNights >= settings.lengthOfStayDiscount.minNights) {
-    discount = (totalPrice * settings.lengthOfStayDiscount.discountPercentage) / 100;
+    discount =
+      (totalPrice * settings.lengthOfStayDiscount.discountPercentage) / 100;
   }
 
   // Calculate flat guest fees (not per night)
@@ -311,37 +569,37 @@ const calculatePriceWithSettings = (
   // Build price elements array
   const priceElements = [
     {
-      type: 'basePrice',
-      name: 'Prix de base',
+      type: "basePrice",
+      name: "Prix de base",
       amount: totalPrice,
-      currencyCode: 'EUR',
-    }
+      currencyCode: "EUR",
+    },
   ];
 
   if (guestFees > 0) {
     priceElements.push({
-      type: 'addon',
-      name: 'Frais de personnes supplémentaires',
+      type: "addon",
+      name: "Frais de personnes supplémentaires",
       amount: guestFees,
-      currencyCode: 'EUR',
+      currencyCode: "EUR",
     });
   }
 
   if (settings.cleaningFee > 0) {
     priceElements.push({
-      type: 'cleaningFee',
-      name: 'Frais de nettoyage',
+      type: "cleaningFee",
+      name: "Frais de nettoyage",
       amount: settings.cleaningFee,
-      currencyCode: 'EUR',
+      currencyCode: "EUR",
     });
   }
 
   if (discount > 0) {
     priceElements.push({
-      type: 'longStayDiscount',
+      type: "longStayDiscount",
       name: `Réduction long séjour (${settings.lengthOfStayDiscount.discountPercentage}%)`,
       amount: -discount,
-      currencyCode: 'EUR',
+      currencyCode: "EUR",
     });
   }
 
@@ -351,19 +609,23 @@ const calculatePriceWithSettings = (
 
   return {
     originalPrice: totalPrice,
-    guestFees,  // Added this to make it explicit in the return
+    guestFees, // Added this to make it explicit in the return
     cleaningFee: settings.cleaningFee,
     discount,
     finalPrice,
     numberOfNights,
     priceElements,
-    settings
+    settings,
   };
 };
 
 // Webhook endpoint must come before JSON middleware
 // Helper function for delays
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+
+
+
 
 app.post(
   "/webhook",
@@ -433,7 +695,6 @@ app.post(
             }
           );
 
-          // Store booking in Firebase
           const bookingDoc = {
             ...bookingData,
             smoobuReservationId: smoobuResponse.data.id,
@@ -441,10 +702,48 @@ app.post(
             stripePaymentStatus: paymentIntent.status,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
+            price: Number(bookingData.price),
+            basePrice: Number(bookingData.basePrice),
+            priceDetails: {
+              basePrice: Number(bookingData.basePrice),
+              finalPrice:
+                Number(bookingData.basePrice) -
+                Number(bookingData.priceDetails?.discount || 0) -
+                (bookingData.couponApplied
+                  ? Number(bookingData.couponApplied.discount)
+                  : 0),
+              extrasTotal:
+                bookingData.extras?.reduce((sum, extra) => {
+                  const extraAmount = Number(extra.amount);
+                  const extraPersonAmount =
+                    extra.extraPersonQuantity > 0
+                      ? Number(extra.extraPersonPrice) *
+                        Number(extra.extraPersonQuantity)
+                      : 0;
+                  return sum + extraAmount + extraPersonAmount;
+                }, 0) || 0,
+              discount: Number(bookingData.priceDetails?.discount || 0),
+              calculatedDiscounts: {
+                longStay: Number(bookingData.priceDetails?.discount || 0),
+                coupon: bookingData.couponApplied
+                  ? Number(bookingData.couponApplied.discount)
+                  : 0,
+              },
+              settings: bookingData.priceDetails?.settings || {},
+            },
             extras: bookingData.extras
               ? bookingData.extras.map((extra) => {
                   const translatedExtra = {
                     ...extra,
+                    amount: Number(extra.amount),
+                    quantity: Number(extra.quantity),
+                    extraPersonAmount:
+                      extra.extraPersonQuantity > 0
+                        ? Number(extra.extraPersonPrice) *
+                          Number(extra.extraPersonQuantity)
+                        : 0,
+                    extraPersonQuantity: Number(extra.extraPersonQuantity || 0),
+                    extraPersonPrice: Number(extra.extraPersonPrice || 0),
                     name: extra.name.startsWith("extras.")
                       ? extrasFrenchNames[extra.name] || extra.name
                       : extra.name,
@@ -462,7 +761,7 @@ app.post(
               ? {
                   code: bookingData.couponApplied.code,
                   type: bookingData.couponApplied.type,
-                  discount: bookingData.couponApplied.discount,
+                  discount: Number(bookingData.couponApplied.discount) || 0,
                   percentageValue:
                     bookingData.couponApplied.type === "percentage"
                       ? Number(bookingData.couponApplied.percentageValue) ||
@@ -471,7 +770,6 @@ app.post(
                 }
               : null,
           };
-
           try {
             const docRef = await db.collection("bookings").add(bookingDoc);
             console.log("🟩 Booking stored in Firebase with ID:", docRef.id);
@@ -797,6 +1095,7 @@ app.use(
       "https://reservation.fermedebasseilles.be",
       "https://smoobu-test.vercel.app",
       "http://localhost:5173",
+      "http://localhost:3000",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
@@ -810,6 +1109,34 @@ app.use(
   })
 );
 
+app.get("/sync-reservations", async (req, res) => {
+  try {
+    console.log("Starting reservation sync...");
+    const result = await syncReservations();
+    console.log("Sync completed:", result);
+    res.json(result);
+  } catch (error) {
+    console.error("Error in sync endpoint:", error);
+    res.status(500).json({
+      error: "Failed to sync reservations",
+      details: error.message,
+    });
+  }
+});
+
+// Schedule automatic sync every 4 hours
+cron.schedule("0 */4 * * *", async () => {
+  try {
+    console.log("🟦 Starting scheduled sync...");
+    await syncReservations();
+    console.log("🟩 Scheduled sync completed");
+  } catch (error) {
+    console.error("🟥 Scheduled sync failed:", error);
+  }
+});
+
+
+
 app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
   try {
     const {
@@ -822,8 +1149,10 @@ app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
     } = req.body;
 
     // Generate unique voucher code
-    const voucherCode = `GIFT-${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
-
+    const voucherCode = `GIFT-${Math.random()
+      .toString(36)
+      .substring(2, 12)
+      .toUpperCase()}`;
 
     // Create voucher document in Firebase
     const voucherData = {
@@ -970,6 +1299,49 @@ app.post("/api/validate-voucher", async (req, res) => {
   }
 });
 
+
+app.get("/api/direct-bookings", async (req, res) => {
+  try {
+    const { startDate, endDate, showCancellation, excludeBlocked } = req.query;
+
+    // Call Smoobu API directly
+    const response = await axios.get(
+      "https://login.smoobu.com/api/reservations",
+      {
+        headers: {
+          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+          "Cache-Control": "no-cache",
+        },
+        params: {
+          arrivalFrom: startDate,
+          arrivalTo: endDate,
+          showCancellation: showCancellation === "true",
+          excludeBlocked: excludeBlocked === "true",
+          pageSize: 100,
+        },
+      }
+    );
+
+    // Log all channel information for debugging
+    console.log(
+      "All channels:",
+      response.data.bookings?.map((b) => ({
+        id: b.id,
+        channelId: b.channel?.id,
+        channelName: b.channel?.name,
+        arrival: b.arrival,
+      }))
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error fetching direct bookings:", error);
+    res.status(500).json({
+      error: "Failed to fetch bookings",
+      message: error.message,
+    });
+  }
+});
 
 // Helper function to generate email content
 
@@ -1187,7 +1559,11 @@ app.get("/api/bookings-report", async (req, res) => {
     let finalEndYear = endYear;
 
     const startDate = `${finalStartYear}-${finalStartMonth}-01`;
-    const lastDay = new Date(finalEndYear, parseInt(finalEndMonth), 0).getDate();
+    const lastDay = new Date(
+      finalEndYear,
+      parseInt(finalEndMonth),
+      0
+    ).getDate();
     const endDate = `${finalEndYear}-${finalEndMonth}-${lastDay}`;
 
     console.log("=== START OF BOOKINGS REPORT REQUEST ===");
@@ -1195,7 +1571,7 @@ app.get("/api/bookings-report", async (req, res) => {
       startMonth: finalStartMonth,
       startYear: finalStartYear,
       endMonth: finalEndMonth,
-      endYear: finalEndYear
+      endYear: finalEndYear,
     });
 
     // Fetch bookings for the period
@@ -1216,17 +1592,26 @@ app.get("/api/bookings-report", async (req, res) => {
     );
 
     const bookings = bookingsResponse.data.bookings || [];
-    console.log(`Found ${bookings.length} bookings for period ${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`);
+    console.log(
+      `Found ${bookings.length} bookings for period ${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`
+    );
 
     // Process each booking to get price elements and extras
     const processedBookings = [];
     for (const booking of bookings) {
       try {
         console.log(`Processing booking ${booking.id}`);
-        
+
         // Skip if it's a blocked booking or cancelled booking
-        if (booking.channelId === 'Blocked' || booking.type === 'cancellation') {
-          console.log(`Skipping ${booking.channelId === 'Blocked' ? 'blocked' : 'cancelled'} booking ${booking.id}`);
+        if (
+          booking.channelId === "Blocked" ||
+          booking.type === "cancellation"
+        ) {
+          console.log(
+            `Skipping ${
+              booking.channelId === "Blocked" ? "blocked" : "cancelled"
+            } booking ${booking.id}`
+          );
           continue;
         }
 
@@ -1242,7 +1627,12 @@ app.get("/api/bookings-report", async (req, res) => {
         );
 
         const priceElements = priceElementsResponse.data.priceElements || [];
-        console.log('Price elements for booking', booking.id, ':', priceElements);
+        console.log(
+          "Price elements for booking",
+          booking.id,
+          ":",
+          priceElements
+        );
 
         // Calculate nights
         const checkIn = new Date(booking.arrival);
@@ -1250,98 +1640,115 @@ app.get("/api/bookings-report", async (req, res) => {
         const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
 
         // Find long stay discount first
-        const longStayDiscount = priceElements.find(el => 
-          el.name?.toLowerCase().includes('long stay') || 
-          el.name?.toLowerCase().includes('long-stay')
-        )?.amount || 0;
+        const longStayDiscount =
+          priceElements.find(
+            (el) =>
+              el.name?.toLowerCase().includes("long stay") ||
+              el.name?.toLowerCase().includes("long-stay")
+          )?.amount || 0;
 
         // Process extras - all non-base price elements, excluding cancellations and long stay discount
-        const extras = priceElements.filter(element => {
-          const name = element.name?.toLowerCase() || '';
-          const type = element.type?.toLowerCase() || '';
-          
+        const extras = priceElements.filter((element) => {
+          const name = element.name?.toLowerCase() || "";
+          const type = element.type?.toLowerCase() || "";
+
           // Skip cancellation-related items and long stay discount
           if (
-            name.includes('cancellation') || 
-            name.includes('pass_through') ||
-            name.includes('prix de base') ||
-            name.includes('base price') ||
-            name.includes('long stay') ||
-            name.includes('long-stay') ||
-            name === 'base' ||
-            type === 'base'
+            name.includes("cancellation") ||
+            name.includes("pass_through") ||
+            name.includes("prix de base") ||
+            name.includes("base price") ||
+            name.includes("long stay") ||
+            name.includes("long-stay") ||
+            name === "base" ||
+            type === "base"
           ) {
             return false;
           }
 
           // Include addons, linen fees, and exclude base price and discounts
           return (
-            element.type === "addon" || 
-            name.includes('linen fee') ||
-            name.includes('frais de linge') ||
+            element.type === "addon" ||
+            name.includes("linen fee") ||
+            name.includes("frais de linge") ||
             (element.type !== "base" && element.type !== "discount")
           );
         });
 
         // Find commission from extras
-        const commissionExtra = extras.find(extra => 
-          extra.name?.toLowerCase().includes('commission')
+        const commissionExtra = extras.find((extra) =>
+          extra.name?.toLowerCase().includes("commission")
         );
         const commission = commissionExtra ? commissionExtra.amount : 0;
 
         // Remove commission from extras list if it exists
-        const nonCommissionExtras = extras.filter(extra => 
-          !extra.name?.toLowerCase().includes('commission')
+        const nonCommissionExtras = extras.filter(
+          (extra) => !extra.name?.toLowerCase().includes("commission")
         );
 
-        const linenFee = priceElements.find(el => 
-          el.name?.toLowerCase().includes('linen_fee') || 
-          el.name?.toLowerCase().includes('pass_through_linen_fee')
-        )?.amount || 0;
+        const linenFee =
+          priceElements.find(
+            (el) =>
+              el.name?.toLowerCase().includes("linen_fee") ||
+              el.name?.toLowerCase().includes("pass_through_linen_fee")
+          )?.amount || 0;
 
         // Calculate base price
-        const basePrice = priceElements.find(el => 
-          el.name?.toLowerCase().includes('base') ||
-          el.type?.toLowerCase() === 'base'
-        )?.amount || 0;
+        const basePrice =
+          priceElements.find(
+            (el) =>
+              el.name?.toLowerCase().includes("base") ||
+              el.type?.toLowerCase() === "base"
+          )?.amount || 0;
 
         // Calculate other discounts (excluding long stay)
         const otherDiscounts = priceElements
-          .filter(el => 
-            el.type === 'discount' && 
-            !el.name?.toLowerCase().includes('long stay') &&
-            !el.name?.toLowerCase().includes('long-stay')
+          .filter(
+            (el) =>
+              el.type === "discount" &&
+              !el.name?.toLowerCase().includes("long stay") &&
+              !el.name?.toLowerCase().includes("long-stay")
           )
           .reduce((sum, discount) => sum + Math.abs(discount.amount), 0);
 
-        const extrasTotal = extras.reduce((sum, extra) => sum + extra.amount, 0);
+        const extrasTotal = extras.reduce(
+          (sum, extra) => sum + extra.amount,
+          0
+        );
 
         // Add portal name mapping
-        const portalNames = {
-          'Homepage': 'Website',
-          'Direct booking': 'Website'
-        };
+
+
 
         const processedBooking = {
           id: booking.id,
-          guest: booking["guest-name"] || 
-                `${booking.firstName || ''} ${booking.lastName || ''}`.trim() || 
-                (booking.notice?.match(/Message du client:?\s*([^\n]+)/) || [])[1] ||
-                booking.email?.split('@')[0] ||
-                'Sans nom',
-          property: roomNames[booking.apartmentId] || booking.apartment?.name || '',
-          portal: portalNames[booking.channel?.name] || booking.channel?.name || 'Website',
-          created: booking['created-at'] || booking.created || new Date().toISOString(),
-          email: booking.email || '',
-          phone: booking.phone || '',
-          address: booking.address || '',
+          guest:
+            booking["guest-name"] ||
+            `${booking.firstName || ""} ${booking.lastName || ""}`.trim() ||
+            (booking.notice?.match(/Message du client:?\s*([^\n]+)/) ||
+              [])[1] ||
+            booking.email?.split("@")[0] ||
+            "Sans nom",
+          property:
+            roomNames[booking.apartmentId] || booking.apartment?.name || "",
+          portal:
+            portalNames[booking.channel?.name] ||
+            booking.channel?.name ||
+            "Website",
+          created:
+            booking["created-at"] ||
+            booking.created ||
+            new Date().toISOString(),
+          email: booking.email || "",
+          phone: booking.phone || "",
+          address: booking.address || "",
           adults: parseInt(booking.adults) || 0,
           children: parseInt(booking.children) || 0,
           checkIn: booking.arrival,
           checkOut: booking.departure,
-          arrivalTime: booking["check-in"] || '',
-          departureTime: booking["check-out"] || '',
-          notes: booking.notice || '',
+          arrivalTime: booking["check-in"] || "",
+          departureTime: booking["check-out"] || "",
+          notes: booking.notice || "",
           price: parseFloat(booking.price) || 0,
           priceDetails: {
             basePrice: parseFloat(basePrice),
@@ -1349,35 +1756,42 @@ app.get("/api/bookings-report", async (req, res) => {
             extrasTotal: parseFloat(extrasTotal),
             longStayDiscount: parseFloat(longStayDiscount),
             discounts: parseFloat(otherDiscounts),
-            promoCode: priceElements.find(el => 
-              el.name?.toLowerCase().includes('code promo') || 
-              el.name?.toLowerCase().includes('coupon') ||
-              (el.type === 'discount' && 
-              !el.name?.toLowerCase().includes('long stay') &&
-              !el.name?.toLowerCase().includes('long-stay'))
+            promoCode: priceElements.find(
+              (el) =>
+                el.name?.toLowerCase().includes("code promo") ||
+                el.name?.toLowerCase().includes("coupon") ||
+                (el.type === "discount" &&
+                  !el.name?.toLowerCase().includes("long stay") &&
+                  !el.name?.toLowerCase().includes("long-stay"))
             ),
-            total: parseFloat(basePrice) + parseFloat(linenFee) + parseFloat(extrasTotal) + parseFloat(longStayDiscount) - parseFloat(otherDiscounts),
+            total:
+              parseFloat(basePrice) +
+              parseFloat(linenFee) +
+              parseFloat(extrasTotal) +
+              parseFloat(longStayDiscount) -
+              parseFloat(otherDiscounts),
           },
           commission: parseFloat(commission),
           nights,
-          extras: nonCommissionExtras
-            .filter(extra => 
-              !extra.name?.toLowerCase().includes('code promo') && 
-              !extra.name?.toLowerCase().includes('coupon') &&
-              extra.type !== 'discount'
-            )
-            .map(extra => ({
-              name: extra.name || 'Extra sans nom',
-              amount: parseFloat(extra.amount) || 0,
-              quantity: parseInt(extra.quantity) || 1
-            })) || []
+          extras:
+            nonCommissionExtras
+              .filter(
+                (extra) =>
+                  !extra.name?.toLowerCase().includes("code promo") &&
+                  !extra.name?.toLowerCase().includes("coupon") &&
+                  extra.type !== "discount"
+              )
+              .map((extra) => ({
+                name: extra.name || "Extra sans nom",
+                amount: parseFloat(extra.amount) || 0,
+                quantity: parseInt(extra.quantity) || 1,
+              })) || [],
         };
 
         processedBookings.push(processedBooking);
-
       } catch (error) {
         console.error(`Error processing booking ${booking.id}:`, error.message);
-        console.error('Full error:', error);
+        console.error("Full error:", error);
       }
     }
 
@@ -1386,7 +1800,7 @@ app.get("/api/bookings-report", async (req, res) => {
       period: `${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`,
       totalBookings: bookings.length,
       processedBookings: processedBookings.length,
-      sampleBooking: processedBookings[0]
+      sampleBooking: processedBookings[0],
     });
 
     res.json({
@@ -1394,13 +1808,12 @@ app.get("/api/bookings-report", async (req, res) => {
       startYear: finalStartYear,
       endMonth: finalEndMonth,
       endYear: finalEndYear,
-      data: processedBookings
+      data: processedBookings,
     });
-
   } catch (error) {
     console.error("=== ERROR IN REQUEST ===");
-    console.error('Full error:', error);
-    console.error('Error response:', error.response?.data);
+    console.error("Full error:", error);
+    console.error("Error response:", error.response?.data);
     res.status(500).json({
       error: "Failed to generate bookings report",
       details: error.message,
@@ -1408,15 +1821,15 @@ app.get("/api/bookings-report", async (req, res) => {
   }
 });
 
-app.get('/api/apartments', async (req, res) => {
+app.get("/api/apartments", async (req, res) => {
   try {
     const response = await axios.get(
-      'https://login.smoobu.com/api/apartments',
+      "https://login.smoobu.com/api/apartments",
       {
         headers: {
-          'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
-          'Cache-Control': 'no-cache',
-          'Content-Type': 'application/json',
+          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+          "Cache-Control": "no-cache",
+          "Content-Type": "application/json",
         },
       }
     );
@@ -1424,20 +1837,20 @@ app.get('/api/apartments', async (req, res) => {
   } catch (error) {
     res.status(error.response?.status || 500).json({
       status: error.response?.status,
-      title: error.response?.data?.title || 'Error',
-      detail: error.response?.data?.detail || 'Failed to fetch apartments',
+      title: error.response?.data?.title || "Error",
+      detail: error.response?.data?.detail || "Failed to fetch apartments",
     });
   }
 });
 
-app.get('/api/apartments/:id', async (req, res) => {
+app.get("/api/apartments/:id", async (req, res) => {
   try {
     const response = await axios.get(
       `https://login.smoobu.com/api/apartments/${req.params.id}`,
       {
         headers: {
-          'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
-          'Content-Type': 'application/json',
+          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+          "Content-Type": "application/json",
         },
       }
     );
@@ -1446,12 +1859,12 @@ app.get('/api/apartments/:id', async (req, res) => {
     const images = response.data.images || [];
     res.json({ images });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch apartment images' });
+    res.status(500).json({ error: "Failed to fetch apartment images" });
   }
 });
 
 // Replace your current /api/rates endpoint with this one
-app.get('/api/rates', async (req, res) => {
+app.get("/api/rates", async (req, res) => {
   try {
     const { apartments, start_date, end_date, adults, children } = req.query;
 
@@ -1466,23 +1879,23 @@ app.get('/api/rates', async (req, res) => {
     // Validate required parameters
     if (!start_date || !end_date) {
       return res.status(400).json({
-        error: 'Missing dates',
-        details: 'Both start_date and end_date are required',
+        error: "Missing dates",
+        details: "Both start_date and end_date are required",
       });
     }
 
     if (!apartments) {
       return res.status(400).json({
-        error: 'Missing apartments',
-        details: 'Apartments parameter is required',
+        error: "Missing apartments",
+        details: "Apartments parameter is required",
       });
     }
 
     // Make the API call to Smoobu
-    const response = await axios.get('https://login.smoobu.com/api/rates', {
+    const response = await axios.get("https://login.smoobu.com/api/rates", {
       headers: {
-        'Api-Key': 'UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o',
-        'Content-Type': 'application/json',
+        "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+        "Content-Type": "application/json",
       },
       params: {
         apartments: Array.isArray(apartments) ? apartments : [apartments],
@@ -1493,8 +1906,8 @@ app.get('/api/rates', async (req, res) => {
 
     if (!response.data || !response.data.data) {
       return res.status(404).json({
-        error: 'No rates found',
-        details: 'The API returned no data',
+        error: "No rates found",
+        details: "The API returned no data",
       });
     }
 
@@ -1556,7 +1969,7 @@ app.get('/api/rates', async (req, res) => {
         data: formattedData,
         priceDetails: {},
         hasAvailability: false,
-        message: 'No apartments available for the selected dates and guests',
+        message: "No apartments available for the selected dates and guests",
       });
     }
 
@@ -1573,7 +1986,7 @@ app.get('/api/rates', async (req, res) => {
   } catch (error) {
     // console.error('Error in /api/rates:', error);
     res.status(500).json({
-      error: 'Failed to fetch rates',
+      error: "Failed to fetch rates",
       details: error.response?.data || error.message,
       status: error.response?.status || 500,
     });
@@ -1582,40 +1995,54 @@ app.get('/api/rates', async (req, res) => {
 
 //CREATE PAYMENT INTENT
 
-app.post('/api/create-payment-intent', async (req, res) => {
+app.post("/api/create-payment-intent", async (req, res) => {
   try {
     const { price, bookingData } = req.body;
 
     // Calculate guest fees for metadata
-    const totalGuests = (parseInt(bookingData.adults) || 0) + (parseInt(bookingData.children) || 0);
+    const totalGuests =
+      (parseInt(bookingData.adults) || 0) +
+      (parseInt(bookingData.children) || 0);
     const settings = discountSettings[bookingData.apartmentId];
     const extraGuests = Math.max(0, totalGuests - settings.startingAtGuest);
     const guestFees = extraGuests * settings.extraGuestsPerNight;
 
-    const bookingReference = `BOOKING-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+    const bookingReference = `BOOKING-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+
     pendingBookings.set(bookingReference, {
       ...bookingData,
-      guestFees // Add guest fees to the stored booking data
+      guestFees, // Add guest fees to the stored booking data
     });
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(price * 100),
-      currency: 'eur',
+      currency: "eur",
       automatic_payment_methods: {
         enabled: true,
       },
-      description: `Réservation - ${bookingData.firstName} ${bookingData.lastName}
+      description: `Réservation - ${bookingData.firstName} ${
+        bookingData.lastName
+      }
         Chambre: ${roomNames[bookingData.apartmentId]} 
         (${bookingData.arrivalDate} - ${bookingData.departureDate})
         Base: ${bookingData.basePrice}€
-        ${guestFees > 0 ? ` • Frais invités: ${guestFees}€` : ''}
-        ${bookingData.extras?.length ? ` • Extras: ${(price - bookingData.basePrice - guestFees)}€` : ''}
-        ${bookingData.couponApplied ? ` • Code ${bookingData.couponApplied.code}: -${bookingData.couponApplied.discount}€` : ''}`,
+        ${guestFees > 0 ? ` • Frais invités: ${guestFees}€` : ""}
+        ${
+          bookingData.extras?.length
+            ? ` • Extras: ${price - bookingData.basePrice - guestFees}€`
+            : ""
+        }
+        ${
+          bookingData.couponApplied
+            ? ` • Code ${bookingData.couponApplied.code}: -${bookingData.couponApplied.discount}€`
+            : ""
+        }`,
       metadata: {
         clientName: `${bookingData.firstName} ${bookingData.lastName}`,
         clientEmail: bookingData.email,
-        clientPhone: bookingData.phone || '',
+        clientPhone: bookingData.phone || "",
         roomId: bookingData.apartmentId,
         roomName: roomNames[bookingData.apartmentId],
         bookingReference: bookingReference,
@@ -1623,14 +2050,16 @@ app.post('/api/create-payment-intent', async (req, res) => {
         checkOut: bookingData.departureDate,
         basePrice: `${bookingData.basePrice}€`,
         guestFees: `${guestFees}€`,
-        extrasTotal: bookingData.extras?.length ? `${(price - bookingData.basePrice - guestFees)}€` : '0€',
+        extrasTotal: bookingData.extras?.length
+          ? `${price - bookingData.basePrice - guestFees}€`
+          : "0€",
         ...(bookingData.couponApplied && {
           couponCode: bookingData.couponApplied.code,
           couponDiscount: `-${bookingData.couponApplied.discount}€`,
-          couponType: bookingData.couponApplied.type
+          couponType: bookingData.couponApplied.type,
         }),
-        finalPrice: `${price}€`
-      }
+        finalPrice: `${price}€`,
+      },
     });
 
     res.json({
@@ -1638,74 +2067,74 @@ app.post('/api/create-payment-intent', async (req, res) => {
       bookingReference: bookingReference,
     });
   } catch (error) {
-    console.error('Error creating payment intent:', error);
+    console.error("Error creating payment intent:", error);
     res.status(500).json({
-      error: 'Failed to create payment intent',
+      error: "Failed to create payment intent",
       details: error.message,
     });
   }
 });
 
-app.get('/api/bookings/:paymentIntentId', async (req, res) => {
+app.get("/api/bookings/:paymentIntentId", async (req, res) => {
   try {
     const { paymentIntentId } = req.params;
 
-    // Fetch the payment intent from Stripe
+    // First get the payment intent from Stripe
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-
     if (!paymentIntent) {
-      return res.status(404).json({ error: 'Payment not found' });
+      return res.status(404).json({ error: "Payment not found" });
     }
 
-    const bookingReference = paymentIntent.metadata.bookingReference;
-    const bookingData = pendingBookings.get(bookingReference);
+    // Then find the booking in Firebase
+    const bookingsRef = db.collection("bookings");
+    const bookingQuery = await bookingsRef
+      .where("paymentIntentId", "==", paymentIntentId)
+      .get();
 
-    if (!bookingData) {
+    if (bookingQuery.empty) {
       return res.status(404).json({
-        error: 'Booking details not found',
-        paymentIntent: paymentIntentId,
-        bookingReference: bookingReference,
+        error: "Booking details not found",
+        message: `No booking found for payment_intent: '${paymentIntentId}'`,
       });
     }
 
-    // Récupérer les montants des réductions depuis les metadata
-    const basePrice = parseFloat(paymentIntent.metadata.basePrice);
-    const extrasTotal = parseFloat(paymentIntent.metadata.extrasTotal || 0);
-    const longStayDiscount = parseFloat(
-      paymentIntent.metadata.longStayDiscount || 0
-    );
-    const couponDiscount = parseFloat(
-      paymentIntent.metadata.couponDiscount || 0
-    );
+    const bookingDoc = bookingQuery.docs[0].data();
 
-    // Calculer le total final
+    // Calculate price breakdown
+    const basePrice = parseFloat(bookingDoc.basePrice);
+    const extrasTotal =
+      bookingDoc.extras?.reduce((sum, extra) => sum + extra.amount, 0) || 0;
+    const longStayDiscount = parseFloat(bookingDoc.priceDetails?.discount || 0);
+    const couponDiscount = parseFloat(bookingDoc.appliedCoupon?.discount || 0);
+
+    // Calculate final total
     const subtotalBeforeDiscounts = basePrice + extrasTotal;
     const finalTotal =
       subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
 
+    // Format response with all necessary data
     const responseData = {
-      ...bookingData,
-      basePrice: basePrice,
+      ...bookingDoc,
       paymentIntent: {
-        id: paymentIntent.id,
+        id: paymentIntentId,
         amount: paymentIntent.amount,
         currency: paymentIntent.currency,
         status: paymentIntent.status,
       },
       priceBreakdown: {
-        basePrice: basePrice,
-        extrasTotal: extrasTotal,
-        longStayDiscount: longStayDiscount,
-        couponDiscount: couponDiscount,
+        basePrice,
+        extrasTotal,
+        longStayDiscount,
+        couponDiscount,
         totalPrice: finalTotal,
       },
     };
 
     res.json(responseData);
   } catch (error) {
-    // console.error('Error fetching booking:', error);
+    console.error("Error fetching booking:", error);
     res.status(500).json({
-      error: 'Failed to fetch booking details',
+      error: "Failed to fetch booking details",
       message: error.message,
     });
   }
@@ -1755,9 +2184,8 @@ function generateGiftVoucherEmail(voucherData, language) {
   `;
 }
 
-
 // Debug endpoint to check pending bookings
-app.get('/api/pending-bookings', (req, res) => {
+app.get("/api/pending-bookings", (req, res) => {
   const bookings = Array.from(pendingBookings.entries());
   res.json(bookings);
 });
@@ -1768,13 +2196,13 @@ app.listen(PORT, () => {
   // console.log('Webhook endpoint ready at /webhook');
 });
 
-app.get('/api/bookings-history/:email', async (req, res) => {
+app.get("/api/bookings-history/:email", async (req, res) => {
   try {
     const { email } = req.params;
     const snapshot = await db
-      .collection('bookings')
-      .where('email', '==', email)
-      .orderBy('createdAt', 'desc')
+      .collection("bookings")
+      .where("email", "==", email)
+      .orderBy("createdAt", "desc")
       .get();
 
     const bookings = [];
@@ -1784,28 +2212,26 @@ app.get('/api/bookings-history/:email', async (req, res) => {
 
     res.json(bookings);
   } catch (error) {
-    console.error('Error fetching bookings:', error);
+    console.error("Error fetching bookings:", error);
     res.status(500).json({
-      error: 'Failed to fetch bookings',
+      error: "Failed to fetch bookings",
       message: error.message,
     });
   }
 });
 
-
-app.post('/api/test-email', async (req, res) => {
+app.post("/api/test-email", async (req, res) => {
   try {
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_USER, // Send to yourself first
-      subject: 'Test Email',
-      html: '<h1>Test booking confirmation</h1><p>This is a test email.</p>'
+      subject: "Test Email",
+      html: "<h1>Test booking confirmation</h1><p>This is a test email.</p>",
     });
     res.json({ success: true });
-    console.error('Email test worked:');
+    console.error("Email test worked:");
   } catch (error) {
-    console.error('Email test failed:', error);
+    console.error("Email test failed:", error);
     res.status(500).json({ error: error.message });
   }
 });
-
