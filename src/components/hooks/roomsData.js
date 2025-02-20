@@ -18,12 +18,12 @@ import Moulin_img_3 from "../../assets/Chambres/Le Moulin/Moulin_3.webp";
 import Moulin_img_4 from "../../assets/Chambres/Le Moulin/Moulin_4.webp";
 import Moulin_img_5 from "../../assets/Chambres/Le Moulin/Moulin_5.webp";
 
-import Cabane_img_1 from "../../assets/Chambres/La Cabane/Cabane_1.jpeg";
-import Cabane_img_2 from "../../assets/Chambres/La Cabane/Cabane_2.jpeg";
-import Cabane_img_3 from "../../assets/Chambres/La Cabane/Cabane_3.jpeg";
-import Cabane_img_4 from "../../assets/Chambres/La Cabane/Cabane_4.jpeg";
-import Cabane_img_5 from "../../assets/Chambres/La Cabane/Cabane_5.jpeg";
-import Cabane_img_6 from "../../assets/Chambres/La Cabane/Cabane_6.jpeg";
+import Cabane_img_1 from "../../assets/Chambres/La Cabane/Cabane_1.webp";
+import Cabane_img_2 from "../../assets/Chambres/La Cabane/Cabane_2.webp";
+import Cabane_img_3 from "../../assets/Chambres/La Cabane/Cabane_3.webp";
+import Cabane_img_4 from "../../assets/Chambres/La Cabane/Cabane_4.webp";
+import Cabane_img_5 from "../../assets/Chambres/La Cabane/Cabane_5.webp";
+import Cabane_img_6 from "../../assets/Chambres/La Cabane/Cabane_6.webp";
 
 import Ble_img_1 from "../../assets/Chambres/De Blé/blé_1.webp";
 import Ble_img_2 from "../../assets/Chambres/De Blé/blé_2.webp";
