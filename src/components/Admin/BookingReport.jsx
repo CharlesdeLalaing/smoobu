@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Calendar,
   Search,
@@ -94,241 +94,285 @@ const BookingsReport = () => {
     }
   }, [startYear, startMonth, endYear, endMonth]);
 
-const fetchFromFirebase = async () => {
-  try {
-    setLoading(true);
-    setError(null);
+  // Inside your BookingsReport component:
 
-    // Create date range for query
-    const startDate = new Date(startYear, startMonth - 1, 1);
-    const endDate = new Date(endYear, endMonth, 0, 23, 59, 59);
+  const fetchFromFirebase = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    // Create Firebase query
-    const bookingsRef = collection(db, "bookings");
-    const q = query(
-      bookingsRef,
-      where("arrivalDate", ">=", startDate.toISOString().split("T")[0]),
-      where("arrivalDate", "<=", endDate.toISOString().split("T")[0]),
-      orderBy("arrivalDate", "desc")
-    );
+      // Create date range for query
+      const startDate = new Date(startYear, startMonth - 1, 1);
+      const endDate = new Date(endYear, endMonth, 0, 23, 59, 59);
 
-    const querySnapshot = await getDocs(q);
-    console.log(
-      `Retrieved ${querySnapshot.docs.length} documents from Firebase`
-    );
-
-    // Create a map for deduplicated bookings
-    const bookingMap = new Map();
-
-    // First, go through all documents and group by smoobuId
-    const bookingsBySmoobuId = {};
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      const smoobuId = data.smoobuId || data.smoobuReservationId;
-
-      if (!smoobuId) return; // Skip entries without smoobuId
-
-      if (!bookingsBySmoobuId[smoobuId]) {
-        bookingsBySmoobuId[smoobuId] = [];
-      }
-
-      bookingsBySmoobuId[smoobuId].push({
-        id: doc.id,
-        ...data,
-        firestoreId: doc.id, // Store the Firestore document ID
-      });
-    });
-
-    // Log duplicates found for debugging
-    const duplicateGroups = Object.entries(bookingsBySmoobuId).filter(
-      ([_, group]) => group.length > 1
-    );
-
-    if (duplicateGroups.length > 0) {
-      console.log(
-        `Found ${duplicateGroups.length} bookings with duplicates in the client-side data`
+      // Create Firebase query
+      const bookingsRef = collection(db, "bookings");
+      const q = query(
+        bookingsRef,
+        where("arrivalDate", ">=", startDate.toISOString().split("T")[0]),
+        where("arrivalDate", "<=", endDate.toISOString().split("T")[0]),
+        orderBy("arrivalDate", "desc")
       );
-    }
 
-    // For each smoobuId, pick the most complete entry
-    Object.entries(bookingsBySmoobuId).forEach(([smoobuId, bookings]) => {
-      if (bookings.length === 1) {
-        // If only one entry, use it
-        const booking = bookings[0];
-        processBookingData(booking, bookingMap);
-      } else {
-        // If multiple entries, choose the one with the most data
-        // Prioritize entries with extras, price elements, etc.
-        bookings.sort((a, b) => {
-          // Calculate "completeness" score
-          const scoreA = calculateCompletenessScore(a);
-          const scoreB = calculateCompletenessScore(b);
+      const querySnapshot = await getDocs(q);
+      console.log(
+        `Retrieved ${querySnapshot.docs.length} documents from Firebase`
+      );
 
-          // Higher score is more complete
-          return scoreB - scoreA;
+      // Create a map for deduplicated bookings
+      const bookingMap = new Map();
+
+      // First, go through all documents and group by smoobuId
+      const bookingsBySmoobuId = {};
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const smoobuId = data.smoobuId || data.smoobuReservationId;
+
+        if (!smoobuId) return; // Skip entries without smoobuId
+
+        if (!bookingsBySmoobuId[smoobuId]) {
+          bookingsBySmoobuId[smoobuId] = [];
+        }
+
+        bookingsBySmoobuId[smoobuId].push({
+          id: doc.id,
+          ...data,
+          firestoreId: doc.id, // Store the Firestore document ID
         });
+      });
 
-        // Use the most complete entry
-        const bestBooking = bookings[0];
-        processBookingData(bestBooking, bookingMap);
+      // Log duplicates found for debugging
+      const duplicateGroups = Object.entries(bookingsBySmoobuId).filter(
+        ([, group]) => group.length > 1
+      );
+
+      if (duplicateGroups.length > 0) {
+        console.log(
+          `Found ${duplicateGroups.length} bookings with duplicates in the client-side data`
+        );
       }
-    });
 
-    // Convert map values to array
-    const bookings = Array.from(bookingMap.values());
-    console.log(`Returning ${bookings.length} deduplicated bookings`);
-    setReportData(bookings);
-  } catch (err) {
-    console.error("Error fetching bookings from Firebase:", err);
-    setError("Failed to fetch bookings: " + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      // For each smoobuId, pick the most complete entry
+      Object.entries(bookingsBySmoobuId).forEach(([smoobuId, bookings]) => {
+        if (bookings.length === 1) {
+          // If only one entry, use it
+          const booking = bookings[0];
+          processBookingData(booking, bookingMap);
+        } else {
+          // If multiple entries, choose the one with the most data
+          // Prioritize entries with extras, price elements, etc.
+          bookings.sort((a, b) => {
+            // Calculate "completeness" score
+            const scoreA = calculateCompletenessScore(a);
+            const scoreB = calculateCompletenessScore(b);
 
-// Helper function to calculate how complete a booking record is
-const calculateCompletenessScore = (booking) => {
-  let score = 0;
+            // Higher score is more complete
+            return scoreB - scoreA;
+          });
 
-  // Check for key data that indicates a complete record
-  if (booking.extras && booking.extras.length > 0) score += 10;
-  if (booking.priceDetails?.priceElements) score += 5;
-  if (booking.priceDetails?.extrasTotal) score += 3;
-  if (booking.commission) score += 2;
-  if (booking.linenFee) score += 2;
-  if (booking.email) score += 1;
-  if (booking.phone) score += 1;
-  if (booking.address) score += 1;
-  if (booking.notes) score += 1;
+          // Use the most complete entry
+          const bestBooking = bookings[0];
+          processBookingData(bestBooking, bookingMap);
+        }
+      });
 
-  // More recent updates are preferred
-  if (booking.updatedAt) {
-    const updateDate = new Date(booking.updatedAt);
-    if (!isNaN(updateDate)) {
-      // Add a small score based on recency (newer is better)
-      const daysAgo = (Date.now() - updateDate) / (1000 * 60 * 60 * 24);
-      score += Math.max(0, 1 - daysAgo / 100); // Small bonus for recency
+      // Convert map values to array
+      const bookings = Array.from(bookingMap.values());
+      console.log(`Returning ${bookings.length} deduplicated bookings`);
+      setReportData(bookings);
+    } catch (err) {
+      console.error("Error fetching bookings from Firebase:", err);
+      setError("Failed to fetch bookings: " + err.message);
+    } finally {
+      setLoading(false);
     }
-  }
+  }, [startMonth, startYear, endMonth, endYear]);
 
-  return score;
-};
+  // Helper function to calculate how complete a booking record is
+  const calculateCompletenessScore = (booking) => {
+    let score = 0;
 
-// Helper function to process booking data in a consistent way
-const processBookingData = (data, bookingMap) => {
-  const smoobuId = data.smoobuId || data.smoobuReservationId;
+    // Check for key data that indicates a complete record
+    if (booking.extras && booking.extras.length > 0) score += 10;
+    if (booking.priceDetails?.priceElements) score += 5;
+    if (booking.priceDetails?.extrasTotal) score += 3;
+    if (booking.commission) score += 2;
+    if (booking.linenFee) score += 2;
+    if (booking.email) score += 1;
+    if (booking.phone) score += 1;
+    if (booking.address) score += 1;
+    if (booking.notes) score += 1;
 
-  // Skip if already processed or missing ID
-  if (!smoobuId || bookingMap.has(smoobuId)) return;
-
-  // Extract fees - check all possible paths
-  const linenFee =
-    parseFloat(data.priceDetails?.cleaningFee) ||
-    parseFloat(data.priceDetails?.linenFee) ||
-    parseFloat(data.linenFee) ||
-    0;
-
-  const commission =
-    parseFloat(data.priceDetails?.commission) ||
-    parseFloat(data.commission) ||
-    0;
-
-  // Get total price
-  const totalPrice = parseFloat(data.price) || 0;
-
-  // Calculate base price by SUBTRACTING fees from total
-  const basePrice = totalPrice - linenFee;
-
-  // Extract long stay discount
-  const longStayDiscount =
-    parseFloat(data.priceDetails?.calculatedDiscounts?.longStay) ||
-    parseFloat(data.priceDetails?.discount) ||
-    parseFloat(data.priceDetails?.longStayDiscount) ||
-    0;
-
-  // Map promo code info consistently
-  const promoCode = data.appliedCoupon
-    ? {
-        name: data.appliedCoupon.code || "",
-        amount: parseFloat(data.appliedCoupon.discount || 0),
+    // More recent updates are preferred
+    if (booking.updatedAt) {
+      const updateDate = new Date(booking.updatedAt);
+      if (!isNaN(updateDate)) {
+        // Add a small score based on recency (newer is better)
+        const daysAgo = (Date.now() - updateDate) / (1000 * 60 * 60 * 24);
+        score += Math.max(0, 1 - daysAgo / 100); // Small bonus for recency
       }
-    : data.priceDetails?.promoCode
-    ? {
-        name:
-          data.priceDetails.promoCode.code ||
-          data.priceDetails.promoCode.name ||
-          "",
-        amount: parseFloat(
-          data.priceDetails.promoCode.discount ||
-            data.priceDetails.promoCode.amount ||
-            0
-        ),
-      }
-    : null;
+    }
 
-  // Map and process extras consistently
-  const processedExtras = (data.extras || []).map((extra) => ({
-    name: extra.name || "Extra sans nom",
-    amount: parseFloat(extra.amount) || 0,
-    quantity: parseInt(extra.quantity) || 1,
-    extraPersonQuantity: parseInt(extra.extraPersonQuantity) || 0,
-    extraPersonPrice: parseFloat(extra.extraPersonPrice) || 0,
-    extraPersonAmount:
-      extra.extraPersonQuantity > 0
-        ? parseFloat(extra.extraPersonPrice) *
-          parseInt(extra.extraPersonQuantity)
-        : 0,
-  }));
+    return score;
+  };
 
-  // Construct processed booking object
-  bookingMap.set(smoobuId, {
-    id: smoobuId,
-    firestoreId: data.firestoreId, // Store the Firestore ID for reference
-    guest:
-      `${data.firstName} ${data.lastName}`.trim() ||
-      data.guestName ||
-      "Unknown",
-    property: roomNames[data.apartmentId] || data.property || data.apartmentId,
-    portal:
-      getPortalName(data.portalName) ||
-      getPortalName(data.channelName) ||
-      getPortalName(String(data.channelId)) ||
-      "Website",
-    created: data.createdAt,
-    email: data.email,
-    phone: data.phone,
-    address: data.street
-      ? `${data.street}, ${data.postalCode} ${data.location}, ${data.country}`
-      : data.address || "",
-    adults: data.adults,
-    children: data.children,
-    checkIn: data.arrivalDate,
-    checkOut: data.departureDate,
-    arrivalTime: data.arrivalTime || data.checkInTime,
-    departureTime: data.departureTime || data.checkOutTime,
-    notes: data.notice,
-    price: totalPrice,
-    priceDetails: {
-      basePrice: basePrice,
+  // ADD THE IMPROVED HELPER FUNCTION HERE
+  // Helper function to process booking data in a consistent way
+  const processBookingData = (data, bookingMap) => {
+    const smoobuId = data.smoobuId || data.smoobuReservationId;
+
+    // Skip if already processed or missing ID
+    if (!smoobuId || bookingMap.has(smoobuId)) return;
+
+    // Extract fees - check all possible paths
+    const linenFee =
+      parseFloat(data.priceDetails?.cleaningFee) ||
+      parseFloat(data.priceDetails?.linenFee) ||
+      parseFloat(data.linenFee) ||
+      0;
+
+    const commission =
+      parseFloat(data.priceDetails?.commission) ||
+      parseFloat(data.commission) ||
+      0;
+
+    // Get total price
+    const totalPrice = parseFloat(data.price) || 0;
+
+    // Calculate base price by SUBTRACTING fees from total
+    const basePrice = totalPrice - linenFee;
+
+    // Extract long stay discount
+    const longStayDiscount =
+      parseFloat(data.priceDetails?.calculatedDiscounts?.longStay) ||
+      parseFloat(data.priceDetails?.discount) ||
+      parseFloat(data.priceDetails?.longStayDiscount) ||
+      0;
+
+    // Map promo code info consistently
+    const promoCode = data.appliedCoupon
+      ? {
+          name: data.appliedCoupon.code || "",
+          amount: parseFloat(data.appliedCoupon.discount || 0),
+        }
+      : data.priceDetails?.promoCode
+      ? {
+          name:
+            data.priceDetails.promoCode.code ||
+            data.priceDetails.promoCode.name ||
+            "",
+          amount: parseFloat(
+            data.priceDetails.promoCode.discount ||
+              data.priceDetails.promoCode.amount ||
+              0
+          ),
+        }
+      : null;
+
+    // IMPROVED: Extract extras from various sources
+    let extractedExtras = [];
+
+    // 1. First try to use the extras array if it exists
+    if (data.extras && Array.isArray(data.extras) && data.extras.length > 0) {
+      extractedExtras = [...data.extras];
+    }
+    // 2. If no extras array or it's empty, try to extract from priceElements
+    else if (
+      data.priceDetails?.priceElements &&
+      Array.isArray(data.priceDetails.priceElements)
+    ) {
+      // Filter price elements to find extras (addons that aren't commission, linen, or cleaning)
+      extractedExtras = data.priceDetails.priceElements
+        .filter((element) => {
+          const name = (element.name || "").toLowerCase();
+          const type = (element.type || "").toLowerCase();
+
+          return (
+            // Include all addons except for specific types we don't want
+            type === "addon" &&
+            !name.includes("commission") &&
+            !name.includes("cleaning fee") &&
+            !name.includes("frais de nettoyage") &&
+            !name.includes("linen fee") &&
+            !name.includes("frais de linge")
+          );
+        })
+        .map((element) => ({
+          name: element.name || "Extra",
+          amount: parseFloat(element.amount) || 0,
+          quantity: parseInt(element.quantity) || 1,
+        }));
+    }
+
+    // Process all extras to ensure consistent format
+    const processedExtras = extractedExtras.map((extra) => ({
+      name: extra.name || "Extra sans nom",
+      amount: parseFloat(extra.amount) || 0,
+      quantity: parseInt(extra.quantity) || 1,
+      extraPersonQuantity: parseInt(extra.extraPersonQuantity) || 0,
+      extraPersonPrice: parseFloat(extra.extraPersonPrice) || 0,
+      extraPersonAmount:
+        extra.extraPersonQuantity > 0
+          ? parseFloat(extra.extraPersonPrice) *
+            parseInt(extra.extraPersonQuantity)
+          : 0,
+    }));
+
+    // Calculate extras total
+    const extrasTotal = processedExtras.reduce(
+      (sum, extra) => sum + parseFloat(extra.amount || 0),
+      0
+    );
+
+    // Construct processed booking object
+    bookingMap.set(smoobuId, {
+      id: smoobuId,
+      firestoreId: data.firestoreId, // Store the Firestore ID for reference
+      guest:
+        `${data.firstName} ${data.lastName}`.trim() ||
+        data.guestName ||
+        "Unknown",
+      property:
+        roomNames[data.apartmentId] || data.property || data.apartmentId,
+      portal:
+        getPortalName(data.portalName) ||
+        getPortalName(data.channelName) ||
+        getPortalName(String(data.channelId)) ||
+        "Website",
+      created: data.createdAt,
+      email: data.email,
+      phone: data.phone,
+      address: data.street
+        ? `${data.street}, ${data.postalCode} ${data.location}, ${data.country}`
+        : data.address || "",
+      adults: data.adults,
+      children: data.children,
+      checkIn: data.arrivalDate,
+      checkOut: data.departureDate,
+      arrivalTime: data.arrivalTime || data.checkInTime,
+      departureTime: data.departureTime || data.checkOutTime,
+      notes: data.notice,
+      price: totalPrice,
+      priceDetails: {
+        basePrice: basePrice,
+        linenFee: linenFee,
+        longStayDiscount: longStayDiscount,
+        promoCode: promoCode,
+        extrasTotal: extrasTotal,
+        // Store original price elements for reference
+        priceElements: data.priceDetails?.priceElements || [],
+      },
+      commission: commission,
       linenFee: linenFee,
-      longStayDiscount: longStayDiscount,
-      promoCode: promoCode,
-      extrasTotal: processedExtras.reduce(
-        (sum, extra) => sum + parseFloat(extra.amount || 0),
-        0
-      ),
-    },
-    commission: commission,
-    linenFee: linenFee,
-    nights:
-      data.priceDetails?.numberOfNights ||
-      Math.ceil(
-        (new Date(data.departureDate) - new Date(data.arrivalDate)) /
-          (1000 * 60 * 60 * 24)
-      ),
-    extras: processedExtras,
-  });
-};
+      nights:
+        data.priceDetails?.numberOfNights ||
+        Math.ceil(
+          (new Date(data.departureDate) - new Date(data.arrivalDate)) /
+            (1000 * 60 * 60 * 24)
+        ),
+      extras: processedExtras,
+    });
+  };
 
   // Frontend function - call your backend proxy instead of Smoobu directly
   const handleFetchAndSync = async () => {
@@ -954,43 +998,44 @@ const processBookingData = (data, bookingMap) => {
                                   Détails Extras
                                 </h3>
                                 <div className="space-y-2">
-                                  {booking.extras.length > 0 && (
+                                  {booking.extras &&
+                                  booking.extras.length > 0 ? (
                                     <div className="text-sm">
                                       <span className="block mb-2 font-medium">
                                         Extras sélectionnés:
                                       </span>
                                       <ul className="space-y-2">
                                         {booking.extras.map((extra, index) => (
-                                          <React.Fragment
-                                            key={`${booking.id}-extra-${index}-${extra.name}`}
+                                          <li
+                                            key={`${booking.id}-extra-${index}`}
+                                            className="break-words"
                                           >
-                                            <li className="break-words">
-                                              • {extra.name} ({extra.quantity}x)
-                                              <span className="block ml-3 text-gray-600">
-                                                €
-                                                {(
+                                            • {extra.name}{" "}
+                                            {extra.quantity > 1 &&
+                                              `(${extra.quantity}x)`}
+                                            <span className="block ml-3 text-gray-600">
+                                              {formatPrice(extra.amount)}
+                                              {extra.quantity > 1 &&
+                                                ` (${formatPrice(
                                                   extra.amount / extra.quantity
-                                                ).toFixed(2)}{" "}
-                                                / unité
-                                              </span>
-                                              {extra.extraPersonQuantity >
-                                                0 && (
-                                                <div className="ml-6 text-sm text-gray-600">
-                                                  + Personne supplémentaire (
-                                                  {extra.extraPersonQuantity}x)
-                                                  <span className="block ml-3">
-                                                    €
-                                                    {extra.extraPersonPrice.toFixed(
-                                                      2
-                                                    )}{" "}
-                                                    / personne
-                                                  </span>
-                                                </div>
-                                              )}
-                                            </li>
-                                          </React.Fragment>
+                                                )} / unité)`}
+                                            </span>
+                                            {extra.extraPersonQuantity > 0 && (
+                                              <div className="ml-6 text-sm text-gray-600">
+                                                + Personne supplémentaire (
+                                                {extra.extraPersonQuantity}x)
+                                                <span className="block ml-3">
+                                                  {formatPrice(
+                                                    extra.extraPersonPrice
+                                                  )}{" "}
+                                                  / personne
+                                                </span>
+                                              </div>
+                                            )}
+                                          </li>
                                         ))}
                                       </ul>
+
                                       <div className="pt-2 mt-4 border-t border-gray-200">
                                         <span className="font-medium">
                                           Total Extras:
@@ -999,13 +1044,101 @@ const processBookingData = (data, bookingMap) => {
                                           {formatPrice(
                                             booking.extras.reduce(
                                               (sum, extra) =>
-                                                sum + extra.amount,
+                                                sum +
+                                                (parseFloat(extra.amount) || 0),
                                               0
                                             )
                                           )}
                                         </span>
                                       </div>
                                     </div>
+                                  ) : booking.priceDetails?.priceElements?.some(
+                                      (el) =>
+                                        el.type === "addon" &&
+                                        !el.name
+                                          ?.toLowerCase()
+                                          .includes("commission") &&
+                                        !el.name
+                                          ?.toLowerCase()
+                                          .includes("linen") &&
+                                        !el.name
+                                          ?.toLowerCase()
+                                          .includes("nettoyage")
+                                    ) ? (
+                                    // Fallback to display raw price elements if no processed extras
+                                    <div className="text-sm">
+                                      <span className="block mb-2 font-medium">
+                                        Extras sélectionnés (depuis Smoobu):
+                                      </span>
+                                      <ul className="space-y-2">
+                                        {booking.priceDetails.priceElements
+                                          .filter(
+                                            (el) =>
+                                              el.type === "addon" &&
+                                              !el.name
+                                                ?.toLowerCase()
+                                                .includes("commission") &&
+                                              !el.name
+                                                ?.toLowerCase()
+                                                .includes("linen") &&
+                                              !el.name
+                                                ?.toLowerCase()
+                                                .includes("nettoyage")
+                                          )
+                                          .map((element, index) => (
+                                            <li
+                                              key={`${booking.id}-element-${index}`}
+                                              className="break-words"
+                                            >
+                                              • {element.name}{" "}
+                                              {element.quantity > 1 &&
+                                                `(${element.quantity}x)`}
+                                              <span className="block ml-3 text-gray-600">
+                                                {formatPrice(element.amount)}
+                                                {element.quantity > 1 &&
+                                                  ` (${formatPrice(
+                                                    element.amount /
+                                                      element.quantity
+                                                  )} / unité)`}
+                                              </span>
+                                            </li>
+                                          ))}
+                                      </ul>
+
+                                      <div className="pt-2 mt-4 border-t border-gray-200">
+                                        <span className="font-medium">
+                                          Total Extras:
+                                        </span>
+                                        <span className="block">
+                                          {formatPrice(
+                                            booking.priceDetails.priceElements
+                                              .filter(
+                                                (el) =>
+                                                  el.type === "addon" &&
+                                                  !el.name
+                                                    ?.toLowerCase()
+                                                    .includes("commission") &&
+                                                  !el.name
+                                                    ?.toLowerCase()
+                                                    .includes("linen") &&
+                                                  !el.name
+                                                    ?.toLowerCase()
+                                                    .includes("nettoyage")
+                                              )
+                                              .reduce(
+                                                (sum, el) =>
+                                                  sum +
+                                                  (parseFloat(el.amount) || 0),
+                                                0
+                                              )
+                                          )}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm text-gray-500">
+                                      Aucun extra sélectionné
+                                    </p>
                                   )}
                                 </div>
                               </div>
