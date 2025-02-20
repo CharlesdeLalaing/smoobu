@@ -371,7 +371,7 @@ const BookingsReport = () => {
     const totalPrice = parseFloat(data.price) || 0;
 
     // Calculate base price by SUBTRACTING fees from total
-    const basePrice = totalPrice - linenFee ;
+    const basePrice = totalPrice - linenFee;
 
     // Extract long stay discount
     const longStayDiscount =
@@ -1183,81 +1183,143 @@ const BookingsReport = () => {
                                 </div>
                               </div>
 
-                              {/* Column 3: Détails de Prix with improved display logic */}
+                              {/* Column 3: Détails de Prix */}
                               <div className="space-y-3">
                                 <h3 className="text-sm font-semibold text-gray-900">
                                   Détails de Prix
                                 </h3>
                                 <div className="space-y-2">
-                                  <p className="text-sm">
-                                    <span className="block font-medium">
-                                      Prix de base:
-                                    </span>
-                                    
-                                    {formatPrice(
-                                      booking.priceDetails.basePrice
-                                    )}
-                                  </p>
+                                  {(() => {
+                                    const priceDetails =
+                                      booking.priceDetails || {};
+                                    const priceElements =
+                                      priceDetails.priceElements || [];
 
-                                  {booking.priceDetails.linenFee > 0 && (
-                                    <p className="text-sm">
-                                      <span className="block font-medium">
-                                        Frais de linge:
-                                      </span>
-                                      {formatPrice(
-                                        booking.priceDetails.linenFee
-                                      )}
-                                    </p>
-                                  )}
+                                    // Extract base price
+                                    const basePriceElement = priceElements.find(
+                                      (el) => el.type === "basePrice"
+                                    );
+                                    let basePrice = basePriceElement
+                                      ? basePriceElement.amount
+                                      : 0;
 
-                                  {booking.priceDetails.longStayDiscount <
-                                    0 && (
-                                    <p className="text-sm text-red-600">
-                                      <span className="block font-medium">
-                                        Réduction long séjour:
-                                      </span>
-                                      {formatPrice(
-                                        booking.priceDetails.longStayDiscount
-                                      )}
-                                    </p>
-                                  )}
+                                    // Extract linen fee (handle variations in naming)
+                                    const linenFeeElement = priceElements.find(
+                                      (el) =>
+                                        el.type === "linenFee" ||
+                                        el.type === "PASS_THROUGH_LINEN_FEE" ||
+                                        (el.name &&
+                                          el.name
+                                            .toLowerCase()
+                                            .includes("linen")) // Check if el.name exists
+                                    );
+                                    const linenFee = linenFeeElement
+                                      ? linenFeeElement.amount
+                                      : 0;
 
-                                  {booking.priceDetails.promoCode &&
-                                    booking.priceDetails.promoCode.amount >
-                                      0 && (
-                                      <p className="text-sm text-green-600">
-                                        <span className="block font-medium">
-                                          {booking.priceDetails.promoCode
-                                            .name || "Code promo"}
-                                          :
-                                        </span>
-                                        {formatPrice(
-                                          -booking.priceDetails.promoCode.amount
-                                        )}
-                                      </p>
-                                    )}
+                                    // Extract commission
+                                    const commissionElement =
+                                      priceElements.find(
+                                        (el) => el.type === "commission"
+                                      );
+                                    const commission = commissionElement
+                                      ? commissionElement.amount
+                                      : 0;
 
-                                  {booking.commission > 0 && (
-                                    <p className="text-sm">
-                                      <span className="block font-medium">
-                                        Commission:
-                                      </span>
-                                      {formatPrice(booking.commission)}
-                                    </p>
-                                  )}
+                                    // Extract coupon discount
+                                    const couponElement = priceElements.find(
+                                      (el) =>
+                                        el.type === "discount" ||
+                                        el.type === "coupon"
+                                    ); // Combine discount and coupon search
+                                    const couponDiscount = couponElement
+                                      ? couponElement.amount
+                                      : 0;
 
-                                  <div className="pt-2 mt-4 border-t border-gray-200">
-                                    <span className="block text-sm font-medium">
-                                      Total chambre:
-                                    </span>
-                                    <span className="text-sm">
-                                      {/* ADD fees for the total - this matches the way you want to display it */}
-                                      {formatPrice(
-                                        booking.priceDetails.basePrice +
-                                          booking.priceDetails.linenFee
-                                      )}
-                                    </span>
-                                  </div>
+                                    // Extract long stay discount
+                                    const longStayElement = priceElements.find(
+                                      (el) => el.type === "longStayDiscount"
+                                    );
+                                    const longStayDiscount = longStayElement
+                                      ? longStayElement.amount
+                                      : 0;
+
+                                    // Adjust base price by subtracting discounts
+                                    const adjustedBasePrice =
+                                      basePrice +
+                                      longStayDiscount +
+                                      couponDiscount; //Corrected discount application
+
+                                    // Calculate total room price (Base Price + Linen Fee)
+                                    const totalRoomPrice =
+                                      adjustedBasePrice + linenFee; // Corrected total calculation
+
+                                    return (
+                                      <>
+                                        {/* Base Price */}
+                                        <p className="text-sm">
+                                          <span className="block font-medium">
+                                            Prix de base:
+                                          </span>
+                                          {formatPrice(basePrice)}
+                                        </p>
+
+                                        {/* Long Stay Discount (if applicable) */}
+                                        {longStayElement &&
+                                          longStayDiscount !== 0 && ( // Check for non-zero value
+                                            <p className="text-sm text-red-600">
+                                              <span className="block font-medium">
+                                                Réduction long séjour:
+                                              </span>
+                                              {formatPrice(longStayDiscount)}
+                                            </p>
+                                          )}
+
+                                        {/* Coupon Discount (if applicable) */}
+                                        {couponElement &&
+                                          couponDiscount !== 0 && ( // Check for non-zero value
+                                            <p className="text-sm text-green-600">
+                                              <span className="block font-medium">
+                                                Code promo:
+                                              </span>
+                                              {formatPrice(couponDiscount)}
+                                            </p>
+                                          )}
+
+                                        {/* Linen Fee (if applicable) */}
+                                        {linenFeeElement &&
+                                          linenFee !== 0 && ( // Check for non-zero value
+                                            <p className="text-sm">
+                                              <span className="block font-medium">
+                                                Linen Fee:
+                                              </span>
+                                              {formatPrice(linenFee)}
+                                            </p>
+                                          )}
+
+                                        {/* Total Room Price (Base Price + Linen Fee - Discounts) */}
+                                        <div className="pt-2 mt-4 border-t border-gray-200">
+                                          <span className="block text-sm font-medium">
+                                            Total chambre:
+                                          </span>
+                                          <span className="text-sm">
+                                            {formatPrice(totalRoomPrice)}
+                                          </span>
+                                        </div>
+
+                                        {/* Commission (Displayed but NOT added to total) */}
+                                        {commissionElement &&
+                                          commission !== 0 && ( // Check for non-zero value
+                                            <p className="text-sm text-gray-600">
+                                              <span className="block font-medium">
+                                                Commission:
+                                              </span>
+                                              {formatPrice(commission)}
+                                            </p>
+                                          )}
+                                      </>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                               {/* Column 4: Détails Extras */}
