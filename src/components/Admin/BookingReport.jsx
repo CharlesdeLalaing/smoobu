@@ -92,195 +92,151 @@ const BookingsReport = () => {
     }
   }, [startYear, startMonth, endYear, endMonth]);
 
-  
-const fetchFromFirebase = async () => {
-  try {
-    setLoading(true);
-    setError(null);
+  const fetchFromFirebase = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    // Create date range for query
-    const startDate = new Date(startYear, startMonth - 1, 1);
-    const endDate = new Date(endYear, endMonth, 0, 23, 59, 59);
+      // Create date range for query
+      const startDate = new Date(startYear, startMonth - 1, 1);
+      const endDate = new Date(endYear, endMonth, 0, 23, 59, 59);
 
-    // Create Firebase query
-    const bookingsRef = collection(db, "bookings");
-    const q = query(
-      bookingsRef,
-      where("arrivalDate", ">=", startDate.toISOString().split("T")[0]),
-      where("arrivalDate", "<=", endDate.toISOString().split("T")[0]),
-      orderBy("arrivalDate", "desc")
-    );
-
-    const querySnapshot = await getDocs(q);
-    const bookingMap = new Map(); // Use a map to deduplicate by smoobuId
-
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      console.log(
-        `Processing booking ${data.smoobuId || data.smoobuReservationId}:`,
-        data
+      // Create Firebase query
+      const bookingsRef = collection(db, "bookings");
+      const q = query(
+        bookingsRef,
+        where("arrivalDate", ">=", startDate.toISOString().split("T")[0]),
+        where("arrivalDate", "<=", endDate.toISOString().split("T")[0]),
+        orderBy("arrivalDate", "desc")
       );
 
-      const smoobuId = data.smoobuId || data.smoobuReservationId;
+      const querySnapshot = await getDocs(q);
+      const bookingMap = new Map(); // Use a map to deduplicate by smoobuId
 
-      // Only add if we don't already have this booking
-      if (!bookingMap.has(smoobuId)) {
-        // Get linen fee - check all possible field locations
-        const linenFee =
-          parseFloat(data.priceDetails?.cleaningFee) ||
-          parseFloat(data.priceDetails?.linenFee) ||
-          parseFloat(data.linenFee) ||
-          0;
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const smoobuId = data.smoobuId || data.smoobuReservationId;
 
-        // Get commission - check all possible field locations
-        const commission =
-          parseFloat(data.priceDetails?.commission) ||
-          parseFloat(data.commission) ||
-          0;
+        // Only add if we don't already have this booking
+        if (!bookingMap.has(smoobuId)) {
+          // Extract fees - check all possible paths
+          const linenFee =
+            parseFloat(data.priceDetails?.cleaningFee) ||
+            parseFloat(data.priceDetails?.linenFee) ||
+            parseFloat(data.linenFee) ||
+            0;
 
-        // Get base price
-        const rawBasePrice =
-          parseFloat(data.basePrice) ||
-          parseFloat(data.priceDetails?.basePrice) ||
-          0;
+          const commission =
+            parseFloat(data.priceDetails?.commission) ||
+            parseFloat(data.commission) ||
+            0;
 
-        // Calculate price components
-        const totalPrice = parseFloat(data.price) || 0;
+          // Get total price
+          const totalPrice = parseFloat(data.price) || 0;
 
-        // Calculate total for extras
-        const extrasTotal =
-          data.extras?.reduce(
-            (sum, extra) => sum + parseFloat(extra.amount || 0),
-            0
-          ) ||
-          parseFloat(data.priceDetails?.extrasTotal) ||
-          0;
+          // CORRECTED: Calculate base price by SUBTRACTING fees from total
+          // Base price should be: total - linenFee
+          // Commission is tracked separately and not part of the base calculation
+          const basePrice = totalPrice - linenFee;
 
-        // Calculate discounts
-        const longStayDiscount =
-          parseFloat(data.priceDetails?.calculatedDiscounts?.longStay) ||
-          parseFloat(data.priceDetails?.discount) ||
-          parseFloat(data.priceDetails?.longStayDiscount) ||
-          0;
+          // Extract long stay discount
+          const longStayDiscount =
+            parseFloat(data.priceDetails?.calculatedDiscounts?.longStay) ||
+            parseFloat(data.priceDetails?.discount) ||
+            parseFloat(data.priceDetails?.longStayDiscount) ||
+            0;
 
-        const promoCodeDiscount =
-          parseFloat(data.priceDetails?.calculatedDiscounts?.coupon) ||
-          (data.appliedCoupon
-            ? parseFloat(data.appliedCoupon.discount || 0)
-            : 0);
+          // Map promo code info consistently
+          const promoCode = data.appliedCoupon
+            ? {
+                name: data.appliedCoupon.code || "",
+                amount: parseFloat(data.appliedCoupon.discount || 0),
+              }
+            : data.priceDetails?.promoCode
+            ? {
+                name:
+                  data.priceDetails.promoCode.code ||
+                  data.priceDetails.promoCode.name ||
+                  "",
+                amount: parseFloat(
+                  data.priceDetails.promoCode.discount ||
+                    data.priceDetails.promoCode.amount ||
+                    0
+                ),
+              }
+            : null;
 
-        // Process promo code data for consistent structure
-        let promoCode = null;
-        if (data.appliedCoupon) {
-          promoCode = {
-            name: data.appliedCoupon.code || "",
-            amount: parseFloat(data.appliedCoupon.discount || 0),
-          };
-        } else if (data.priceDetails?.promoCode) {
-          promoCode = {
-            name:
-              data.priceDetails.promoCode.code ||
-              data.priceDetails.promoCode.name ||
-              "",
-            amount: parseFloat(
-              data.priceDetails.promoCode.discount ||
-                data.priceDetails.promoCode.amount ||
-                0
-            ),
-          };
+          bookingMap.set(smoobuId, {
+            id: smoobuId,
+            guest:
+              `${data.firstName} ${data.lastName}`.trim() ||
+              data.guestName ||
+              "Unknown",
+            property:
+              roomNames[data.apartmentId] || data.property || data.apartmentId,
+            portal:
+              getPortalName(data.portalName) ||
+              getPortalName(data.channelName) ||
+              getPortalName(String(data.channelId)) ||
+              "Website",
+            created: data.createdAt,
+            email: data.email,
+            phone: data.phone,
+            address: data.street
+              ? `${data.street}, ${data.postalCode} ${data.location}, ${data.country}`
+              : "",
+            adults: data.adults,
+            children: data.children,
+            checkIn: data.arrivalDate,
+            checkOut: data.departureDate,
+            arrivalTime: data.arrivalTime || data.checkInTime,
+            departureTime: data.departureTime || data.checkOutTime,
+            notes: data.notice,
+            price: totalPrice,
+            priceDetails: {
+              basePrice: basePrice, // CORRECTED: This is now total - linenFee
+              linenFee: linenFee,
+              longStayDiscount: longStayDiscount,
+              promoCode: promoCode,
+              extrasTotal:
+                data.extras?.reduce(
+                  (sum, extra) => sum + Number(extra.amount),
+                  0
+                ) || 0,
+            },
+            commission: commission,
+            linenFee: linenFee, // Keeping for backward compatibility
+            nights:
+              data.priceDetails?.numberOfNights ||
+              Math.ceil(
+                (new Date(data.departureDate) - new Date(data.arrivalDate)) /
+                  (1000 * 60 * 60 * 24)
+              ),
+            extras: data.extras || [],
+          });
         }
+      });
 
-        // Calculate and normalize data
-        const normalizedBooking = {
-          id: smoobuId,
-          guest:
-            `${data.firstName || ""} ${data.lastName || ""}`.trim() ||
-            data.guestName ||
-            "Unknown",
-          property:
-            roomNames[data.apartmentId] || data.property || data.apartmentId,
-          portal:
-            getPortalName(data.portalName) ||
-            getPortalName(data.channelName) ||
-            getPortalName(String(data.channelId)) ||
-            "Website",
-          created: data.createdAt,
-          email: data.email,
-          phone: data.phone,
-          address: data.street
-            ? `${data.street}, ${data.postalCode || ""} ${
-                data.location || ""
-              }, ${data.country || ""}`
-            : data.address || "",
-          adults: parseInt(data.adults) || 0,
-          children: parseInt(data.children) || 0,
-          checkIn: data.arrivalDate,
-          checkOut: data.departureDate,
-          arrivalTime: data.arrivalTime || data.checkInTime,
-          departureTime: data.departureTime || data.checkOutTime,
-          notes: data.notice,
-          price: totalPrice,
+      // Convert map values to array
+      const bookings = Array.from(bookingMap.values());
+      setReportData(bookings);
+    } catch (err) {
+      console.error("Error fetching bookings from Firebase:", err);
+      setError("Failed to fetch bookings: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-          // Normalized price details structure
-          priceDetails: {
-            basePrice: rawBasePrice,
-            linenFee: linenFee,
-            extrasTotal: extrasTotal,
-            longStayDiscount: longStayDiscount,
-            promoCode: promoCode,
-            total: totalPrice,
-          },
-
-          // Keep these fields for backward compatibility
-          commission: commission,
-          linenFee: linenFee,
-
-          nights:
-            parseInt(data.priceDetails?.numberOfNights) ||
-            parseInt(data.nights) ||
-            Math.ceil(
-              (new Date(data.departureDate) - new Date(data.arrivalDate)) /
-                (1000 * 60 * 60 * 24)
-            ),
-          extras: Array.isArray(data.extras)
-            ? data.extras.map((extra) => ({
-                name: extra.name || "Extra",
-                amount: parseFloat(extra.amount) || 0,
-                quantity: parseInt(extra.quantity) || 1,
-              }))
-            : [],
-        };
-
-        console.log(`Normalized booking ${smoobuId}:`, {
-          basePrice: normalizedBooking.priceDetails.basePrice,
-          linenFee: normalizedBooking.priceDetails.linenFee,
-          commission: normalizedBooking.commission,
-        });
-
-        bookingMap.set(smoobuId, normalizedBooking);
-      }
-    });
-
-    // Convert map values to array
-    const bookings = Array.from(bookingMap.values());
-    setReportData(bookings);
-  } catch (err) {
-    console.error("Error fetching bookings from Firebase:", err);
-    setError("Failed to fetch bookings: " + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+  // Frontend function - call your backend proxy instead of Smoobu directly
   const handleFetchAndSync = async () => {
     try {
       setLoading(true);
       console.log("Starting fetch and sync...");
 
-      // Step 1: Fetch from Smoobu and sync to Firebase
+      // FIXED: Call your backend proxy endpoint instead of Smoobu directly
       const response = await axios.get(
-        "http://localhost:3000/api/fetch-and-sync",
+        "http://localhost:3000/api/fetch-and-sync", // Your backend proxy endpoint
         {
           params: {
             startDate: new Date(startYear - 1, startMonth - 1, 1)
@@ -295,13 +251,13 @@ const fetchFromFirebase = async () => {
 
       if (response.data.success) {
         alert(
-          `Fetch and sync completed successfully!\nFetched: ${response.data.stats.fetched}\nSynced: ${response.data.stats.synced}`
+          `Fetch and sync completed successfully!\nFetched: ${response.data.stats.fetched}\nAdded: ${response.data.stats.added}\nUpdated: ${response.data.stats.updated}`
         );
 
-        // Step 2: Now fetch from Firebase to display
+        // Refresh data from Firebase
         fetchFromFirebase();
       } else {
-        throw new Error("Fetch and sync failed");
+        throw new Error(response.data.error || "Fetch and sync failed");
       }
     } catch (error) {
       console.error("Error in fetch and sync:", error);
@@ -317,7 +273,6 @@ const fetchFromFirebase = async () => {
   useEffect(() => {
     fetchFromFirebase();
   }, [startMonth, startYear, endMonth, endYear]);
-  
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -336,99 +291,99 @@ const fetchFromFirebase = async () => {
     return `€${Number(price).toFixed(2)}`;
   };
 
-const handleExport = () => {
-  const wsData = [
-    [
-      "ID",
-      "Client",
-      "Création",
-      "Portail",
-      "Email",
-      "Téléphone",
-      "Adresse",
-      "Adulte",
-      "Enfant",
-      "Arrivée",
-      "Check-in",
-      "Départ",
-      "Nombre de nuits",
-      "Prix de base",
-      "Nom coupon",
-      "Valeur coupon",
-      "Frais de linge",
-      "Promotion long séjour",
-      "Commission",
-      "Liste des extras",
-      "Total des extras",
-      "Prix total",
-    ],
-    ...filteredAndSortedData.map((booking) => [
-      booking.id,
-      booking.guest,
-      formatDate(booking.created),
-      booking.portal,
-      booking.email || "",
-      booking.phone || "",
-      booking.address || "",
-      booking.adults,
-      booking.children,
-      formatDate(booking.checkIn),
-      booking.arrivalTime || "",
-      formatDate(booking.checkOut),
-      booking.nights,
-      booking.priceDetails.basePrice,
-      booking.priceDetails.promoCode?.name || "",
-      booking.priceDetails.promoCode?.amount || "",
-      booking.priceDetails.linenFee || "",
-      booking.priceDetails.longStayDiscount || "",
-      booking.commission || "",
-      booking.extras.map((e) => `${e.name} (${e.quantity}x)`).join(", "),
-      booking.extras.reduce(
-        (sum, extra) => sum + parseFloat(extra.amount || 0),
-        0
-      ),
-      booking.price,
-    ]),
-  ];
+  const handleExport = () => {
+    const wsData = [
+      [
+        "ID",
+        "Client",
+        "Création",
+        "Portail",
+        "Email",
+        "Téléphone",
+        "Adresse",
+        "Adulte",
+        "Enfant",
+        "Arrivée",
+        "Check-in",
+        "Départ",
+        "Nombre de nuits",
+        "Prix de base",
+        "Nom coupon",
+        "Valeur coupon",
+        "Frais de linge",
+        "Promotion long séjour",
+        "Commission",
+        "Liste des extras",
+        "Total des extras",
+        "Prix total",
+      ],
+      ...filteredAndSortedData.map((booking) => [
+        booking.id,
+        booking.guest,
+        formatDate(booking.created),
+        booking.portal,
+        booking.email || "",
+        booking.phone || "",
+        booking.address || "",
+        booking.adults,
+        booking.children,
+        formatDate(booking.checkIn),
+        booking.arrivalTime || "",
+        formatDate(booking.checkOut),
+        booking.nights,
+        booking.priceDetails.basePrice,
+        booking.priceDetails.promoCode?.name || "",
+        booking.priceDetails.promoCode?.amount || "",
+        booking.priceDetails.linenFee || "",
+        booking.priceDetails.longStayDiscount || "",
+        booking.commission || "",
+        booking.extras.map((e) => `${e.name} (${e.quantity}x)`).join(", "),
+        booking.extras.reduce(
+          (sum, extra) => sum + parseFloat(extra.amount || 0),
+          0
+        ),
+        booking.price,
+      ]),
+    ];
 
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-  const colWidths = [
-    { wch: 15 }, // ID de réservation
-    { wch: 25 }, // Client
-    { wch: 20 }, // Création de la réservation
-    { wch: 20 }, // Portail de réservation
-    { wch: 30 }, // Email du client
-    { wch: 20 }, // Téléphone du client
-    { wch: 35 }, // Adresse du client
-    { wch: 15 }, // Nombre d'adulte
-    { wch: 15 }, // Nombre d'enfant
-    { wch: 15 }, // Arrivée
-    { wch: 15 }, // Check-in
-    { wch: 15 }, // Départ
-    { wch: 15 }, // Nombre de nuits
-    { wch: 15 }, // Prix de base
-    { wch: 20 }, // Nom du coupon
-    { wch: 15 }, // Valeur du coupon
-    { wch: 15 }, // Frais de linge
-    { wch: 20 }, // Promotion de long séjour
-    { wch: 15 }, // Commission
-    { wch: 50 }, // Liste des extras
-    { wch: 15 }, // Total des extras
-    { wch: 15 }, // Prix total de la chambre
-  ];
+    const colWidths = [
+      { wch: 15 }, // ID de réservation
+      { wch: 25 }, // Client
+      { wch: 20 }, // Création de la réservation
+      { wch: 20 }, // Portail de réservation
+      { wch: 30 }, // Email du client
+      { wch: 20 }, // Téléphone du client
+      { wch: 35 }, // Adresse du client
+      { wch: 15 }, // Nombre d'adulte
+      { wch: 15 }, // Nombre d'enfant
+      { wch: 15 }, // Arrivée
+      { wch: 15 }, // Check-in
+      { wch: 15 }, // Départ
+      { wch: 15 }, // Nombre de nuits
+      { wch: 15 }, // Prix de base
+      { wch: 20 }, // Nom du coupon
+      { wch: 15 }, // Valeur du coupon
+      { wch: 15 }, // Frais de linge
+      { wch: 20 }, // Promotion de long séjour
+      { wch: 15 }, // Commission
+      { wch: 50 }, // Liste des extras
+      { wch: 15 }, // Total des extras
+      { wch: 15 }, // Prix total de la chambre
+    ];
 
-  ws["!cols"] = colWidths;
+    ws["!cols"] = colWidths;
 
-  XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
+    XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
 
-  const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
-  const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
-  const fileName = `rapport-reservations_${startDate}_${endDate}.xlsx`;
+    const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
+    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
+    const fileName = `rapport-reservations_${startDate}_${endDate}.xlsx`;
 
-  XLSX.writeFile(wb, fileName);
-};
+    XLSX.writeFile(wb, fileName);
+  };
 
   const filteredAndSortedData = reportData
     .filter((booking) =>
@@ -843,13 +798,10 @@ const handleExport = () => {
                                       Total chambre:
                                     </span>
                                     <span className="text-sm">
+                                      {/* ADD fees for the total - this matches the way you want to display it */}
                                       {formatPrice(
                                         booking.priceDetails.basePrice +
-                                          booking.priceDetails.linenFee +
-                                          (booking.priceDetails
-                                            .longStayDiscount || 0) -
-                                          (booking.priceDetails.promoCode
-                                            ?.amount || 0)
+                                          booking.priceDetails.linenFee
                                       )}
                                     </span>
                                   </div>

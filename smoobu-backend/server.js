@@ -1128,12 +1128,21 @@ app.get("/sync-reservations", async (req, res) => {
 
 
 // In your server.js
+// Add or update this endpoint in your server.js
 app.get("/api/fetch-and-sync", async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
+    
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing date parameters"
+      });
+    }
 
-    // Step 1: Fetch from Smoobu with complete data
-    console.log("🟦 Fetching bookings from Smoobu...", { startDate, endDate });
+    console.log("🟦 Starting fetch and sync process...", { startDate, endDate });
+    
+    // 1. Fetch bookings from Smoobu API
     const response = await axios.get(
       "https://login.smoobu.com/api/reservations",
       {
@@ -1144,213 +1153,174 @@ app.get("/api/fetch-and-sync", async (req, res) => {
         params: {
           arrivalFrom: startDate,
           arrivalTo: endDate,
-          showCancellation: false,
+          showCancellation: true,
           excludeBlocked: false,
           pageSize: 100,
-          includePriceElements: true, // Add this to get price elements
         },
       }
     );
 
     const bookings = response.data.bookings || [];
     console.log(`🟦 Fetched ${bookings.length} bookings from Smoobu`);
-
-    // Improved channel mapping
-    const channelMapping = {
-      // Channel IDs - these are the most reliable
-      2323525: "Website",
-      2323516: "Blocked",
-      2323543: "Airbnb",
-
-      // Channel Names
-      Homepage: "Website",
-      "Direct booking": "Website",
-      "Homepage direct": "Website",
-      Direct: "Website",
-      Airbnb: "Airbnb",
-      airbnb: "Airbnb",
-      "Booking.com": "Booking.com",
-      "booking.com": "Booking.com",
-      Expedia: "Expedia",
-      blocked: "Blocked",
-      Blocked: "Blocked",
-      "Blocked channel": "Blocked",
-      Partenariat: "Partenariat",
-      partenariat: "Partenariat",
+    
+    // Track statistics
+    let stats = {
+      fetched: bookings.length,
+      added: 0,
+      updated: 0,
+      skipped: 0,
+      errors: 0
     };
 
-    // Step 2: Sync to Firebase with improved data extraction
-    let syncedCount = 0;
+    // 2. Process each booking
     for (const booking of bookings) {
       try {
-        // Fetch price elements for each booking
-        const priceElementsResponse = await axios.get(
-          `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`,
-          {
-            headers: {
-              "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-              "Cache-Control": "no-cache",
-            },
-          }
-        );
-
-        const priceElements = priceElementsResponse.data.priceElements || [];
-
-        // Extract commission and other price details
-        const basePrice =
-          priceElements.find((el) => el.type === "base")?.amount ||
-          booking.price;
-        const getLinenFee = (priceElements) => {
-          return (
-            priceElements.find(
-              (el) =>
-                el.name?.toLowerCase().includes("linen") ||
-                el.name?.toLowerCase().includes("linge") ||
-                el.name?.toLowerCase().includes("nettoyage") ||
-                el.name?.toLowerCase().includes("cleaning")
-            )?.amount || 0
+        const smoobuId = booking.id.toString();
+        
+        // Check if booking already exists in Firebase
+        const bookingsRef = db.collection("bookings");
+        const existingBookingSnapshot = await bookingsRef
+          .where("smoobuId", "==", smoobuId)
+          .get();
+        
+        // Get channel/portal name
+        const channelName = booking.channel?.name || 'Website';
+        const portalName = getPortalName(channelName) || 'Website';
+        
+        // Fetch price elements
+        let priceElements = [];
+        try {
+          const priceElementsResponse = await axios.get(
+            `https://login.smoobu.com/api/reservations/${smoobuId}/price-elements`,
+            {
+              headers: {
+                "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                "Cache-Control": "no-cache",
+              },
+            }
           );
-        };
-
-        const getCommission = (priceElements) => {
-          return (
-            priceElements.find((el) =>
-              el.name?.toLowerCase().includes("commission")
-            )?.amount || 0
-          );
-        };
-
+          priceElements = priceElementsResponse.data.priceElements || [];
+        } catch (priceError) {
+          console.error(`🟨 Error fetching price elements for booking ${smoobuId}:`, priceError.message);
+        }
+        
+        // Find important price components
+        const basePrice = priceElements.find(el => el.type === 'base')?.amount || 0;
+        const linenFee = priceElements.find(el => 
+          el.name?.toLowerCase().includes('linen') || 
+          el.name?.toLowerCase().includes('linge') || 
+          el.name?.toLowerCase().includes('cleaning')
+        )?.amount || 0;
+        const commission = priceElements.find(el => 
+          el.name?.toLowerCase().includes('commission')
+        )?.amount || 0;
+        
         // Calculate nights
         const checkIn = new Date(booking.arrival);
         const checkOut = new Date(booking.departure);
-        const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-
-        // Properly get the guest name
-        const guestName =
-          booking["guest-name"] ||
-          `${booking.firstName || ""} ${booking.lastName || ""}`.trim();
-
-        // Get the correct portal name
-        const portalName = booking.channel
-          ? channelMapping[booking.channel.id] ||
-            channelMapping[booking.channel.name] ||
-            booking.channel.name ||
-            "Website"
-          : "Website";
-
-          const linenFee = parseFloat(getLinenFee(priceElements));
-          const commission = parseFloat(getCommission(priceElements));
-
-        // Prepare booking document with complete data
+        const nights = Math.ceil(
+          (checkOut - checkIn) / (1000 * 60 * 60 * 24)
+        );
+        
+        // Calculate extras total
+        const extras = priceElements.filter(element => {
+          const name = element.name?.toLowerCase() || "";
+          return element.type === "addon" && 
+            !name.includes("commission") &&
+            !name.includes("linen") &&
+            !name.includes("cleaning");
+        }).map(extra => ({
+          name: extra.name || "Extra",
+          amount: parseFloat(extra.amount) || 0,
+          quantity: parseInt(extra.quantity) || 1
+        }));
+        
+        const extrasTotal = extras.reduce(
+          (sum, extra) => sum + parseFloat(extra.amount || 0), 0
+        );
+        
+        // Format guest name
+        const guestName = booking["guest-name"] || 
+          `${booking.firstName || ""} ${booking.lastName || ""}`.trim() ||
+          "Unknown Guest";
+          
+        // Create booking document with corrected price calculations
+        const totalPrice = parseFloat(booking.price) || 0;
+        // Base price should be total minus linen fee (as requested)
+        const correctedBasePrice = totalPrice - linenFee;
+        
         const bookingDoc = {
-          smoobuId: booking.id,
+          smoobuId: smoobuId,
           createdAt: booking["created-at"] || new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-
-          // Guest information with fallbacks
-          firstName: booking.firstName || guestName.split(" ")[0] || "",
-          lastName:
-            booking.lastName || guestName.split(" ").slice(1).join(" ") || "",
+          firstName: booking.firstName || guestName.split(' ')[0] || "",
+          lastName: booking.lastName || (guestName.split(' ').length > 1 ? guestName.split(' ').slice(1).join(' ') : ""),
           guestName: guestName,
           email: booking.email || "",
           phone: booking.phone || "",
           address: booking.address || "",
-
-          // Booking details
           adults: parseInt(booking.adults) || 0,
           children: parseInt(booking.children) || 0,
           arrivalDate: booking.arrival,
           departureDate: booking.departure,
           checkInTime: booking["check-in"] || "",
           checkOutTime: booking["check-out"] || "",
-          nights: nights,
-
-          // Property information
           apartmentId: booking.apartment?.id,
-          property: roomNames[booking.apartment?.id] || booking.apartment?.name,
-
-          // Channel information
+          property: roomNames[booking.apartment?.id] || booking.apartment?.name || "",
           channelId: booking.channel?.id,
           channelName: booking.channel?.name || "",
           portalName: portalName,
-
-          // Price information with extracted elements
-          price: parseFloat(booking.price) || 0,
+          price: totalPrice,
+          basePrice: correctedBasePrice, // CORRECTED: This is now total - linenFee
           linenFee: linenFee,
           commission: commission,
-          priceElements: priceElements,
-
-          // Additional data
-          notice: booking.notice || "",
-          lastSyncedAt: new Date().toISOString(),
-
-          // Price details structure for the UI
+          extras: extras,
+          nights: nights,
           priceDetails: {
-            basePrice: parseFloat(basePrice) || 0,
+            basePrice: correctedBasePrice,
             linenFee: linenFee,
             commission: commission,
-            finalPrice: parseFloat(booking.price) || 0,
-            calculatedDiscounts: {
-              longStay: 0,
-              coupon: 0,
-            },
-
-            priceElements: priceElements.map((element) => ({
-              type: element.type,
-              name: element.name,
-              amount: parseFloat(element.amount) || 0,
-              quantity: parseInt(element.quantity) || 1,
-            })),
+            extrasTotal: extrasTotal,
+            priceElements: priceElements
           },
+          lastSyncedAt: new Date().toISOString(),
         };
-
-        // Check if booking already exists
-        const bookingsSnapshot = await db
-          .collection("bookings")
-          .where("smoobuId", "==", booking.id.toString())
-          .get();
-
-        if (bookingsSnapshot.empty) {
+        
+        // Add or update in Firebase
+        if (existingBookingSnapshot.empty) {
           // Add new booking
-          await db.collection("bookings").add(bookingDoc);
-          console.log(
-            `🟩 Added new booking ${booking.id} (${portalName}): ${guestName}`
-          );
+          await bookingsRef.add(bookingDoc);
+          console.log(`🟩 Added new booking ${smoobuId} (${portalName}): ${guestName}`);
+          stats.added++;
         } else {
           // Update existing booking
-          const docId = bookingsSnapshot.docs[0].id;
-          await db
-            .collection("bookings")
-            .doc(docId)
-            .update({
-              ...bookingDoc,
-              updatedAt: new Date().toISOString(),
-            });
-          console.log(
-            `🟩 Updated existing booking ${booking.id} (${portalName}): ${guestName}`
-          );
+          const docId = existingBookingSnapshot.docs[0].id;
+          await bookingsRef.doc(docId).update({
+            ...bookingDoc,
+            updatedAt: new Date().toISOString(),
+          });
+          console.log(`🟦 Updated booking ${smoobuId} (${portalName}): ${guestName}`);
+          stats.updated++;
         }
-
-        syncedCount++;
-      } catch (error) {
-        console.error(`🟥 Error syncing booking ${booking.id}:`, error);
+      } catch (bookingError) {
+        console.error(`🟥 Error processing booking ${booking.id}:`, bookingError.message);
+        stats.errors++;
       }
     }
-
-    res.json({
+    
+    console.log("🟩 Sync process completed:", stats);
+    return res.json({
       success: true,
-      stats: {
-        fetched: bookings.length,
-        synced: syncedCount,
-      },
-      message: "Fetch and sync completed successfully",
+      stats: stats,
+      message: "Fetch and sync completed successfully"
     });
+    
   } catch (error) {
-    console.error("🟥 Error in fetch and sync:", error);
-    res.status(500).json({
+    console.error("🟥 Error in fetch-and-sync endpoint:", error);
+    return res.status(500).json({
       success: false,
-      error: "Failed to fetch and sync bookings",
-      message: error.message,
+      error: error.message || "An unknown error occurred",
+      message: "Failed to fetch and sync bookings"
     });
   }
 });
