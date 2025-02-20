@@ -96,283 +96,540 @@ const BookingsReport = () => {
 
   // Inside your BookingsReport component:
 
-  const fetchFromFirebase = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+ const diagnoseBookingData = (booking) => {
+   console.group(`Diagnosing booking ${booking.id} (${booking.portal})`);
 
-      // Create date range for query
-      const startDate = new Date(startYear, startMonth - 1, 1);
-      const endDate = new Date(endYear, endMonth, 0, 23, 59, 59);
+   // Check data structure
+   console.log("Basic booking info:", {
+     id: booking.id,
+     portal: booking.portal,
+     guest: booking.guest,
+     price: booking.price,
+   });
 
-      // Create Firebase query
-      const bookingsRef = collection(db, "bookings");
-      const q = query(
-        bookingsRef,
-        where("arrivalDate", ">=", startDate.toISOString().split("T")[0]),
-        where("arrivalDate", "<=", endDate.toISOString().split("T")[0]),
-        orderBy("arrivalDate", "desc")
-      );
+   // Check extras array
+   console.log("Extras array:", {
+     exists: !!booking.extras,
+     isArray: Array.isArray(booking.extras),
+     length: booking.extras?.length || 0,
+     content: booking.extras,
+   });
 
-      const querySnapshot = await getDocs(q);
-      console.log(
-        `Retrieved ${querySnapshot.docs.length} documents from Firebase`
-      );
+   // Check priceDetails structure
+   console.log("PriceDetails structure:", {
+     exists: !!booking.priceDetails,
+     hasBasePrice: !!booking.priceDetails?.basePrice,
+     hasLinenFee: !!booking.priceDetails?.linenFee,
+     hasCommission: !!booking.priceDetails?.commission,
+     hasExtrasTotal: !!booking.priceDetails?.extrasTotal,
+     hasPriceElements: !!booking.priceDetails?.priceElements,
+     priceElementsLength: booking.priceDetails?.priceElements?.length || 0,
+   });
 
-      // Create a map for deduplicated bookings
-      const bookingMap = new Map();
+   // Check priceElements content if it exists
+   if (booking.priceDetails?.priceElements?.length > 0) {
+     console.log(
+       "PriceElements content:",
+       booking.priceDetails.priceElements.map((el) => ({
+         type: el.type,
+         name: el.name,
+         amount: el.amount,
+         quantity: el.quantity,
+       }))
+     );
 
-      // First, go through all documents and group by smoobuId
-      const bookingsBySmoobuId = {};
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const smoobuId = data.smoobuId || data.smoobuReservationId;
+     // Check if there are any potential extras in priceElements
+     const potentialExtras = booking.priceDetails.priceElements.filter(
+       (el) =>
+         el.type === "addon" &&
+         !el.name?.toLowerCase().includes("commission") &&
+         !el.name?.toLowerCase().includes("linen") &&
+         !el.name?.toLowerCase().includes("nettoyage")
+     );
 
-        if (!smoobuId) return; // Skip entries without smoobuId
+     console.log("Potential extras in priceElements:", {
+       count: potentialExtras.length,
+       items: potentialExtras,
+     });
+   }
 
-        if (!bookingsBySmoobuId[smoobuId]) {
-          bookingsBySmoobuId[smoobuId] = [];
-        }
+   // Check root-level priceElements if they exist
+   if (booking.priceElements?.length > 0) {
+     console.log(
+       "Root-level priceElements content:",
+       booking.priceElements.map((el) => ({
+         type: el.type,
+         name: el.name,
+         amount: el.amount,
+         quantity: el.quantity,
+       }))
+     );
+   }
 
-        bookingsBySmoobuId[smoobuId].push({
-          id: doc.id,
-          ...data,
-          firestoreId: doc.id, // Store the Firestore document ID
-        });
-      });
+   console.groupEnd();
+ };
 
-      // Log duplicates found for debugging
-      const duplicateGroups = Object.entries(bookingsBySmoobuId).filter(
-        ([, group]) => group.length > 1
-      );
+ // Complete fetchFromFirebase function with diagnostic logging
+ const fetchFromFirebase = useCallback(async () => {
+   try {
+     setLoading(true);
+     setError(null);
 
-      if (duplicateGroups.length > 0) {
-        console.log(
-          `Found ${duplicateGroups.length} bookings with duplicates in the client-side data`
-        );
-      }
+     // Create date range for query
+     const startDate = new Date(startYear, startMonth - 1, 1);
+     const endDate = new Date(endYear, endMonth, 0, 23, 59, 59);
 
-      // For each smoobuId, pick the most complete entry
-      Object.entries(bookingsBySmoobuId).forEach(([smoobuId, bookings]) => {
-        if (bookings.length === 1) {
-          // If only one entry, use it
-          const booking = bookings[0];
-          processBookingData(booking, bookingMap);
-        } else {
-          // If multiple entries, choose the one with the most data
-          // Prioritize entries with extras, price elements, etc.
-          bookings.sort((a, b) => {
-            // Calculate "completeness" score
-            const scoreA = calculateCompletenessScore(a);
-            const scoreB = calculateCompletenessScore(b);
+     // Create Firebase query
+     const bookingsRef = collection(db, "bookings");
+     const q = query(
+       bookingsRef,
+       where("arrivalDate", ">=", startDate.toISOString().split("T")[0]),
+       where("arrivalDate", "<=", endDate.toISOString().split("T")[0]),
+       orderBy("arrivalDate", "desc")
+     );
 
-            // Higher score is more complete
-            return scoreB - scoreA;
-          });
+     const querySnapshot = await getDocs(q);
+     console.log(
+       `Retrieved ${querySnapshot.docs.length} documents from Firebase`
+     );
 
-          // Use the most complete entry
-          const bestBooking = bookings[0];
-          processBookingData(bestBooking, bookingMap);
-        }
-      });
+     // Log a sample of the raw data structure from Firebase
+     if (querySnapshot.docs.length > 0) {
+       const sampleDoc = querySnapshot.docs.find((doc) => {
+         const data = doc.data();
+         return data.portalName === "Airbnb" || data.channelName === "Airbnb";
+       });
 
-      // Convert map values to array
-      const bookings = Array.from(bookingMap.values());
-      console.log(`Returning ${bookings.length} deduplicated bookings`);
-      setReportData(bookings);
-    } catch (err) {
-      console.error("Error fetching bookings from Firebase:", err);
-      setError("Failed to fetch bookings: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [startMonth, startYear, endMonth, endYear]);
+       if (sampleDoc) {
+         console.group("Sample Airbnb booking raw data structure");
+         console.log("Document ID:", sampleDoc.id);
+         console.log("Data:", sampleDoc.data());
+         console.groupEnd();
+       }
+     }
 
-  // Helper function to calculate how complete a booking record is
-  const calculateCompletenessScore = (booking) => {
-    let score = 0;
+     // Create a map for deduplicated bookings
+     const bookingMap = new Map();
 
-    // Check for key data that indicates a complete record
-    if (booking.extras && booking.extras.length > 0) score += 10;
-    if (booking.priceDetails?.priceElements) score += 5;
-    if (booking.priceDetails?.extrasTotal) score += 3;
-    if (booking.commission) score += 2;
-    if (booking.linenFee) score += 2;
-    if (booking.email) score += 1;
-    if (booking.phone) score += 1;
-    if (booking.address) score += 1;
-    if (booking.notes) score += 1;
+     // First, go through all documents and group by smoobuId
+     const bookingsBySmoobuId = {};
+     querySnapshot.forEach((doc) => {
+       const data = doc.data();
+       const smoobuId = data.smoobuId || data.smoobuReservationId;
 
-    // More recent updates are preferred
-    if (booking.updatedAt) {
-      const updateDate = new Date(booking.updatedAt);
-      if (!isNaN(updateDate)) {
-        // Add a small score based on recency (newer is better)
-        const daysAgo = (Date.now() - updateDate) / (1000 * 60 * 60 * 24);
-        score += Math.max(0, 1 - daysAgo / 100); // Small bonus for recency
-      }
-    }
+       if (!smoobuId) return; // Skip entries without smoobuId
 
-    return score;
-  };
+       if (!bookingsBySmoobuId[smoobuId]) {
+         bookingsBySmoobuId[smoobuId] = [];
+       }
 
-  // ADD THE IMPROVED HELPER FUNCTION HERE
-  // Helper function to process booking data in a consistent way
-  const processBookingData = (data, bookingMap) => {
-    const smoobuId = data.smoobuId || data.smoobuReservationId;
+       bookingsBySmoobuId[smoobuId].push({
+         id: doc.id,
+         ...data,
+         firestoreId: doc.id, // Store the Firestore document ID
+       });
+     });
 
-    // Skip if already processed or missing ID
-    if (!smoobuId || bookingMap.has(smoobuId)) return;
+     // Log duplicates found for debugging
+     const duplicateGroups = Object.entries(bookingsBySmoobuId).filter(
+       ([, group]) => group.length > 1
+     );
 
-    // Extract fees - check all possible paths
-    const linenFee =
-      parseFloat(data.priceDetails?.cleaningFee) ||
-      parseFloat(data.priceDetails?.linenFee) ||
-      parseFloat(data.linenFee) ||
-      0;
+     if (duplicateGroups.length > 0) {
+       console.log(
+         `Found ${duplicateGroups.length} bookings with duplicates in the client-side data`
+       );
+     }
 
-    const commission =
-      parseFloat(data.priceDetails?.commission) ||
-      parseFloat(data.commission) ||
-      0;
+     // For each smoobuId, pick the most complete entry
+     Object.entries(bookingsBySmoobuId).forEach(([smoobuId, bookings]) => {
+       if (bookings.length === 1) {
+         // If only one entry, use it
+         const booking = bookings[0];
+         processBookingData(booking, bookingMap);
+       } else {
+         // If multiple entries, choose the one with the most data
+         // Prioritize entries with extras, price elements, etc.
+         bookings.sort((a, b) => {
+           // Calculate "completeness" score
+           const scoreA = calculateCompletenessScore(a);
+           const scoreB = calculateCompletenessScore(b);
 
-    // Get total price
-    const totalPrice = parseFloat(data.price) || 0;
+           // Higher score is more complete
+           return scoreB - scoreA;
+         });
 
-    // Calculate base price by SUBTRACTING fees from total
-    const basePrice = totalPrice - linenFee;
+         // Use the most complete entry
+         const bestBooking = bookings[0];
+         processBookingData(bestBooking, bookingMap);
+       }
+     });
 
-    // Extract long stay discount
-    const longStayDiscount =
-      parseFloat(data.priceDetails?.calculatedDiscounts?.longStay) ||
-      parseFloat(data.priceDetails?.discount) ||
-      parseFloat(data.priceDetails?.longStayDiscount) ||
-      0;
+     // Convert map values to array
+     const bookings = Array.from(bookingMap.values());
+     console.log(`Returning ${bookings.length} deduplicated bookings`);
 
-    // Map promo code info consistently
-    const promoCode = data.appliedCoupon
-      ? {
-          name: data.appliedCoupon.code || "",
-          amount: parseFloat(data.appliedCoupon.discount || 0),
-        }
-      : data.priceDetails?.promoCode
-      ? {
-          name:
-            data.priceDetails.promoCode.code ||
-            data.priceDetails.promoCode.name ||
-            "",
-          amount: parseFloat(
-            data.priceDetails.promoCode.discount ||
-              data.priceDetails.promoCode.amount ||
-              0
-          ),
-        }
-      : null;
+     // Log some stats about extras
+     const bookingsWithExtras = bookings.filter(
+       (b) => b.extras && b.extras.length > 0
+     );
+     const airbnbBookings = bookings.filter((b) => b.portal === "Airbnb");
+     const airbnbWithExtras = airbnbBookings.filter(
+       (b) => b.extras && b.extras.length > 0
+     );
 
-    // IMPROVED: Extract extras from various sources
-    let extractedExtras = [];
+     console.log("Extras statistics:", {
+       totalBookings: bookings.length,
+       bookingsWithExtras: bookingsWithExtras.length,
+       airbnbTotal: airbnbBookings.length,
+       airbnbWithExtras: airbnbWithExtras.length,
+       percentWithExtras:
+         ((bookingsWithExtras.length / bookings.length) * 100).toFixed(1) + "%",
+       percentAirbnbWithExtras: airbnbBookings.length
+         ? ((airbnbWithExtras.length / airbnbBookings.length) * 100).toFixed(
+             1
+           ) + "%"
+         : "N/A",
+     });
 
-    // 1. First try to use the extras array if it exists
-    if (data.extras && Array.isArray(data.extras) && data.extras.length > 0) {
-      extractedExtras = [...data.extras];
-    }
-    // 2. If no extras array or it's empty, try to extract from priceElements
-    else if (
-      data.priceDetails?.priceElements &&
-      Array.isArray(data.priceDetails.priceElements)
-    ) {
-      // Filter price elements to find extras (addons that aren't commission, linen, or cleaning)
-      extractedExtras = data.priceDetails.priceElements
-        .filter((element) => {
-          const name = (element.name || "").toLowerCase();
-          const type = (element.type || "").toLowerCase();
+     setReportData(bookings);
+   } catch (err) {
+     console.error("Error fetching bookings from Firebase:", err);
+     setError("Failed to fetch bookings: " + err.message);
+   } finally {
+     setLoading(false);
+   }
+ }, [startMonth, startYear, endMonth, endYear]);
 
-          return (
-            // Include all addons except for specific types we don't want
-            type === "addon" &&
-            !name.includes("commission") &&
-            !name.includes("cleaning fee") &&
-            !name.includes("frais de nettoyage") &&
-            !name.includes("linen fee") &&
-            !name.includes("frais de linge")
-          );
-        })
-        .map((element) => ({
-          name: element.name || "Extra",
-          amount: parseFloat(element.amount) || 0,
-          quantity: parseInt(element.quantity) || 1,
-        }));
-    }
+ // Helper function to calculate how complete a booking record is
+ const calculateCompletenessScore = (booking) => {
+   let score = 0;
 
-    // Process all extras to ensure consistent format
-    const processedExtras = extractedExtras.map((extra) => ({
-      name: extra.name || "Extra sans nom",
-      amount: parseFloat(extra.amount) || 0,
-      quantity: parseInt(extra.quantity) || 1,
-      extraPersonQuantity: parseInt(extra.extraPersonQuantity) || 0,
-      extraPersonPrice: parseFloat(extra.extraPersonPrice) || 0,
-      extraPersonAmount:
-        extra.extraPersonQuantity > 0
-          ? parseFloat(extra.extraPersonPrice) *
-            parseInt(extra.extraPersonQuantity)
-          : 0,
-    }));
+   // Check for key data that indicates a complete record
+   if (booking.extras && booking.extras.length > 0) score += 10;
+   if (
+     booking.priceDetails?.priceElements &&
+     booking.priceDetails.priceElements.length > 0
+   )
+     score += 5;
+   if (booking.priceDetails?.extrasTotal) score += 3;
+   if (booking.commission) score += 2;
+   if (booking.linenFee) score += 2;
+   if (booking.email) score += 1;
+   if (booking.phone) score += 1;
+   if (booking.address) score += 1;
+   if (booking.notes) score += 1;
 
-    // Calculate extras total
-    const extrasTotal = processedExtras.reduce(
-      (sum, extra) => sum + parseFloat(extra.amount || 0),
-      0
-    );
+   // More recent updates are preferred
+   if (booking.updatedAt) {
+     const updateDate = new Date(booking.updatedAt);
+     if (!isNaN(updateDate)) {
+       // Add a small score based on recency (newer is better)
+       const daysAgo = (Date.now() - updateDate) / (1000 * 60 * 60 * 24);
+       score += Math.max(0, 1 - daysAgo / 100); // Small bonus for recency
+     }
+   }
 
-    // Construct processed booking object
-    bookingMap.set(smoobuId, {
-      id: smoobuId,
-      firestoreId: data.firestoreId, // Store the Firestore ID for reference
-      guest:
-        `${data.firstName} ${data.lastName}`.trim() ||
-        data.guestName ||
-        "Unknown",
-      property:
-        roomNames[data.apartmentId] || data.property || data.apartmentId,
-      portal:
-        getPortalName(data.portalName) ||
-        getPortalName(data.channelName) ||
-        getPortalName(String(data.channelId)) ||
-        "Website",
-      created: data.createdAt,
-      email: data.email,
-      phone: data.phone,
-      address: data.street
-        ? `${data.street}, ${data.postalCode} ${data.location}, ${data.country}`
-        : data.address || "",
-      adults: data.adults,
-      children: data.children,
-      checkIn: data.arrivalDate,
-      checkOut: data.departureDate,
-      arrivalTime: data.arrivalTime || data.checkInTime,
-      departureTime: data.departureTime || data.checkOutTime,
-      notes: data.notice,
-      price: totalPrice,
-      priceDetails: {
-        basePrice: basePrice,
-        linenFee: linenFee,
-        longStayDiscount: longStayDiscount,
-        promoCode: promoCode,
-        extrasTotal: extrasTotal,
-        // Store original price elements for reference
-        priceElements: data.priceDetails?.priceElements || [],
-      },
-      commission: commission,
-      linenFee: linenFee,
-      nights:
-        data.priceDetails?.numberOfNights ||
-        Math.ceil(
-          (new Date(data.departureDate) - new Date(data.arrivalDate)) /
-            (1000 * 60 * 60 * 24)
-        ),
-      extras: processedExtras,
-    });
-  };
+   return score;
+ };
+
+ // Helper function to process booking data with improved robustness
+ const processBookingData = (data, bookingMap) => {
+   const smoobuId = data.smoobuId || data.smoobuReservationId;
+
+   // Skip if already processed or missing ID
+   if (!smoobuId || bookingMap.has(smoobuId)) return;
+
+   // DEBUGGING - log the structure of this booking's price-related data
+   if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
+     console.log(`Processing Airbnb booking ${smoobuId} - Data structure:`, {
+       hasExtras: !!data.extras,
+       extrasLength: data.extras?.length || 0,
+       hasPriceDetails: !!data.priceDetails,
+       hasPriceDetailsElements: !!data.priceDetails?.priceElements,
+       priceDetailsElementsLength:
+         data.priceDetails?.priceElements?.length || 0,
+       hasRootPriceElements: !!data.priceElements,
+       rootPriceElementsLength: data.priceElements?.length || 0,
+     });
+   }
+
+   // Extract fees - check all possible paths
+   const linenFee =
+     parseFloat(data.priceDetails?.cleaningFee) ||
+     parseFloat(data.priceDetails?.linenFee) ||
+     parseFloat(data.linenFee) ||
+     0;
+
+   const commission =
+     parseFloat(data.priceDetails?.commission) ||
+     parseFloat(data.commission) ||
+     0;
+
+   // Get total price
+   const totalPrice = parseFloat(data.price) || 0;
+
+   // Calculate base price by SUBTRACTING fees from total
+   const basePrice = totalPrice - linenFee;
+
+   // Extract long stay discount
+   const longStayDiscount =
+     parseFloat(data.priceDetails?.calculatedDiscounts?.longStay) ||
+     parseFloat(data.priceDetails?.discount) ||
+     parseFloat(data.priceDetails?.longStayDiscount) ||
+     0;
+
+   // Map promo code info consistently
+   const promoCode = data.appliedCoupon
+     ? {
+         name: data.appliedCoupon.code || "",
+         amount: parseFloat(data.appliedCoupon.discount || 0),
+       }
+     : data.priceDetails?.promoCode
+     ? {
+         name:
+           data.priceDetails.promoCode.code ||
+           data.priceDetails.promoCode.name ||
+           "",
+         amount: parseFloat(
+           data.priceDetails.promoCode.discount ||
+             data.priceDetails.promoCode.amount ||
+             0
+         ),
+       }
+     : null;
+
+   // IMPROVED: Extract extras from various sources with more robust checks
+   let extractedExtras = [];
+   let sourceOfExtras = "none";
+
+   // 1. First try to use the extras array if it exists and has items
+   if (data.extras && Array.isArray(data.extras) && data.extras.length > 0) {
+     extractedExtras = [...data.extras];
+     sourceOfExtras = "extras";
+
+     if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
+       console.log(
+         `Airbnb booking ${smoobuId}: Using extras array with ${data.extras.length} items`
+       );
+     }
+   }
+   // 2. Try to extract from priceDetails.priceElements
+   else if (
+     data.priceDetails?.priceElements &&
+     Array.isArray(data.priceDetails.priceElements) &&
+     data.priceDetails.priceElements.length > 0
+   ) {
+     if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
+       console.log(
+         `Airbnb booking ${smoobuId}: Using priceDetails.priceElements with ${data.priceDetails.priceElements.length} items`
+       );
+     }
+
+     // Filter price elements to find extras
+ const filteredExtras = data.priceDetails.priceElements.filter((element) => {
+   const name = (element.name || "").toLowerCase();
+   const type = (element.type || "").toLowerCase();
+
+   // Log each element being considered for Airbnb bookings
+   if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
+     console.log(`Element ${element.name} (${element.type})`);
+   }
+
+   // IMPROVED: Handle elements with null/missing type fields
+   // 1. If it's specifically an "addon" type, include it (unless it's a fee)
+   // 2. If it has no type but appears to be an extra (not a fee), include it
+   // 3. Check for common extra names even if type is missing
+   const isAddon = type === "addon";
+   const isFee =
+     name.includes("commission") ||
+     name.includes("cleaning fee") ||
+     name.includes("frais de nettoyage") ||
+     name.includes("linen fee") ||
+     name.includes("frais de linge") ||
+     name.includes("cancellation");
+
+   // Special detection for Airbnb extras which often have null types
+   const isProbablyExtra =
+     // Check for formule, which appears in many extras
+     name.includes("formule") ||
+     // Check for common meal types
+     name.includes("petit-déjeuner") ||
+     name.includes("raclette") ||
+     name.includes("barbecue") ||
+     name.includes("anniversaire") ||
+     // Check for spa packages
+     name.includes("spa") ||
+     name.includes("2 pers") ||
+     // For non-French extras
+     name.includes("breakfast") ||
+     name.includes("meal") ||
+     name.includes("package") ||
+     // Check for known product categories
+     name.includes("(pour 2)");
+
+   const include = (isAddon && !isFee) || (!type && isProbablyExtra);
+
+   if (
+     (data.portalName === "Airbnb" || data.channelName === "Airbnb") &&
+     include
+   ) {
+     console.log(
+       `✓ Including element as extra: ${element.name} (${element.amount})`
+     );
+   }
+
+   return include;
+ });
+
+     if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
+       console.log(
+         `Found ${filteredExtras.length} extras in priceDetails.priceElements`
+       );
+     }
+
+     extractedExtras = filteredExtras.map((element) => ({
+       name: element.name || "Extra",
+       amount: parseFloat(element.amount) || 0,
+       quantity: parseInt(element.quantity) || 1,
+     }));
+     sourceOfExtras = "priceDetails.priceElements";
+   }
+   // 3. Try to extract from root-level priceElements (alternative structure)
+   else if (
+     data.priceElements &&
+     Array.isArray(data.priceElements) &&
+     data.priceElements.length > 0
+   ) {
+     if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
+       console.log(
+         `Airbnb booking ${smoobuId}: Using root priceElements with ${data.priceElements.length} items`
+       );
+     }
+
+     // Filter price elements to find extras
+     const filteredExtras = data.priceElements.filter((element) => {
+       const name = (element.name || "").toLowerCase();
+       const type = (element.type || "").toLowerCase();
+
+       return (
+         type === "addon" &&
+         !name.includes("commission") &&
+         !name.includes("cleaning fee") &&
+         !name.includes("frais de nettoyage") &&
+         !name.includes("linen fee") &&
+         !name.includes("frais de linge")
+       );
+     });
+
+     if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
+       console.log(
+         `Found ${filteredExtras.length} extras in root priceElements`
+       );
+     }
+
+     extractedExtras = filteredExtras.map((element) => ({
+       name: element.name || "Extra",
+       amount: parseFloat(element.amount) || 0,
+       quantity: parseInt(element.quantity) || 1,
+     }));
+     sourceOfExtras = "root.priceElements";
+   }
+
+   // Process all extras to ensure consistent format
+   const processedExtras = extractedExtras.map((extra) => ({
+     name: extra.name || "Extra sans nom",
+     amount: parseFloat(extra.amount) || 0,
+     quantity: parseInt(extra.quantity) || 1,
+     extraPersonQuantity: parseInt(extra.extraPersonQuantity) || 0,
+     extraPersonPrice: parseFloat(extra.extraPersonPrice) || 0,
+     extraPersonAmount:
+       extra.extraPersonQuantity > 0
+         ? parseFloat(extra.extraPersonPrice) *
+           parseInt(extra.extraPersonQuantity)
+         : 0,
+   }));
+
+   // Calculate extras total
+   const extrasTotal = processedExtras.reduce(
+     (sum, extra) => sum + parseFloat(extra.amount || 0),
+     0
+   );
+
+   if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
+     if (processedExtras.length > 0) {
+       console.log(
+         `Airbnb booking ${smoobuId}: Processed ${processedExtras.length} extras from ${sourceOfExtras}:`,
+         processedExtras.map((e) => e.name).join(", ")
+       );
+     } else {
+       console.log(`Airbnb booking ${smoobuId}: No extras found in any source`);
+     }
+   }
+
+   // Get all price elements from all possible locations
+   const allPriceElements = [
+     ...(data.priceDetails?.priceElements || []),
+     ...(data.priceElements || []),
+   ];
+
+   // Construct processed booking object
+   bookingMap.set(smoobuId, {
+     id: smoobuId,
+     firestoreId: data.firestoreId, // Store the Firestore ID for reference
+     guest:
+       `${data.firstName} ${data.lastName}`.trim() ||
+       data.guestName ||
+       "Unknown",
+     property: roomNames[data.apartmentId] || data.property || data.apartmentId,
+     portal:
+       getPortalName(data.portalName) ||
+       getPortalName(data.channelName) ||
+       getPortalName(String(data.channelId)) ||
+       "Website",
+     created: data.createdAt,
+     email: data.email,
+     phone: data.phone,
+     address: data.street
+       ? `${data.street}, ${data.postalCode} ${data.location}, ${data.country}`
+       : data.address || "",
+     adults: data.adults,
+     children: data.children,
+     checkIn: data.arrivalDate,
+     checkOut: data.departureDate,
+     arrivalTime: data.arrivalTime || data.checkInTime,
+     departureTime: data.departureTime || data.checkOutTime,
+     notes: data.notice,
+     price: totalPrice,
+     priceDetails: {
+       basePrice: basePrice,
+       linenFee: linenFee,
+       longStayDiscount: longStayDiscount,
+       promoCode: promoCode,
+       extrasTotal: extrasTotal,
+       // Store all price elements from all sources
+       priceElements: allPriceElements,
+     },
+     commission: commission,
+     linenFee: linenFee,
+     nights:
+       data.priceDetails?.numberOfNights ||
+       Math.ceil(
+         (new Date(data.departureDate) - new Date(data.arrivalDate)) /
+           (1000 * 60 * 60 * 24)
+       ),
+     extras: processedExtras,
+     // Store original data sources for debugging
+     _debug: {
+       extrasSource: sourceOfExtras,
+       hasExtrasArray: data.extras && data.extras.length > 0,
+       hasPriceDetailsElements:
+         data.priceDetails?.priceElements &&
+         data.priceDetails.priceElements.length > 0,
+       hasRootElements: data.priceElements && data.priceElements.length > 0,
+     },
+   });
+ };
 
   // Frontend function - call your backend proxy instead of Smoobu directly
   const handleFetchAndSync = async () => {
@@ -832,6 +1089,10 @@ const BookingsReport = () => {
                     {expandedBooking === booking.id && (
                       <tr key={`expanded-${booking.id}`}>
                         <td colSpan="10" className="p-0">
+                          {(() => {
+                            diagnoseBookingData(booking);
+                            return null;
+                          })()}
                           <div className="p-4 bg-gray-50">
                             <div className="w-[95%] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                               {/* Column 1: Information Client */}
@@ -998,148 +1259,192 @@ const BookingsReport = () => {
                                   Détails Extras
                                 </h3>
                                 <div className="space-y-2">
-                                  {booking.extras &&
-                                  booking.extras.length > 0 ? (
-                                    <div className="text-sm">
-                                      <span className="block mb-2 font-medium">
-                                        Extras sélectionnés:
-                                      </span>
-                                      <ul className="space-y-2">
-                                        {booking.extras.map((extra, index) => (
-                                          <li
-                                            key={`${booking.id}-extra-${index}`}
-                                            className="break-words"
-                                          >
-                                            • {extra.name}{" "}
-                                            {extra.quantity > 1 &&
-                                              `(${extra.quantity}x)`}
-                                            <span className="block ml-3 text-gray-600">
-                                              {formatPrice(extra.amount)}
-                                              {extra.quantity > 1 &&
-                                                ` (${formatPrice(
-                                                  extra.amount / extra.quantity
-                                                )} / unité)`}
-                                            </span>
-                                            {extra.extraPersonQuantity > 0 && (
-                                              <div className="ml-6 text-sm text-gray-600">
-                                                + Personne supplémentaire (
-                                                {extra.extraPersonQuantity}x)
-                                                <span className="block ml-3">
-                                                  {formatPrice(
-                                                    extra.extraPersonPrice
-                                                  )}{" "}
-                                                  / personne
-                                                </span>
-                                              </div>
+                                  {(() => {
+                                    // Log our decision process
+                                    console.group(
+                                      `Extras display decision for booking ${booking.id}`
+                                    );
+
+                                    // First check: processed extras array
+                                    if (
+                                      booking.extras &&
+                                      booking.extras.length > 0
+                                    ) {
+                                      console.log(
+                                        "Using processed extras array with",
+                                        booking.extras.length,
+                                        "items"
+                                      );
+                                      console.groupEnd();
+                                      return (
+                                        <div className="text-sm">
+                                          <span className="block mb-2 font-medium">
+                                            Extras sélectionnés:
+                                          </span>
+                                          <ul className="space-y-2">
+                                            {booking.extras.map(
+                                              (extra, index) => (
+                                                <li
+                                                  key={`${booking.id}-extra-${index}`}
+                                                  className="break-words"
+                                                >
+                                                  • {extra.name}{" "}
+                                                  {extra.quantity > 1 &&
+                                                    `(${extra.quantity}x)`}
+                                                  <span className="block ml-3 text-gray-600">
+                                                    {formatPrice(extra.amount)}
+                                                    {extra.quantity > 1 &&
+                                                      ` (${formatPrice(
+                                                        extra.amount /
+                                                          extra.quantity
+                                                      )} / unité)`}
+                                                  </span>
+                                                </li>
+                                              )
                                             )}
-                                          </li>
-                                        ))}
-                                      </ul>
+                                          </ul>
 
-                                      <div className="pt-2 mt-4 border-t border-gray-200">
-                                        <span className="font-medium">
-                                          Total Extras:
-                                        </span>
-                                        <span className="block">
-                                          {formatPrice(
-                                            booking.extras.reduce(
-                                              (sum, extra) =>
-                                                sum +
-                                                (parseFloat(extra.amount) || 0),
-                                              0
-                                            )
-                                          )}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  ) : booking.priceDetails?.priceElements?.some(
-                                      (el) =>
-                                        el.type === "addon" &&
-                                        !el.name
-                                          ?.toLowerCase()
-                                          .includes("commission") &&
-                                        !el.name
-                                          ?.toLowerCase()
-                                          .includes("linen") &&
-                                        !el.name
-                                          ?.toLowerCase()
-                                          .includes("nettoyage")
-                                    ) ? (
-                                    // Fallback to display raw price elements if no processed extras
-                                    <div className="text-sm">
-                                      <span className="block mb-2 font-medium">
-                                        Extras sélectionnés (depuis Smoobu):
-                                      </span>
-                                      <ul className="space-y-2">
-                                        {booking.priceDetails.priceElements
-                                          .filter(
-                                            (el) =>
-                                              el.type === "addon" &&
-                                              !el.name
-                                                ?.toLowerCase()
-                                                .includes("commission") &&
-                                              !el.name
-                                                ?.toLowerCase()
-                                                .includes("linen") &&
-                                              !el.name
-                                                ?.toLowerCase()
-                                                .includes("nettoyage")
-                                          )
-                                          .map((element, index) => (
-                                            <li
-                                              key={`${booking.id}-element-${index}`}
-                                              className="break-words"
-                                            >
-                                              • {element.name}{" "}
-                                              {element.quantity > 1 &&
-                                                `(${element.quantity}x)`}
-                                              <span className="block ml-3 text-gray-600">
-                                                {formatPrice(element.amount)}
-                                                {element.quantity > 1 &&
-                                                  ` (${formatPrice(
-                                                    element.amount /
-                                                      element.quantity
-                                                  )} / unité)`}
+                                          <div className="pt-2 mt-4 border-t border-gray-200">
+                                            <span className="font-medium">
+                                              Total Extras:
+                                            </span>
+                                            <span className="block">
+                                              {formatPrice(
+                                                booking.extras.reduce(
+                                                  (sum, extra) =>
+                                                    sum +
+                                                    (parseFloat(extra.amount) ||
+                                                      0),
+                                                  0
+                                                )
+                                              )}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+
+                                    // Second check: improved filtering for priceElements
+                                    else if (
+                                      booking.priceDetails?.priceElements
+                                        ?.length > 0
+                                    ) {
+                                      // IMPROVED: Better filtering for Airbnb price elements
+                                      const filteredElements =
+                                        booking.priceDetails.priceElements.filter(
+                                          (el) => {
+                                            const name = (
+                                              el.name || ""
+                                            ).toLowerCase();
+                                            const type = (
+                                              el.type || ""
+                                            ).toLowerCase();
+
+                                            // Handle elements with null/missing type fields
+                                            const isAddon = type === "addon";
+                                            const isFee =
+                                              name.includes("commission") ||
+                                              name.includes("cleaning fee") ||
+                                              name.includes(
+                                                "frais de nettoyage"
+                                              ) ||
+                                              name.includes("linen fee") ||
+                                              name.includes("frais de linge") ||
+                                              name.includes("cancellation");
+
+                                            // Special detection for Airbnb extras
+                                            const isProbablyExtra =
+                                              name.includes("formule") ||
+                                              name.includes("petit-déjeuner") ||
+                                              name.includes("raclette") ||
+                                              name.includes("barbecue") ||
+                                              name.includes("anniversaire") ||
+                                              name.includes("spa") ||
+                                              name.includes("breakfast") ||
+                                              name.includes("meal") ||
+                                              name.includes("package") ||
+                                              name.includes("(pour 2)");
+
+                                            return (
+                                              (isAddon && !isFee) ||
+                                              (!type && isProbablyExtra)
+                                            );
+                                          }
+                                        );
+
+                                      if (filteredElements.length > 0) {
+                                        console.log(
+                                          "Using filtered priceElements with",
+                                          filteredElements.length,
+                                          "items:",
+                                          filteredElements.map((e) => e.name)
+                                        );
+                                        console.groupEnd();
+
+                                        return (
+                                          <div className="text-sm">
+                                            <span className="block mb-2 font-medium">
+                                              Extras sélectionnés:
+                                            </span>
+                                            <ul className="space-y-2">
+                                              {filteredElements.map(
+                                                (element, index) => (
+                                                  <li
+                                                    key={`${booking.id}-element-${index}`}
+                                                    className="break-words"
+                                                  >
+                                                    • {element.name}{" "}
+                                                    {element.quantity > 1 &&
+                                                      `(${element.quantity}x)`}
+                                                    <span className="block ml-3 text-gray-600">
+                                                      {formatPrice(
+                                                        element.amount
+                                                      )}
+                                                      {element.quantity > 1 &&
+                                                        ` (${formatPrice(
+                                                          element.amount /
+                                                            element.quantity
+                                                        )} / unité)`}
+                                                    </span>
+                                                  </li>
+                                                )
+                                              )}
+                                            </ul>
+
+                                            <div className="pt-2 mt-4 border-t border-gray-200">
+                                              <span className="font-medium">
+                                                Total Extras:
                                               </span>
-                                            </li>
-                                          ))}
-                                      </ul>
+                                              <span className="block">
+                                                {formatPrice(
+                                                  filteredElements.reduce(
+                                                    (sum, el) =>
+                                                      sum +
+                                                      (parseFloat(el.amount) ||
+                                                        0),
+                                                    0
+                                                  )
+                                                )}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+                                    }
 
-                                      <div className="pt-2 mt-4 border-t border-gray-200">
-                                        <span className="font-medium">
-                                          Total Extras:
-                                        </span>
-                                        <span className="block">
-                                          {formatPrice(
-                                            booking.priceDetails.priceElements
-                                              .filter(
-                                                (el) =>
-                                                  el.type === "addon" &&
-                                                  !el.name
-                                                    ?.toLowerCase()
-                                                    .includes("commission") &&
-                                                  !el.name
-                                                    ?.toLowerCase()
-                                                    .includes("linen") &&
-                                                  !el.name
-                                                    ?.toLowerCase()
-                                                    .includes("nettoyage")
-                                              )
-                                              .reduce(
-                                                (sum, el) =>
-                                                  sum +
-                                                  (parseFloat(el.amount) || 0),
-                                                0
-                                              )
-                                          )}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <p className="text-sm text-gray-500">
-                                      Aucun extra sélectionné
-                                    </p>
-                                  )}
+                                    // Log that no extras were found
+                                    console.log(
+                                      "No extras found in any location for this booking"
+                                    );
+                                    console.groupEnd();
+
+                                    // No extras found
+                                    return (
+                                      <p className="text-sm text-gray-500">
+                                        Aucun extra sélectionné
+                                      </p>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             </div>
