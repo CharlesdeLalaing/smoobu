@@ -325,6 +325,11 @@ const processBookingData = (data, bookingMap) => {
   const basePrice =
     parseFloat(data.priceDetails?.basePrice) || parseFloat(data.basePrice) || 0;
 
+    const guestFees =
+      parseFloat(data.guestFees) ||
+      parseFloat(data.priceDetails?.guestFees) ||
+      0;
+
   const totalPrice = parseFloat(data.price) || 0;
 
   // Get fees directly
@@ -578,6 +583,7 @@ const processBookingData = (data, bookingMap) => {
     notes: data.notice,
     price: totalPrice,
     basePrice: basePrice, // Root level basePrice for ease of access
+    guestFees: guestFees,
     priceDetails: {
       basePrice: basePrice,
       linenFee: linenFee,
@@ -608,6 +614,7 @@ const processBookingData = (data, bookingMap) => {
             : "rootPriceElements"
           : "none",
       hasExtrasArray: data.extras && data.extras.length > 0,
+      guestFees: guestFees,
       hasPriceDetailsElements:
         data.priceDetails?.priceElements &&
         data.priceDetails.priceElements.length > 0,
@@ -1276,69 +1283,80 @@ const processBookingData = (data, bookingMap) => {
                                 </h3>
                                 <div className="space-y-2">
                                   {(() => {
-                                    console.group(
-                                      `Extras display decision for booking ${booking.id}`
+                                    // Get guest fees (extra guests charge)
+                                    const extraGuestFees =
+                                      booking.guestFees ||
+                                      booking._debug?.guestFees ||
+                                      0;
+
+                                    // Calculate extra guests count for display
+                                    const extraGuestsCount = Math.max(
+                                      0,
+                                      parseInt(booking.adults) +
+                                        parseInt(booking.children) -
+                                        (booking.priceDetails?.settings
+                                          ?.startingAtGuest || 2)
                                     );
 
-                                    // 1️⃣ Get existing extras from `booking.extras`
-                                    const existingExtras = booking.extras || [];
+                                    // Check if we have any extras to display
+                                    const hasExtras =
+                                      (booking.extras &&
+                                        booking.extras.length > 0) ||
+                                      extraGuestFees > 0;
 
-                                    // 2️⃣ Get additional extras from `priceDetails.priceElements`
-                                    const priceElementExtras = (
-                                      booking.priceDetails?.priceElements || []
-                                    ).filter((el) => {
-                                      const type = (
-                                        el.type || ""
-                                      ).toLowerCase();
-                                      return type === "addon"; // Always include add-ons (like supplementary persons)
-                                    });
-
-                                    console.log(
-                                      "Existing Extras:",
-                                      existingExtras
-                                    );
-                                    console.log(
-                                      "Price Element Extras:",
-                                      priceElementExtras
-                                    );
-
-                                    // 3️⃣ Merge both extras lists
-                                    const allExtras = [
-                                      ...existingExtras,
-                                      ...priceElementExtras,
-                                    ];
-
-                                    // 4️⃣ If we have extras, display them
-                                    if (allExtras.length > 0) {
-                                      console.log(
-                                        `Using ${allExtras.length} extras`
-                                      );
-
-                                      console.groupEnd();
+                                    if (hasExtras) {
                                       return (
                                         <div className="text-sm">
                                           <span className="block mb-2 font-medium">
                                             Extras sélectionnés:
                                           </span>
                                           <ul className="space-y-2">
-                                            {allExtras.map((extra, index) => (
-                                              <li
-                                                key={`${booking.id}-extra-${index}`}
-                                                className="break-words"
-                                              >
-                                                • {extra.name}{" "}
-                                                {extra.quantity > 1 &&
-                                                  `(${extra.quantity}x)`}
-                                                <span className="block ml-3 text-gray-600">
-                                                  {formatPrice(extra.amount)}
-                                                  {extra.quantity > 1 &&
-                                                    ` (${formatPrice(
-                                                      extra.amount /
-                                                        extra.quantity
-                                                    )} / unité)`}
-                                                </span>
+                                            {/* Show extra guest fees as the first item if applicable */}
+                                            {extraGuestFees > 0 && (
+                                              <li className="break-words">
+                                                • Frais supplémentaires (
+                                                {extraGuestsCount} personne
+                                                {extraGuestsCount > 1
+                                                  ? "s"
+                                                  : ""}
+                                                ): {formatPrice(extraGuestFees)}
                                               </li>
-                                            ))}
+                                            )}
+
+                                            {/* Then show regular extras */}
+                                            {booking.extras
+                                              ?.filter(
+                                                (extra) => !extra.isExtraPerson
+                                              )
+                                              .map((extra, index) => (
+                                                <li
+                                                  key={`${booking.id}-extra-${index}`}
+                                                  className="break-words"
+                                                >
+                                                  • {extra.name}{" "}
+                                                  {extra.quantity > 1 &&
+                                                    `(${extra.quantity}x)`}
+                                                  : {formatPrice(extra.amount)}
+                                                  {/* Show extra person inline with the main extra */}
+                                                  {extra.extraPersonQuantity >
+                                                    0 &&
+                                                    extra.extraPersonAmount >
+                                                      0 && (
+                                                      <span className="ml-1 text-indigo-700">
+                                                        {" "}
+                                                        (Personne supplémentaire
+                                                        {extra.extraPersonQuantity >
+                                                          1 &&
+                                                          ` (x${extra.extraPersonQuantity})`}{" "}
+                                                        :{" "}
+                                                        {formatPrice(
+                                                          extra.extraPersonAmount
+                                                        )}
+                                                        )
+                                                      </span>
+                                                    )}
+                                                </li>
+                                              ))}
                                           </ul>
 
                                           <div className="pt-2 mt-4 border-t border-gray-200">
@@ -1346,30 +1364,39 @@ const processBookingData = (data, bookingMap) => {
                                               Total Extras:
                                             </span>
                                             <span className="block">
-                                              {formatPrice(
-                                                allExtras.reduce(
-                                                  (sum, extra) =>
-                                                    sum +
-                                                    (parseFloat(extra.amount) ||
-                                                      0),
-                                                  0
-                                                )
-                                              )}
+                                              {(() => {
+                                                // Calculate regular extras total (excluding extra person amounts)
+                                                const extrasTotal =
+                                                  booking.extras?.reduce(
+                                                    (sum, extra) =>
+                                                      sum +
+                                                      (parseFloat(
+                                                        extra.amount
+                                                      ) || 0),
+                                                    0
+                                                  ) || 0;
+
+                                                // Add only the extra guest fees
+                                                // (the supplementary person charges are shown inline but not added separately)
+                                                const totalExtras =
+                                                  extrasTotal +
+                                                  (booking.guestFees ||
+                                                    booking._debug?.guestFees ||
+                                                    0);
+
+                                                return formatPrice(totalExtras);
+                                              })()}
                                             </span>
                                           </div>
                                         </div>
                                       );
+                                    } else {
+                                      return (
+                                        <p className="text-sm text-gray-500">
+                                          Aucun extra sélectionné
+                                        </p>
+                                      );
                                     }
-
-                                    console.log("No extras found.");
-                                    console.groupEnd();
-
-                                    // If no extras found, show "Aucun extra sélectionné"
-                                    return (
-                                      <p className="text-sm text-gray-500">
-                                        Aucun extra sélectionné
-                                      </p>
-                                    );
                                   })()}
                                 </div>
                               </div>
