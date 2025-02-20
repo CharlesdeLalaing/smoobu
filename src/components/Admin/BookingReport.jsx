@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { db } from "../../firebase";
@@ -72,6 +73,7 @@ const BookingsReport = () => {
   const [sortField, setSortField] = useState("checkIn");
   const [sortDirection, setSortDirection] = useState("desc");
   const [expandedBooking, setExpandedBooking] = useState(null);
+  const [deduplicating, setDeduplicating] = useState(false);
 
   const years = Array.from(
     { length: 3 },
@@ -92,141 +94,241 @@ const BookingsReport = () => {
     }
   }, [startYear, startMonth, endYear, endMonth]);
 
-  const fetchFromFirebase = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+const fetchFromFirebase = async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
-      // Create date range for query
-      const startDate = new Date(startYear, startMonth - 1, 1);
-      const endDate = new Date(endYear, endMonth, 0, 23, 59, 59);
+    // Create date range for query
+    const startDate = new Date(startYear, startMonth - 1, 1);
+    const endDate = new Date(endYear, endMonth, 0, 23, 59, 59);
 
-      // Create Firebase query
-      const bookingsRef = collection(db, "bookings");
-      const q = query(
-        bookingsRef,
-        where("arrivalDate", ">=", startDate.toISOString().split("T")[0]),
-        where("arrivalDate", "<=", endDate.toISOString().split("T")[0]),
-        orderBy("arrivalDate", "desc")
-      );
+    // Create Firebase query
+    const bookingsRef = collection(db, "bookings");
+    const q = query(
+      bookingsRef,
+      where("arrivalDate", ">=", startDate.toISOString().split("T")[0]),
+      where("arrivalDate", "<=", endDate.toISOString().split("T")[0]),
+      orderBy("arrivalDate", "desc")
+    );
 
-      const querySnapshot = await getDocs(q);
-      const bookingMap = new Map(); // Use a map to deduplicate by smoobuId
+    const querySnapshot = await getDocs(q);
+    console.log(
+      `Retrieved ${querySnapshot.docs.length} documents from Firebase`
+    );
 
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const smoobuId = data.smoobuId || data.smoobuReservationId;
+    // Create a map for deduplicated bookings
+    const bookingMap = new Map();
 
-        // Only add if we don't already have this booking
-        if (!bookingMap.has(smoobuId)) {
-          // Extract fees - check all possible paths
-          const linenFee =
-            parseFloat(data.priceDetails?.cleaningFee) ||
-            parseFloat(data.priceDetails?.linenFee) ||
-            parseFloat(data.linenFee) ||
-            0;
+    // First, go through all documents and group by smoobuId
+    const bookingsBySmoobuId = {};
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const smoobuId = data.smoobuId || data.smoobuReservationId;
 
-          const commission =
-            parseFloat(data.priceDetails?.commission) ||
-            parseFloat(data.commission) ||
-            0;
+      if (!smoobuId) return; // Skip entries without smoobuId
 
-          // Get total price
-          const totalPrice = parseFloat(data.price) || 0;
+      if (!bookingsBySmoobuId[smoobuId]) {
+        bookingsBySmoobuId[smoobuId] = [];
+      }
 
-          // CORRECTED: Calculate base price by SUBTRACTING fees from total
-          // Base price should be: total - linenFee
-          // Commission is tracked separately and not part of the base calculation
-          const basePrice = totalPrice - linenFee;
-
-          // Extract long stay discount
-          const longStayDiscount =
-            parseFloat(data.priceDetails?.calculatedDiscounts?.longStay) ||
-            parseFloat(data.priceDetails?.discount) ||
-            parseFloat(data.priceDetails?.longStayDiscount) ||
-            0;
-
-          // Map promo code info consistently
-          const promoCode = data.appliedCoupon
-            ? {
-                name: data.appliedCoupon.code || "",
-                amount: parseFloat(data.appliedCoupon.discount || 0),
-              }
-            : data.priceDetails?.promoCode
-            ? {
-                name:
-                  data.priceDetails.promoCode.code ||
-                  data.priceDetails.promoCode.name ||
-                  "",
-                amount: parseFloat(
-                  data.priceDetails.promoCode.discount ||
-                    data.priceDetails.promoCode.amount ||
-                    0
-                ),
-              }
-            : null;
-
-          bookingMap.set(smoobuId, {
-            id: smoobuId,
-            guest:
-              `${data.firstName} ${data.lastName}`.trim() ||
-              data.guestName ||
-              "Unknown",
-            property:
-              roomNames[data.apartmentId] || data.property || data.apartmentId,
-            portal:
-              getPortalName(data.portalName) ||
-              getPortalName(data.channelName) ||
-              getPortalName(String(data.channelId)) ||
-              "Website",
-            created: data.createdAt,
-            email: data.email,
-            phone: data.phone,
-            address: data.street
-              ? `${data.street}, ${data.postalCode} ${data.location}, ${data.country}`
-              : "",
-            adults: data.adults,
-            children: data.children,
-            checkIn: data.arrivalDate,
-            checkOut: data.departureDate,
-            arrivalTime: data.arrivalTime || data.checkInTime,
-            departureTime: data.departureTime || data.checkOutTime,
-            notes: data.notice,
-            price: totalPrice,
-            priceDetails: {
-              basePrice: basePrice, // CORRECTED: This is now total - linenFee
-              linenFee: linenFee,
-              longStayDiscount: longStayDiscount,
-              promoCode: promoCode,
-              extrasTotal:
-                data.extras?.reduce(
-                  (sum, extra) => sum + Number(extra.amount),
-                  0
-                ) || 0,
-            },
-            commission: commission,
-            linenFee: linenFee, // Keeping for backward compatibility
-            nights:
-              data.priceDetails?.numberOfNights ||
-              Math.ceil(
-                (new Date(data.departureDate) - new Date(data.arrivalDate)) /
-                  (1000 * 60 * 60 * 24)
-              ),
-            extras: data.extras || [],
-          });
-        }
+      bookingsBySmoobuId[smoobuId].push({
+        id: doc.id,
+        ...data,
+        firestoreId: doc.id, // Store the Firestore document ID
       });
+    });
 
-      // Convert map values to array
-      const bookings = Array.from(bookingMap.values());
-      setReportData(bookings);
-    } catch (err) {
-      console.error("Error fetching bookings from Firebase:", err);
-      setError("Failed to fetch bookings: " + err.message);
-    } finally {
-      setLoading(false);
+    // Log duplicates found for debugging
+    const duplicateGroups = Object.entries(bookingsBySmoobuId).filter(
+      ([_, group]) => group.length > 1
+    );
+
+    if (duplicateGroups.length > 0) {
+      console.log(
+        `Found ${duplicateGroups.length} bookings with duplicates in the client-side data`
+      );
     }
-  };
+
+    // For each smoobuId, pick the most complete entry
+    Object.entries(bookingsBySmoobuId).forEach(([smoobuId, bookings]) => {
+      if (bookings.length === 1) {
+        // If only one entry, use it
+        const booking = bookings[0];
+        processBookingData(booking, bookingMap);
+      } else {
+        // If multiple entries, choose the one with the most data
+        // Prioritize entries with extras, price elements, etc.
+        bookings.sort((a, b) => {
+          // Calculate "completeness" score
+          const scoreA = calculateCompletenessScore(a);
+          const scoreB = calculateCompletenessScore(b);
+
+          // Higher score is more complete
+          return scoreB - scoreA;
+        });
+
+        // Use the most complete entry
+        const bestBooking = bookings[0];
+        processBookingData(bestBooking, bookingMap);
+      }
+    });
+
+    // Convert map values to array
+    const bookings = Array.from(bookingMap.values());
+    console.log(`Returning ${bookings.length} deduplicated bookings`);
+    setReportData(bookings);
+  } catch (err) {
+    console.error("Error fetching bookings from Firebase:", err);
+    setError("Failed to fetch bookings: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+// Helper function to calculate how complete a booking record is
+const calculateCompletenessScore = (booking) => {
+  let score = 0;
+
+  // Check for key data that indicates a complete record
+  if (booking.extras && booking.extras.length > 0) score += 10;
+  if (booking.priceDetails?.priceElements) score += 5;
+  if (booking.priceDetails?.extrasTotal) score += 3;
+  if (booking.commission) score += 2;
+  if (booking.linenFee) score += 2;
+  if (booking.email) score += 1;
+  if (booking.phone) score += 1;
+  if (booking.address) score += 1;
+  if (booking.notes) score += 1;
+
+  // More recent updates are preferred
+  if (booking.updatedAt) {
+    const updateDate = new Date(booking.updatedAt);
+    if (!isNaN(updateDate)) {
+      // Add a small score based on recency (newer is better)
+      const daysAgo = (Date.now() - updateDate) / (1000 * 60 * 60 * 24);
+      score += Math.max(0, 1 - daysAgo / 100); // Small bonus for recency
+    }
+  }
+
+  return score;
+};
+
+// Helper function to process booking data in a consistent way
+const processBookingData = (data, bookingMap) => {
+  const smoobuId = data.smoobuId || data.smoobuReservationId;
+
+  // Skip if already processed or missing ID
+  if (!smoobuId || bookingMap.has(smoobuId)) return;
+
+  // Extract fees - check all possible paths
+  const linenFee =
+    parseFloat(data.priceDetails?.cleaningFee) ||
+    parseFloat(data.priceDetails?.linenFee) ||
+    parseFloat(data.linenFee) ||
+    0;
+
+  const commission =
+    parseFloat(data.priceDetails?.commission) ||
+    parseFloat(data.commission) ||
+    0;
+
+  // Get total price
+  const totalPrice = parseFloat(data.price) || 0;
+
+  // Calculate base price by SUBTRACTING fees from total
+  const basePrice = totalPrice - linenFee;
+
+  // Extract long stay discount
+  const longStayDiscount =
+    parseFloat(data.priceDetails?.calculatedDiscounts?.longStay) ||
+    parseFloat(data.priceDetails?.discount) ||
+    parseFloat(data.priceDetails?.longStayDiscount) ||
+    0;
+
+  // Map promo code info consistently
+  const promoCode = data.appliedCoupon
+    ? {
+        name: data.appliedCoupon.code || "",
+        amount: parseFloat(data.appliedCoupon.discount || 0),
+      }
+    : data.priceDetails?.promoCode
+    ? {
+        name:
+          data.priceDetails.promoCode.code ||
+          data.priceDetails.promoCode.name ||
+          "",
+        amount: parseFloat(
+          data.priceDetails.promoCode.discount ||
+            data.priceDetails.promoCode.amount ||
+            0
+        ),
+      }
+    : null;
+
+  // Map and process extras consistently
+  const processedExtras = (data.extras || []).map((extra) => ({
+    name: extra.name || "Extra sans nom",
+    amount: parseFloat(extra.amount) || 0,
+    quantity: parseInt(extra.quantity) || 1,
+    extraPersonQuantity: parseInt(extra.extraPersonQuantity) || 0,
+    extraPersonPrice: parseFloat(extra.extraPersonPrice) || 0,
+    extraPersonAmount:
+      extra.extraPersonQuantity > 0
+        ? parseFloat(extra.extraPersonPrice) *
+          parseInt(extra.extraPersonQuantity)
+        : 0,
+  }));
+
+  // Construct processed booking object
+  bookingMap.set(smoobuId, {
+    id: smoobuId,
+    firestoreId: data.firestoreId, // Store the Firestore ID for reference
+    guest:
+      `${data.firstName} ${data.lastName}`.trim() ||
+      data.guestName ||
+      "Unknown",
+    property: roomNames[data.apartmentId] || data.property || data.apartmentId,
+    portal:
+      getPortalName(data.portalName) ||
+      getPortalName(data.channelName) ||
+      getPortalName(String(data.channelId)) ||
+      "Website",
+    created: data.createdAt,
+    email: data.email,
+    phone: data.phone,
+    address: data.street
+      ? `${data.street}, ${data.postalCode} ${data.location}, ${data.country}`
+      : data.address || "",
+    adults: data.adults,
+    children: data.children,
+    checkIn: data.arrivalDate,
+    checkOut: data.departureDate,
+    arrivalTime: data.arrivalTime || data.checkInTime,
+    departureTime: data.departureTime || data.checkOutTime,
+    notes: data.notice,
+    price: totalPrice,
+    priceDetails: {
+      basePrice: basePrice,
+      linenFee: linenFee,
+      longStayDiscount: longStayDiscount,
+      promoCode: promoCode,
+      extrasTotal: processedExtras.reduce(
+        (sum, extra) => sum + parseFloat(extra.amount || 0),
+        0
+      ),
+    },
+    commission: commission,
+    linenFee: linenFee,
+    nights:
+      data.priceDetails?.numberOfNights ||
+      Math.ceil(
+        (new Date(data.departureDate) - new Date(data.arrivalDate)) /
+          (1000 * 60 * 60 * 24)
+      ),
+    extras: processedExtras,
+  });
+};
 
   // Frontend function - call your backend proxy instead of Smoobu directly
   const handleFetchAndSync = async () => {
@@ -280,6 +382,37 @@ const BookingsReport = () => {
     } else {
       setSortField(field);
       setSortDirection("desc");
+    }
+  };
+
+  const handleDeduplicate = async () => {
+    try {
+      setDeduplicating(true);
+      console.log("Starting deduplication process...");
+
+      const response = await axios.get(
+        "http://localhost:3000/api/deduplicate-bookings"
+      );
+
+      console.log("Deduplication response:", response.data);
+
+      if (response.data.success) {
+        alert(
+          `Deduplication completed successfully!\n` +
+            `Found ${response.data.stats.duplicateGroups} bookings with duplicates\n` +
+            `Deleted ${response.data.stats.deletedBookings} duplicate entries`
+        );
+
+        // Refresh data from Firebase
+        fetchFromFirebase();
+      } else {
+        throw new Error(response.data.error || "Deduplication failed");
+      }
+    } catch (error) {
+      console.error("Error in deduplication:", error);
+      alert(`Failed to deduplicate: ${error.message}`);
+    } finally {
+      setDeduplicating(false);
     }
   };
 
@@ -435,6 +568,14 @@ const BookingsReport = () => {
         >
           <RefreshCw size={20} />
           Sync Réservations
+        </button>
+        <button
+          onClick={handleDeduplicate}
+          className="flex items-center justify-center w-full gap-2 px-4 py-2 text-white transition-colors bg-purple-500 rounded-lg hover:bg-purple-600 sm:w-auto"
+          disabled={deduplicating}
+        >
+          <Trash2 size={20} className={deduplicating ? "animate-pulse" : ""} />
+          Supprimer Doublons
         </button>
       </div>
 
