@@ -49,9 +49,6 @@ const portalNames = {
   partenariat: "Partenariat",
 };
 
-
-
-
 dotenv.config();
 
 async function syncReservations() {
@@ -92,8 +89,8 @@ async function syncReservations() {
         params: {
           arrivalFrom: startDate,
           arrivalTo: endDate,
-          showCancellation: true,
-          excludeBlocked: false,
+          showCancellation: false,
+          excludeBlocked: true,
           pageSize: 100,
         },
       }
@@ -111,26 +108,22 @@ async function syncReservations() {
       }))
     );
 
-
-
     const reservations = response.data.bookings || [];
     console.log(`🟦 Found ${reservations.length} reservations to process`);
-    
 
     let successCount = 0;
     let errorCount = 0;
 
     for (const reservation of reservations) {
       try {
-         console.log(
-           `🟦 Processing reservation ${reservation.id} from channel:`,
-           {
-             rawChannelName: reservation.channel?.name,
-             mappedChannelName:
-               channelMapping[reservation.channel?.name] || "Website",
-           }
-         );
-
+        console.log(
+          `🟦 Processing reservation ${reservation.id} from channel:`,
+          {
+            rawChannelName: reservation.channel?.name,
+            mappedChannelName:
+              channelMapping[reservation.channel?.name] || "Website",
+          }
+        );
 
         // Get price elements
         const priceElementsResponse = await axios.get(
@@ -166,16 +159,16 @@ async function syncReservations() {
         const channelName = reservation.channel?.name || "Website";
         const mappedChannel = channelMapping[channelName] || channelName;
 
-  console.log("Channel mapping for reservation " + reservation.id, {
-    rawChannelName: reservation.channel?.name,
-    rawChannelId: reservation.channel?.id,
-    mappedChannel: reservation.channel
-      ? channelMapping[reservation.channel.name] ||
-        channelMapping[reservation.channel.id] ||
-        reservation.channel.name ||
-        "Unknown"
-      : "Unknown",
-  });
+        console.log("Channel mapping for reservation " + reservation.id, {
+          rawChannelName: reservation.channel?.name,
+          rawChannelId: reservation.channel?.id,
+          mappedChannel: reservation.channel
+            ? channelMapping[reservation.channel.name] ||
+              channelMapping[reservation.channel.id] ||
+              reservation.channel.name ||
+              "Unknown"
+            : "Unknown",
+        });
 
         // Prepare document with correct channel mapping
         const bookingDoc = {
@@ -272,9 +265,7 @@ async function syncReservations() {
   }
 }
 
-
 const app = express();
-
 
 app.use((req, res, next) => {
   // console.log('Incoming Origin:', req.headers.origin);
@@ -320,8 +311,6 @@ const formatDate = (dateString) => {
     year: "numeric",
   });
 };
-
-
 
 const sendBookingConfirmation = async (bookingData) => {
   try {
@@ -526,7 +515,6 @@ const extrasFrenchNames = {
 
 // Add this near your other constants at the top of server.js
 
-
 // Modified processExtraName function
 const processExtraName = (extra) => {
   // If the name is a translation key (starts with "extras.")
@@ -639,10 +627,6 @@ const calculatePriceWithSettings = (
 // Helper function for delays
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-
-
-
-
 app.post(
   "/webhook",
   express.raw({ type: "application/json" }),
@@ -722,12 +706,9 @@ app.post(
             basePrice: Number(bookingData.basePrice),
             priceDetails: {
               basePrice: Number(bookingData.basePrice),
-              finalPrice:
-                Number(bookingData.basePrice) -
-                Number(bookingData.priceDetails?.discount || 0) -
-                (bookingData.couponApplied
-                  ? Number(bookingData.couponApplied.discount)
-                  : 0),
+              finalPrice: Number(bookingData.price),
+              linenFee: 0, // Add explicit linen fee field
+              commission: 0, // Add explicit commission field
               extrasTotal:
                 bookingData.extras?.reduce((sum, extra) => {
                   const extraAmount = Number(extra.amount);
@@ -739,6 +720,22 @@ app.post(
                   return sum + extraAmount + extraPersonAmount;
                 }, 0) || 0,
               discount: Number(bookingData.priceDetails?.discount || 0),
+              longStayDiscount: Number(bookingData.priceDetails?.discount || 0), // Add explicit name for consistency
+              couponDiscount: bookingData.couponApplied
+                ? Number(bookingData.couponApplied.discount)
+                : 0,
+              promoCode: bookingData.couponApplied
+                ? {
+                    name: bookingData.couponApplied.code,
+                    code: bookingData.couponApplied.code,
+                    amount: Number(bookingData.couponApplied.discount) || 0,
+                    type: bookingData.couponApplied.type,
+                    percentageValue:
+                      bookingData.couponApplied.type === "percentage"
+                        ? Number(bookingData.couponApplied.percentageValue)
+                        : null,
+                  }
+                : null,
               calculatedDiscounts: {
                 longStay: Number(bookingData.priceDetails?.discount || 0),
                 coupon: bookingData.couponApplied
@@ -747,6 +744,8 @@ app.post(
               },
               settings: bookingData.priceDetails?.settings || {},
             },
+            linenFee: 0, // For backward compatibility
+            commission: 0, // For backward compatibility
             extras: bookingData.extras
               ? bookingData.extras.map((extra) => {
                   const translatedExtra = {
@@ -786,6 +785,33 @@ app.post(
                 }
               : null,
           };
+
+          // Add diagnostic logging right before storing
+          console.log("🔍 Final booking document structure:", {
+            id: bookingDoc.smoobuReservationId,
+            paymentIntentId: bookingDoc.paymentIntentId,
+            price: bookingDoc.price,
+            basePrice: bookingDoc.basePrice,
+            priceDetailsBasePrice: bookingDoc.priceDetails.basePrice,
+            extrasTotal: bookingDoc.priceDetails.extrasTotal,
+            longStayDiscount: bookingDoc.priceDetails.longStayDiscount,
+            couponDiscount: bookingDoc.priceDetails.couponDiscount,
+            hasPromoCode: !!bookingDoc.priceDetails.promoCode,
+            hasAppliedCoupon: !!bookingDoc.appliedCoupon,
+            extrasCount: bookingDoc.extras?.length || 0,
+          });
+
+          console.log(
+            "Storing booking with payment intent ID:",
+            paymentIntent.id
+          );
+          console.log("Full booking data being stored:", {
+            id: paymentIntent.id,
+            bookingReference,
+            firstName: bookingData.firstName,
+            lastName: bookingData.lastName,
+          });
+
           try {
             const docRef = await db.collection("bookings").add(bookingDoc);
             console.log("🟩 Booking stored in Firebase with ID:", docRef.id);
@@ -1125,8 +1151,6 @@ app.use(
   })
 );
 
-
-
 app.get("/sync-reservations", async (req, res) => {
   try {
     console.log("Starting reservation sync...");
@@ -1141,7 +1165,6 @@ app.get("/sync-reservations", async (req, res) => {
     });
   }
 });
-
 
 const getPortalName = (portal) => {
   // Handle null/undefined
@@ -1254,7 +1277,6 @@ app.get("/api/deduplicate-bookings", async (req, res) => {
   }
 });
 
-
 // In your server.js
 // Add or update this endpoint in your server.js
 app.get("/api/fetch-and-sync", async (req, res) => {
@@ -1284,8 +1306,8 @@ app.get("/api/fetch-and-sync", async (req, res) => {
         params: {
           arrivalFrom: startDate,
           arrivalTo: endDate,
-          showCancellation: true,
-          excludeBlocked: false,
+          showCancellation: false,
+          excludeBlocked: true,
           pageSize: 100,
         },
       }
@@ -1532,7 +1554,7 @@ app.get("/api/fetch-and-sync", async (req, res) => {
 });
 
 // Schedule automatic sync every 4 hours
-cron.schedule("0 */4 * * *", async () => {
+cron.schedule("0 */12 * * *", async () => {
   try {
     console.log("🟦 Starting scheduled sync...");
     await syncReservations();
@@ -1541,8 +1563,6 @@ cron.schedule("0 */4 * * *", async () => {
     console.error("🟥 Scheduled sync failed:", error);
   }
 });
-
-
 
 app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
   try {
@@ -1705,7 +1725,6 @@ app.post("/api/validate-voucher", async (req, res) => {
     });
   }
 });
-
 
 app.get("/api/direct-bookings", async (req, res) => {
   try {
@@ -2125,8 +2144,6 @@ app.get("/api/bookings-report", async (req, res) => {
 
         // Add portal name mapping
 
-
-
         const processedBooking = {
           id: booking.id,
           guest:
@@ -2485,18 +2502,30 @@ app.post("/api/create-payment-intent", async (req, res) => {
 app.get("/api/bookings/:paymentIntentId", async (req, res) => {
   try {
     const { paymentIntentId } = req.params;
+    console.log(
+      `Searching for booking with payment intent: ${paymentIntentId}`
+    );
 
     // First get the payment intent from Stripe
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     if (!paymentIntent) {
+      console.log(`Payment intent not found in Stripe: ${paymentIntentId}`);
       return res.status(404).json({ error: "Payment not found" });
     }
+    console.log(
+      `Found payment intent in Stripe with status: ${paymentIntent.status}`
+    );
 
+    // Then find the booking in Firebase
     // Then find the booking in Firebase
     const bookingsRef = db.collection("bookings");
     const bookingQuery = await bookingsRef
       .where("paymentIntentId", "==", paymentIntentId)
       .get();
+
+    console.log(
+      `Found ${bookingQuery.size} bookings matching payment intent: ${paymentIntentId}`
+    );
 
     if (bookingQuery.empty) {
       return res.status(404).json({
@@ -2546,7 +2575,6 @@ app.get("/api/bookings/:paymentIntentId", async (req, res) => {
     });
   }
 });
-
 
 // Debug endpoint to check pending bookings
 app.get("/api/pending-bookings", (req, res) => {

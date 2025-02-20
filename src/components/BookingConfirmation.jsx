@@ -38,10 +38,14 @@ const BookingConfirmation = () => {
 
   const API_URL = "http://localhost:3000";
 
-  const fetchBookingDetails = async (paymentIntentId) => {
+const fetchBookingDetails = async (paymentIntentId) => {
+  let attempts = 0;
+  const maxAttempts = 5;
+  const retryDelay = 2000; // 2 seconds
+
+  const attemptFetch = async () => {
     try {
-      console.log("Starting to fetch booking details");
-      console.log("API URL:", `${API_URL}/api/bookings/${paymentIntentId}`);
+      console.log(`Attempt ${attempts + 1} to fetch booking details`);
 
       const response = await fetch(
         `${API_URL}/api/bookings/${paymentIntentId}`,
@@ -53,22 +57,49 @@ const BookingConfirmation = () => {
         }
       );
 
-      console.log("Response status:", response.status);
+      if (response.status === 404) {
+        attempts++;
+        if (attempts < maxAttempts) {
+          console.log(
+            `Booking not found yet. Retrying in ${retryDelay / 1000} seconds...`
+          );
+          setTimeout(attemptFetch, retryDelay);
+          return;
+        }
+      }
+
       const data = await response.json();
-      console.log("Response data:", data);
 
       if (data.error) {
-        console.error("API returned error:", data.error);
+        if (attempts < maxAttempts) {
+          attempts++;
+          console.log(
+            `Error: ${data.error}. Retrying in ${retryDelay / 1000} seconds...`
+          );
+          setTimeout(attemptFetch, retryDelay);
+          return;
+        }
         throw new Error(data.error);
       }
 
       setBookingDetails(data);
       setStatus("success");
     } catch (error) {
-      console.error("Detailed error in fetchBookingDetails:", error);
-      setStatus("error");
+      if (attempts < maxAttempts) {
+        attempts++;
+        console.log(
+          `Error: ${error.message}. Retrying in ${retryDelay / 1000} seconds...`
+        );
+        setTimeout(attemptFetch, retryDelay);
+      } else {
+        console.error("Detailed error in fetchBookingDetails:", error);
+        setStatus("error");
+      }
     }
   };
+
+  attemptFetch();
+};
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
