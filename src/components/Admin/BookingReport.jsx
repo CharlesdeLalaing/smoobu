@@ -1365,26 +1365,41 @@ const processBookingData = (data, bookingMap) => {
                                             </span>
                                             <span className="block">
                                               {(() => {
-                                                // Calculate regular extras total (excluding extra person amounts)
+                                                // Calculate extras total including extra person amounts
                                                 const extrasTotal =
                                                   booking.extras?.reduce(
-                                                    (sum, extra) =>
-                                                      sum +
-                                                      (parseFloat(
-                                                        extra.amount
-                                                      ) || 0),
+                                                    (sum, extra) => {
+                                                      const baseAmount =
+                                                        parseFloat(
+                                                          extra.amount || 0
+                                                        );
+                                                      const extraPersonAmount =
+                                                        extra.extraPersonQuantity >
+                                                        0
+                                                          ? parseFloat(
+                                                              extra.extraPersonAmount ||
+                                                                0
+                                                            )
+                                                          : 0;
+                                                      return (
+                                                        sum +
+                                                        baseAmount +
+                                                        extraPersonAmount
+                                                      );
+                                                    },
                                                     0
                                                   ) || 0;
 
-                                                // Add only the extra guest fees
-                                                // (the supplementary person charges are shown inline but not added separately)
-                                                const totalExtras =
+                                                // Add guest fees
+                                                const totalWithFees =
                                                   extrasTotal +
                                                   (booking.guestFees ||
                                                     booking._debug?.guestFees ||
                                                     0);
 
-                                                return formatPrice(totalExtras);
+                                                return formatPrice(
+                                                  totalWithFees
+                                                );
                                               })()}
                                             </span>
                                           </div>

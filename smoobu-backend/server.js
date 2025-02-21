@@ -332,6 +332,17 @@ const sendBookingConfirmation = async (bookingData) => {
         <div style="margin: 20px 0;">
           <h2>Détails des prix</h2>
           <p>Prix de base: ${bookingData.basePrice.toFixed(2)} EUR</p>
+          ${
+            bookingData.guestFees > 0
+              ? `<p>Frais supplémentaires (${Math.max(
+                  0,
+                  parseInt(bookingData.adults) +
+                    parseInt(bookingData.children) -
+                    bookingData.priceDetails?.settings?.startingAtGuest || 2
+                )} personne(s)): 
+              ${bookingData.guestFees.toFixed(2)} EUR</p>`
+              : ""
+          }
           ${bookingData.extras
             ?.map(
               (extra) => `
@@ -339,10 +350,12 @@ const sendBookingConfirmation = async (bookingData) => {
                 2
               )} EUR</p>
             ${
-              extra.extraPersonQuantity
+              extra.extraPersonQuantity > 0
                 ? `<p>Personne supplémentaire (x${
                     extra.extraPersonQuantity
-                  }): ${extra.extraPersonAmount.toFixed(2)} EUR</p>`
+                  }): ${(
+                    extra.extraPersonPrice * extra.extraPersonQuantity
+                  ).toFixed(2)} EUR</p>`
                 : ""
             }
           `
@@ -359,18 +372,18 @@ const sendBookingConfirmation = async (bookingData) => {
           ${
             bookingData.couponApplied
               ? `<p style="color: #22c55e;">
-              ${
-                bookingData.couponApplied.type === "percentage"
-                  ? `Code promo (${bookingData.couponApplied.code} - ${
-                      bookingData.couponApplied.percentageValue
-                    }%): -${(bookingData.couponApplied.discount || 0).toFixed(
-                      2
-                    )} EUR`
-                  : `Code promo (${bookingData.couponApplied.code}): -${(
-                      bookingData.couponApplied.discount || 0
-                    ).toFixed(2)} EUR`
-              }
-            </p>`
+                ${
+                  bookingData.couponApplied.type === "percentage"
+                    ? `Code promo (${bookingData.couponApplied.code} - ${
+                        bookingData.couponApplied.percentageValue
+                      }%): -${(bookingData.couponApplied.discount || 0).toFixed(
+                        2
+                      )} EUR`
+                    : `Code promo (${bookingData.couponApplied.code}): -${(
+                        bookingData.couponApplied.discount || 0
+                      ).toFixed(2)} EUR`
+                }
+              </p>`
               : ""
           }
           <p style="font-weight: bold; margin-top: 10px;">Total: ${bookingData.price.toFixed(
@@ -639,7 +652,7 @@ app.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        "whsec_d9b86273072de6b319134fbc08752e2b4e66bae72aaa2cf4cb7db1411974c20a"
+        "whsec_d9b86273072de6b319134fbc08752e2b4e66bae72aaa2cf4cb7db1411974c20a" // Hardcoded for local
       );
 
       if (event.type === "payment_intent.succeeded") {
@@ -661,11 +674,13 @@ app.post(
             "No booking data found for reference:",
             bookingReference
           );
-          return;
+          return res.status(400).send("No booking data found");
         }
 
+        const totalPriceWithExtras = bookingData.totalPriceWithExtras;
+        let reservationId; // Declare reservationId
+
         try {
-          // Create the main booking in Smoobu
           const smoobuResponse = await axios.post(
             "https://login.smoobu.com/api/reservations",
             {
@@ -681,7 +696,7 @@ app.post(
               notice: bookingData.notice,
               adults: Number(bookingData.adults),
               children: Number(bookingData.children),
-              price: Number(bookingData.price),
+              price: Number(totalPriceWithExtras),
               priceStatus: 1,
               deposit: Number(bookingData.deposit),
               depositStatus: 1,
@@ -689,26 +704,28 @@ app.post(
             },
             {
               headers: {
-                "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o", // Hardcoded for local
                 "Content-Type": "application/json",
               },
             }
           );
 
+          reservationId = smoobuResponse.data.id;
+
           const bookingDoc = {
             ...bookingData,
-            smoobuReservationId: smoobuResponse.data.id,
+            smoobuReservationId: reservationId,
             paymentIntentId: paymentIntent.id,
             stripePaymentStatus: paymentIntent.status,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            price: Number(bookingData.price),
+            price: Number(totalPriceWithExtras),
             basePrice: Number(bookingData.basePrice),
             priceDetails: {
               basePrice: Number(bookingData.basePrice),
-              finalPrice: Number(bookingData.price),
-              linenFee: 0, // Add explicit linen fee field
-              commission: 0, // Add explicit commission field
+              finalPrice: Number(totalPriceWithExtras),
+              linenFee: 0,
+              commission: 0,
               extrasTotal:
                 bookingData.extras?.reduce((sum, extra) => {
                   const extraAmount = Number(extra.amount);
@@ -720,7 +737,7 @@ app.post(
                   return sum + extraAmount + extraPersonAmount;
                 }, 0) || 0,
               discount: Number(bookingData.priceDetails?.discount || 0),
-              longStayDiscount: Number(bookingData.priceDetails?.discount || 0), // Add explicit name for consistency
+              longStayDiscount: Number(bookingData.priceDetails?.discount || 0),
               couponDiscount: bookingData.couponApplied
                 ? Number(bookingData.couponApplied.discount)
                 : 0,
@@ -744,8 +761,8 @@ app.post(
               },
               settings: bookingData.priceDetails?.settings || {},
             },
-            linenFee: 0, // For backward compatibility
-            commission: 0, // For backward compatibility
+            linenFee: 0,
+            commission: 0,
             extras: bookingData.extras
               ? bookingData.extras.map((extra) => {
                   const translatedExtra = {
@@ -786,7 +803,6 @@ app.post(
               : null,
           };
 
-          // Add diagnostic logging right before storing
           console.log("🔍 Final booking document structure:", {
             id: bookingDoc.smoobuReservationId,
             paymentIntentId: bookingDoc.paymentIntentId,
@@ -815,16 +831,14 @@ app.post(
           try {
             const docRef = await db.collection("bookings").add(bookingDoc);
             console.log("🟩 Booking stored in Firebase with ID:", docRef.id);
-
             await sendBookingConfirmation(bookingDoc);
           } catch (firebaseError) {
             console.error("🟥 Error storing in Firebase:", firebaseError);
+            return res.status(500).send("Error storing in Firebase");
           }
 
-          const reservationId = smoobuResponse.data.id;
           await wait(2000);
 
-          // First add base price
           try {
             await axios.post(
               `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
@@ -837,7 +851,7 @@ app.post(
               },
               {
                 headers: {
-                  "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                  "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o", // Hardcoded for local
                   "Content-Type": "application/json",
                 },
               }
@@ -845,199 +859,101 @@ app.post(
             await wait(1000);
           } catch (error) {
             console.error("🟥 Failed to add base price:", error);
+            return res.status(500).send("Failed to add base price");
           }
 
-          // Add guest fees if they exist
-          if (bookingData.guestFees > 0) {
-            try {
-              await axios.post(
-                `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-                {
-                  type: "addon",
-                  name: "Frais de personnes supplémentaires",
-                  amount: bookingData.guestFees,
-                  quantity: 1,
-                  currencyCode: "EUR",
-                },
-                {
-                  headers: {
-                    "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-                    "Content-Type": "application/json",
-                  },
-                }
-              );
-              await wait(1000);
-            } catch (error) {
-              console.error("🟥 Failed to add guest fees:", error);
-            }
-          }
-
-          // Process extras if they exist
           if (bookingData.extras && bookingData.extras.length > 0) {
             for (const extra of bookingData.extras) {
-              let retryCount = 0;
-              const maxRetries = 3;
-
-              while (retryCount < maxRetries) {
-                try {
-                  const processedName = {
-                    nameKey: extra.name.startsWith("extras.")
-                      ? extra.name
-                      : null,
-                    name: extra.name.startsWith("extras.")
-                      ? extrasFrenchNames[extra.name]
-                      : extra.name,
-                  };
-
-                  if (
-                    processedName.name &&
-                    !processedName.name
-                      .toLowerCase()
-                      .includes("personne supplémentaire".toLowerCase())
-                  ) {
-                    await axios.post(
-                      `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-                      {
-                        type: "addon",
-                        name: processedName.name,
-                        nameKey: processedName.nameKey,
-                        amount: extra.amount,
-                        quantity: extra.quantity,
-                        currencyCode: "EUR",
-                      },
-                      {
-                        headers: {
-                          "Api-Key":
-                            "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-                          "Content-Type": "application/json",
-                        },
-                      }
-                    );
-                    await wait(1000);
-                  }
-
-                  if (extra.extraPersonQuantity > 0 && extra.extraPersonPrice) {
-                    await axios.post(
-                      `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-                      {
-                        type: "addon",
-                        name: `${processedName.name} - ${extrasFrenchNames["extras.additionalPerson"]}`,
-                        nameKey: "extras.additionalPerson",
-                        amount:
-                          extra.extraPersonPrice * extra.extraPersonQuantity,
-                        quantity: extra.extraPersonQuantity,
-                        currencyCode: "EUR",
-                      },
-                      {
-                        headers: {
-                          "Api-Key":
-                            "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-                          "Content-Type": "application/json",
-                        },
-                      }
-                    );
-                    await wait(1000);
-                  }
-
-                  break;
-                } catch (extraError) {
-                  retryCount++;
-                  if (retryCount === maxRetries) {
-                    console.error("🟥 Failed to add extra:", extraError);
-                  } else {
-                    await wait(2000 * retryCount);
-                    continue;
-                  }
-                }
-              }
-            }
-          }
-
-          // Add coupon discount if exists
-          if (bookingData.couponApplied) {
-            let retryCount = 0;
-            const maxRetries = 3;
-
-            while (retryCount < maxRetries) {
               try {
-                const couponName =
-                  bookingData.couponApplied.type === "percentage"
-                    ? `Code promo: ${bookingData.couponApplied.code} (-${bookingData.couponApplied.percentageValue}%)`
-                    : `Code promo: ${bookingData.couponApplied.code} (-${bookingData.couponApplied.discount}€)`;
+                const totalExtraAmount =
+                  Number(extra.amount) +
+                  Number(extra.extraPersonPrice) *
+                    Number(extra.extraPersonQuantity);
 
                 await axios.post(
                   `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
                   {
-                    type: "discount",
-                    name: couponName,
-                    amount: -bookingData.couponApplied.discount,
-                    quantity: 1,
+                    type: "addon",
+                    name: extra.name.startsWith("extras.")
+                      ? extrasFrenchNames[extra.name]
+                      : extra.name,
+                    amount: totalExtraAmount,
+                    quantity: extra.quantity || 1,
                     currencyCode: "EUR",
                   },
                   {
                     headers: {
-                      "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                      "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o", // Hardcoded for local
                       "Content-Type": "application/json",
                     },
                   }
                 );
                 await wait(1000);
-                break;
-              } catch (couponError) {
-                retryCount++;
-                if (retryCount === maxRetries) {
-                  console.error(
-                    "🟥 Failed to add coupon discount:",
-                    couponError
-                  );
-                } else {
-                  await wait(2000 * retryCount);
-                  continue;
-                }
+              } catch (extraError) {
+                console.error("🟥 Failed to add extra:", extraError);
+                return res.status(500).send("Failed to add extra");
               }
             }
           }
 
-          // Add long stay discount if applicable
-          if (bookingData.priceDetails?.discount > 0) {
-            let retryCount = 0;
-            const maxRetries = 3;
+          if (bookingData.couponApplied) {
+            try {
+              const couponName =
+                bookingData.couponApplied.type === "percentage"
+                  ? `Code promo: ${bookingData.couponApplied.code} (-${bookingData.couponApplied.percentageValue}%)`
+                  : `Code promo: ${bookingData.couponApplied.code} (-${bookingData.couponApplied.discount}€)`;
 
-            while (retryCount < maxRetries) {
-              try {
-                await axios.post(
-                  `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-                  {
-                    type: "discount",
-                    name: `Réduction long séjour (${bookingData.priceDetails.settings.lengthOfStayDiscount.discountPercentage}%)`,
-                    amount: -bookingData.priceDetails.discount,
-                    quantity: 1,
-                    currencyCode: "EUR",
+              await axios.post(
+                `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+                {
+                  type: "discount",
+                  name: couponName,
+                  amount: -bookingData.couponApplied.discount,
+                  quantity: 1,
+                  currencyCode: "EUR",
+                },
+                {
+                  headers: {
+                    "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o", // Hardcoded for local
+                    "Content-Type": "application/json",
                   },
-                  {
-                    headers: {
-                      "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-                      "Content-Type": "application/json",
-                    },
-                  }
-                );
-                break;
-              } catch (discountError) {
-                retryCount++;
-                if (retryCount === maxRetries) {
-                  console.error(
-                    "🟥 Failed to add long stay discount:",
-                    discountError
-                  );
-                } else {
-                  await wait(2000 * retryCount);
-                  continue;
                 }
-              }
+              );
+              await wait(1000);
+            } catch (couponError) {
+              console.error("🟥 Failed to add coupon discount:", couponError);
+              return res.status(500).send("Failed to add coupon discount");
             }
           }
 
-          // Update coupon usage in Firebase if applicable
+          if (bookingData.priceDetails?.discount > 0) {
+            try {
+              await axios.post(
+                `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+                {
+                  type: "discount",
+                  name: `Réduction long séjour (${bookingData.priceDetails.settings.lengthOfStayDiscount.discountPercentage}%)`,
+                  amount: -bookingData.priceDetails.discount,
+                  quantity: 1,
+                  currencyCode: "EUR",
+                },
+                {
+                  headers: {
+                    "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o", // Hardcoded for local
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+              await wait(1000);
+            } catch (discountError) {
+              console.error(
+                "🟥 Failed to add long stay discount:",
+                discountError
+              );
+              return res.status(500).send("Failed to add long stay discount");
+            }
+          }
+
           if (bookingData.couponApplied?.code) {
             console.log("🟨 Starting coupon update process:", {
               couponCode: bookingData.couponApplied.code,
@@ -2418,18 +2334,64 @@ app.get("/api/rates", async (req, res) => {
 });
 
 //CREATE PAYMENT INTENT
-
 app.post("/api/create-payment-intent", async (req, res) => {
   try {
     const { price, bookingData } = req.body;
 
-    // Calculate guest fees for metadata
-    const totalGuests =
-      (parseInt(bookingData.adults) || 0) +
-      (parseInt(bookingData.children) || 0);
-    const settings = discountSettings[bookingData.apartmentId];
-    const extraGuests = Math.max(0, totalGuests - settings.startingAtGuest);
-    const guestFees = extraGuests * settings.extraGuestsPerNight;
+    // Start with base price
+    let totalPrice = Number(bookingData.basePrice);
+
+    console.log("Starting price calculation:", {
+      basePrice: bookingData.basePrice,
+      guestFees: bookingData.guestFees,
+      extras: bookingData.extras,
+    });
+
+    // Add guest fees
+    totalPrice += Number(bookingData.guestFees || 0);
+
+    // Add extras
+    if (bookingData.extras && bookingData.extras.length > 0) {
+      const extrasTotal = bookingData.extras.reduce((sum, extra) => {
+        const extraAmount = Number(extra.amount) || 0;
+        const extraPersonFee =
+          (Number(extra.extraPersonPrice) || 0) *
+          (Number(extra.extraPersonQuantity) || 0);
+        return sum + extraAmount + extraPersonFee;
+      }, 0);
+
+      totalPrice += extrasTotal;
+    }
+
+    // Apply coupon discount if exists
+    if (bookingData.couponApplied) {
+      totalPrice -= Number(bookingData.couponApplied.discount || 0);
+    }
+
+    // Apply long stay discount if exists
+    if (bookingData.priceDetails?.discount) {
+      totalPrice -= Number(bookingData.priceDetails.discount);
+    }
+
+    console.log("Final price calculation:", {
+      totalPrice,
+      breakdown: {
+        basePrice: Number(bookingData.basePrice),
+        guestFees: Number(bookingData.guestFees || 0),
+        extrasTotal:
+          bookingData.extras?.reduce((sum, extra) => {
+            return (
+              sum +
+              Number(extra.amount) +
+              Number(extra.extraPersonPrice) * Number(extra.extraPersonQuantity)
+            );
+          }, 0) || 0,
+        couponDiscount: bookingData.couponApplied
+          ? Number(bookingData.couponApplied.discount)
+          : 0,
+        longStayDiscount: Number(bookingData.priceDetails?.discount || 0),
+      },
+    });
 
     const bookingReference = `BOOKING-${Date.now()}-${Math.random()
       .toString(36)
@@ -2437,11 +2399,11 @@ app.post("/api/create-payment-intent", async (req, res) => {
 
     pendingBookings.set(bookingReference, {
       ...bookingData,
-      guestFees, // Add guest fees to the stored booking data
+      totalPriceWithExtras: totalPrice,
     });
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(price * 100),
+      amount: Math.round(totalPrice * 100),
       currency: "eur",
       automatic_payment_methods: {
         enabled: true,
@@ -2452,10 +2414,21 @@ app.post("/api/create-payment-intent", async (req, res) => {
         Chambre: ${roomNames[bookingData.apartmentId]} 
         (${bookingData.arrivalDate} - ${bookingData.departureDate})
         Base: ${bookingData.basePrice}€
-        ${guestFees > 0 ? ` • Frais invités: ${guestFees}€` : ""}
+        ${
+          bookingData.guestFees > 0
+            ? ` • Frais invités: ${bookingData.guestFees}€`
+            : ""
+        }
         ${
           bookingData.extras?.length
-            ? ` • Extras: ${price - bookingData.basePrice - guestFees}€`
+            ? ` • Extras: ${bookingData.extras.reduce(
+                (sum, extra) =>
+                  sum +
+                  Number(extra.amount) +
+                  Number(extra.extraPersonPrice) *
+                    Number(extra.extraPersonQuantity),
+                0
+              )}€`
             : ""
         }
         ${
@@ -2473,16 +2446,23 @@ app.post("/api/create-payment-intent", async (req, res) => {
         checkIn: bookingData.arrivalDate,
         checkOut: bookingData.departureDate,
         basePrice: `${bookingData.basePrice}€`,
-        guestFees: `${guestFees}€`,
+        guestFees: `${bookingData.guestFees}€`,
         extrasTotal: bookingData.extras?.length
-          ? `${price - bookingData.basePrice - guestFees}€`
+          ? `${bookingData.extras.reduce(
+              (sum, extra) =>
+                sum +
+                Number(extra.amount) +
+                Number(extra.extraPersonPrice) *
+                  Number(extra.extraPersonQuantity),
+              0
+            )}€`
           : "0€",
         ...(bookingData.couponApplied && {
           couponCode: bookingData.couponApplied.code,
           couponDiscount: `-${bookingData.couponApplied.discount}€`,
           couponType: bookingData.couponApplied.type,
         }),
-        finalPrice: `${price}€`,
+        finalPrice: `${totalPrice}€`,
       },
     });
 
@@ -2498,34 +2478,18 @@ app.post("/api/create-payment-intent", async (req, res) => {
     });
   }
 });
-
 app.get("/api/bookings/:paymentIntentId", async (req, res) => {
   try {
     const { paymentIntentId } = req.params;
-    console.log(
-      `Searching for booking with payment intent: ${paymentIntentId}`
-    );
 
-    // First get the payment intent from Stripe
+    // 1. Retrieve Payment Intent from Stripe (optional, but good for verification)
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    if (!paymentIntent) {
-      console.log(`Payment intent not found in Stripe: ${paymentIntentId}`);
-      return res.status(404).json({ error: "Payment not found" });
-    }
-    console.log(
-      `Found payment intent in Stripe with status: ${paymentIntent.status}`
-    );
 
-    // Then find the booking in Firebase
-    // Then find the booking in Firebase
+    // 2. Retrieve Booking from Firebase
     const bookingsRef = db.collection("bookings");
     const bookingQuery = await bookingsRef
       .where("paymentIntentId", "==", paymentIntentId)
       .get();
-
-    console.log(
-      `Found ${bookingQuery.size} bookings matching payment intent: ${paymentIntentId}`
-    );
 
     if (bookingQuery.empty) {
       return res.status(404).json({
@@ -2536,33 +2500,66 @@ app.get("/api/bookings/:paymentIntentId", async (req, res) => {
 
     const bookingDoc = bookingQuery.docs[0].data();
 
-    // Calculate price breakdown
+    // 3. Calculate Price Breakdown (Corrected)
     const basePrice = parseFloat(bookingDoc.basePrice);
+    const guestFees = parseFloat(bookingDoc.guestFees || 0);
+
     const extrasTotal =
-      bookingDoc.extras?.reduce((sum, extra) => sum + extra.amount, 0) || 0;
+      bookingDoc.extras?.reduce((sum, extra) => {
+        const baseAmount = parseFloat(extra.amount || 0);
+        const extraPersonAmount =
+          extra.extraPersonQuantity > 0
+            ? parseFloat(extra.extraPersonPrice) *
+              parseInt(extra.extraPersonQuantity)
+            : 0;
+        return sum + baseAmount + extraPersonAmount;
+      }, 0) || 0;
+
     const longStayDiscount = parseFloat(bookingDoc.priceDetails?.discount || 0);
     const couponDiscount = parseFloat(bookingDoc.appliedCoupon?.discount || 0);
 
-    // Calculate final total
-    const subtotalBeforeDiscounts = basePrice + extrasTotal;
-    const finalTotal =
-      subtotalBeforeDiscounts - longStayDiscount - couponDiscount;
+    const subtotalBeforeDiscounts = basePrice + guestFees + extrasTotal;
+    const totalDiscounts = longStayDiscount + couponDiscount;
+    const finalTotal = subtotalBeforeDiscounts - totalDiscounts;
 
-    // Format response with all necessary data
+    // 4. Format Response Data (Corrected extrasBreakdown)
     const responseData = {
       ...bookingDoc,
       paymentIntent: {
         id: paymentIntentId,
-        amount: paymentIntent.amount,
-        currency: paymentIntent.currency,
-        status: paymentIntent.status,
+        ...(paymentIntent && {
+          // Conditionally include paymentIntent data
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+          status: paymentIntent.status,
+        }),
       },
       priceBreakdown: {
         basePrice,
+        guestFees,
         extrasTotal,
+        extrasBreakdown: bookingDoc.extras?.map((extra) => ({
+          name: extra.name,
+          baseAmount: parseFloat(extra.amount || 0),
+          quantity: parseInt(extra.quantity || 1),
+          extraPersonQuantity: parseInt(extra.extraPersonQuantity || 0),
+          extraPersonAmount:
+            extra.extraPersonQuantity > 0
+              ? parseFloat(extra.extraPersonPrice) *
+                parseInt(extra.extraPersonQuantity)
+              : 0,
+          totalAmount:
+            parseFloat(extra.amount || 0) +
+            (extra.extraPersonQuantity > 0
+              ? parseFloat(extra.extraPersonPrice) *
+                parseInt(extra.extraPersonQuantity)
+              : 0),
+        })),
         longStayDiscount,
         couponDiscount,
-        totalPrice: finalTotal,
+        subtotalBeforeDiscounts,
+        totalDiscounts,
+        finalTotal,
       },
     };
 
@@ -2575,7 +2572,6 @@ app.get("/api/bookings/:paymentIntentId", async (req, res) => {
     });
   }
 });
-
 // Debug endpoint to check pending bookings
 app.get("/api/pending-bookings", (req, res) => {
   const bookings = Array.from(pendingBookings.entries());

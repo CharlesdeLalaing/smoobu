@@ -339,11 +339,45 @@ const fetchBookingDetails = async (paymentIntentId) => {
               </p>
             )}
 
-            {/* Total */}
             <div className="total-section">
               <p className="total-text">
                 {t("bookingConfirmation.success.sections.priceDetails.total", {
-                  price: formatPrice(bookingDetails?.price),
+                  price: formatPrice(
+                    (() => {
+                      // Base price of the room
+                      const basePrice = parseFloat(
+                        bookingDetails?.priceBreakdown?.basePrice || 0
+                      );
+
+                      // Guest fees for additional room guests
+                      const guestFees = parseFloat(
+                        bookingDetails?.guestFees || 0
+                      );
+
+                      // Calculate extras total including their extra person fees
+                      const extrasTotal =
+                        bookingDetails?.extras?.reduce((sum, extra) => {
+                          const baseAmount = parseFloat(extra.amount || 0);
+                          const extraPersonAmount =
+                            extra.extraPersonQuantity > 0
+                              ? parseFloat(extra.extraPersonAmount || 0)
+                              : 0;
+                          return sum + baseAmount + extraPersonAmount;
+                        }, 0) || 0;
+
+                      // Calculate all discounts
+                      const discounts =
+                        parseFloat(
+                          bookingDetails?.priceBreakdown?.longStayDiscount || 0
+                        ) +
+                        parseFloat(
+                          bookingDetails?.priceBreakdown?.couponDiscount || 0
+                        );
+
+                      // Final total should be: base price + guest fees + extras total - discounts
+                      return basePrice + guestFees + extrasTotal - discounts;
+                    })()
+                  ),
                 })}
               </p>
               <p>
