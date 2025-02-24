@@ -1878,21 +1878,90 @@ app.get('/api/rates', async (req, res) => {
 
 //CREATE PAYMENT INTENT
 
+// app.post('/api/create-payment-intent', async (req, res) => {
+//   try {
+//     const { price, bookingData } = req.body;
+
+//     // Calculate guest fees for metadata
+//     const totalGuests = (parseInt(bookingData.adults) || 0) + (parseInt(bookingData.children) || 0);
+//     const settings = discountSettings[bookingData.apartmentId];
+//     const extraGuests = Math.max(0, totalGuests - settings.startingAtGuest);
+//     const guestFees = extraGuests * settings.extraGuestsPerNight;
+
+//     const bookingReference = `BOOKING-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+//     pendingBookings.set(bookingReference, {
+//       ...bookingData,
+//       guestFees // Add guest fees to the stored booking data
+//     });
+
+//     const paymentIntent = await stripe.paymentIntents.create({
+//       amount: Math.round(price * 100),
+//       currency: 'eur',
+//       automatic_payment_methods: {
+//         enabled: true,
+//       },
+//       description: `Réservation - ${bookingData.firstName} ${bookingData.lastName}
+//         Chambre: ${roomNames[bookingData.apartmentId]} 
+//         (${bookingData.arrivalDate} - ${bookingData.departureDate})
+//         Base: ${bookingData.basePrice}€
+//         ${guestFees > 0 ? ` • Frais invités: ${guestFees}€` : ''}
+//         ${bookingData.extras?.length ? ` • Extras: ${(price - bookingData.basePrice - guestFees)}€` : ''}
+//         ${bookingData.couponApplied ? ` • Code ${bookingData.couponApplied.code}: -${bookingData.couponApplied.discount}€` : ''}`,
+//       metadata: {
+//         clientName: `${bookingData.firstName} ${bookingData.lastName}`,
+//         clientEmail: bookingData.email,
+//         clientPhone: bookingData.phone || '',
+//         roomId: bookingData.apartmentId,
+//         roomName: roomNames[bookingData.apartmentId],
+//         bookingReference: bookingReference,
+//         checkIn: bookingData.arrivalDate,
+//         checkOut: bookingData.departureDate,
+//         basePrice: `${bookingData.basePrice}€`,
+//         guestFees: `${guestFees}€`,
+//         extrasTotal: bookingData.extras?.length ? `${(price - bookingData.basePrice - guestFees)}€` : '0€',
+//         ...(bookingData.couponApplied && {
+//           couponCode: bookingData.couponApplied.code,
+//           couponDiscount: `-${bookingData.couponApplied.discount}€`,
+//           couponType: bookingData.couponApplied.type
+//         }),
+//         finalPrice: `${price}€`
+//       }
+//     });
+
+//     res.json({
+//       clientSecret: paymentIntent.client_secret,
+//       bookingReference: bookingReference,
+//     });
+//   } catch (error) {
+//     console.error('Error creating payment intent:', error);
+//     res.status(500).json({
+//       error: 'Failed to create payment intent',
+//       details: error.message,
+//     });
+//   }
+// });
+
 app.post('/api/create-payment-intent', async (req, res) => {
   try {
     const { price, bookingData } = req.body;
 
-    // Calculate guest fees for metadata
+    // Calculate guest fees
     const totalGuests = (parseInt(bookingData.adults) || 0) + (parseInt(bookingData.children) || 0);
     const settings = discountSettings[bookingData.apartmentId];
     const extraGuests = Math.max(0, totalGuests - settings.startingAtGuest);
     const guestFees = extraGuests * settings.extraGuestsPerNight;
 
+    // Calculate total extras directly from the extras array
+    const extrasTotal = bookingData.extras?.reduce((total, extra) => {
+      return total + (extra.amount || 0);
+    }, 0) || 0;
+
     const bookingReference = `BOOKING-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     pendingBookings.set(bookingReference, {
       ...bookingData,
-      guestFees // Add guest fees to the stored booking data
+      guestFees
     });
 
     const paymentIntent = await stripe.paymentIntents.create({
@@ -1906,7 +1975,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
         (${bookingData.arrivalDate} - ${bookingData.departureDate})
         Base: ${bookingData.basePrice}€
         ${guestFees > 0 ? ` • Frais invités: ${guestFees}€` : ''}
-        ${bookingData.extras?.length ? ` • Extras: ${(price - bookingData.basePrice - guestFees)}€` : ''}
+        ${extrasTotal > 0 ? ` • Extras: ${extrasTotal}€` : ''}
         ${bookingData.couponApplied ? ` • Code ${bookingData.couponApplied.code}: -${bookingData.couponApplied.discount}€` : ''}`,
       metadata: {
         clientName: `${bookingData.firstName} ${bookingData.lastName}`,
@@ -1919,7 +1988,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
         checkOut: bookingData.departureDate,
         basePrice: `${bookingData.basePrice}€`,
         guestFees: `${guestFees}€`,
-        extrasTotal: bookingData.extras?.length ? `${(price - bookingData.basePrice - guestFees)}€` : '0€',
+        extrasTotal: `${extrasTotal}€`,
         ...(bookingData.couponApplied && {
           couponCode: bookingData.couponApplied.code,
           couponDiscount: `-${bookingData.couponApplied.discount}€`,
