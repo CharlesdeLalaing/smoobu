@@ -854,6 +854,8 @@ const BookingsReport = () => {
     return `€${Number(price).toFixed(2)}`;
   };
 
+  
+
   const handleExport = () => {
     const wsData = [
       [
@@ -1376,7 +1378,7 @@ const BookingsReport = () => {
                                           couponDiscount > 0 && (
                                             <p className="text-sm text-green-600">
                                               <span className="block font-medium">
-                                                Code promo{" "}
+                                                {" "}
                                                 {
                                                   booking.priceDetails.promoCode
                                                     .name
