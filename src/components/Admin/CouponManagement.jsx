@@ -103,36 +103,80 @@ const CouponManagement = () => {
     }
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   try {
+  //     const data = {
+  //       ...formData,
+  //       code: formData.code.toUpperCase(),
+  //       discount: Number(formData.discount),
+  //       dateCreated: editingCoupon ? formData.dateCreated : Timestamp.now(),
+  //       expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
+  //       usedCount: editingCoupon ? formData.usedCount : 0,
+  //       lastUsedDate: null,
+  //       usedBy: editingCoupon ? formData.usedBy || [] : [],
+  //       currency: "EUR",
+  //       type: formData.type || "fixed",
+  //       status: formData.status || "active",
+  //     };
+
+  //     if (editingCoupon) {
+  //       await updateDoc(doc(db, "coupons", editingCoupon.id), data);
+  //     } else {
+  //       await addDoc(collection(db, "coupons"), data);
+  //     }
+
+  //     await fetchCoupons();
+  //     handleCloseModal();
+  //   } catch (error) {
+  //     console.error("Erreur lors de la sauvegarde du coupon:", error);
+  //   }
+  // };
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const data = {
         ...formData,
         code: formData.code.toUpperCase(),
-        discount: Number(formData.discount),
         dateCreated: editingCoupon ? formData.dateCreated : Timestamp.now(),
         expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
+        validityStartDate: formData.validityStartDate ? Timestamp.fromDate(new Date(formData.validityStartDate)) : null,
+        validityEndDate: formData.validityEndDate ? Timestamp.fromDate(new Date(formData.validityEndDate)) : null,
         usedCount: editingCoupon ? formData.usedCount : 0,
         lastUsedDate: null,
         usedBy: editingCoupon ? formData.usedBy || [] : [],
         currency: "EUR",
-        type: formData.type || "fixed",
-        status: formData.status || "active",
+        type: formData.type,
+        status: formData.status || "active"
       };
-
+  
+      // Handle discount values based on type
+      if (formData.type === "percentage") {
+        data.percentageValue = Number(formData.discount);
+        data.discount = Number(formData.discount); // Keep for backwards compatibility
+        data.amount = null; // Clear amount field for percentage discounts
+      } else {
+        data.amount = Number(formData.discount);
+        data.discount = Number(formData.discount); // Keep for backwards compatibility
+        data.percentageValue = null; // Clear percentage field for fixed discounts
+      }
+  
       if (editingCoupon) {
         await updateDoc(doc(db, "coupons", editingCoupon.id), data);
       } else {
         await addDoc(collection(db, "coupons"), data);
       }
-
+  
       await fetchCoupons();
       handleCloseModal();
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde du coupon:", error);
+      console.error("Error saving coupon:", error);
     }
   };
 
+  
   const handleEdit = (coupon) => {
     if (coupon.isGiftVoucher) return; // Prevent editing gift vouchers
     setEditingCoupon(coupon);
