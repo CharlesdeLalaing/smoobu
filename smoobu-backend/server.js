@@ -74,6 +74,12 @@ async function syncReservations() {
       Blocked: "Blocked",
     };
 
+    // Improved normalize function
+    const normalizeBookingId = (id) => {
+      if (!id) return null;
+      return String(id).trim();
+    };
+
     const endDate = new Date().toISOString().split("T")[0];
     const startDate = new Date(Date.now() - 730 * 24 * 60 * 60 * 1000)
       .toISOString()
@@ -99,7 +105,7 @@ async function syncReservations() {
     console.log(
       "Full booking details:",
       response.data.bookings?.map((booking) => ({
-        id: booking.id,
+        id: normalizeBookingId(booking.id),
         channel: booking.channel,
         channelId: booking.channel?.id,
         channelName: booking.channel?.name,
@@ -116,18 +122,32 @@ async function syncReservations() {
 
     for (const reservation of reservations) {
       try {
-        console.log(
-          `🟦 Processing reservation ${reservation.id} from channel:`,
-          {
-            rawChannelName: reservation.channel?.name,
-            mappedChannelName:
-              channelMapping[reservation.channel?.name] || "Website",
-          }
-        );
+        const normalizedId = normalizeBookingId(reservation.id);
+        if (!normalizedId) {
+          console.error("🟥 Invalid reservation ID, skipping...");
+          errorCount++;
+          continue;
+        }
+
+        console.log(`🟦 Processing reservation ${normalizedId} from channel:`, {
+          rawChannelName: reservation.channel?.name,
+          mappedChannelName:
+            channelMapping[reservation.channel?.name] || "Website",
+        });
+
+        // Check for existing booking with normalized ID
+        const existingBookingRef = await db
+          .collection("bookings")
+          .where("smoobuId", "==", String(normalizedId))
+          .get();
+
+        const existingDoc = existingBookingRef.empty
+          ? null
+          : existingBookingRef.docs[0];
 
         // Get price elements
         const priceElementsResponse = await axios.get(
-          `https://login.smoobu.com/api/reservations/${reservation.id}/price-elements`,
+          `https://login.smoobu.com/api/reservations/${normalizedId}/price-elements`,
           {
             headers: {
               "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
@@ -138,7 +158,162 @@ async function syncReservations() {
 
         const priceElements = priceElementsResponse.data.priceElements || [];
 
-        // Calculate all the necessary price details...
+        // Add debug logging for all price elements
+        console.log(
+          `Raw price elements for booking ${normalizedId}:`,
+          priceElements
+        );
+
+        // Improved extras processing with better filtering
+        const extras = priceElements.filter((element) => {
+          const name = (element.name || "").toLowerCase();
+          const type = (element.type || "").toLowerCase();
+
+          // Exclude base price, discounts, etc.
+          if (
+            name.includes("prix de base") ||
+            name.includes("base price") ||
+            name.includes("code promo") ||
+            name.includes("réduction") ||
+            name.includes("commission") ||
+            type === "base" ||
+            type === "discount"
+          ) {
+            return false;
+          }
+
+          // Include extras, but exclude standalone "personne supplémentaire" items
+          // We'll handle these separately to associate them with their parent extras
+          return (
+            (type === "addon" ||
+              name.includes("formule") ||
+              name.includes("formule spa") ||
+              name.includes("petit-déjeuner") ||
+              name.includes("raclette") ||
+              name.includes("barbecue") ||
+              name.includes("spa") ||
+              name.includes("bouteille") ||
+              name.includes("2 pers") ||
+              name.includes("essentiel") ||
+              name.includes("détente") ||
+              name.includes("gourmet") ||
+              name.includes("frais supplémentaires")) &&
+            !name.match(/^personne supplémentaire/i)
+          ); // Exclude standalone person items
+        });
+
+        // Find extra person elements that might be associated with the extras
+        const personElements = priceElements.filter((element) => {
+          const name = (element.name || "").toLowerCase();
+          return name.includes("personne supplémentaire");
+        });
+
+        console.log(
+          `Found ${personElements.length} person elements for booking ${normalizedId}`
+        );
+
+        // Process extras and link person elements to them
+        const processedExtras = extras.map((extra) => {
+          const extraResult = {
+            name: extra.name || "Extra",
+            amount: Math.abs(parseFloat(extra.amount) || 0),
+            quantity: parseInt(extra.quantity) || 1,
+            type: extra.type || "addon",
+            id: extra.id,
+            currencyCode: extra.currencyCode || "EUR",
+            extraPersonQuantity: 0,
+            extraPersonPrice: 0,
+            extraPersonAmount: 0,
+          };
+
+          // Look for matching person element
+          const extraNameLower = extra.name.toLowerCase();
+
+          // Try to find a person element that might be related to this extra
+          const relatedPersonElement = personElements.find((personEl) => {
+            const personNameLower = personEl.name.toLowerCase();
+
+            // Check for specific patterns:
+            // 1. "Extra Name - Personne supplémentaire"
+            if (
+              personNameLower.includes(extraNameLower) ||
+              personNameLower.includes(
+                extraNameLower.replace(" (pour 2)", "")
+              ) ||
+              personNameLower.includes(extraNameLower.replace(" (2 pers)", ""))
+            ) {
+              return true;
+            }
+
+            // 2. "Personne supplémentaire - Extra Name"
+            if (
+              personNameLower.includes("supplémentaire") &&
+              (personNameLower.includes(extraNameLower) ||
+                personNameLower.includes(
+                  extraNameLower.replace(" (pour 2)", "")
+                ) ||
+                personNameLower.includes(
+                  extraNameLower.replace(" (2 pers)", "")
+                ))
+            ) {
+              return true;
+            }
+
+            return false;
+          });
+
+          // If we found a related person element, extract the data
+          if (relatedPersonElement) {
+            console.log(
+              `Found related person element for extra "${extra.name}": ${relatedPersonElement.name}`
+            );
+
+            extraResult.extraPersonQuantity =
+              parseInt(relatedPersonElement.quantity) || 1;
+            extraResult.extraPersonPrice =
+              Math.abs(parseFloat(relatedPersonElement.amount)) /
+              extraResult.extraPersonQuantity;
+            extraResult.extraPersonAmount = Math.abs(
+              parseFloat(relatedPersonElement.amount)
+            );
+            extraResult.extraPersonName = relatedPersonElement.name;
+          }
+
+          return extraResult;
+        });
+
+        // Debug log the filtered extras
+        console.log(
+          `Filtered extras for booking ${normalizedId}:`,
+          processedExtras
+        );
+
+        const hasSpa = processedExtras.some((extra) =>
+          extra.name.toLowerCase().includes("formule spa")
+        );
+        if (!hasSpa) {
+          const spaElement = priceElements.find((element) =>
+            (element.name || "").toLowerCase().includes("formule spa")
+          );
+          if (spaElement) {
+            processedExtras.push({
+              name: spaElement.name,
+              amount: Math.abs(parseFloat(spaElement.amount) || 0),
+              quantity: parseInt(spaElement.quantity) || 1,
+              type: spaElement.type || "addon",
+              id: spaElement.id,
+              currencyCode: spaElement.currencyCode || "EUR",
+              extraPersonQuantity: 0,
+              extraPersonPrice: 0,
+              extraPersonAmount: 0,
+            });
+            console.log(
+              `✅ "Formule SPA" was missing, manually added to extras.`
+            );
+          }
+        }
+
+        // Calculate base price and other components
         const basePrice =
           priceElements.find(
             (el) =>
@@ -146,33 +321,45 @@ async function syncReservations() {
               el.name?.toLowerCase().includes("prix de base")
           )?.amount || 0;
 
-        const extras = priceElements.filter((element) => {
-          const name = element.name?.toLowerCase() || "";
+        const extrasTotal = processedExtras.reduce(
+          (sum, extra) =>
+            sum +
+            (Number(extra.amount) || 0) +
+            (Number(extra.extraPersonAmount) || 0),
+          0
+        );
+
+        // Look for discounts
+        const discounts = priceElements.filter((element) => {
+          const name = (element.name || "").toLowerCase();
           return (
-            element.type === "addon" &&
-            !name.includes("commission") &&
-            !name.includes("cleaning fee")
+            element.type === "discount" ||
+            name.includes("code promo") ||
+            name.includes("réduction")
           );
         });
 
-        // Map the channel correctly
-        const channelName = reservation.channel?.name || "Website";
-        const mappedChannel = channelMapping[channelName] || channelName;
+        // Calculate total discounts
+        const totalDiscounts = discounts.reduce(
+          (sum, discount) => sum + Math.abs(parseFloat(discount.amount) || 0),
+          0
+        );
 
-        console.log("Channel mapping for reservation " + reservation.id, {
-          rawChannelName: reservation.channel?.name,
-          rawChannelId: reservation.channel?.id,
-          mappedChannel: reservation.channel
-            ? channelMapping[reservation.channel.name] ||
-              channelMapping[reservation.channel.id] ||
-              reservation.channel.name ||
-              "Unknown"
-            : "Unknown",
-        });
+        // Extract long stay discount if present
+        const longStayDiscount =
+          discounts.find((d) =>
+            d.name?.toLowerCase().includes("réduction long séjour")
+          )?.amount || 0;
 
-        // Prepare document with correct channel mapping
+        // Extract coupon discount if present
+        const couponDiscount =
+          discounts.find((d) => d.name?.toLowerCase().includes("code promo"))
+            ?.amount || 0;
+
+        // Prepare booking document with complete extra details
         const bookingDoc = {
-          smoobuId: reservation.id,
+          smoobuId: normalizedId,
+          smoobuReservationId: normalizedId,
           firstName: reservation.firstName || "",
           lastName: reservation.lastName || "",
           guestName:
@@ -191,9 +378,8 @@ async function syncReservations() {
           checkInTime: reservation["check-in"] || "",
           checkOutTime: reservation["check-out"] || "",
           apartmentId: reservation.apartment?.id,
-          apartmentName:
+          property:
             roomNames[reservation.apartment?.id] || reservation.apartment?.name,
-          channelObject: reservation.channel,
           channelId: reservation.channel?.id,
           channelName: reservation.channel?.name,
           notice: reservation.notice || "",
@@ -203,40 +389,62 @@ async function syncReservations() {
           price: parseFloat(reservation.price),
           priceDetails: {
             basePrice: parseFloat(basePrice),
-            extrasTotal: extras.reduce((sum, extra) => sum + extra.amount, 0),
-            extras: extras.map((extra) => ({
-              name: extra.name,
-              amount: parseFloat(extra.amount),
-              quantity: parseInt(extra.quantity) || 1,
-            })),
+            extrasTotal: extrasTotal,
+            longStayDiscount: Math.abs(parseFloat(longStayDiscount)),
+            couponDiscount: Math.abs(parseFloat(couponDiscount)),
+            totalDiscounts: totalDiscounts,
+            extras: processedExtras,
+            priceElements: priceElements,
+            guestFees: parseFloat(
+              priceElements.find((el) =>
+                el.name?.toLowerCase().includes("frais supplémentaires")
+              )?.amount || 0
+            ),
           },
-          portalName: reservation.channel
-            ? channelMapping[reservation.channel.id] ||
-              channelMapping[reservation.channel.name] ||
-              reservation.channel.name
-            : "Website",
-          createdAt: reservation["created-at"] || new Date().toISOString(),
+          portalName: getPortalName(
+            reservation.channel?.name || reservation.channel?.id
+          ),
           updatedAt: new Date().toISOString(),
           lastSyncedAt: new Date().toISOString(),
+          extras: processedExtras,
         };
 
-        // Save to the "bookings" collection (not "reservations")
-        await db
-          .collection("bookings")
-          .doc(reservation.id.toString())
-          .set(bookingDoc, { merge: true });
+        // If booking exists, update it, otherwise create new
+        if (existingDoc) {
+          await db
+            .collection("bookings")
+            .doc(existingDoc.id)
+            .update({
+              ...bookingDoc,
+              createdAt: existingDoc.data().createdAt,
+              smoobuId: normalizedId,
+              smoobuReservationId: normalizedId,
+            });
+          console.log(
+            `🟦 Updated existing booking ${normalizedId} with ${processedExtras.length} extras:`,
+            processedExtras.map((e) => e.name)
+          );
+        } else {
+          // For new bookings, set creation date
+          const newBookingDoc = {
+            ...bookingDoc,
+            createdAt: reservation["created-at"] || new Date().toISOString(),
+            smoobuId: normalizedId,
+            smoobuReservationId: normalizedId,
+          };
+          await db.collection("bookings").doc(normalizedId).set(newBookingDoc);
+          console.log(
+            `🟩 Added new booking ${normalizedId} with ${processedExtras.length} extras:`,
+            processedExtras.map((e) => e.name)
+          );
+        }
 
-        console.log(
-          `🟩 Successfully processed ${mappedChannel} booking ${reservation.id}`
-        );
         successCount++;
-
-        // Add delay between requests
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      } catch (reservationError) {
+        await new Promise((resolve) => setTimeout(resolve, 500)); // Add delay between requests
+      } catch (error) {
         console.error(
           `🟥 Error processing reservation ${reservation.id}:`,
-          reservationError
+          error
         );
         errorCount++;
         continue;
@@ -857,6 +1065,35 @@ app.post(
               }
             );
             await wait(1000);
+
+            if (bookingData.guestFees > 0) {
+              const extraGuests = Math.max(
+                0,
+                parseInt(bookingData.adults) +
+                  parseInt(bookingData.children) -
+                  (bookingData.priceDetails?.settings?.startingAtGuest || 2)
+              );
+
+              await axios.post(
+                `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+                {
+                  type: "addon",
+                  name: `Frais supplémentaires (${extraGuests} personne${
+                    extraGuests > 1 ? "s" : ""
+                  })`,
+                  amount: bookingData.guestFees,
+                  quantity: 1,
+                  currencyCode: "EUR",
+                },
+                {
+                  headers: {
+                    "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+              await wait(1000);
+            }
           } catch (error) {
             console.error("🟥 Failed to add base price:", error);
             return res.status(500).send("Failed to add base price");
@@ -1319,11 +1556,28 @@ app.get("/api/fetch-and-sync", async (req, res) => {
         const extras = priceElements
           .filter((element) => {
             const name = element.name?.toLowerCase() || "";
+            const type = (element.type || "").toLowerCase();
+            if (
+              name.includes("prix de base") ||
+              name.includes("base price") ||
+              name.includes("code promo") ||
+              name.includes("réduction") ||
+              name.includes("commission") ||
+              type === "base" ||
+              type === "discount"
+            ) {
+              return false;
+            }
+
             return (
-              element.type === "addon" &&
-              !name.includes("commission") &&
-              !name.includes("linen") &&
-              !name.includes("cleaning")
+              (type === "addon" && name.includes("formule")) ||
+              name.includes("spa") ||
+              name.includes("bouteille") ||
+              name.includes("petit-déjeuner") ||
+              name.includes("raclette") ||
+              name.includes("barbecue") ||
+              name.includes("frais supplémentaires") ||
+              name.includes("2 pers")
             );
           })
           .map((extra) => ({
@@ -1333,7 +1587,7 @@ app.get("/api/fetch-and-sync", async (req, res) => {
           }));
 
         const extrasTotal = extras.reduce(
-          (sum, extra) => sum + parseFloat(extra.amount || 0),
+          (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
           0
         );
 

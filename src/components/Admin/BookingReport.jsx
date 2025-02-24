@@ -96,45 +96,75 @@ const BookingsReport = () => {
 
   // Inside your BookingsReport component:
 
-const diagnoseBookingData = (booking) => {
-  console.group(`🔍 Diagnosing booking ${booking.id} (${booking.portal})`);
+  // Enhanced version of the diagnoseBookingData function with more verbose logging
+  const diagnoseBookingData = (booking) => {
+    console.group(`🔍 Diagnosing booking ${booking.id} (${booking.portal})`);
 
-  // Check data structure - focus on price fields
-  console.log("Price structure:", {
-    price: booking.price,
-    basePrice: booking.basePrice,
-    priceDetailsBasePrice: booking?.priceDetails?.basePrice,
-    linenFee: booking.linenFee,
-    priceDetailsLinenFee: booking?.priceDetails?.linenFee,
-  });
+    // Log all price elements for inspection
+    console.log(
+      "All price elements:",
+      booking.priceDetails?.priceElements?.map((el) => ({
+        name: el.name,
+        type: el.type,
+        amount: el.amount,
+      })) || "No price elements"
+    );
 
-  // Check coupon/discount structure
-  console.log("Discount structure:", {
-    appliedCoupon: booking.appliedCoupon,
-    priceDetailsPromoCode: booking?.priceDetails?.promoCode,
-    priceDetailsCouponDiscount: booking?.priceDetails?.couponDiscount,
-    priceDetailsLongStayDiscount: booking?.priceDetails?.longStayDiscount,
-    priceDetailsDiscount: booking?.priceDetails?.discount,
-  });
-
-  // Check extras - especially for extra person handling
-  if (booking.extras && booking.extras.length > 0) {
-    console.log("Extras structure:");
-    booking.extras.forEach((extra, i) => {
-      console.log(`Extra ${i + 1}:`, {
-        name: extra.name,
-        amount: extra.amount,
-        quantity: extra.quantity,
-        hasExtraPerson: !!extra.extraPersonQuantity,
-        extraPersonQuantity: extra.extraPersonQuantity,
-        extraPersonPrice: extra.extraPersonPrice,
-        extraPersonAmount: extra.extraPersonAmount,
-      });
+    // Check data structure - focus on price fields
+    console.log("Price structure:", {
+      price: booking.price,
+      basePrice: booking.basePrice,
+      priceDetailsBasePrice: booking?.priceDetails?.basePrice,
+      linenFee: booking.linenFee,
+      priceDetailsLinenFee: booking?.priceDetails?.linenFee,
     });
-  }
 
-  console.groupEnd();
-};
+    // Check coupon/discount structure
+    console.log("Discount structure:", {
+      appliedCoupon: booking.appliedCoupon,
+      priceDetailsPromoCode: booking?.priceDetails?.promoCode,
+      priceDetailsCouponDiscount: booking?.priceDetails?.couponDiscount,
+      priceDetailsLongStayDiscount: booking?.priceDetails?.longStayDiscount,
+      priceDetailsDiscount: booking?.priceDetails?.discount,
+    });
+
+    // Check extras - especially for extra person handling
+    if (booking.extras && booking.extras.length > 0) {
+      console.log("Extras structure:");
+      booking.extras.forEach((extra, i) => {
+        console.log(`Extra ${i + 1}:`, {
+          name: extra.name,
+          amount: extra.amount,
+          quantity: extra.quantity,
+          hasExtraPerson: !!extra.extraPersonQuantity,
+          extraPersonQuantity: extra.extraPersonQuantity,
+          extraPersonPrice: extra.extraPersonPrice,
+          extraPersonAmount: extra.extraPersonAmount,
+        });
+      });
+    } else {
+      console.log(
+        "No extras found - this could be a problem if extras should exist!"
+      );
+      console.log("Debug sources:", booking._debug || "No debug info");
+    }
+
+    // Check if original raw data has extras that might be missing
+    console.log(
+      "Check for any extras in priceDetails that might be missed:",
+      booking.priceDetails?.priceElements
+        ?.filter(
+          (el) =>
+            el.type === "addon" ||
+            (el.name || "").toLowerCase().includes("formule") ||
+            (el.name || "").toLowerCase().includes("essentiel") ||
+            (el.name || "").toLowerCase().includes("détente")
+        )
+        .map((el) => el.name) || "No extras in priceElements"
+    );
+
+    console.groupEnd();
+  };
 
   // Complete fetchFromFirebase function with diagnostic logging
   const fetchFromFirebase = useCallback(async () => {
@@ -182,6 +212,120 @@ const diagnoseBookingData = (booking) => {
       const bookingsBySmoobuId = {};
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        if (
+          (!data.extras || data.extras.length === 0) &&
+          data.priceDetails?.priceElements
+        ) {
+          // For debugging
+          console.log(
+            `Processing extras for booking ${data.id || data.smoobuId}`
+          );
+          console.log(
+            "All price elements:",
+            data.priceDetails.priceElements.map((el) => el.name)
+          );
+
+          // 1. Extract extras from priceElements - Use a simple, robust approach
+          data.extras = data.priceDetails.priceElements
+            .filter((element) => {
+              const name = (element.name || "").toLowerCase();
+              const type = (element.type || "").toLowerCase();
+
+              // Specifically exclude these items as non-extras
+              if (
+                type === "base" ||
+                type === "discount" ||
+                name === "prix de base" ||
+                name.includes("réduction long séjour") ||
+                name.includes("code promo")
+              ) {
+                return false;
+              }
+
+              // Include all addons (this is the key part - rely on the type)
+              if (type === "addon") {
+                return true;
+              }
+
+              // For elements without a type, use name-based inclusion
+              return (
+                name.includes("formule") ||
+                name.includes("essentiel") || // Note: lowercase matches "l'essentiel"
+                name.includes("détente") ||
+                name.includes("petit-déjeuner") ||
+                name.includes("raclette") ||
+                name.includes("barbecue") ||
+                name.includes("spa") ||
+                name.includes("bouteille") ||
+                name.includes("2 pers") ||
+                name.includes("personne") ||
+                name.includes("frais supplémentaires")
+              );
+            })
+            .map((element) => ({
+              name: element.name,
+              amount: Math.abs(parseFloat(element.amount) || 0),
+              quantity: parseInt(element.quantity) || 1,
+              type: element.type || "addon",
+              id: element.id,
+              currencyCode: element.currencyCode || "EUR",
+              extraPersonQuantity: 0,
+              extraPersonPrice: 0,
+              extraPersonAmount: 0,
+              hasExtraPerson: false,
+            }));
+
+          console.log(
+            "Extracted extras:",
+            data.extras.map((el) => el.name)
+          );
+
+          // 2. Separately handle other important price elements
+
+          // Find base price element
+          const basePriceElement = data.priceDetails.priceElements.find(
+            (el) =>
+              el.type === "base" ||
+              (el.name || "").toLowerCase() === "prix de base"
+          );
+
+          if (basePriceElement) {
+            data.priceDetails.basePrice =
+              parseFloat(basePriceElement.amount) || 0;
+            data.basePrice = parseFloat(basePriceElement.amount) || 0;
+            console.log("Found base price:", data.basePrice);
+          }
+
+          // Find long stay discount
+          const longStayElement = data.priceDetails.priceElements.find((el) =>
+            (el.name || "").toLowerCase().includes("réduction long séjour")
+          );
+
+          if (longStayElement) {
+            data.priceDetails.longStayDiscount = Math.abs(
+              parseFloat(longStayElement.amount) || 0
+            );
+            console.log(
+              "Found long stay discount:",
+              data.priceDetails.longStayDiscount
+            );
+          }
+
+          // Find coupon discount from priceElements
+          const couponElement = data.priceDetails.priceElements.find((el) =>
+            (el.name || "").toLowerCase().includes("code promo")
+          );
+
+          if (couponElement) {
+            if (!data.priceDetails.promoCode) {
+              data.priceDetails.promoCode = {
+                name: couponElement.name,
+                amount: Math.abs(parseFloat(couponElement.amount) || 0),
+              };
+            }
+            console.log("Found coupon:", data.priceDetails.promoCode);
+          }
+        }
         const smoobuId = data.smoobuId || data.smoobuReservationId;
 
         if (!smoobuId) return; // Skip entries without smoobuId
@@ -302,329 +446,320 @@ const diagnoseBookingData = (booking) => {
   };
 
   // Helper function to process booking data with improved robustness
-const processBookingData = (data, bookingMap) => {
-  const smoobuId = data.smoobuId || data.smoobuReservationId;
+  // Replace the entire processBookingData function with this improved version
+  const processBookingData = (data, bookingMap) => {
+    const smoobuId = data.smoobuId || data.smoobuReservationId;
 
-  // Skip if already processed or missing ID
-  if (!smoobuId || bookingMap.has(smoobuId)) return;
+    // Skip if already processed or missing ID
+    if (!smoobuId || bookingMap.has(smoobuId)) return;
 
-  // DEBUGGING - log the structure of this booking's price-related data
-  if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
-    console.log(`Processing Airbnb booking ${smoobuId} - Data structure:`, {
-      hasExtras: !!data.extras,
-      extrasLength: data.extras?.length || 0,
-      hasPriceDetails: !!data.priceDetails,
-      hasPriceDetailsElements: !!data.priceDetails?.priceElements,
-      priceDetailsElementsLength: data.priceDetails?.priceElements?.length || 0,
-      hasRootPriceElements: !!data.priceElements,
-      rootPriceElementsLength: data.priceElements?.length || 0,
-    });
-  }
+    // DEBUGGING - log the structure of this booking's price-related data
+    if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
+      console.log(`Processing Airbnb booking ${smoobuId} - Data structure:`, {
+        hasExtras: !!data.extras,
+        extrasLength: data.extras?.length || 0,
+        hasPriceDetails: !!data.priceDetails,
+        hasPriceDetailsElements: !!data.priceDetails?.priceElements,
+        priceDetailsElementsLength:
+          data.priceDetails?.priceElements?.length || 0,
+        hasRootPriceElements: !!data.priceElements,
+        rootPriceElementsLength: data.priceElements?.length || 0,
+      });
+    }
 
-  // Extract prices directly rather than calculating
-  const basePrice =
-    parseFloat(data.priceDetails?.basePrice) || parseFloat(data.basePrice) || 0;
+    // Extract prices directly rather than calculating
+    const basePrice =
+      parseFloat(data.priceDetails?.basePrice) ||
+      parseFloat(data.basePrice) ||
+      0;
 
     const guestFees =
       parseFloat(data.guestFees) ||
       parseFloat(data.priceDetails?.guestFees) ||
       0;
 
-  const totalPrice = parseFloat(data.price) || 0;
+    const totalPrice = parseFloat(data.price) || 0;
 
-  // Get fees directly
-  const linenFee =
-    parseFloat(data.priceDetails?.linenFee) ||
-    parseFloat(data.priceDetails?.cleaningFee) ||
-    parseFloat(data.linenFee) ||
-    0;
+    // Get fees directly
+    const linenFee =
+      parseFloat(data.priceDetails?.linenFee) ||
+      parseFloat(data.priceDetails?.cleaningFee) ||
+      parseFloat(data.linenFee) ||
+      0;
 
-  const commission =
-    parseFloat(data.priceDetails?.commission) ||
-    parseFloat(data.commission) ||
-    0;
+    const commission =
+      parseFloat(data.priceDetails?.commission) ||
+      parseFloat(data.commission) ||
+      0;
 
-  // Extract discount info from all possible paths
-  const longStayDiscount =
-    parseFloat(data.priceDetails?.longStayDiscount) ||
-    parseFloat(data.priceDetails?.discount) ||
-    0;
+    // Extract discount info from all possible paths
+    const longStayDiscount =
+      parseFloat(data.priceDetails?.longStayDiscount) ||
+      parseFloat(data.priceDetails?.discount) ||
+      0;
 
-  // Extract coupon info with priority to newer format
-  const promoCode = data.priceDetails?.promoCode
-    ? {
-        name:
-          data.priceDetails.promoCode.code ||
-          data.priceDetails.promoCode.name ||
-          "",
-        amount: parseFloat(data.priceDetails.promoCode.amount || 0),
-      }
-    : data.appliedCoupon
-    ? {
-        name: data.appliedCoupon.code || "",
-        amount: parseFloat(data.appliedCoupon.discount || 0),
-      }
-    : null;
+    // Extract coupon info with priority to newer format
+    const promoCode = data.priceDetails?.promoCode
+      ? {
+          name:
+            data.priceDetails.promoCode.code ||
+            data.priceDetails.promoCode.name ||
+            "",
+          amount: parseFloat(data.priceDetails.promoCode.amount || 0),
+        }
+      : data.appliedCoupon
+      ? {
+          name: data.appliedCoupon.code || "",
+          amount: parseFloat(data.appliedCoupon.discount || 0),
+        }
+      : null;
 
-  // IMPROVED: Process extras from all possible sources
-  let extractedExtras = [];
+    // Prepare to collect price elements from all sources
+    let allPriceElements = [];
 
-  // 1. First try to use the extras array if it exists
-  if (data.extras && Array.isArray(data.extras) && data.extras.length > 0) {
-    extractedExtras = [...data.extras];
-
-    if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
-      console.log(
-        `Airbnb booking ${smoobuId}: Using extras array with ${data.extras.length} items`
-      );
-    }
-  }
-  // 2. Check priceDetails.priceElements for extras if extras array is empty
-  else if (
-    data.priceDetails?.priceElements &&
-    Array.isArray(data.priceDetails.priceElements) &&
-    data.priceDetails.priceElements.length > 0
-  ) {
-    if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
-      console.log(
-        `Airbnb booking ${smoobuId}: Using priceDetails.priceElements with ${data.priceDetails.priceElements.length} items`
-      );
+    // 1. If there are priceDetails.priceElements, add them
+    if (
+      data.priceDetails?.priceElements &&
+      Array.isArray(data.priceDetails.priceElements)
+    ) {
+      allPriceElements = [...data.priceDetails.priceElements];
     }
 
-    // Filter price elements to find extras
-    const extraElements = data.priceDetails.priceElements.filter((element) => {
-      const name = (element.name || "").toLowerCase();
-      const type = (element.type || "").toLowerCase();
+    // 2. If there are root priceElements, add them if not duplicates
+    if (data.priceElements && Array.isArray(data.priceElements)) {
+      data.priceElements.forEach((element) => {
+        // Check if this element already exists in allPriceElements by ID
+        const existingElement = allPriceElements.find(
+          (e) => e.id === element.id
+        );
+        if (!existingElement) {
+          allPriceElements.push(element);
+        }
+      });
+    }
 
-      // Log each element being considered for Airbnb bookings
+    // IMPROVED: Process extras from all possible sources
+    let extractedExtras = [];
+
+    // 1. First try to use the extras array if it exists
+    if (data.extras && Array.isArray(data.extras) && data.extras.length > 0) {
+      extractedExtras = [...data.extras];
+
       if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
-        console.log(`Element ${element.name} (${element.type})`);
-      }
-
-      // IMPROVED: Handle elements with null/missing type fields
-      // 1. If it's specifically an "addon" type, include it (unless it's a fee)
-      // 2. If it has no type but appears to be an extra (not a fee), include it
-      const isAddon = type === "addon";
-      const isFee =
-        name.includes("commission") ||
-        name.includes("cleaning fee") ||
-        name.includes("frais de nettoyage") ||
-        name.includes("linen fee") ||
-        name.includes("frais de linge") ||
-        name.includes("cancellation");
-
-      // Special detection for extras with null types (common in Airbnb)
-      const isProbablyExtra =
-        name.includes("formule") ||
-        name.includes("petit-déjeuner") ||
-        name.includes("raclette") ||
-        name.includes("barbecue") ||
-        name.includes("anniversaire") ||
-        name.includes("spa") ||
-        name.includes("2 pers") ||
-        name.includes("breakfast") ||
-        name.includes("meal") ||
-        name.includes("package") ||
-        name.includes("(pour 2)");
-
-      const include = (isAddon && !isFee) || (!type && isProbablyExtra);
-
-      if (
-        (data.portalName === "Airbnb" || data.channelName === "Airbnb") &&
-        include
-      ) {
         console.log(
-          `✓ Including element as extra: ${element.name} (${element.amount})`
+          `Airbnb booking ${smoobuId}: Using extras array with ${data.extras.length} items`
+        );
+      }
+    }
+    // 2. Otherwise, extract extras from the collected allPriceElements
+    else if (allPriceElements.length > 0) {
+      if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
+        console.log(
+          `Airbnb booking ${smoobuId}: Extracting extras from priceElements with ${allPriceElements.length} items`
         );
       }
 
-      return include;
+      // Filter price elements to find extras
+      const extraElements = allPriceElements.filter((element) => {
+        const name = (element.name || "").toLowerCase();
+        const type = (element.type || "").toLowerCase();
+
+        // Include only elements that are addons or have specific names indicating they are extras
+        const isAddon = type === "addon";
+        const isSpecialExtra =
+          name.includes("formule") ||
+          name.includes("petit-déjeuner") ||
+          name.includes("raclette") ||
+          name.includes("barbecue") ||
+          name.includes("spa") ||
+          name.includes("bouteille") ||
+          name.includes("2 pers") ||
+          name.includes("personne") ||
+          name.includes("frais supplémentaires");
+
+        const isBaseOrDiscount =
+          name.includes("prix de base") ||
+          name.includes("base price") ||
+          name.includes("code promo") ||
+          name.includes("réduction") ||
+          name.includes("commission") ||
+          type === "base" ||
+          type === "discount";
+
+        // Return true if it's an addon or special extra, and NOT a base price or discount
+        return (isAddon || isSpecialExtra) && !isBaseOrDiscount;
+      });
+
+      if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
+        console.log(`Found ${extraElements.length} extras in priceElements`);
+      }
+
+      extractedExtras = extraElements.map((element) => ({
+        name: element.name || "Extra",
+        amount: Math.abs(parseFloat(element.amount) || 0),
+        quantity: parseInt(element.quantity) || 1,
+        type: element.type || "addon",
+        id: element.id,
+        currencyCode: element.currencyCode || "EUR",
+      }));
+    }
+
+    // Process all extras to ensure consistent format
+    // Process all extras to ensure consistent format
+    const processedExtras = extractedExtras.map((extra) => {
+      // Look for extra person data in the original name - this is critical for Smoobu extras
+      const nameLower = (extra.name || "").toLowerCase();
+      let extraPersonData = {
+        extraPersonQuantity: parseInt(extra.extraPersonQuantity) || 0,
+        extraPersonPrice: parseFloat(extra.extraPersonPrice) || 0,
+        extraPersonAmount: 0,
+        hasExtraPerson: false,
+      };
+
+      // Check if the name contains person information
+      if (
+        nameLower.includes("personne supplémentaire") ||
+        nameLower.includes("extra person") ||
+        nameLower.includes("(pour 2)") ||
+        nameLower.includes("2 pers")
+      ) {
+        // Parse the extra person price from the name if it exists
+        const priceMatch = extra.name.match(/€\s*(\d+[.,]?\d*)/); // Matches price patterns like €20 or €20.00
+        if (priceMatch) {
+          extraPersonData.extraPersonPrice = parseFloat(
+            priceMatch[1].replace(",", ".")
+          );
+          extraPersonData.extraPersonQuantity = 1; // Assume 1 extra person if we found a price
+          extraPersonData.hasExtraPerson = true;
+        }
+      }
+
+      // If standard extraperson fields are populated, they take priority
+      if (extra.extraPersonQuantity > 0) {
+        extraPersonData.extraPersonQuantity = parseInt(
+          extra.extraPersonQuantity
+        );
+        extraPersonData.hasExtraPerson = true;
+      }
+
+      if (extra.extraPersonPrice > 0) {
+        extraPersonData.extraPersonPrice = parseFloat(extra.extraPersonPrice);
+      }
+
+      // Calculate the total amount for extra persons
+      extraPersonData.extraPersonAmount =
+        extraPersonData.extraPersonQuantity > 0
+          ? parseFloat(extra.extraPersonAmount) ||
+            extraPersonData.extraPersonPrice *
+              extraPersonData.extraPersonQuantity
+          : 0;
+
+      return {
+        name: extra.name || "Extra sans nom",
+        amount: parseFloat(extra.amount) || 0,
+        quantity: parseInt(extra.quantity) || 1,
+        type: extra.type || "addon",
+        id: extra.id,
+        currencyCode: extra.currencyCode || "EUR",
+        ...extraPersonData, // Spread the extra person data
+      };
     });
 
-    if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
-      console.log(
-        `Found ${extraElements.length} extras in priceDetails.priceElements`
+    // Calculate extras total including extra person amounts
+    const extrasTotal = processedExtras.reduce((sum, extra) => {
+      // Include both the extra amount and any extra person amount
+      return (
+        sum +
+        parseFloat(extra.amount || 0) +
+        parseFloat(extra.extraPersonAmount || 0)
       );
-    }
-
-    extractedExtras = extraElements.map((element) => ({
-      name: element.name || "Extra",
-      amount: parseFloat(element.amount) || 0,
-      quantity: parseInt(element.quantity) || 1,
-      extraPersonQuantity: 0, // These might not be available for dashboard-added extras
-      extraPersonPrice: 0,
-      extraPersonAmount: 0,
-    }));
-  }
-  // 3. Try to extract from root-level priceElements (alternative structure)
-  else if (
-    data.priceElements &&
-    Array.isArray(data.priceElements) &&
-    data.priceElements.length > 0
-  ) {
-    if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
-      console.log(
-        `Airbnb booking ${smoobuId}: Using root priceElements with ${data.priceElements.length} items`
-      );
-    }
-
-    // Filter price elements to find extras
-    const extraElements = data.priceElements.filter((element) => {
-      const name = (element.name || "").toLowerCase();
-      const type = (element.type || "").toLowerCase();
-
-      // Include add-ons that aren't fees
-      const isAddon = type === "addon";
-      const isFee =
-        name.includes("commission") ||
-        name.includes("cleaning fee") ||
-        name.includes("frais de nettoyage") ||
-        name.includes("linen fee") ||
-        name.includes("frais de linge");
-
-      // Special detection for extras
-      const isProbablyExtra =
-        name.includes("formule") ||
-        name.includes("petit-déjeuner") ||
-        name.includes("raclette") ||
-        name.includes("barbecue") ||
-        name.includes("anniversaire") ||
-        name.includes("spa") ||
-        name.includes("2 pers") ||
-        name.includes("(pour 2)");
-
-      return (isAddon && !isFee) || (!type && isProbablyExtra);
-    });
+    }, 0);
 
     if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
-      console.log(`Found ${extraElements.length} extras in root priceElements`);
+      if (processedExtras.length > 0) {
+        console.log(
+          `Airbnb booking ${smoobuId}: Processed ${processedExtras.length} extras:`,
+          processedExtras.map((e) => e.name).join(", ")
+        );
+      } else {
+        console.log(
+          `Airbnb booking ${smoobuId}: No extras found in any source`
+        );
+      }
     }
 
-    extractedExtras = extraElements.map((element) => ({
-      name: element.name || "Extra",
-      amount: parseFloat(element.amount) || 0,
-      quantity: parseInt(element.quantity) || 1,
-      extraPersonQuantity: 0,
-      extraPersonPrice: 0,
-      extraPersonAmount: 0,
-    }));
-  }
-
-  // Process all extras to ensure consistent format
-  const processedExtras = extractedExtras.map((extra) => ({
-    name: extra.name || "Extra sans nom",
-    amount: parseFloat(extra.amount) || 0,
-    quantity: parseInt(extra.quantity) || 1,
-    extraPersonQuantity: parseInt(extra.extraPersonQuantity) || 0,
-    extraPersonPrice: parseFloat(extra.extraPersonPrice) || 0,
-    extraPersonAmount:
-      extra.extraPersonQuantity > 0
-        ? parseFloat(extra.extraPersonAmount) ||
-          parseFloat(extra.extraPersonPrice) *
-            parseInt(extra.extraPersonQuantity)
-        : 0,
-    // Set flag for improved display
-    hasExtraPerson: parseInt(extra.extraPersonQuantity) > 0,
-  }));
-
-  // Calculate extras total including extra person amounts
-  const extrasTotal = processedExtras.reduce((sum, extra) => {
-    // Include both the extra amount and any extra person amount
-    return (
-      sum +
-      parseFloat(extra.amount || 0) +
-      parseFloat(extra.extraPersonAmount || 0)
-    );
-  }, 0);
-
-  if (data.portalName === "Airbnb" || data.channelName === "Airbnb") {
-    if (processedExtras.length > 0) {
-      console.log(
-        `Airbnb booking ${smoobuId}: Processed ${processedExtras.length} extras:`,
-        processedExtras.map((e) => e.name).join(", ")
-      );
-    } else {
-      console.log(`Airbnb booking ${smoobuId}: No extras found in any source`);
-    }
-  }
-
-  // Get all price elements from all possible locations for reference
-  const allPriceElements = [
-    ...(data.priceDetails?.priceElements || []),
-    ...(data.priceElements || []),
-  ];
-
-  // Construct processed booking object
-  bookingMap.set(smoobuId, {
-    id: smoobuId,
-    firestoreId: data.firestoreId, // Store the Firestore ID for reference
-    guest:
-      `${data.firstName} ${data.lastName}`.trim() ||
-      data.guestName ||
-      "Unknown",
-    property: roomNames[data.apartmentId] || data.property || data.apartmentId,
-    portal:
-      getPortalName(data.portalName) ||
-      getPortalName(data.channelName) ||
-      getPortalName(String(data.channelId)) ||
-      "Website",
-    created: data.createdAt,
-    email: data.email,
-    phone: data.phone,
-    address: data.street
-      ? `${data.street}, ${data.postalCode} ${data.location}, ${data.country}`
-      : data.address || "",
-    adults: data.adults,
-    children: data.children,
-    checkIn: data.arrivalDate,
-    checkOut: data.departureDate,
-    arrivalTime: data.arrivalTime || data.checkInTime,
-    departureTime: data.departureTime || data.checkOutTime,
-    notes: data.notice,
-    price: totalPrice,
-    basePrice: basePrice, // Root level basePrice for ease of access
-    guestFees: guestFees,
-    priceDetails: {
-      basePrice: basePrice,
-      linenFee: linenFee,
-      commission: commission,
-      longStayDiscount: longStayDiscount,
-      promoCode: promoCode,
-      extrasTotal: extrasTotal,
-      // Store all price elements from all sources
-      priceElements: allPriceElements,
-    },
-    commission: commission,
-    linenFee: linenFee,
-    nights:
-      data.priceDetails?.numberOfNights ||
-      Math.ceil(
-        (new Date(data.departureDate) - new Date(data.arrivalDate)) /
-          (1000 * 60 * 60 * 24)
-      ),
-    extras: processedExtras,
-    // Store original data sources for debugging
-    _debug: {
-      extrasSource:
-        processedExtras.length > 0
-          ? data.extras?.length > 0
-            ? "extras"
-            : data.priceDetails?.priceElements?.length > 0
-            ? "priceDetails.priceElements"
-            : "rootPriceElements"
-          : "none",
-      hasExtrasArray: data.extras && data.extras.length > 0,
+    // Construct processed booking object
+    bookingMap.set(smoobuId, {
+      id: smoobuId,
+      firestoreId: data.firestoreId, // Store the Firestore ID for reference
+      guest:
+        `${data.firstName} ${data.lastName}`.trim() ||
+        data.guestName ||
+        "Unknown",
+      property:
+        roomNames[data.apartmentId] || data.property || data.apartmentId,
+      portal:
+        getPortalName(data.portalName) ||
+        getPortalName(data.channelName) ||
+        getPortalName(String(data.channelId)) ||
+        "Website",
+      created: data.createdAt,
+      email: data.email,
+      phone: data.phone,
+      address: data.street
+        ? `${data.street}, ${data.postalCode} ${data.location}, ${data.country}`
+        : data.address || "",
+      adults: data.adults,
+      children: data.children,
+      checkIn: data.arrivalDate,
+      checkOut: data.departureDate,
+      arrivalTime: data.arrivalTime || data.checkInTime,
+      departureTime: data.departureTime || data.checkOutTime,
+      notes: data.notice,
+      price: totalPrice,
+      basePrice: basePrice, // Root level basePrice for ease of access
       guestFees: guestFees,
-      hasPriceDetailsElements:
-        data.priceDetails?.priceElements &&
-        data.priceDetails.priceElements.length > 0,
-      hasRootElements: data.priceElements && data.priceElements.length > 0,
-      originalPortalName: data.portalName || data.channelName,
-      appliedCoupon: data.appliedCoupon,
-      priceDetailsPromoCode: data.priceDetails?.promoCode,
-    },
-  });
-};
+      priceDetails: {
+        basePrice: basePrice,
+        linenFee: linenFee,
+        commission: commission,
+        longStayDiscount: longStayDiscount,
+        promoCode: promoCode,
+        extrasTotal: extrasTotal,
+        // Store all price elements from all sources
+        priceElements: allPriceElements,
+      },
+      commission: commission,
+      linenFee: linenFee,
+      nights:
+        data.priceDetails?.numberOfNights ||
+        Math.ceil(
+          (new Date(data.departureDate) - new Date(data.arrivalDate)) /
+            (1000 * 60 * 60 * 24)
+        ),
+      extras: processedExtras,
+      // Store original data sources for debugging
+      _debug: {
+        extrasSource:
+          processedExtras.length > 0
+            ? data.extras?.length > 0
+              ? "extras"
+              : data.priceDetails?.priceElements?.length > 0
+              ? "priceDetails.priceElements"
+              : "rootPriceElements"
+            : "none",
+        hasExtrasArray: data.extras && data.extras.length > 0,
+        guestFees: guestFees,
+        hasPriceDetailsElements:
+          data.priceDetails?.priceElements &&
+          data.priceDetails.priceElements.length > 0,
+        hasRootElements: data.priceElements && data.priceElements.length > 0,
+        originalPortalName: data.portalName || data.channelName,
+        appliedCoupon: data.appliedCoupon,
+        priceDetailsPromoCode: data.priceDetails?.promoCode,
+      },
+    });
+  };
   // Frontend function - call your backend proxy instead of Smoobu directly
   const handleFetchAndSync = async () => {
     try {
@@ -1324,39 +1459,58 @@ const processBookingData = (data, bookingMap) => {
                                             )}
 
                                             {/* Then show regular extras */}
-                                            {booking.extras
-                                              ?.filter(
-                                                (extra) => !extra.isExtraPerson
-                                              )
-                                              .map((extra, index) => (
-                                                <li
-                                                  key={`${booking.id}-extra-${index}`}
-                                                  className="break-words"
-                                                >
-                                                  • {extra.name}{" "}
-                                                  {extra.quantity > 1 &&
-                                                    `(${extra.quantity}x)`}
-                                                  : {formatPrice(extra.amount)}
-                                                  {/* Show extra person inline with the main extra */}
-                                                  {extra.extraPersonQuantity >
-                                                    0 &&
-                                                    extra.extraPersonAmount >
-                                                      0 && (
+                                            {booking.extras?.map(
+                                              (extra, index) => {
+                                                // Optional debug log to see what's available
+                                                // console.log(`Extra ${index}: ${extra.name}`, {
+                                                //   extraPersonQuantity: extra.extraPersonQuantity,
+                                                //   extraPersonPrice: extra.extraPersonPrice,
+                                                //   extraPersonAmount: extra.extraPersonAmount,
+                                                //   isExtraPerson: extra.isExtraPerson
+                                                // });
+
+                                                return (
+                                                  <li
+                                                    key={`${booking.id}-extra-${index}`}
+                                                    className="break-words"
+                                                  >
+                                                    • {extra.name}{" "}
+                                                    {extra.quantity > 1 &&
+                                                      `(${extra.quantity}x)`}
+                                                    :{" "}
+                                                    {formatPrice(extra.amount)}
+                                                    {/* Modified condition to be more lenient */}
+                                                    {(extra.extraPersonQuantity >
+                                                      0 ||
+                                                      extra.extraPersonPrice >
+                                                        0 ||
+                                                      extra.extraPersonAmount >
+                                                        0) && (
                                                       <span className="ml-1 text-indigo-700">
-                                                        {" "}
-                                                        (Personne supplémentaire
-                                                        {extra.extraPersonQuantity >
-                                                          1 &&
-                                                          ` (x${extra.extraPersonQuantity})`}{" "}
-                                                        :{" "}
-                                                        {formatPrice(
-                                                          extra.extraPersonAmount
-                                                        )}
-                                                        )
+                                                        <br />
+                                                        <span className="ml-4">
+                                                          (Personne
+                                                          supplémentaire
+                                                          {extra.extraPersonQuantity >
+                                                          1
+                                                            ? ` (x${extra.extraPersonQuantity})`
+                                                            : ""}{" "}
+                                                          :{" "}
+                                                          {formatPrice(
+                                                            extra.extraPersonAmount ||
+                                                              extra.extraPersonPrice *
+                                                                (extra.extraPersonQuantity ||
+                                                                  1) ||
+                                                              0
+                                                          )}
+                                                          )
+                                                        </span>
                                                       </span>
                                                     )}
-                                                </li>
-                                              ))}
+                                                  </li>
+                                                );
+                                              }
+                                            )}
                                           </ul>
 
                                           <div className="pt-2 mt-4 border-t border-gray-200">
