@@ -1953,8 +1953,17 @@ app.post('/api/create-payment-intent', async (req, res) => {
     const guestFees = extraGuests * settings.extraGuestsPerNight;
 
     // Calculate total extras directly from the extras array
+    // Calculate total extras directly from the extras array
     const extrasTotal = bookingData.extras?.reduce((total, extra) => {
-      return total + (extra.amount || 0);
+      // Include the base amount of the extra
+      let extraTotal = extra.amount || 0;
+      
+      // Add extra person amount if it exists
+      if (extra.extraPersonQuantity && extra.extraPersonPrice) {
+        extraTotal += (extra.extraPersonQuantity * extra.extraPersonPrice);
+      }
+      
+      return total + extraTotal;
     }, 0) || 0;
 
     const bookingReference = `BOOKING-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
