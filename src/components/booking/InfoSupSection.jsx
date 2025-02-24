@@ -14,6 +14,11 @@ export const InfoSupSection = ({
   const [couponError, setCouponError] = useState(null);
 
   const onApplyCoupon = async () => {
+    // Don't allow applying if there's already a coupon
+    if (appliedCoupon) {
+      return;
+    }
+
     if (!coupon) {
       setCouponError(t('booking.coupon.errors.enterCode'));
       return;
@@ -21,7 +26,6 @@ export const InfoSupSection = ({
 
     try {
       if (handleApplyCoupon) {
-        // The handleApplyCoupon function should now return an object with status
         const result = await handleApplyCoupon(coupon);
         
         if (result?.error) {
@@ -38,11 +42,16 @@ export const InfoSupSection = ({
             case 'not_found':
               setCouponError(t('booking.coupon.errors.notFound'));
               break;
+            case 'invalid_dates':
+              setCouponError(result.message || t('booking.coupon.errors.invalid'));
+              break;
             default:
               setCouponError(t('booking.coupon.errors.invalid'));
           }
         } else {
           setCouponError(null);
+          // Clear the input field after successful application
+          setCoupon("");
         }
       }
     } catch (error) {
@@ -78,12 +87,13 @@ export const InfoSupSection = ({
                 value={coupon}
                 onChange={(e) => {
                   setCoupon(e.target.value);
-                  setCouponError(null); // Clear error when user types
+                  setCouponError(null);
                 }}
+                disabled={appliedCoupon !== null}
                 placeholder={t('extras.infoSup.promoCode.placeholder')}
                 className={`mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2 ${
                   couponError ? 'border-red-500' : ''
-                }`}
+                } ${appliedCoupon ? 'bg-gray-100' : ''}`}
               />
             </label>
             {couponError && (
@@ -93,14 +103,25 @@ export const InfoSupSection = ({
           <button
             type="button"
             onClick={onApplyCoupon}
-            className="h-12 px-6 rounded shadow-sm text-[16px] font-medium text-white bg-[#668E73] hover:bg-opacity-90 focus:outline-none"
+            disabled={appliedCoupon !== null}
+            className={`h-12 px-6 rounded shadow-sm text-[16px] font-medium text-white ${
+              appliedCoupon 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-[#668E73] hover:bg-opacity-90'
+            } focus:outline-none`}
           >
             {t('extras.infoSup.promoCode.button')}
           </button>
         </div>
         {appliedCoupon && !couponError && (
-          <div className="mt-2 text-sm text-green-600">
-            {t('extras.infoSup.promoCode.appliedStart')} {appliedCoupon.code} {t('extras.infoSup.promoCode.appliedEnd')}: -{appliedCoupon.discount} {t('extras.infoSup.promoCode.appliedCurrency')} <br/>
+          <div className="mt-2">
+            <p className="text-sm text-green-600">
+              {t('extras.infoSup.promoCode.appliedStart')} {appliedCoupon.code} 
+              {appliedCoupon.type === 'percentage' 
+                ? ` (${appliedCoupon.percentageValue}%) `
+                : ' '}
+              {t('extras.infoSup.promoCode.appliedEnd')}: -{appliedCoupon.discount} {t('extras.infoSup.promoCode.appliedCurrency')}
+            </p>
             <p className="mt-4 text-sm text-gray-500">{t('booking.coupon.minusZero')}</p>
           </div>
         )}
