@@ -474,6 +474,11 @@ const BookingsReport = () => {
 
 const processBookingData = (data, bookingMap) => {
   const smoobuId = data.smoobuId || data.smoobuReservationId;
+  console.log(
+    `📌 Booking ${data.id}: Raw extras before any processing:`,
+    data.extras
+  );
+
 
   // Skip if already processed or missing ID
   if (!smoobuId || bookingMap.has(smoobuId)) return;
@@ -647,20 +652,50 @@ const processBookingData = (data, bookingMap) => {
       console.log(`Found ${extraElements.length} extras in priceElements`);
     }
 
-    extractedExtras = extraElements.map((element) => ({
-      name: element.name || "Extra",
-      amount: Math.abs(parseFloat(element.amount) || 0),
-      quantity: parseInt(element.quantity) || 1,
-      type: element.type || "addon",
-      id: element.id,
-      currencyCode: element.currencyCode || "EUR",
-      // Initialize empty extra person data
-      extraPersonQuantity: 0,
-      extraPersonPrice: 0,
-      extraPersonAmount: 0,
-      extraPersonName: "Personne supplémentaire",
-      hasExtraPerson: false,
-    }));
+
+    console.log(
+      `📌 Booking ${data.id}: Raw extras before processing:`,
+      data.extras
+    );
+    console.log(
+      `📌 Booking ${data.id}: Extracted priceElements:`,
+      data.priceDetails?.priceElements
+    );
+
+    console.log(
+      `📌 Booking ${data.id}: Source of extras -`,
+      data.extras?.length > 0
+        ? "✅ Using extras array"
+        : "⚠️ Extracting from priceElements"
+    );
+
+    
+extractedExtras = extraElements.map((element) => ({
+  name: element.name || "Extra",
+  amount: Math.abs(parseFloat(element.amount) || 0),
+  quantity: parseInt(element.quantity) || 1,
+  type: element.type || "addon",
+  id: element.id,
+  currencyCode: element.currencyCode || "EUR",
+  // Preserve existing extra person data when available
+  extraPersonQuantity: element.extraPersonQuantity
+    ? parseInt(element.extraPersonQuantity)
+    : 0,
+  extraPersonPrice: element.extraPersonPrice
+    ? parseFloat(element.extraPersonPrice)
+    : 0,
+  extraPersonAmount: element.extraPersonAmount
+    ? parseFloat(element.extraPersonAmount)
+    : 0,
+  extraPersonName: element.extraPersonName || "Personne supplémentaire",
+  hasExtraPerson:
+    (element.extraPersonQuantity && element.extraPersonQuantity > 0) ||
+    (element.extraPersonPrice && element.extraPersonPrice > 0) ||
+    (element.extraPersonAmount && element.extraPersonAmount > 0),
+}));
+
+
+
   }
 
   // Process all extras to ensure consistent format
@@ -722,6 +757,13 @@ const processBookingData = (data, bookingMap) => {
       console.log(`Airbnb booking ${smoobuId}: No extras found in any source`);
     }
   }
+
+console.log("Processed extras before saving:", processedExtras);
+
+console.log(
+  `✅ Booking ${data.id}: Processed extras before saving:`,
+  extractedExtras
+);
 
   // Construct processed booking object
   bookingMap.set(smoobuId, {
@@ -809,8 +851,12 @@ const processBookingData = (data, bookingMap) => {
     );
     console.log("Original extras:", data.extras);
     console.log("Processed extras:", processedExtras);
+    console.log("✅ Saved booking in bookingMap:", bookingMap.get(smoobuId));
+
   }
 };
+
+
   // Frontend function - call your backend proxy instead of Smoobu directly
   const handleFetchAndSync = async () => {
     try {
