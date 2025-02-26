@@ -1485,11 +1485,27 @@ app.get("/api/fetch-and-sync", async (req, res) => {
 
     existingBookingsSnapshot.forEach((doc) => {
       const data = doc.data();
+      // Use normalized ID to ensure consistent matching
       if (data.smoobuId) {
-        if (!existingBookingMap.has(data.smoobuId)) {
-          existingBookingMap.set(data.smoobuId, []);
+        const normalizedId = normalizeBookingId(data.smoobuId);
+        if (!existingBookingMap.has(normalizedId)) {
+          existingBookingMap.set(normalizedId, []);
         }
-        existingBookingMap.get(data.smoobuId).push({
+        existingBookingMap.get(normalizedId).push({
+          id: doc.id,
+          ...data,
+        });
+      }
+      // Also add by smoobuReservationId if it exists
+      if (
+        data.smoobuReservationId &&
+        data.smoobuReservationId !== data.smoobuId
+      ) {
+        const normalizedResId = normalizeBookingId(data.smoobuReservationId);
+        if (!existingBookingMap.has(normalizedResId)) {
+          existingBookingMap.set(normalizedResId, []);
+        }
+        existingBookingMap.get(normalizedResId).push({
           id: doc.id,
           ...data,
         });
@@ -1503,7 +1519,10 @@ app.get("/api/fetch-and-sync", async (req, res) => {
     // 2. Process each booking
     for (const booking of bookings) {
       try {
-        const smoobuId = booking.id.toString();
+        // Use normalized ID for consistent matching
+        const smoobuId = normalizeBookingId(booking.id);
+
+        console.log(`🔄 Processing booking ${smoobuId}`);
 
         // Check for existing booking using our map
         const existingBookings = existingBookingMap.get(smoobuId) || [];
@@ -1525,6 +1544,9 @@ app.get("/api/fetch-and-sync", async (req, res) => {
             }
           );
           priceElements = priceElementsResponse.data.priceElements || [];
+          console.log(
+            `🟦 Fetched ${priceElements.length} price elements for booking ${smoobuId}`
+          );
         } catch (priceError) {
           console.error(
             `🟨 Error fetching price elements for booking ${smoobuId}:`,
@@ -1532,9 +1554,11 @@ app.get("/api/fetch-and-sync", async (req, res) => {
           );
         }
 
-        // Find important price components
-        const basePrice =
-          priceElements.find((el) => el.type === "base")?.amount || 0;
+        // Use helper functions for price extraction
+        const pricingInfo = extractPricingInfo(priceElements);
+        const extrasData = processExtrasWithPersons(priceElements);
+
+        // Still extract these directly
         const linenFee =
           priceElements.find(
             (el) =>
@@ -1542,6 +1566,7 @@ app.get("/api/fetch-and-sync", async (req, res) => {
               el.name?.toLowerCase().includes("linge") ||
               el.name?.toLowerCase().includes("cleaning")
           )?.amount || 0;
+
         const commission =
           priceElements.find((el) =>
             el.name?.toLowerCase().includes("commission")
@@ -1552,58 +1577,16 @@ app.get("/api/fetch-and-sync", async (req, res) => {
         const checkOut = new Date(booking.departure);
         const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
 
-        // Calculate extras total
-        const extras = priceElements
-          .filter((element) => {
-            const name = element.name?.toLowerCase() || "";
-            const type = (element.type || "").toLowerCase();
-            if (
-              name.includes("prix de base") ||
-              name.includes("base price") ||
-              name.includes("code promo") ||
-              name.includes("réduction") ||
-              name.includes("commission") ||
-              type === "base" ||
-              type === "discount"
-            ) {
-              return false;
-            }
-
-            return (
-              (type === "addon" && name.includes("formule")) ||
-              name.includes("spa") ||
-              name.includes("bouteille") ||
-              name.includes("petit-déjeuner") ||
-              name.includes("raclette") ||
-              name.includes("barbecue") ||
-              name.includes("frais supplémentaires") ||
-              name.includes("2 pers")
-            );
-          })
-          .map((extra) => ({
-            name: extra.name || "Extra",
-            amount: parseFloat(extra.amount) || 0,
-            quantity: parseInt(extra.quantity) || 1,
-          }));
-
-        const extrasTotal = extras.reduce(
-          (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
-          0
-        );
-
         // Format guest name
         const guestName =
           booking["guest-name"] ||
           `${booking.firstName || ""} ${booking.lastName || ""}`.trim() ||
           "Unknown Guest";
 
-        // Create booking document with corrected price calculations
-        const totalPrice = parseFloat(booking.price) || 0;
-        // Base price should be total minus linen fee (as requested)
-        const correctedBasePrice = totalPrice - linenFee;
-
+        // Create booking document with improved price and discount handling
         const bookingDoc = {
           smoobuId: smoobuId,
+          smoobuReservationId: Number(smoobuId), // Store both formats for better matching
           createdAt: booking["created-at"] || new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           firstName: booking.firstName || guestName.split(" ")[0] || "",
@@ -1628,75 +1611,338 @@ app.get("/api/fetch-and-sync", async (req, res) => {
           channelId: booking.channel?.id,
           channelName: booking.channel?.name || "",
           portalName: portalName,
-          price: totalPrice,
-          basePrice: correctedBasePrice,
-          linenFee: linenFee,
-          commission: commission,
-          extras: extras,
+          price: parseFloat(booking.price) || 0,
+          basePrice: pricingInfo.basePrice,
+          linenFee: parseFloat(linenFee),
+          commission: parseFloat(commission),
+          extras: extrasData.extras,
           nights: nights,
           priceDetails: {
-            basePrice: correctedBasePrice,
-            linenFee: linenFee,
-            commission: commission,
-            extrasTotal: extrasTotal,
+            basePrice: pricingInfo.basePrice,
+            linenFee: parseFloat(linenFee),
+            commission: parseFloat(commission),
+            longStayDiscount: pricingInfo.longStayDiscount,
+            couponDiscount: pricingInfo.couponDiscount,
+            discount: pricingInfo.longStayDiscount,
+            extrasTotal: extrasData.extras.reduce(
+              (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
+              0 // Only use base amount
+            ),
             priceElements: priceElements,
+            promoCode: pricingInfo.promoCode, // This is now always either an object or null
+            calculatedDiscounts: {
+              longStay: pricingInfo.longStayDiscount,
+              coupon: pricingInfo.couponDiscount,
+            },
+            settings: {
+              extraChildPerNight: 20,
+              extraGuestsPerNight: 20,
+              lengthOfStayDiscount: {
+                discountPercentage: pricingInfo.longStayDiscount > 0 ? 40 : 0,
+                minNights: 2,
+              },
+              maxGuests: 4,
+              startingAtGuest: 2,
+            },
           },
           lastSyncedAt: new Date().toISOString(),
         };
 
+        // Log detailed information for the specific problematic booking
+        if (smoobuId === "88649503") {
+          console.log("🔍 Found target booking 88649503!");
+          console.log("Base price:", pricingInfo.basePrice);
+          console.log("Long stay discount:", pricingInfo.longStayDiscount);
+          console.log("Coupon discount:", pricingInfo.couponDiscount);
+          console.log(
+            "Extras:",
+            extrasData.extras.map((e) => `${e.name} (${e.amount}€)`)
+          );
+        }
+
+        // Create clean versions of data objects without undefined values
+        const cleanBookingDoc = {};
+        Object.entries(bookingDoc).forEach(([key, value]) => {
+          if (value !== undefined) {
+            cleanBookingDoc[key] = value;
+          }
+        });
+
+        const cleanPriceDetails = {};
+        Object.entries(bookingDoc.priceDetails || {}).forEach(
+          ([key, value]) => {
+            if (value !== undefined) {
+              cleanPriceDetails[key] = value;
+            }
+          }
+        );
+
+        cleanBookingDoc.priceDetails = cleanPriceDetails;
+
         // Add or update in Firebase
         if (existingBookings.length === 0) {
           // Add new booking
-          await db.collection("bookings").add(bookingDoc);
+          await db.collection("bookings").add(cleanBookingDoc);
           console.log(
             `🟩 Added new booking ${smoobuId} (${portalName}): ${guestName}`
           );
           stats.added++;
         } else if (existingBookings.length === 1) {
-          // Update single existing booking
+          // Update single existing booking with proper data preservation
           const docId = existingBookings[0].id;
-          await db
-            .collection("bookings")
-            .doc(docId)
-            .update({
-              ...bookingDoc,
-              updatedAt: new Date().toISOString(),
+          const existingData = existingBookings[0];
+
+          // IMPROVED: Preserve existing extra person data for all matching extras
+          const mergedExtras = [];
+
+          // Process each new extra
+          extrasData.extras.forEach((newExtra) => {
+            // Try to find matching extra in existing data
+            const existingExtra = existingData.extras?.find(
+              (e) => e.name === newExtra.name || e.id === newExtra.id
+            );
+
+            if (existingExtra) {
+              // If the existing extra has extra person data, preserve it
+              if (
+                existingExtra.hasExtraPerson ||
+                existingExtra.extraPersonQuantity > 0 ||
+                existingExtra.extraPersonPrice > 0 ||
+                existingExtra.extraPersonAmount > 0
+              ) {
+                console.log(
+                  `Preserving extra person data for ${existingExtra.name}: Amount=${existingExtra.extraPersonAmount}€`
+                );
+
+                // Use the new extra but keep the existing extra person data
+                mergedExtras.push({
+                  ...newExtra,
+                  extraPersonQuantity: existingExtra.extraPersonQuantity,
+                  extraPersonPrice: existingExtra.extraPersonPrice,
+                  extraPersonAmount: existingExtra.extraPersonAmount,
+                  extraPersonName:
+                    existingExtra.extraPersonName || "Personne supplémentaire",
+                  hasExtraPerson: true,
+                });
+              } else {
+                // No existing extra person data, just use the new one
+                mergedExtras.push(newExtra);
+              }
+            } else {
+              // No matching existing extra, use the new one
+              mergedExtras.push(newExtra);
+            }
+          });
+
+          // Find extras in existing data that aren't in the new data
+          if (existingData.extras) {
+            const newExtraNames = new Set(mergedExtras.map((e) => e.name));
+            existingData.extras.forEach((existingExtra) => {
+              if (!newExtraNames.has(existingExtra.name)) {
+                // This extra exists in the current data but not in the new data,
+                // so add it to preserve it
+                mergedExtras.push(existingExtra);
+                console.log(
+                  `Adding extra from existing data: ${existingExtra.name}`
+                );
+              }
             });
+          }
+
+          // FIXED: Calculate extras total using only the base amount
+          const mergedExtrasTotal = mergedExtras.reduce(
+            (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
+            0
+          );
+
+          // Create updated booking doc with merged extras
+          const updatedBookingDoc = {
+            ...existingData, // Start with ALL existing data
+            ...cleanBookingDoc, // Add/overwrite with new data
+
+            // Use our carefully merged extras
+            extras: mergedExtras,
+
+            // Make sure these critical fields don't get overwritten
+            createdAt: existingData.createdAt || bookingDoc.createdAt,
+            paymentIntentId: existingData.paymentIntentId || null,
+            stripePaymentStatus: existingData.stripePaymentStatus || null,
+            updatedAt: new Date().toISOString(),
+
+            // Special handling for price details to ensure we don't lose information
+            priceDetails: {
+              ...cleanPriceDetails, // Use our clean price details
+
+              // Update extras total with the correct calculation
+              extrasTotal: mergedExtrasTotal,
+            },
+          };
+
+          // Create clean version of this updated doc
+          const cleanUpdatedDoc = {};
+          Object.entries(updatedBookingDoc).forEach(([key, value]) => {
+            if (value !== undefined) {
+              cleanUpdatedDoc[key] = value;
+            }
+          });
+
+          // Make sure priceDetails is clean too
+          if (cleanUpdatedDoc.priceDetails) {
+            const cleanUpdatedPriceDetails = {};
+            Object.entries(cleanUpdatedDoc.priceDetails).forEach(
+              ([key, value]) => {
+                if (value !== undefined) {
+                  cleanUpdatedPriceDetails[key] = value;
+                }
+              }
+            );
+            cleanUpdatedDoc.priceDetails = cleanUpdatedPriceDetails;
+          }
+
+          // Update with cleaned document
+          await db.collection("bookings").doc(docId).update(cleanUpdatedDoc);
+
           console.log(
-            `🟦 Updated booking ${smoobuId} (${portalName}): ${guestName}`
+            `🟦 Updated booking ${smoobuId} (${portalName}): ${guestName} with ${
+              mergedExtras.length
+            } extras: ${mergedExtras.map((e) => e.name).join(", ")}`
           );
           stats.updated++;
         } else {
-          // Handle duplicate existing bookings - update the most recent one
+          // Handle duplicate existing bookings - update the most recent one but DON'T delete others
+          console.log(
+            `⚠️ Found ${existingBookings.length} potential duplicates for booking ${smoobuId}. Will update without deleting.`
+          );
+
+          // Sort the bookings by update date to find the most recently updated one
           existingBookings.sort((a, b) => {
             const dateA = new Date(a.updatedAt || a.createdAt || 0);
             const dateB = new Date(b.updatedAt || b.createdAt || 0);
             return dateB - dateA;
           });
 
-          const [mostRecent, ...duplicates] = existingBookings;
+          const mostRecent = existingBookings[0];
+          const existingData = mostRecent;
 
-          // Update the most recent booking
-          await db
-            .collection("bookings")
-            .doc(mostRecent.id)
-            .update({
-              ...bookingDoc,
-              updatedAt: new Date().toISOString(),
-            });
+          // IMPROVED: Preserve existing extra person data for all matching extras
+          const mergedExtras = [];
 
-          // Delete the duplicates
-          for (const duplicate of duplicates) {
-            await db.collection("bookings").doc(duplicate.id).delete();
-            console.log(
-              `🟨 Deleted duplicate booking ${duplicate.id} for smoobuId ${smoobuId}`
+          // Process each new extra
+          extrasData.extras.forEach((newExtra) => {
+            // Try to find matching extra in existing data
+            const existingExtra = existingData.extras?.find(
+              (e) => e.name === newExtra.name || e.id === newExtra.id
             );
+
+            if (existingExtra) {
+              // If the existing extra has extra person data, preserve it
+              if (
+                existingExtra.hasExtraPerson ||
+                existingExtra.extraPersonQuantity > 0 ||
+                existingExtra.extraPersonPrice > 0 ||
+                existingExtra.extraPersonAmount > 0
+              ) {
+                console.log(
+                  `Preserving extra person data for ${existingExtra.name}: Amount=${existingExtra.extraPersonAmount}€`
+                );
+
+                // Use the new extra but keep the existing extra person data
+                mergedExtras.push({
+                  ...newExtra,
+                  extraPersonQuantity: existingExtra.extraPersonQuantity,
+                  extraPersonPrice: existingExtra.extraPersonPrice,
+                  extraPersonAmount: existingExtra.extraPersonAmount,
+                  extraPersonName:
+                    existingExtra.extraPersonName || "Personne supplémentaire",
+                  hasExtraPerson: true,
+                });
+              } else {
+                // No existing extra person data, just use the new one
+                mergedExtras.push(newExtra);
+              }
+            } else {
+              // No matching existing extra, use the new one
+              mergedExtras.push(newExtra);
+            }
+          });
+
+          // Find extras in existing data that aren't in the new data
+          if (existingData.extras) {
+            const newExtraNames = new Set(mergedExtras.map((e) => e.name));
+            existingData.extras.forEach((existingExtra) => {
+              if (!newExtraNames.has(existingExtra.name)) {
+                // This extra exists in the current data but not in the new data,
+                // so add it to preserve it
+                mergedExtras.push(existingExtra);
+                console.log(
+                  `Adding extra from existing data: ${existingExtra.name}`
+                );
+              }
+            });
           }
 
-          console.log(
-            `🟦 Updated booking ${smoobuId} and removed ${duplicates.length} duplicates`
+          // FIXED: Calculate extras total using only the base amount
+          const mergedExtrasTotal = mergedExtras.reduce(
+            (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
+            0
           );
-          stats.updated++;
+
+          // Create clean version of the updated document
+          const updatedBookingDoc = {
+            ...existingData, // Start with ALL existing data
+            ...cleanBookingDoc, // Add/overwrite with new data
+
+            // Use our carefully merged extras
+            extras: mergedExtras,
+
+            // Make sure these critical fields don't get overwritten
+            createdAt: existingData.createdAt || bookingDoc.createdAt,
+            paymentIntentId: existingData.paymentIntentId || null,
+            stripePaymentStatus: existingData.stripePaymentStatus || null,
+            updatedAt: new Date().toISOString(),
+
+            // Special handling for price details
+            priceDetails: {
+              ...cleanPriceDetails,
+              extrasTotal: mergedExtrasTotal,
+            },
+          };
+
+          // Clean the updated doc
+          const cleanUpdatedDoc = {};
+          Object.entries(updatedBookingDoc).forEach(([key, value]) => {
+            if (value !== undefined) {
+              cleanUpdatedDoc[key] = value;
+            }
+          });
+
+          // Make sure priceDetails is clean too
+          if (cleanUpdatedDoc.priceDetails) {
+            const cleanUpdatedPriceDetails = {};
+            Object.entries(cleanUpdatedDoc.priceDetails).forEach(
+              ([key, value]) => {
+                if (value !== undefined) {
+                  cleanUpdatedPriceDetails[key] = value;
+                }
+              }
+            );
+            cleanUpdatedDoc.priceDetails = cleanUpdatedPriceDetails;
+          }
+
+          // Update the booking without deleting any others
+          try {
+            await db
+              .collection("bookings")
+              .doc(mostRecent.id)
+              .update(cleanUpdatedDoc);
+            console.log(
+              `🟦 Updated booking ${smoobuId} - DISABLED duplicate deletion`
+            );
+            stats.updated++;
+          } catch (updateError) {
+            console.error(`Error updating booking ${smoobuId}:`, updateError);
+            stats.errors++;
+          }
         }
       } catch (bookingError) {
         console.error(
@@ -1722,6 +1968,235 @@ app.get("/api/fetch-and-sync", async (req, res) => {
     });
   }
 });
+
+// Helper function for normalizing booking IDs
+function normalizeBookingId(id) {
+  if (!id) return null;
+  return String(id).trim();
+}
+
+// Helper function for extracting pricing information
+function extractPricingInfo(priceElements) {
+  // Base price elements - look for either "base" type or "Prix de base" name
+const basePriceElement = priceElements.find(
+  (el) =>
+    el.type === "base" ||
+    (el.name || "").toLowerCase().includes("prix de base") ||
+    (el.name || "").toLowerCase().includes("base price")
+);
+
+const basePrice = basePriceElement
+  ? parseFloat(basePriceElement.amount) || 0
+  : 0;
+
+  // Find discounts
+  const longStayElement = priceElements.find(
+    (el) => el.name && el.name.toLowerCase().includes("réduction long séjour")
+  );
+  const longStayDiscount = longStayElement
+    ? Math.abs(parseFloat(longStayElement.amount) || 0)
+    : 0;
+
+  const couponElement = priceElements.find(
+    (el) => el.name && el.name.toLowerCase().includes("code promo")
+  );
+  const couponDiscount = couponElement
+    ? Math.abs(parseFloat(couponElement.amount) || 0)
+    : 0;
+
+  // Create promoCode object if coupon exists
+  let promoCode = null;
+  if (couponElement && couponElement.name) {
+    const couponMatch = couponElement.name.match(/POTES|[A-Z0-9]+/i);
+    const couponName = couponMatch ? couponMatch[0] : "CODE";
+
+    promoCode = {
+      code: couponName,
+      name: couponName,
+      amount: couponDiscount,
+      type: "fixed",
+      percentageValue: null,
+    };
+  }
+
+  return {
+    basePrice,
+    longStayDiscount,
+    couponDiscount,
+    promoCode,
+    discountElements: {
+      longStay: longStayElement,
+      coupon: couponElement,
+    },
+  };
+}
+
+// Helper function for processing extras
+function processExtrasWithPersons(priceElements) {
+  // 1. First identify all potential extras, excluding duplicates
+  const extraNamesMap = new Map(); // Use a map to prevent duplicates by name
+
+  priceElements.forEach((element) => {
+    const name = (element.name || "").toLowerCase();
+    const type = (element.type || "").toLowerCase();
+
+    // Exclude these types of items from extras
+    if (
+      name.includes("prix de base") ||
+      name.includes("base price") ||
+      name.includes("réduction") ||
+      name.includes("code promo") ||
+      type === "base" ||
+      type === "discount"
+    ) {
+      return;
+    }
+
+    // If we've already seen this name, only keep the one with more details or higher amount
+    if (extraNamesMap.has(element.name)) {
+      const existing = extraNamesMap.get(element.name);
+      // Only replace if this one has more data or higher amount
+      if (
+        element.type === "addon" ||
+        parseFloat(element.amount) > parseFloat(existing.amount)
+      ) {
+        extraNamesMap.set(element.name, element);
+      }
+    } else {
+      extraNamesMap.set(element.name, element);
+    }
+  });
+
+  const potentialExtras = Array.from(extraNamesMap.values());
+  console.log(
+    "Deduplicated extras:",
+    potentialExtras.map((e) => e.name)
+  );
+
+  // 2. Identify "personne supplémentaire" items
+  const personneItems = priceElements.filter((element) => {
+    const name = (element.name || "").toLowerCase();
+    return name.includes("personne supplémentaire");
+  });
+
+  console.log(
+    "Personne supplémentaire items:",
+    personneItems.map((e) => e.name)
+  );
+
+  // 3. Process each extra and try to match with personne supplémentaire items
+  const processedExtras = potentialExtras.map((extra) => {
+    const extraName = (extra.name || "").toLowerCase();
+
+    // Try to find a matching personne supplémentaire item for this extra
+    const matchingPersonItem = personneItems.find((person) => {
+      const personName = (person.name || "").toLowerCase();
+
+      // Check if the person item references this extra
+      // First strip out qualifiers from the extra name
+      const baseExtraName = extraName
+        .replace(" (pour 2)", "")
+        .replace(" (2 pers)", "")
+        .replace(" (pour 2 personnes)", "");
+
+      // More aggressive matching - look for significant words in both names
+      const extraWords = baseExtraName.split(" ");
+      const significantExtraWords = extraWords.filter(
+        (word) =>
+          word.length > 3 &&
+          !["pour", "avec", "sans", "dans", "les"].includes(word)
+      );
+
+      // Check if personne item contains these significant words
+      const hasMatch = significantExtraWords.some((word) =>
+        personName.includes(word)
+      );
+
+      return hasMatch;
+    });
+
+    let extraPersonAmount = 0;
+    let extraPersonPrice = 0;
+    let extraPersonQuantity = 0;
+    let hasExtraPerson = false;
+
+    if (matchingPersonItem) {
+      // Use data from matched item
+      extraPersonAmount = Math.abs(parseFloat(matchingPersonItem.amount) || 0);
+      extraPersonQuantity = parseInt(matchingPersonItem.quantity) || 1;
+      extraPersonPrice = extraPersonAmount / extraPersonQuantity;
+      hasExtraPerson = true;
+
+      console.log(
+        `Found match for "${extra.name}": "${matchingPersonItem.name}" (${extraPersonAmount}€)`
+      );
+    }
+
+    return {
+      name: extra.name || "Extra",
+      amount: Math.abs(parseFloat(extra.amount) || 0),
+      quantity: parseInt(extra.quantity) || 1,
+      type: extra.type || "addon",
+      id: extra.id,
+      currencyCode: extra.currencyCode || "EUR",
+      extraPersonQuantity,
+      extraPersonPrice,
+      extraPersonAmount,
+      extraPersonName: matchingPersonItem
+        ? matchingPersonItem.name
+        : "Personne supplémentaire",
+      hasExtraPerson,
+    };
+  });
+
+  // Filter out "Frais supplémentaires" if it appears as a regular extra AND we already have it with "personne supplémentaire"
+  const fraisPresentAsPersonne = personneItems.some((p) =>
+    p.name.toLowerCase().includes("frais supplémentaires")
+  );
+
+  const finalExtras = fraisPresentAsPersonne
+    ? processedExtras.filter(
+        (e) => !e.name.toLowerCase().includes("frais supplémentaires")
+      )
+    : processedExtras;
+
+  // If we filtered out "Frais supplémentaires", add it back as a separate item
+  if (fraisPresentAsPersonne) {
+    const fraisItem = personneItems.find((p) =>
+      p.name.toLowerCase().includes("frais supplémentaires")
+    );
+
+    if (fraisItem) {
+      finalExtras.push({
+        name: fraisItem.name,
+        amount: Math.abs(parseFloat(fraisItem.amount) || 0),
+        quantity: parseInt(fraisItem.quantity) || 1,
+        type: "addon",
+        id: fraisItem.id,
+        currencyCode: fraisItem.currencyCode || "EUR",
+        extraPersonQuantity: 0,
+        extraPersonPrice: 0,
+        extraPersonAmount: 0,
+        extraPersonName: "Personne supplémentaire",
+        hasExtraPerson: false,
+      });
+
+      console.log(
+        `Added "Frais supplémentaires" as a separate item (${fraisItem.amount}€)`
+      );
+    }
+  }
+
+  // FIXED: Calculate extras total using only the base amount
+  const extrasTotal = finalExtras.reduce((sum, extra) => {
+    return sum + parseFloat(extra.amount || 0); // Only use base amount, not extraPersonAmount
+  }, 0);
+
+  return {
+    extras: finalExtras,
+    extrasTotal,
+  };
+}
 
 // Schedule automatic sync every 4 hours
 cron.schedule("0 */12 * * *", async () => {

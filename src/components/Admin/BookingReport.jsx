@@ -652,7 +652,6 @@ const processBookingData = (data, bookingMap) => {
       console.log(`Found ${extraElements.length} extras in priceElements`);
     }
 
-
     console.log(
       `📌 Booking ${data.id}: Raw extras before processing:`,
       data.extras
@@ -669,33 +668,31 @@ const processBookingData = (data, bookingMap) => {
         : "⚠️ Extracting from priceElements"
     );
 
-    
-extractedExtras = extraElements.map((element) => ({
-  name: element.name || "Extra",
-  amount: Math.abs(parseFloat(element.amount) || 0),
-  quantity: parseInt(element.quantity) || 1,
-  type: element.type || "addon",
-  id: element.id,
-  currencyCode: element.currencyCode || "EUR",
-  // Preserve existing extra person data when available
-  extraPersonQuantity: element.extraPersonQuantity
-    ? parseInt(element.extraPersonQuantity)
-    : 0,
-  extraPersonPrice: element.extraPersonPrice
-    ? parseFloat(element.extraPersonPrice)
-    : 0,
-  extraPersonAmount: element.extraPersonAmount
-    ? parseFloat(element.extraPersonAmount)
-    : 0,
-  extraPersonName: element.extraPersonName || "Personne supplémentaire",
-  hasExtraPerson:
-    (element.extraPersonQuantity && element.extraPersonQuantity > 0) ||
-    (element.extraPersonPrice && element.extraPersonPrice > 0) ||
-    (element.extraPersonAmount && element.extraPersonAmount > 0),
-}));
-
-
-
+    // Inside processBookingData in BookingReport.jsx
+    extractedExtras = extraElements.map((element) => ({
+      name: element.name || "Extra",
+      amount: Math.abs(parseFloat(element.amount) || 0),
+      quantity: parseInt(element.quantity) || 1,
+      type: element.type || "addon",
+      id: element.id,
+      currencyCode: element.currencyCode || "EUR",
+      // IMPORTANT FIX: Preserve existing extra person data when available
+      extraPersonQuantity: element.extraPersonQuantity
+        ? parseInt(element.extraPersonQuantity)
+        : 0,
+      extraPersonPrice: element.extraPersonPrice
+        ? parseFloat(element.extraPersonPrice)
+        : 0,
+      extraPersonAmount: element.extraPersonAmount
+        ? parseFloat(element.extraPersonAmount)
+        : 0,
+      extraPersonName: element.extraPersonName || "Personne supplémentaire",
+      hasExtraPerson:
+        (element.extraPersonQuantity && element.extraPersonQuantity > 0) ||
+        (element.extraPersonPrice && element.extraPersonPrice > 0) ||
+        (element.extraPersonAmount && element.extraPersonAmount > 0) ||
+        !!element.hasExtraPerson,
+    }));
   }
 
   // Process all extras to ensure consistent format
@@ -1591,30 +1588,13 @@ console.log(
                                             {/* Then show regular extras */}
                                             {booking.extras?.map(
                                               (extra, index) => {
-                                                // Calculate the actual display amount for this extra
-                                                const baseAmount = parseFloat(
-                                                  extra.amount || 0
-                                                );
+                                                // Access hasExtraPerson directly from the extra object
                                                 const hasExtraPerson =
+                                                  extra.hasExtraPerson ||
                                                   extra.extraPersonQuantity >
                                                     0 ||
                                                   extra.extraPersonPrice > 0 ||
-                                                  extra.extraPersonAmount > 0 ||
-                                                  !!extra.hasExtraPerson;
-
-                                                // Get the extra person amount using explicit amount or calculated
-                                                const extraPersonAmount =
-                                                  hasExtraPerson
-                                                    ? parseFloat(
-                                                        extra.extraPersonAmount
-                                                      ) ||
-                                                      parseFloat(
-                                                        extra.extraPersonPrice
-                                                      ) *
-                                                        parseInt(
-                                                          extra.extraPersonQuantity
-                                                        )
-                                                    : 0;
+                                                  extra.extraPersonAmount > 0;
 
                                                 return (
                                                   <li
@@ -1624,8 +1604,9 @@ console.log(
                                                     • {extra.name}{" "}
                                                     {extra.quantity > 1 &&
                                                       `(${extra.quantity}x)`}
-                                                    : {formatPrice(baseAmount)}
-                                                    {/* Show extra person details */}
+                                                    :{" "}
+                                                    {formatPrice(extra.amount)}
+                                                    {/* Always try to show extra person details if they might exist */}
                                                     {hasExtraPerson && (
                                                       <span className="ml-1 text-indigo-700">
                                                         <br />
@@ -1640,7 +1621,9 @@ console.log(
                                                             : ""}{" "}
                                                           :{" "}
                                                           {formatPrice(
-                                                            extraPersonAmount
+                                                            extra.extraPersonAmount ||
+                                                              extra.extraPersonPrice *
+                                                                extra.extraPersonQuantity
                                                           )}
                                                           )
                                                         </span>
