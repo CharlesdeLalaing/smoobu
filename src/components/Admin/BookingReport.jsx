@@ -479,7 +479,6 @@ const processBookingData = (data, bookingMap) => {
     data.extras
   );
 
-
   // Skip if already processed or missing ID
   if (!smoobuId || bookingMap.has(smoobuId)) return;
 
@@ -523,21 +522,35 @@ const processBookingData = (data, bookingMap) => {
     parseFloat(data.priceDetails?.discount) ||
     0;
 
-  // Extract coupon info with priority to newer format
-  const promoCode = data.priceDetails?.promoCode
-    ? {
-        name:
-          data.priceDetails.promoCode.code ||
-          data.priceDetails.promoCode.name ||
-          "",
-        amount: parseFloat(data.priceDetails.promoCode.amount || 0),
-      }
-    : data.appliedCoupon
-    ? {
-        name: data.appliedCoupon.code || "",
-        amount: parseFloat(data.appliedCoupon.discount || 0),
-      }
-    : null;
+  // Extract coupon info with priority to descriptive names in priceElements
+  let promoCode = null;
+
+  // First, try to find the coupon element in priceElements for the full descriptive name
+  const couponElement = data.priceDetails?.priceElements?.find((el) =>
+    (el.name || "").toLowerCase().includes("code promo")
+  );
+
+  if (couponElement) {
+    promoCode = {
+      name: couponElement.name, // Use the descriptive name from priceElements
+      amount: Math.abs(parseFloat(couponElement.amount || 0)),
+    };
+  } else if (data.priceDetails?.promoCode) {
+    // Fall back to the promoCode object if no priceElement was found
+    promoCode = {
+      name:
+        data.priceDetails.promoCode.code ||
+        data.priceDetails.promoCode.name ||
+        "",
+      amount: parseFloat(data.priceDetails.promoCode.amount || 0),
+    };
+  } else if (data.appliedCoupon) {
+    // Last resort: use the appliedCoupon object
+    promoCode = {
+      name: data.appliedCoupon.code || "",
+      amount: parseFloat(data.appliedCoupon.discount || 0),
+    };
+  }
 
   // Prepare to collect price elements from all sources
   let allPriceElements = [];
@@ -755,12 +768,12 @@ const processBookingData = (data, bookingMap) => {
     }
   }
 
-console.log("Processed extras before saving:", processedExtras);
+  console.log("Processed extras before saving:", processedExtras);
 
-console.log(
-  `✅ Booking ${data.id}: Processed extras before saving:`,
-  extractedExtras
-);
+  console.log(
+    `✅ Booking ${data.id}: Processed extras before saving:`,
+    extractedExtras
+  );
 
   // Construct processed booking object
   bookingMap.set(smoobuId, {
@@ -849,10 +862,8 @@ console.log(
     console.log("Original extras:", data.extras);
     console.log("Processed extras:", processedExtras);
     console.log("✅ Saved booking in bookingMap:", bookingMap.get(smoobuId));
-
   }
 };
-
 
   // Frontend function - call your backend proxy instead of Smoobu directly
   const handleFetchAndSync = async () => {
