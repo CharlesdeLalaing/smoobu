@@ -1583,6 +1583,47 @@ app.get("/api/fetch-and-sync", async (req, res) => {
           `${booking.firstName || ""} ${booking.lastName || ""}`.trim() ||
           "Unknown Guest";
 
+        // When handling a booking, add this check right after fetching the booking data
+        if (booking.channel?.name === "Airbnb" || portalName === "Airbnb") {
+          console.log(`🔄 Special handling for Airbnb booking ${smoobuId}`);
+
+          // Only keep one specific extra if it exists
+          const filteredExtras = extrasData.extras.filter(
+            (extra) => extra.name && extra.name.includes("anniversaire")
+          );
+
+          // Force replace the extras
+          extrasData.extras = filteredExtras;
+          extrasData.extrasTotal = filteredExtras.reduce(
+            (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
+            0
+          );
+
+          console.log(
+            "Restricted Airbnb extras to:",
+            filteredExtras.map((e) => e.name)
+          );
+        }
+
+                  function isUnwantedExtra(extraName) {
+                    if (!extraName) return true;
+
+                    const name = extraName.toLowerCase();
+                    return (
+                      name.includes("cancellation") ||
+                      name.includes("commission") ||
+                      name.includes("pass_through") ||
+                      name.includes("host fee") ||
+                      name.includes("service fee") ||
+                      name.includes("cleaning fee") ||
+                      name.includes("vat") ||
+                      name.includes("tax") ||
+                      name.includes("linen_fee") ||
+                      (name.includes("fee") && !name.includes("coffee"))
+                    );
+                  }
+
+
         // Create booking document with improved price and discount handling
         const bookingDoc = {
           smoobuId: smoobuId,
@@ -1691,68 +1732,136 @@ app.get("/api/fetch-and-sync", async (req, res) => {
           // Update single existing booking with proper data preservation
           const docId = existingBookings[0].id;
           const existingData = existingBookings[0];
-
           // IMPROVED: Preserve existing extra person data for all matching extras
-          const mergedExtras = [];
+          let mergedExtras = [];
 
           // Process each new extra
           extrasData.extras.forEach((newExtra) => {
-            // Try to find matching extra in existing data
+            // Skip unwanted extras
+            if (isUnwantedExtra(newExtra.name)) {
+              console.log(
+                `⛔ Skipping unwanted extra from API: ${newExtra.name}`
+              );
+              return;
+            }
+
+            // Check if this extra exists in the existing data
             const existingExtra = existingData.extras?.find(
-              (e) => e.name === newExtra.name || e.id === newExtra.id
+              (e) => e.name === newExtra.name
             );
 
-            if (existingExtra) {
-              // If the existing extra has extra person data, preserve it
-              if (
-                existingExtra.hasExtraPerson ||
+            if (
+              existingExtra &&
+              (existingExtra.hasExtraPerson ||
                 existingExtra.extraPersonQuantity > 0 ||
                 existingExtra.extraPersonPrice > 0 ||
-                existingExtra.extraPersonAmount > 0
-              ) {
-                console.log(
-                  `Preserving extra person data for ${existingExtra.name}: Amount=${existingExtra.extraPersonAmount}€`
-                );
-
-                // Use the new extra but keep the existing extra person data
-                mergedExtras.push({
-                  ...newExtra,
-                  extraPersonQuantity: existingExtra.extraPersonQuantity,
-                  extraPersonPrice: existingExtra.extraPersonPrice,
-                  extraPersonAmount: existingExtra.extraPersonAmount,
-                  extraPersonName:
-                    existingExtra.extraPersonName || "Personne supplémentaire",
-                  hasExtraPerson: true,
-                });
-              } else {
-                // No existing extra person data, just use the new one
-                mergedExtras.push(newExtra);
-              }
+                existingExtra.extraPersonAmount > 0)
+            ) {
+              // Use the existing extra person data
+              console.log(
+                `Preserving extra person data for ${existingExtra.name}`
+              );
+              mergedExtras.push({
+                ...newExtra,
+                extraPersonQuantity: existingExtra.extraPersonQuantity,
+                extraPersonPrice: existingExtra.extraPersonPrice,
+                extraPersonAmount: existingExtra.extraPersonAmount,
+                extraPersonName:
+                  existingExtra.extraPersonName || "Personne supplémentaire",
+                hasExtraPerson: true,
+              });
             } else {
-              // No matching existing extra, use the new one
+              // Use the new extra as is
               mergedExtras.push(newExtra);
             }
           });
 
-          // Find extras in existing data that aren't in the new data
-          if (existingData.extras) {
+          // Then add any existing extras that are not unwanted and not already included
+          if (existingData.extras && Array.isArray(existingData.extras)) {
             const newExtraNames = new Set(mergedExtras.map((e) => e.name));
+
             existingData.extras.forEach((existingExtra) => {
-              if (!newExtraNames.has(existingExtra.name)) {
-                // This extra exists in the current data but not in the new data,
-                // so add it to preserve it
-                mergedExtras.push(existingExtra);
+              // Skip if it's already in our list or if it's an unwanted extra
+              if (
+                newExtraNames.has(existingExtra.name) ||
+                isUnwantedExtra(existingExtra.name)
+              ) {
+                if (isUnwantedExtra(existingExtra.name)) {
+                  console.log(
+                    `⛔ Skipping unwanted extra from existing data: ${existingExtra.name}`
+                  );
+                }
+                return;
+              }
+
+              // Only include extras that are definitely wanted (formulas, services, etc.)
+              const name = (existingExtra.name || "").toLowerCase();
+              const isWantedExtra =
+                name.includes("formule") ||
+                name.includes("essentiel") ||
+                name.includes("détente") ||
+                name.includes("gourmet") ||
+                name.includes("romantique") ||
+                name.includes("barbecue") ||
+                name.includes("anniversaire") ||
+                name.includes("petit-déjeuner") ||
+                name.includes("raclette") ||
+                name.includes("bouteille") ||
+                name.includes("champagne") ||
+                name.includes("spa") ||
+                name.includes("massage") ||
+                (name.includes("frais supplémentaires") &&
+                  name.includes("personnes"));
+
+              if (isWantedExtra) {
                 console.log(
-                  `Adding extra from existing data: ${existingExtra.name}`
+                  `✅ Adding wanted extra from existing data: ${existingExtra.name}`
+                );
+                mergedExtras.push(existingExtra);
+              } else {
+                console.log(
+                  `⛔ Skipping extra from existing data (not in whitelist): ${existingExtra.name}`
                 );
               }
             });
           }
 
-          // FIXED: Calculate extras total using only the base amount
+          // Add this just before calculating mergedExtrasTotal
+          if (booking.channel?.name === "Airbnb" || portalName === "Airbnb") {
+            // Remove all unwanted extras from the merged list
+            const filteredMergedExtras = mergedExtras.filter((extra) => {
+              const name = (extra.name || "").toLowerCase();
+
+              if (
+                name.includes("cancellation") ||
+                name.includes("commission") ||
+                name.includes("pass_through") ||
+                name.includes("linen_fee")
+              ) {
+                console.log(`🔴 Removing unwanted Airbnb extra: ${extra.name}`);
+                return false;
+              }
+              return true;
+            });
+
+            console.log(
+              "Filtered mergedExtras from:",
+              mergedExtras.length,
+              "to:",
+              filteredMergedExtras.length
+            );
+            mergedExtras = filteredMergedExtras;
+          }
+
+          // Calculate extras total using only the base amount
           const mergedExtrasTotal = mergedExtras.reduce(
             (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
             0
+          );
+
+          console.log(
+            "Final extras after merging and filtering:",
+            mergedExtras.map((e) => e.name)
           );
 
           // Create updated booking doc with merged extras
@@ -1825,61 +1934,94 @@ app.get("/api/fetch-and-sync", async (req, res) => {
           const existingData = mostRecent;
 
           // IMPROVED: Preserve existing extra person data for all matching extras
-          const mergedExtras = [];
+let mergedExtras = [];
 
-          // Process each new extra
-          extrasData.extras.forEach((newExtra) => {
-            // Try to find matching extra in existing data
-            const existingExtra = existingData.extras?.find(
-              (e) => e.name === newExtra.name || e.id === newExtra.id
-            );
+// Process each new extra
+extrasData.extras.forEach((newExtra) => {
+  // Skip unwanted extras
+  if (isUnwantedExtra(newExtra.name)) {
+    console.log(`⛔ Skipping unwanted extra from API: ${newExtra.name}`);
+    return;
+  }
 
-            if (existingExtra) {
-              // If the existing extra has extra person data, preserve it
-              if (
-                existingExtra.hasExtraPerson ||
-                existingExtra.extraPersonQuantity > 0 ||
-                existingExtra.extraPersonPrice > 0 ||
-                existingExtra.extraPersonAmount > 0
-              ) {
-                console.log(
-                  `Preserving extra person data for ${existingExtra.name}: Amount=${existingExtra.extraPersonAmount}€`
-                );
+  // Check if this extra exists in the existing data
+  const existingExtra = existingData.extras?.find(
+    (e) => e.name === newExtra.name
+  );
 
-                // Use the new extra but keep the existing extra person data
-                mergedExtras.push({
-                  ...newExtra,
-                  extraPersonQuantity: existingExtra.extraPersonQuantity,
-                  extraPersonPrice: existingExtra.extraPersonPrice,
-                  extraPersonAmount: existingExtra.extraPersonAmount,
-                  extraPersonName:
-                    existingExtra.extraPersonName || "Personne supplémentaire",
-                  hasExtraPerson: true,
-                });
-              } else {
-                // No existing extra person data, just use the new one
-                mergedExtras.push(newExtra);
-              }
-            } else {
-              // No matching existing extra, use the new one
-              mergedExtras.push(newExtra);
-            }
-          });
+  if (
+    existingExtra &&
+    (existingExtra.hasExtraPerson ||
+      existingExtra.extraPersonQuantity > 0 ||
+      existingExtra.extraPersonPrice > 0 ||
+      existingExtra.extraPersonAmount > 0)
+  ) {
+    // Use the existing extra person data
+    console.log(`Preserving extra person data for ${existingExtra.name}`);
+    mergedExtras.push({
+      ...newExtra,
+      extraPersonQuantity: existingExtra.extraPersonQuantity,
+      extraPersonPrice: existingExtra.extraPersonPrice,
+      extraPersonAmount: existingExtra.extraPersonAmount,
+      extraPersonName:
+        existingExtra.extraPersonName || "Personne supplémentaire",
+      hasExtraPerson: true,
+    });
+  } else {
+    // Use the new extra as is
+    mergedExtras.push(newExtra);
+  }
+});
 
-          // Find extras in existing data that aren't in the new data
-          if (existingData.extras) {
-            const newExtraNames = new Set(mergedExtras.map((e) => e.name));
-            existingData.extras.forEach((existingExtra) => {
-              if (!newExtraNames.has(existingExtra.name)) {
-                // This extra exists in the current data but not in the new data,
-                // so add it to preserve it
-                mergedExtras.push(existingExtra);
-                console.log(
-                  `Adding extra from existing data: ${existingExtra.name}`
-                );
-              }
-            });
-          }
+// Then add any existing extras that are not unwanted and not already included
+if (existingData.extras && Array.isArray(existingData.extras)) {
+  const newExtraNames = new Set(mergedExtras.map((e) => e.name));
+
+  existingData.extras.forEach((existingExtra) => {
+    // Skip if it's already in our list or if it's an unwanted extra
+    if (
+      newExtraNames.has(existingExtra.name) ||
+      isUnwantedExtra(existingExtra.name)
+    ) {
+      if (isUnwantedExtra(existingExtra.name)) {
+        console.log(
+          `⛔ Skipping unwanted extra from existing data: ${existingExtra.name}`
+        );
+      }
+      return;
+    }
+
+    // Only include extras that are definitely wanted (formulas, services, etc.)
+    const name = (existingExtra.name || "").toLowerCase();
+    const isWantedExtra =
+      name.includes("formule") ||
+      name.includes("essentiel") ||
+      name.includes("détente") ||
+      name.includes("gourmet") ||
+      name.includes("romantique") ||
+      name.includes("barbecue") ||
+      name.includes("anniversaire") ||
+      name.includes("petit-déjeuner") ||
+      name.includes("raclette") ||
+      name.includes("bouteille") ||
+      name.includes("champagne") ||
+      name.includes("spa") ||
+      name.includes("massage") ||
+      (name.includes("frais supplémentaires") &&
+        name.includes("personnes"));
+
+    if (isWantedExtra) {
+      console.log(
+        `✅ Adding wanted extra from existing data: ${existingExtra.name}`
+      );
+      mergedExtras.push(existingExtra);
+    } else {
+      console.log(
+        `⛔ Skipping extra from existing data (not in whitelist): ${existingExtra.name}`
+      );
+    }
+  });
+}
 
           // FIXED: Calculate extras total using only the base amount
           const mergedExtrasTotal = mergedExtras.reduce(
@@ -1978,16 +2120,16 @@ function normalizeBookingId(id) {
 // Helper function for extracting pricing information
 function extractPricingInfo(priceElements) {
   // Base price elements - look for either "base" type or "Prix de base" name
-const basePriceElement = priceElements.find(
-  (el) =>
-    el.type === "base" ||
-    (el.name || "").toLowerCase().includes("prix de base") ||
-    (el.name || "").toLowerCase().includes("base price")
-);
+  const basePriceElement = priceElements.find(
+    (el) =>
+      el.type === "base" ||
+      (el.name || "").toLowerCase().includes("prix de base") ||
+      (el.name || "").toLowerCase().includes("base price")
+  );
 
-const basePrice = basePriceElement
-  ? parseFloat(basePriceElement.amount) || 0
-  : 0;
+  const basePrice = basePriceElement
+    ? parseFloat(basePriceElement.amount) || 0
+    : 0;
 
   // Find discounts
   const longStayElement = priceElements.find(
@@ -2033,26 +2175,60 @@ const basePrice = basePriceElement
 
 // Helper function for processing extras
 function processExtrasWithPersons(priceElements) {
-  // 1. First identify all potential extras, excluding duplicates
-  const extraNamesMap = new Map(); // Use a map to prevent duplicates by name
+  // First, filter to ONLY include items that are definitely extras we want to display
+  // This is a "whitelist" approach instead of a "blacklist" approach
 
-  priceElements.forEach((element) => {
+  const isWantedExtra = (element) => {
     const name = (element.name || "").toLowerCase();
     const type = (element.type || "").toLowerCase();
 
-    // Exclude these types of items from extras
-    if (
-      name.includes("prix de base") ||
-      name.includes("base price") ||
-      name.includes("réduction") ||
-      name.includes("code promo") ||
-      type === "base" ||
-      type === "discount"
-    ) {
-      return;
-    }
+    // Check if it's a clearly wanted extra (positive check)
+    const isDefinitelyExtra =
+      // Formules and packages
+      name.includes("formule") ||
+      name.includes("essentiel") ||
+      name.includes("détente") ||
+      name.includes("gourmet") ||
+      name.includes("romantique") ||
+      name.includes("barbecue") ||
+      name.includes("anniversaire") ||
+      // Food and beverages
+      name.includes("petit-déjeuner") ||
+      name.includes("raclette") ||
+      name.includes("bouteille") ||
+      name.includes("champagne") ||
+      // Specific services
+      name.includes("spa") ||
+      name.includes("massage") ||
+      // Only include "frais supplémentaires" if it refers to extra guests
+      (name.includes("frais supplémentaires") && name.includes("personnes"));
 
-    // If we've already seen this name, only keep the one with more details or higher amount
+    // Even if it matches above, exclude it if it also contains these terms
+    const containsUnwantedTerms =
+      name.includes("cancellation") ||
+      name.includes("commission") ||
+      name.includes("pass_through") ||
+      name.includes("host fee") ||
+      name.includes("service fee") ||
+      name.includes("cleaning fee") ||
+      (name.includes("fee") && !name.includes("coffee"));
+
+    return isDefinitelyExtra && !containsUnwantedTerms;
+  };
+
+  // First filter the price elements to only include the extras we definitely want
+  const wantedExtras = priceElements.filter(isWantedExtra);
+
+  console.log(
+    "Filtered to only wanted extras:",
+    wantedExtras.map((e) => e.name)
+  );
+
+  // Now continue with processing as before, but starting from our filtered list
+
+  // 1. Deduplicate by name
+  const extraNamesMap = new Map();
+  wantedExtras.forEach((element) => {
     if (extraNamesMap.has(element.name)) {
       const existing = extraNamesMap.get(element.name);
       // Only replace if this one has more data or higher amount
@@ -2187,7 +2363,7 @@ function processExtrasWithPersons(priceElements) {
     }
   }
 
-  // FIXED: Calculate extras total using only the base amount
+  // Calculate extras total using only the base amount
   const extrasTotal = finalExtras.reduce((sum, extra) => {
     return sum + parseFloat(extra.amount || 0); // Only use base amount, not extraPersonAmount
   }, 0);
