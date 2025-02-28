@@ -681,7 +681,6 @@ const processBookingData = (data, bookingMap) => {
         : "⚠️ Extracting from priceElements"
     );
 
-    // Inside processBookingData in BookingReport.jsx
     extractedExtras = extraElements.map((element) => ({
       name: element.name || "Extra",
       amount: Math.abs(parseFloat(element.amount) || 0),
@@ -689,7 +688,7 @@ const processBookingData = (data, bookingMap) => {
       type: element.type || "addon",
       id: element.id,
       currencyCode: element.currencyCode || "EUR",
-      // IMPORTANT FIX: Preserve existing extra person data when available
+      // Preserve existing extra person data when available
       extraPersonQuantity: element.extraPersonQuantity
         ? parseInt(element.extraPersonQuantity)
         : 0,

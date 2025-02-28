@@ -25,6 +25,8 @@ import { db, FieldValue } from "./firebase-config.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// AlexisVS: third-party/smobou/rooms.js
 const roomNames = {
   1946282: "Le Dôme des Libellules",
   1644643: "La Bulle du Ruisseau",
@@ -33,6 +35,7 @@ const roomNames = {
   1946270: "Le Logis",
 };
 
+// AlexisVS: third-party/smobou/portals.js
 const portalNames = {
   Homepage: "Website",
   "Direct booking": "Direct booking",
@@ -49,8 +52,10 @@ const portalNames = {
   partenariat: "Partenariat",
 };
 
+// AlexisVS: init.js
 dotenv.config();
 
+// AlexisVS: scheduler/actions
 async function syncReservations() {
   try {
     console.log("🟦 Starting reservation sync...", new Date().toISOString());
@@ -473,15 +478,19 @@ async function syncReservations() {
   }
 }
 
+// AlexisVS: init.js 
 const app = express();
 
+// AlexisVS: remove
 app.use((req, res, next) => {
   // console.log('Incoming Origin:', req.headers.origin);
   next();
 });
 
+// AlexisVS: je sais pas c'est quoi
 app.options("/webhook", cors());
 
+// AlexisVS: third-party/wordpress/verify-wordpress-auth.js
 const verifyWordPressAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -498,10 +507,13 @@ const verifyWordPressAuth = (req, res, next) => {
   next();
 };
 
+// AlexisVS: third-party/stripe/stripe.js
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// AlexisVS: sais pas
 const pendingBookings = new Map();
 
+// AlexisVS: email/transporter.js
 // After imports, with other configurations
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -511,6 +523,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// AlexisVS: helpers/date.js
 // Add this function near the top with other helpers
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString("fr-BE", {
@@ -520,6 +533,7 @@ const formatDate = (dateString) => {
   });
 };
 
+// AlexisVS: third-party/smobou/actions/send-booking-confirmation.js
 const sendBookingConfirmation = async (bookingData) => {
   try {
     const emailContent = `
@@ -626,6 +640,7 @@ const sendBookingConfirmation = async (bookingData) => {
   }
 };
 
+// AlexisVS: third-party/smobou/config/discount.js
 const discountSettings = {
   1946282: {
     // Le dôme de libellules
@@ -699,6 +714,7 @@ const discountSettings = {
   },
 };
 
+// AlexisVS: third-party/smobou/translations/extras.js
 // Create a mapping of translation keys to French names
 const extrasFrenchNames = {
   // Packs
@@ -735,7 +751,7 @@ const extrasFrenchNames = {
 };
 
 // Add this near your other constants at the top of server.js
-
+// AlexisVS: remove
 // Modified processExtraName function
 const processExtraName = (extra) => {
   // If the name is a translation key (starts with "extras.")
@@ -752,6 +768,7 @@ const processExtraName = (extra) => {
   };
 };
 
+// AlexisVS: helpers/pricing/calculate-price-with-settings.js
 // Calculate price with settings
 const calculatePriceWithSettings = (
   rates,
@@ -846,8 +863,10 @@ const calculatePriceWithSettings = (
 
 // Webhook endpoint must come before JSON middleware
 // Helper function for delays
+// AlexisVS: helpers/wait.ts
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// AlexisVS: third-party/smobou/actions/webhook.js
 app.post(
   "/webhook",
   express.raw({ type: "application/json" }),
@@ -1282,6 +1301,7 @@ app.post(
   }
 );
 
+// AlexisVS: init.js et faire une separation si les trucs qui avait au dessus en on pas besoins
 // Use JSON parsing and CORS for all other routes
 app.use(express.json());
 app.use(
@@ -1304,6 +1324,7 @@ app.use(
   })
 );
 
+// AlexisVS: third-party/smobou/actions/sync-reservations.js
 app.get("/sync-reservations", async (req, res) => {
   try {
     console.log("Starting reservation sync...");
@@ -1319,6 +1340,7 @@ app.get("/sync-reservations", async (req, res) => {
   }
 });
 
+// AlexisVS: third-party/smobou/helpers/get-portal-name.js
 const getPortalName = (portal) => {
   // Handle null/undefined
   if (!portal) return "Website";
@@ -1345,6 +1367,7 @@ const getPortalName = (portal) => {
   return portal || "Website";
 };
 
+// AlexisVS: third-party/smobou/actions/api/deduplicate-bookings.js
 app.get("/api/deduplicate-bookings", async (req, res) => {
   try {
     console.log("🟦 Starting deduplication process...");
@@ -1432,6 +1455,7 @@ app.get("/api/deduplicate-bookings", async (req, res) => {
 
 // In your server.js
 // Add or update this endpoint in your server.js
+// AlexisVS: third-party/smobou/actions/api/fetch-and-sync.js
 app.get("/api/fetch-and-sync", async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
@@ -1719,6 +1743,8 @@ app.get("/api/fetch-and-sync", async (req, res) => {
         );
 
         cleanBookingDoc.priceDetails = cleanPriceDetails;
+
+        console.log
 
         // Add or update in Firebase
         if (existingBookings.length === 0) {
@@ -2111,12 +2137,14 @@ if (existingData.extras && Array.isArray(existingData.extras)) {
   }
 });
 
+// AlexisVS: helpers/normalize-booking-id.js
 // Helper function for normalizing booking IDs
 function normalizeBookingId(id) {
   if (!id) return null;
   return String(id).trim();
 }
 
+// AlexisVS: helpers/price/extract-pricing-info.js
 // Helper function for extracting pricing information
 function extractPricingInfo(priceElements) {
   // Base price elements - look for either "base" type or "Prix de base" name
@@ -2173,6 +2201,7 @@ function extractPricingInfo(priceElements) {
   };
 }
 
+// AlexisVS: third-party/smobou/helpers/process-extras-with-persons.js
 // Helper function for processing extras
 function processExtrasWithPersons(priceElements) {
   // First, filter to ONLY include items that are definitely extras we want to display
@@ -2374,6 +2403,7 @@ function processExtrasWithPersons(priceElements) {
   };
 }
 
+// AlexisVS: schedule.js
 // Schedule automatic sync every 4 hours
 cron.schedule("0 */12 * * *", async () => {
   try {
@@ -2385,6 +2415,7 @@ cron.schedule("0 */12 * * *", async () => {
   }
 });
 
+// AlexisVS: third-party/smobou/actions/api/create-gift-voucher
 app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
   try {
     const {
@@ -2439,6 +2470,7 @@ app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
   }
 });
 
+// AlexisVS: third-party/smobou/actions/api/validate-voucher.js
 // Endpoint to validate gift voucher during booking
 app.post("/api/validate-voucher", async (req, res) => {
   try {
@@ -2547,6 +2579,7 @@ app.post("/api/validate-voucher", async (req, res) => {
   }
 });
 
+// AlexisVS: third-party/smobou/actions/api/direct-bookings.js
 app.get("/api/direct-bookings", async (req, res) => {
   try {
     const { startDate, endDate, showCancellation, excludeBlocked } = req.query;
@@ -2591,7 +2624,7 @@ app.get("/api/direct-bookings", async (req, res) => {
 });
 
 // Helper function to generate email content
-
+// AlexisVS: third-party/smobou/actions/api/extra-report.js
 app.get("/api/extras-report", async (req, res) => {
   try {
     const { startMonth, startYear, endMonth, endYear } = req.query;
@@ -2795,6 +2828,7 @@ app.get("/api/extras-report", async (req, res) => {
   }
 });
 
+// AlexisVS: third-party/smobou/actions/api/booking-report.js
 app.get("/api/bookings-report", async (req, res) => {
   try {
     const { startMonth, startYear, endMonth, endYear } = req.query;
@@ -3066,6 +3100,7 @@ app.get("/api/bookings-report", async (req, res) => {
   }
 });
 
+// AlexisVS: third-party/smobou/actions/api/apartments.js
 app.get("/api/apartments", async (req, res) => {
   try {
     const response = await axios.get(
@@ -3088,6 +3123,7 @@ app.get("/api/apartments", async (req, res) => {
   }
 });
 
+// AlexisVS: third-party/smobou/actions/api/get-appartment.js
 app.get("/api/apartments/:id", async (req, res) => {
   try {
     const response = await axios.get(
@@ -3108,6 +3144,7 @@ app.get("/api/apartments/:id", async (req, res) => {
   }
 });
 
+// AlexisVS: third-party/smobou/actions/api/rates.js
 // Replace your current /api/rates endpoint with this one
 app.get("/api/rates", async (req, res) => {
   try {
@@ -3238,6 +3275,7 @@ app.get("/api/rates", async (req, res) => {
   }
 });
 
+// AlexisVS: third-party/smobou/actions/api/create-payment-intent.js
 //CREATE PAYMENT INTENT
 app.post("/api/create-payment-intent", async (req, res) => {
   try {
@@ -3383,6 +3421,8 @@ app.post("/api/create-payment-intent", async (req, res) => {
     });
   }
 });
+
+// AlexisVS: third-party/smobou/actions/api/bookings/get-payment-intent.js
 app.get("/api/bookings/:paymentIntentId", async (req, res) => {
   try {
     const { paymentIntentId } = req.params;
@@ -3477,18 +3517,22 @@ app.get("/api/bookings/:paymentIntentId", async (req, res) => {
     });
   }
 });
+
+// AlexisVS: third-party/smobou/actions/api/pending-bookings.js
 // Debug endpoint to check pending bookings
 app.get("/api/pending-bookings", (req, res) => {
   const bookings = Array.from(pendingBookings.entries());
   res.json(bookings);
 });
 
+// AlexisVS: remove
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   // console.log(`Server running on port ${PORT}`);
   // console.log('Webhook endpoint ready at /webhook');
 });
 
+// AlexisVS: third-party/smobou/actions/api/get-booking-history-email.js
 app.get("/api/bookings-history/:email", async (req, res) => {
   try {
     const { email } = req.params;
@@ -3513,6 +3557,7 @@ app.get("/api/bookings-history/:email", async (req, res) => {
   }
 });
 
+// AlexisVS: third-party/smobou/actions/api/test-email.js
 app.post("/api/test-email", async (req, res) => {
   try {
     await transporter.sendMail({
