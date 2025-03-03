@@ -3,19 +3,20 @@ import cors from "cors";
 import axios from "axios";
 import Stripe from "stripe";
 import * as dotenv from "dotenv";
-import cron from "node-cron";
 //Config imports
 import { roomNames, portalNames, discountSettings, extrasFrenchNames } from "./config/config.js"
 
 //Helper imports 
 import { calculatePriceWithSettings } from "./helpers/pricing/calculate-price-with-settings.js"
 
-import { syncReservations } from "./third-party/smoobu/syncReservationsNodeCron.js"
 import { verifyWordPressAuth } from "./third-party/wordpress/verify-wordpress-auth.js"
 import { transporter } from "./config/nodemailer.js"
 import { handleWebhook, pendingBookings } from "./third-party/stripe/webhook/index.js";
 import { deduplicateBookings } from "./third-party/firebase/deduplicate-bookings.js";
 import { fetchAndSync } from "./third-party/smoobu/actions/api/fetch-and-sync.js";
+import { setupScheduledTasks } from "./third-party/smoobu/schedule.js";
+
+import { handleCreateGiftVoucher } from "./third-party/wordpress/create-gift-voucher.js";
 
 
 import {
@@ -64,23 +65,6 @@ app.use(
   })
 );
 
-// AlexisVS: third-party/smobou/actions/sync-reservations.js
-app.get("/sync-reservations", async (req, res) => {
-  try {
-    console.log("Starting reservation sync...");
-    const result = await syncReservations();
-    console.log("Sync completed:", result);
-    res.json(result);
-  } catch (error) {
-    console.error("Error in sync endpoint:", error);
-    res.status(500).json({
-      error: "Failed to sync reservations",
-      details: error.message,
-    });
-  }
-});
-
-
 // AlexisVS: third-party/smobou/actions/api/deduplicate-bookings.js
 app.get("/api/deduplicate-bookings", deduplicateBookings);
 
@@ -91,73 +75,13 @@ app.get("/api/fetch-and-sync", fetchAndSync);
 
 // AlexisVS: schedule.js
 // Schedule automatic sync every 4 hours
-cron.schedule("0 */12 * * *", async () => {
-  try {
-    console.log("🟦 Starting scheduled sync...");
-    await syncReservations();
-    console.log("🟩 Scheduled sync completed");
-  } catch (error) {
-    console.error("🟥 Scheduled sync failed:", error);
-  }
-});
+setupScheduledTasks();
 
 // AlexisVS: third-party/smobou/actions/api/create-gift-voucher
-app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
-  try {
-    const {
-      orderId,
-      amount,
-      customerEmail,
-      customerName,
-      customerPhone,
-      language,
-    } = req.body;
-
-    // Generate unique voucher code
-    const voucherCode = `GIFT-${Math.random()
-      .toString(36)
-      .substring(2, 12)
-      .toUpperCase()}`;
-
-    // Create voucher document in Firebase
-    const voucherData = {
-      code: voucherCode,
-      amount: Number(amount),
-      type: "fixed",
-      isGiftVoucher: true,
-      status: "active",
-      orderId,
-      customerEmail,
-      customerName,
-      customerPhone,
-      language,
-      dateCreated: new Date().toISOString(),
-      expiryDate: new Date(
-        Date.now() + 365 * 24 * 60 * 60 * 1000
-      ).toISOString(),
-      usedCount: 0,
-      usageHistory: [],
-    };
-
-    await db.collection("coupons").add(voucherData);
-
-    // Just return the success response, no email sending
-    res.json({
-      success: true,
-      voucherCode,
-      amount,
-    });
-  } catch (error) {
-    console.error("Error creating gift voucher:", error);
-    res.status(500).json({
-      error: "Failed to create gift voucher",
-      details: error.message,
-    });
-  }
-});
+app.post("/api/create-gift-voucher", handleCreateGiftVoucher);
 
 // AlexisVS: third-party/smobou/actions/api/validate-voucher.js
-// Endpoint to validate gift voucher during booking
+
 app.post("/api/validate-voucher", async (req, res) => {
   try {
     const { code, amount } = req.body;
