@@ -1,3 +1,42 @@
+import axios from "axios";
+import { db } from "../../firebase-config.js"; 
+import { roomNames } from "../../config/config.js";
+import { extractPricingInfo } from "../../helpers/pricing/extract-pricing-info.js";
+import { processExtrasWithPersons } from "../smoobu/process-extras-with-persons.js";
+import { normalizeBookingId } from "../../helpers/normalize-booking-id.js";
+import { portalNames } from "../../config/config.js";
+
+/**
+ * Synchronizes reservations from Smoobu to Firebase
+ * @returns {Object} - Sync result statistics
+ */
+
+const getPortalName = (portal) => {
+  // Handle null/undefined
+  if (!portal) return "Website";
+
+  // Check if it's already a mapped portal
+  if (portalNames[portal]) return portalNames[portal];
+
+  // Handle channel IDs that should map to Website
+  if (portal === "2323525" || portal === 2323525) return "Website";
+
+  // Handle channel IDs that should map to Airbnb
+  if (portal === "2323543" || portal === 2323543) return "Airbnb";
+
+  // Special case for unknown channels from Smoobu that should be Website
+  if (
+    portal.includes("Homepage") ||
+    portal === "Direct" ||
+    portal === "Direct booking"
+  ) {
+    return "Website";
+  }
+
+  // Return the original portal name or default to Website
+  return portal || "Website";
+};
+
 export async function syncReservations() {
   try {
     console.log("🟦 Starting reservation sync...", new Date().toISOString());
@@ -21,12 +60,6 @@ export async function syncReservations() {
       Blocked: "Blocked",
     };
 
-    // Improved normalize function
-    const normalizeBookingId = (id) => {
-      if (!id) return null;
-      return String(id).trim();
-    };
-
     const endDate = new Date().toISOString().split("T")[0];
     const startDate = new Date(Date.now() - 730 * 24 * 60 * 60 * 1000)
       .toISOString()
@@ -36,7 +69,9 @@ export async function syncReservations() {
       "https://login.smoobu.com/api/reservations",
       {
         headers: {
-          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+          "Api-Key":
+            process.env.SMOOBU_API_KEY ||
+            "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
           "Cache-Control": "no-cache",
         },
         params: {
@@ -97,7 +132,9 @@ export async function syncReservations() {
           `https://login.smoobu.com/api/reservations/${normalizedId}/price-elements`,
           {
             headers: {
-              "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+              "Api-Key":
+                process.env.SMOOBU_API_KEY ||
+                "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
               "Cache-Control": "no-cache",
             },
           }
@@ -111,210 +148,76 @@ export async function syncReservations() {
           priceElements
         );
 
-        // Improved extras processing with better filtering
-        const extras = priceElements.filter((element) => {
-          const name = (element.name || "").toLowerCase();
-          const type = (element.type || "").toLowerCase();
+        // Process extras data
+        const extrasData = processExtrasWithPersons(priceElements);
 
-          // Exclude base price, discounts, etc.
-          if (
-            name.includes("prix de base") ||
-            name.includes("base price") ||
-            name.includes("code promo") ||
-            name.includes("réduction") ||
-            name.includes("commission") ||
-            type === "base" ||
-            type === "discount"
-          ) {
-            return false;
-          }
+        // Extract pricing information
+        const pricingInfo = extractPricingInfo(priceElements);
 
-          // Include extras, but exclude standalone "personne supplémentaire" items
-          // We'll handle these separately to associate them with their parent extras
-          return (
-            (type === "addon" ||
-              name.includes("formule") ||
-              name.includes("formule spa") ||
-              name.includes("petit-déjeuner") ||
-              name.includes("raclette") ||
-              name.includes("barbecue") ||
-              name.includes("spa") ||
-              name.includes("bouteille") ||
-              name.includes("2 pers") ||
-              name.includes("essentiel") ||
-              name.includes("détente") ||
-              name.includes("gourmet") ||
-              name.includes("frais supplémentaires")) &&
-            !name.match(/^personne supplémentaire/i)
-          ); // Exclude standalone person items
-        });
-
-        // Find extra person elements that might be associated with the extras
-        const personElements = priceElements.filter((element) => {
-          const name = (element.name || "").toLowerCase();
-          return name.includes("personne supplémentaire");
-        });
-
-        console.log(
-          `Found ${personElements.length} person elements for booking ${normalizedId}`
-        );
-
-        // Process extras and link person elements to them
-        const processedExtras = extras.map((extra) => {
-          const extraResult = {
-            name: extra.name || "Extra",
-            amount: Math.abs(parseFloat(extra.amount) || 0),
-            quantity: parseInt(extra.quantity) || 1,
-            type: extra.type || "addon",
-            id: extra.id,
-            currencyCode: extra.currencyCode || "EUR",
-            extraPersonQuantity: 0,
-            extraPersonPrice: 0,
-            extraPersonAmount: 0,
-          };
-
-          // Look for matching person element
-          const extraNameLower = extra.name.toLowerCase();
-
-          // Try to find a person element that might be related to this extra
-          const relatedPersonElement = personElements.find((personEl) => {
-            const personNameLower = personEl.name.toLowerCase();
-
-            // Check for specific patterns:
-            // 1. "Extra Name - Personne supplémentaire"
-            if (
-              personNameLower.includes(extraNameLower) ||
-              personNameLower.includes(
-                extraNameLower.replace(" (pour 2)", "")
-              ) ||
-              personNameLower.includes(extraNameLower.replace(" (2 pers)", ""))
-            ) {
-              return true;
-            }
-
-            // 2. "Personne supplémentaire - Extra Name"
-            if (
-              personNameLower.includes("supplémentaire") &&
-              (personNameLower.includes(extraNameLower) ||
-                personNameLower.includes(
-                  extraNameLower.replace(" (pour 2)", "")
-                ) ||
-                personNameLower.includes(
-                  extraNameLower.replace(" (2 pers)", "")
-                ))
-            ) {
-              return true;
-            }
-
-            return false;
-          });
-
-          // If we found a related person element, extract the data
-          if (relatedPersonElement) {
-            console.log(
-              `Found related person element for extra "${extra.name}": ${relatedPersonElement.name}`
-            );
-
-            extraResult.extraPersonQuantity =
-              parseInt(relatedPersonElement.quantity) || 1;
-            extraResult.extraPersonPrice =
-              Math.abs(parseFloat(relatedPersonElement.amount)) /
-              extraResult.extraPersonQuantity;
-            extraResult.extraPersonAmount = Math.abs(
-              parseFloat(relatedPersonElement.amount)
-            );
-            extraResult.extraPersonName = relatedPersonElement.name;
-          }
-
-          return extraResult;
-        });
-
-        // Debug log the filtered extras
-        console.log(
-          `Filtered extras for booking ${normalizedId}:`,
-          processedExtras
-        );
-
-        const hasSpa = processedExtras.some((extra) =>
-          extra.name.toLowerCase().includes("formule spa")
-        );
-        if (!hasSpa) {
-          const spaElement = priceElements.find((element) =>
-            (element.name || "").toLowerCase().includes("formule spa")
-          );
-          if (spaElement) {
-            processedExtras.push({
-              name: spaElement.name,
-              amount: Math.abs(parseFloat(spaElement.amount) || 0),
-              quantity: parseInt(spaElement.quantity) || 1,
-              type: spaElement.type || "addon",
-              id: spaElement.id,
-              currencyCode: spaElement.currencyCode || "EUR",
-              extraPersonQuantity: 0,
-              extraPersonPrice: 0,
-              extraPersonAmount: 0,
-            });
-            console.log(
-              `✅ "Formule SPA" was missing, manually added to extras.`
-            );
-          }
-        }
-
-        // Calculate base price and other components
-        const basePrice =
+        // Extract linen fee
+        const linenFee =
           priceElements.find(
             (el) =>
-              el.type === "base" ||
-              el.name?.toLowerCase().includes("prix de base")
+              el.name?.toLowerCase().includes("linen") ||
+              el.name?.toLowerCase().includes("linge") ||
+              el.name?.toLowerCase().includes("cleaning")
           )?.amount || 0;
 
-        const extrasTotal = processedExtras.reduce(
-          (sum, extra) =>
-            sum +
-            (Number(extra.amount) || 0) +
-            (Number(extra.extraPersonAmount) || 0),
-          0
-        );
+        // Extract commission
+        const commission =
+          priceElements.find((el) =>
+            el.name?.toLowerCase().includes("commission")
+          )?.amount || 0;
 
-        // Look for discounts
-        const discounts = priceElements.filter((element) => {
-          const name = (element.name || "").toLowerCase();
-          return (
-            element.type === "discount" ||
-            name.includes("code promo") ||
-            name.includes("réduction")
+        // Calculate nights
+        const checkIn = new Date(reservation.arrival);
+        const checkOut = new Date(reservation.departure);
+        const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+
+        // Format guest name
+        const guestName =
+          reservation["guest-name"] ||
+          `${reservation.firstName || ""} ${
+            reservation.lastName || ""
+          }`.trim() ||
+          "Unknown Guest";
+
+        // Special handling for Airbnb bookings
+        const portalName = getPortalName(reservation.channel?.name);
+        if (reservation.channel?.name === "Airbnb" || portalName === "Airbnb") {
+          console.log(`🔄 Special handling for Airbnb booking ${normalizedId}`);
+
+          // Only keep anniversary-related extras for Airbnb bookings
+          const filteredExtras = extrasData.extras.filter(
+            (extra) => extra.name && extra.name.includes("anniversaire")
           );
-        });
 
-        // Calculate total discounts
-        const totalDiscounts = discounts.reduce(
-          (sum, discount) => sum + Math.abs(parseFloat(discount.amount) || 0),
-          0
-        );
+          // Replace the extras in extrasData
+          extrasData.extras = filteredExtras;
+          extrasData.extrasTotal = filteredExtras.reduce(
+            (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
+            0
+          );
 
-        // Extract long stay discount if present
-        const longStayDiscount =
-          discounts.find((d) =>
-            d.name?.toLowerCase().includes("réduction long séjour")
-          )?.amount || 0;
+          console.log(
+            "Restricted Airbnb extras to:",
+            filteredExtras.map((e) => e.name)
+          );
+        }
 
-        // Extract coupon discount if present
-        const couponDiscount =
-          discounts.find((d) => d.name?.toLowerCase().includes("code promo"))
-            ?.amount || 0;
-
-        // Prepare booking document with complete extra details
+        // Create booking document
         const bookingDoc = {
           smoobuId: normalizedId,
-          smoobuReservationId: normalizedId,
-          firstName: reservation.firstName || "",
-          lastName: reservation.lastName || "",
-          guestName:
-            reservation["guest-name"] ||
-            `${reservation.firstName || ""} ${
-              reservation.lastName || ""
-            }`.trim() ||
-            "Sans nom",
+          smoobuReservationId: Number(normalizedId), // Store both formats for better matching
+          createdAt: reservation["created-at"] || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          firstName: reservation.firstName || guestName.split(" ")[0] || "",
+          lastName:
+            reservation.lastName ||
+            (guestName.split(" ").length > 1
+              ? guestName.split(" ").slice(1).join(" ")
+              : ""),
+          guestName: guestName,
           email: reservation.email || "",
           phone: reservation.phone || "",
           address: reservation.address || "",
@@ -326,64 +229,85 @@ export async function syncReservations() {
           checkOutTime: reservation["check-out"] || "",
           apartmentId: reservation.apartment?.id,
           property:
-            roomNames[reservation.apartment?.id] || reservation.apartment?.name,
+            roomNames[reservation.apartment?.id] ||
+            reservation.apartment?.name ||
+            "",
           channelId: reservation.channel?.id,
-          channelName: reservation.channel?.name,
-          notice: reservation.notice || "",
-          status:
-            reservation.type === "cancellation" ? "cancelled" : "confirmed",
-          basePrice: parseFloat(basePrice),
-          price: parseFloat(reservation.price),
+          channelName: reservation.channel?.name || "",
+          portalName: portalName,
+          price: parseFloat(reservation.price) || 0,
+          basePrice: pricingInfo.basePrice,
+          linenFee: parseFloat(linenFee),
+          commission: parseFloat(commission),
+          extras: extrasData.extras,
+          nights: nights,
           priceDetails: {
-            basePrice: parseFloat(basePrice),
-            extrasTotal: extrasTotal,
-            longStayDiscount: Math.abs(parseFloat(longStayDiscount)),
-            couponDiscount: Math.abs(parseFloat(couponDiscount)),
-            totalDiscounts: totalDiscounts,
-            extras: processedExtras,
-            priceElements: priceElements,
-            guestFees: parseFloat(
-              priceElements.find((el) =>
-                el.name?.toLowerCase().includes("frais supplémentaires")
-              )?.amount || 0
+            basePrice: pricingInfo.basePrice,
+            linenFee: parseFloat(linenFee),
+            commission: parseFloat(commission),
+            longStayDiscount: pricingInfo.longStayDiscount,
+            couponDiscount: pricingInfo.couponDiscount,
+            discount: pricingInfo.longStayDiscount,
+            extrasTotal: extrasData.extras.reduce(
+              (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
+              0 // Only use base amount
             ),
+            priceElements: priceElements,
+            promoCode: pricingInfo.promoCode, // This is now always either an object or null
+            calculatedDiscounts: {
+              longStay: pricingInfo.longStayDiscount,
+              coupon: pricingInfo.couponDiscount,
+            },
+            settings: {
+              extraChildPerNight: 20,
+              extraGuestsPerNight: 20,
+              lengthOfStayDiscount: {
+                discountPercentage: pricingInfo.longStayDiscount > 0 ? 40 : 0,
+                minNights: 2,
+              },
+              maxGuests: 4,
+              startingAtGuest: 2,
+            },
           },
-          portalName: getPortalName(
-            reservation.channel?.name || reservation.channel?.id
-          ),
-          updatedAt: new Date().toISOString(),
           lastSyncedAt: new Date().toISOString(),
-          extras: processedExtras,
         };
 
-        // If booking exists, update it, otherwise create new
+        // Clean up undefined values
+        const cleanBookingDoc = {};
+        Object.entries(bookingDoc).forEach(([key, value]) => {
+          if (value !== undefined) {
+            cleanBookingDoc[key] = value;
+          }
+        });
+
+        const cleanPriceDetails = {};
+        Object.entries(bookingDoc.priceDetails || {}).forEach(
+          ([key, value]) => {
+            if (value !== undefined) {
+              cleanPriceDetails[key] = value;
+            }
+          }
+        );
+
+        cleanBookingDoc.priceDetails = cleanPriceDetails;
+
+        // Save to Firebase
         if (existingDoc) {
           await db
             .collection("bookings")
             .doc(existingDoc.id)
             .update({
-              ...bookingDoc,
+              ...cleanBookingDoc,
               createdAt: existingDoc.data().createdAt,
-              smoobuId: normalizedId,
-              smoobuReservationId: normalizedId,
             });
-          console.log(
-            `🟦 Updated existing booking ${normalizedId} with ${processedExtras.length} extras:`,
-            processedExtras.map((e) => e.name)
-          );
+
+          console.log(`🟦 Updated existing booking ${normalizedId}`);
         } else {
-          // For new bookings, set creation date
-          const newBookingDoc = {
-            ...bookingDoc,
-            createdAt: reservation["created-at"] || new Date().toISOString(),
-            smoobuId: normalizedId,
-            smoobuReservationId: normalizedId,
-          };
-          await db.collection("bookings").doc(normalizedId).set(newBookingDoc);
-          console.log(
-            `🟩 Added new booking ${normalizedId} with ${processedExtras.length} extras:`,
-            processedExtras.map((e) => e.name)
-          );
+          await db
+            .collection("bookings")
+            .doc(normalizedId)
+            .set(cleanBookingDoc);
+          console.log(`🟩 Added new booking ${normalizedId}`);
         }
 
         successCount++;
