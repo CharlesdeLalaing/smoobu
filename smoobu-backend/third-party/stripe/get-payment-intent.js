@@ -1,7 +1,5 @@
-// getBookingByPaymentIntentId.js (in your project's root or a suitable directory, e.g., api)
-
 import Stripe from "stripe";
-import { db } from "../../firebase-config";
+import { db } from "../../firebase-config.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
