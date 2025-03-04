@@ -12,7 +12,6 @@ import { validateVoucher } from "./third-party/smoobu/actions/api/voucherValidat
 import { fetchDirectBookings } from "./third-party/smoobu/actions/api/fetch-direct-bookings.js";
 import { generateExtrasReport } from "./third-party/smoobu/actions/api/extras-report.js";
 
-import { db } from "./firebase-config.js";
 import { generateBookingsReport } from "./third-party/smoobu/actions/api/booking-report.js";
 import { fetchApartments } from "./third-party/smoobu/actions/api/apartments.js";
 import { fetchApartmentsId } from "./third-party/smoobu/actions/api/apartment-id.js";
