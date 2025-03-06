@@ -88,70 +88,24 @@ const BookingInfoSection = ({ booking }) => (
 );
 
 const PriceDetailsSection = ({ booking }) => {
-  // Get portal name
-  const portalName = booking.portalName || booking.channelName || "";
-  const isAirbnb = portalName === "Airbnb";
+  // Get base price directly from booking data
+  const basePrice = booking.priceDetails?.basePrice || 0;
 
-  // Price elements
-  const priceElements = booking.priceDetails?.priceElements || [];
+  // Get linen fee
+  const linenFee = booking.priceDetails?.linenFee || 0;
 
-  let basePrice = 0;
-  let linenFee = 0;
-  let longStayDiscount = 0;
-  let couponDiscount = 0;
+  // Get long stay discount
+  const longStayDiscount = booking.priceDetails?.longStayDiscount || 0;
 
-  if (isAirbnb) {
-    // For Airbnb, use our specialized base price extractor
-    basePrice = extractAirbnbBasePrice(priceElements, booking);
+  // Get coupon discount
+  const couponDiscount = booking.priceDetails?.promoCode?.amount || 0;
 
-    // Find linen fee
-    const linenFeeElement = priceElements.find(
-      (el) =>
-        el &&
-        el.name &&
-        (el.name.includes("LINEN_FEE") ||
-          el.name.includes("linen_fee") ||
-          el.name.includes("Linen Fee"))
-    );
+  // Get commission
+  const commission = booking.priceDetails?.commission || 0;
 
-    if (linenFeeElement) {
-      linenFee = parseFloat(linenFeeElement.amount) || 0;
-    }
-
-    // Find commission (for display only)
-    const commissionElement = priceElements.find(
-      (el) =>
-        el &&
-        el.name &&
-        (el.name.includes("Cancellation Host Fee") ||
-          el.name.includes("Host Fee"))
-    );
-
-    if (commissionElement) {
-      booking.commission = parseFloat(commissionElement.amount) || 0;
-    }
-  } else {
-    // For non-Airbnb bookings, use the normal fields
-    basePrice = parseFloat(
-      booking.priceDetails?.basePrice || booking.basePrice || 0
-    );
-    linenFee = parseFloat(
-      booking.priceDetails?.linenFee || booking.linenFee || 0
-    );
-    longStayDiscount = parseFloat(booking.priceDetails?.longStayDiscount || 0);
-    couponDiscount = parseFloat(
-      booking.priceDetails?.promoCode?.amount ||
-        booking.priceDetails?.couponDiscount ||
-        0
-    );
-  }
-
-  // Calculate total room price
+  // Calculate total room price correctly
   const totalRoomPrice =
     basePrice + linenFee - longStayDiscount - couponDiscount;
-
-  // Get commission for display (if any)
-  const commission = parseFloat(booking.commission || 0);
 
   return (
     <div className="space-y-3">
@@ -180,10 +134,10 @@ const PriceDetailsSection = ({ booking }) => {
         )}
 
         {/* Coupon Discount (if applicable) */}
-        {couponDiscount > 0 && booking.priceDetails?.promoCode && (
+        {booking.priceDetails?.promoCode && couponDiscount > 0 && (
           <p className="text-sm text-green-600">
             <span className="block font-medium">
-              {`Code promo: ${booking.priceDetails.promoCode.code || "PROMO"}:`}
+              {booking.priceDetails.promoCode.name}:
             </span>
             {formatPrice(-couponDiscount)}
           </p>
@@ -207,110 +161,34 @@ const PriceDetailsSection = ({ booking }) => {
   );
 };
 
-/**
- * Special function to find the base price for Airbnb bookings
- * @param {Array} priceElements - The price elements from the booking
- * @param {Object} booking - The booking object
- * @returns {number} - The extracted base price
- */
-function extractAirbnbBasePrice(priceElements, booking) {
-  // Initialize base price
-  let basePrice = 0;
-
-  // First approach: Try to find the "Base Price" element
-  const basePriceElement = priceElements.find(
-    (el) =>
-      el &&
-      el.name &&
-      (el.name === "Base Price" ||
-        el.name === "base_price" ||
-        el.name === "BasePrice")
-  );
-
-  if (basePriceElement && basePriceElement.amount) {
-    basePrice = Math.abs(parseFloat(basePriceElement.amount));
-    return basePrice;
-  }
-
-  // Second approach: Try to find the "Cancellation Payout" element
-  // This often contains the actual room amount in Airbnb
-  const payoutElement = priceElements.find(
-    (el) => el && el.name && el.name.includes("Cancellation Payout")
-  );
-
-  if (payoutElement && payoutElement.amount) {
-    basePrice = Math.abs(parseFloat(payoutElement.amount));
-    return basePrice;
-  }
-
-  // Third approach: Try to use the booking price
-  if (booking.price) {
-    // Subtract known extras from total price
-    let extrasTotal = 0;
-    const relevantExtras = priceElements.filter(
-      (el) =>
-        el &&
-        el.name &&
-        el.amount &&
-        (el.name.includes("formule") ||
-          el.name.includes("anniversaire") ||
-          el.name.includes("détente") ||
-          el.name.includes("gourmet") ||
-          el.name.includes("essentiel") ||
-          el.name.includes("romantique"))
-    );
-
-    extrasTotal = relevantExtras.reduce(
-      (sum, el) => sum + parseFloat(el.amount || 0),
-      0
-    );
-
-    // Subtract extras from total price
-    basePrice = parseFloat(booking.price) - extrasTotal;
-
-    // Subtract linen fee if present
-    const linenFeeElement = priceElements.find(
-      (el) =>
-        el &&
-        el.name &&
-        (el.name.includes("LINEN_FEE") ||
-          el.name.includes("linen_fee") ||
-          el.name.includes("Linen Fee"))
-    );
-
-    if (linenFeeElement && linenFeeElement.amount) {
-      basePrice -= parseFloat(linenFeeElement.amount);
-    }
-
-    return Math.max(0, basePrice);
-  }
-
-  // Fourth approach: Try to use the nights and a constant value
-  if (booking.nights) {
-    // Assume a standard nightly rate
-    const nights = parseInt(booking.nights) || 1;
-    basePrice = nights * 150; // Assuming 150€ per night as default
-    return basePrice;
-  }
-
-  // If all else fails, return a fallback value
-  return 180; // Reasonable fallback
-}
-
 const ExtrasDetailsSection = ({ booking }) => {
-  // Get extras from price elements for guaranteed deduplication
-  const priceElements = booking.priceDetails?.priceElements || [];
-  const portalName = booking.portalName || booking.channelName;
-  const displayExtras = getExtrasFromPriceElements(priceElements, portalName);
+  // Get portal name
+  const portalName = booking.portalName || booking.channelName || "";
+
+  // Process and organize extras
+  let displayExtras = [];
+
+  // If we have price elements, use those for a consistent display
+  if (booking.priceDetails?.priceElements?.length > 0) {
+    const priceElements = booking.priceDetails.priceElements;
+    displayExtras = getCleanExtrasFromPriceElements(priceElements, portalName);
+  }
+  // Otherwise fall back to the extras array
+  else if (booking.extras?.length > 0) {
+    displayExtras = booking.extras;
+  }
+
+  // Sort extras to keep related items together
+  const sortedExtras = sortExtras(displayExtras);
 
   // Calculate total
-  const extrasTotal = displayExtras.reduce(
+  const extrasTotal = sortedExtras.reduce(
     (sum, extra) => sum + parseFloat(extra.amount || 0),
     0
   );
 
   // Check if we have any extras to display
-  const hasExtras = displayExtras.length > 0;
+  const hasExtras = sortedExtras.length > 0;
 
   return (
     <div className="space-y-3">
@@ -320,19 +198,27 @@ const ExtrasDetailsSection = ({ booking }) => {
           <div className="text-sm">
             <span className="block mb-2 font-medium">Extras sélectionnés:</span>
             <ul className="space-y-2">
-              {displayExtras.map((extra, index) => (
-                <li
-                  key={`extra-item-${index}`}
-                  className={
-                    extra.isPersonExtra
-                      ? "ml-4 text-indigo-700 break-words"
-                      : "break-words"
-                  }
-                >
-                  • {extra.name} {extra.quantity > 1 && `(${extra.quantity}x)`}:{" "}
-                  {formatPrice(extra.amount)}
-                </li>
-              ))}
+              {sortedExtras.map((extra, index) => {
+                // Check if this is a person extra
+                const isPersonExtra = extra.name.includes(
+                  "Personne supplémentaire"
+                );
+
+                return (
+                  <li
+                    key={`extra-item-${index}`}
+                    className={
+                      isPersonExtra
+                        ? "ml-4 text-indigo-700 break-words"
+                        : "break-words"
+                    }
+                  >
+                    • {extra.name}{" "}
+                    {extra.quantity > 1 && `(${extra.quantity}x)`}:{" "}
+                    {formatPrice(extra.amount)}
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="pt-2 mt-4 border-t border-gray-200">
@@ -354,7 +240,7 @@ const ExtrasDetailsSection = ({ booking }) => {
  * @param {string} portalName - Portal name for special handling
  * @returns {Array} - Clean list of extras for display
  */
-function getExtrasFromPriceElements(priceElements, portalName) {
+function getCleanExtrasFromPriceElements(priceElements, portalName) {
   if (!priceElements || !Array.isArray(priceElements)) return [];
 
   // Define unwanted extras patterns
@@ -422,15 +308,12 @@ function getExtrasFromPriceElements(priceElements, portalName) {
     // Skip if we already have this exact name
     if (uniqueExtras.has(el.name)) return;
 
-    // Determine if this is a person extra
-    const isPersonExtra = el.name.includes("Personne supplémentaire");
-
     // Add this extra
     uniqueExtras.set(el.name, {
       name: el.name,
       amount: el.amount,
       quantity: el.quantity || 1,
-      isPersonExtra: isPersonExtra,
+      id: el.id,
     });
   });
 
@@ -448,6 +331,98 @@ function getExtrasFromPriceElements(priceElements, portalName) {
       (e) => !e.name.includes("Frais supplémentaires") || e === toKeep
     );
   }
+
+  return result;
+}
+
+/**
+ * Sorts extras to keep related items together
+ * @param {Array} extras - Array of extras
+ * @returns {Array} - Sorted array of extras
+ */
+function sortExtras(extras) {
+  if (!extras || !Array.isArray(extras)) return [];
+
+  // Create a map to group related extras
+  const extrasGroups = new Map();
+  const mainExtras = [];
+  const personExtras = [];
+
+  // First pass: separate main extras and person extras
+  extras.forEach((extra) => {
+    if (!extra.name) return;
+
+    const isPersonExtra = extra.name.includes("Personne supplémentaire");
+
+    if (isPersonExtra) {
+      personExtras.push(extra);
+    } else {
+      mainExtras.push(extra);
+
+      // Initialize the group for this main extra
+      const baseName = extra.name.split(" - ")[0].trim();
+      if (!extrasGroups.has(baseName)) {
+        extrasGroups.set(baseName, []);
+      }
+    }
+  });
+
+  // Second pass: assign person extras to their parent groups
+  personExtras.forEach((personExtra) => {
+    // Extract the parent name from the person extra name
+    let parentName = "";
+
+    if (personExtra.name.includes(" - ")) {
+      // If the name has a format like "Parent Name - Personne supplémentaire"
+      parentName = personExtra.name.split(" - ")[0].trim();
+    }
+
+    // If we found a parent and it exists in our groups, add this person extra to that group
+    if (parentName && extrasGroups.has(parentName)) {
+      extrasGroups.get(parentName).push(personExtra);
+    } else {
+      // If we can't determine the parent, handle it as an orphan
+      // Create a fallback group
+      if (!extrasGroups.has("Autres")) {
+        extrasGroups.set("Autres", []);
+      }
+      extrasGroups.get("Autres").push(personExtra);
+    }
+  });
+
+  // Sort main extras by name for consistency
+  mainExtras.sort((a, b) => {
+    // Special case: always put "Frais supplémentaires" at the top
+    if (a.name.includes("Frais supplémentaires")) return -1;
+    if (b.name.includes("Frais supplémentaires")) return 1;
+
+    return a.name.localeCompare(b.name);
+  });
+
+  // Build the final sorted array
+  const result = [];
+
+  // Add each main extra followed by its related person extras
+  mainExtras.forEach((mainExtra) => {
+    result.push(mainExtra);
+
+    const baseName = mainExtra.name.split(" - ")[0].trim();
+    const relatedPersonExtras = extrasGroups.get(baseName) || [];
+
+    // Sort related person extras by name if there are multiple
+    relatedPersonExtras.sort((a, b) => a.name.localeCompare(b.name));
+
+    // Add all related person extras
+    relatedPersonExtras.forEach((personExtra) => {
+      result.push(personExtra);
+    });
+  });
+
+  // Add any orphaned extras from the "Autres" group
+  const orphans = extrasGroups.get("Autres") || [];
+  orphans.forEach((orphan) => {
+    result.push(orphan);
+  });
 
   return result;
 }
