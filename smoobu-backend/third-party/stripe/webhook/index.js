@@ -160,3 +160,4 @@ export const handleWebhook = async (req, res) => {
 
 // Export pendingBookings to be accessed from outside
 export { pendingBookings };
+

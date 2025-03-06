@@ -59,7 +59,7 @@ export const addGuestFeesToReservation = async (
       },
       {
         headers: {
-          "Api-Key": apiKey || process.env.SMOOBU_API_KEY,
+          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
           "Content-Type": "application/json",
         },
       }
@@ -76,29 +76,79 @@ export const addExtrasToReservation = async (reservationId, extras, apiKey) => {
 
   try {
     for (const extra of extras) {
-      const totalExtraAmount =
-        Number(extra.amount) +
-        Number(extra.extraPersonPrice) * Number(extra.extraPersonQuantity);
+      let retryCount = 0;
+      const maxRetries = 3;
 
-      await axios.post(
-        `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-        {
-          type: "addon",
-          name: extra.name.startsWith("extras.")
-            ? extrasFrenchNames[extra.name]
-            : extra.name,
-          amount: totalExtraAmount,
-          quantity: extra.quantity || 1,
-          currencyCode: "EUR",
-        },
-        {
-          headers: {
-            "Api-Key": apiKey || process.env.SMOOBU_API_KEY,
-            "Content-Type": "application/json",
-          },
+      while (retryCount < maxRetries) {
+        try {
+          const processedName = {
+            nameKey: extra.name.startsWith("extras.") ? extra.name : null,
+            name: extra.name.startsWith("extras.")
+              ? extrasFrenchNames[extra.name]
+              : extra.name,
+          };
+
+          // Skip if it's "personne supplémentaire" 
+          if (
+            processedName.name &&
+            !processedName.name
+              .toLowerCase()
+              .includes("personne supplémentaire".toLowerCase())
+          ) {
+            await axios.post(
+              `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+              {
+                type: "addon",
+                name: processedName.name,
+                nameKey: processedName.nameKey,
+                amount: extra.amount,
+                quantity: extra.quantity,
+                currencyCode: "EUR",
+              },
+              {
+                headers: {
+                  "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            await wait(1000);
+          }
+
+          // Add the additional person as a separate price element
+          if (extra.extraPersonQuantity > 0 && extra.extraPersonPrice) {
+            await axios.post(
+              `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+              {
+                type: "addon",
+                name: `${processedName.name} - ${extrasFrenchNames["extras.additionalPerson"]}`,
+                nameKey: "extras.additionalPerson",
+                amount: extra.extraPersonPrice * extra.extraPersonQuantity,
+                quantity: extra.extraPersonQuantity,
+                currencyCode: "EUR",
+              },
+              {
+                headers: {
+                  "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            await wait(1000);
+          }
+
+          break;
+        } catch (extraError) {
+          retryCount++;
+          if (retryCount === maxRetries) {
+            console.error("🟥 Failed to add extra:", extraError);
+            throw extraError; // Re-throw to be caught by the outer try/catch
+          } else {
+            await wait(2000 * retryCount);
+            continue;
+          }
         }
-      );
-      await wait(1000);
+      }
     }
     return { success: true };
   } catch (error) {
