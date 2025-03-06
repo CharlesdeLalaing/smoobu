@@ -177,33 +177,39 @@ const BookingsTable = ({
 };
 
 // Helper function to calculate the total price
+// Helper function to calculate the total price
 const calculateTotalPrice = (booking) => {
-  // Calculate total room price
-  const roomPrice =
-    parseFloat(booking.basePrice) +
-    parseFloat(booking.linenFee || 0) -
-    parseFloat(booking.priceDetails?.longStayDiscount || 0) -
-    parseFloat(booking.priceDetails?.promoCode?.amount || 0);
-
-  // Calculate extras total
-  const extrasTotal =
-    booking.extras?.reduce((sum, extra) => {
-      const baseAmount = parseFloat(extra.amount || 0);
-      const extraPersonAmount =
-        extra.extraPersonQuantity > 0
-          ? parseFloat(extra.extraPersonAmount) ||
-            parseFloat(extra.extraPersonPrice) *
-              parseInt(extra.extraPersonQuantity)
-          : 0;
-      return sum + baseAmount + extraPersonAmount;
-    }, 0) || 0;
-
-  // Add guest fees
-  const guestFees = parseFloat(booking.guestFees || 0);
-
+  // 1. Use stored price if available (from fetch and sync)
+  if (booking.price && !isNaN(parseFloat(booking.price))) {
+    return formatPrice(parseFloat(booking.price));
+  }
+  
+  // 2. Use totalPriceWithExtras as a fallback
+  if (booking.totalPriceWithExtras && !isNaN(parseFloat(booking.totalPriceWithExtras))) {
+    return formatPrice(parseFloat(booking.totalPriceWithExtras));
+  }
+  
+  // 3. Calculate from components as a last resort
+  // Base room price
+  const basePrice = parseFloat(booking.basePrice || booking.priceDetails?.basePrice || 0);
+  
+  // Add linen fee
+  const linenFee = parseFloat(booking.linenFee || booking.priceDetails?.linenFee || 0);
+  
+  // Subtract discounts (ensure they're treated as positive values)
+  const longStayDiscount = Math.abs(parseFloat(booking.priceDetails?.longStayDiscount || 0));
+  const couponDiscount = Math.abs(parseFloat(booking.priceDetails?.couponDiscount || 
+                               booking.priceDetails?.promoCode?.amount || 0));
+  
+  // Calculate room total
+  const roomTotal = basePrice + linenFee - longStayDiscount - couponDiscount;
+  
+  // Get extras total (directly from the precomputed value)
+  const extrasTotal = parseFloat(booking.priceDetails?.extrasTotal || 0);
+  
   // Calculate final price
-  const finalPrice = roomPrice + extrasTotal + guestFees;
-
+  const finalPrice = roomTotal + extrasTotal;
+  
   return formatPrice(finalPrice);
 };
 
