@@ -51,9 +51,23 @@ export function processExtrasWithPersons(priceElements) {
     wantedExtras.map((e) => e.name)
   );
 
-  // 1. Deduplicate by name
-  const extraNamesMap = new Map();
+  // 1. Separate regular extras and "Personne supplémentaire" extras
+  const regularExtras = [];
+  const personneExtras = [];
+
   wantedExtras.forEach((element) => {
+    if (
+      (element.name || "").toLowerCase().includes("personne supplémentaire")
+    ) {
+      personneExtras.push(element);
+    } else {
+      regularExtras.push(element);
+    }
+  });
+
+  // 2. Deduplicate regular extras by name
+  const extraNamesMap = new Map();
+  regularExtras.forEach((element) => {
     if (extraNamesMap.has(element.name)) {
       const existing = extraNamesMap.get(element.name);
       // Only replace if this one has more data or higher amount
@@ -70,51 +84,68 @@ export function processExtrasWithPersons(priceElements) {
 
   const potentialExtras = Array.from(extraNamesMap.values());
   console.log(
-    "Deduplicated extras:",
+    "Deduplicated regular extras:",
     potentialExtras.map((e) => e.name)
   );
 
-  // 2. Identify "personne supplémentaire" items
-  const personneItems = priceElements.filter((element) => {
-    const name = (element.name || "").toLowerCase();
-    return name.includes("personne supplémentaire");
+  // 3. Group and merge "personne supplémentaire" items by exact name
+  const personneItemsMap = new Map();
+
+  personneExtras.forEach((element) => {
+    // If we already have this exact name, merge quantities and amounts
+    if (personneItemsMap.has(element.name)) {
+      const existing = personneItemsMap.get(element.name);
+      const existingQuantity = parseInt(existing.quantity) || 1;
+      const currentQuantity = parseInt(element.quantity) || 1;
+      const totalQuantity = existingQuantity + currentQuantity;
+
+      const existingAmount = parseFloat(existing.amount) || 0;
+      const currentAmount = parseFloat(element.amount) || 0;
+      const totalAmount = existingAmount + currentAmount;
+
+      // Create a merged item
+      const mergedItem = {
+        ...element,
+        quantity: totalQuantity,
+        amount: totalAmount,
+      };
+
+      personneItemsMap.set(element.name, mergedItem);
+      console.log(
+        `Merged duplicate "${element.name}" - New quantity: ${totalQuantity}, Amount: ${totalAmount}€`
+      );
+    } else {
+      personneItemsMap.set(element.name, element);
+    }
   });
 
+  const mergedPersonneItems = Array.from(personneItemsMap.values());
+
   console.log(
-    "Personne supplémentaire items:",
-    personneItems.map((e) => e.name)
+    "Personne supplémentaire items after merging:",
+    mergedPersonneItems.map((e) => `${e.name} (${e.quantity}x, ${e.amount}€)`)
   );
 
-  // 3. Process each extra and try to match with personne supplémentaire items
-  const processedExtras = potentialExtras.map((extra) => {
-    const extraName = (extra.name || "").toLowerCase();
+  // 4. Match regular extras with their corresponding "personne supplémentaire" items
+  // Track which personne items have been matched
+  const matchedPersonneItems = new Set();
+  const processedExtras = [];
 
-    // Try to find a matching personne supplémentaire item for this extra
-    const matchingPersonItem = personneItems.find((person) => {
-      const personName = (person.name || "").toLowerCase();
+  // Process each regular extra
+  potentialExtras.forEach((regularExtra) => {
+    const regularExtraName = regularExtra.name;
 
-      // Check if the person item references this extra
-      // First strip out qualifiers from the extra name
-      const baseExtraName = extraName
-        .replace(" (pour 2)", "")
-        .replace(" (2 pers)", "")
-        .replace(" (pour 2 personnes)", "");
+    // Look for a matching personne item that has the format: "[regularExtraName] - Personne supplémentaire"
+    const expectedPersonneName = `${regularExtraName} - Personne supplémentaire`;
 
-      // More aggressive matching - look for significant words in both names
-      const extraWords = baseExtraName.split(" ");
-      const significantExtraWords = extraWords.filter(
-        (word) =>
-          word.length > 3 &&
-          !["pour", "avec", "sans", "dans", "les"].includes(word)
-      );
+    // Find personne item with matching name
+    const matchingPersonItem = mergedPersonneItems.find(
+      (personItem) => personItem.name === expectedPersonneName
+    );
 
-      // Check if personne item contains these significant words
-      const hasMatch = significantExtraWords.some((word) =>
-        personName.includes(word)
-      );
-
-      return hasMatch;
-    });
+    console.log(
+      `Looking for match for "${regularExtraName}" -> expected: "${expectedPersonneName}"`
+    );
 
     let extraPersonAmount = 0;
     let extraPersonPrice = 0;
@@ -125,21 +156,27 @@ export function processExtrasWithPersons(priceElements) {
       // Use data from matched item
       extraPersonAmount = Math.abs(parseFloat(matchingPersonItem.amount) || 0);
       extraPersonQuantity = parseInt(matchingPersonItem.quantity) || 1;
-      extraPersonPrice = extraPersonAmount / extraPersonQuantity;
+      extraPersonPrice = extraPersonAmount / extraPersonQuantity; // Unit price per person
       hasExtraPerson = true;
 
+      // Mark this personne item as matched
+      matchedPersonneItems.add(matchingPersonItem.name);
+
       console.log(
-        `Found match for "${extra.name}": "${matchingPersonItem.name}" (${extraPersonAmount}€)`
+        `✅ FOUND match for "${regularExtraName}": "${matchingPersonItem.name}" (${extraPersonQuantity}x, ${extraPersonAmount}€)`
       );
+    } else {
+      console.log(`❌ NO match found for "${regularExtraName}"`);
     }
 
-    return {
-      name: extra.name || "Extra",
-      amount: Math.abs(parseFloat(extra.amount) || 0),
-      quantity: parseInt(extra.quantity) || 1,
-      type: extra.type || "addon",
-      id: extra.id,
-      currencyCode: extra.currencyCode || "EUR",
+    // Add the processed extra
+    processedExtras.push({
+      name: regularExtraName,
+      amount: Math.abs(parseFloat(regularExtra.amount) || 0),
+      quantity: parseInt(regularExtra.quantity) || 1,
+      type: regularExtra.type || "addon",
+      id: regularExtra.id,
+      currencyCode: regularExtra.currencyCode || "EUR",
       extraPersonQuantity,
       extraPersonPrice,
       extraPersonAmount,
@@ -147,23 +184,55 @@ export function processExtrasWithPersons(priceElements) {
         ? matchingPersonItem.name
         : "Personne supplémentaire",
       hasExtraPerson,
-    };
+    });
   });
 
+  // 5. Add any "Personne supplémentaire" items that weren't matched as standalone extras
+  const unmatchedPersonneItems = mergedPersonneItems.filter(
+    (item) =>
+      !matchedPersonneItems.has(item.name) &&
+      !item.name.toLowerCase().includes("frais supplémentaires") // Skip these as they're handled separately
+  );
+
+  if (unmatchedPersonneItems.length > 0) {
+    console.log(
+      "Adding unmapped personne supplémentaire items as standalone extras:",
+      unmatchedPersonneItems.map((e) => e.name)
+    );
+
+    unmatchedPersonneItems.forEach((item) => {
+      processedExtras.push({
+        name: item.name,
+        amount: Math.abs(parseFloat(item.amount) || 0),
+        quantity: parseInt(item.quantity) || 1,
+        type: "addon",
+        id: item.id,
+        currencyCode: item.currencyCode || "EUR",
+        extraPersonQuantity: 0,
+        extraPersonPrice: 0,
+        extraPersonAmount: 0,
+        extraPersonName: "",
+        hasExtraPerson: false,
+      });
+    });
+  }
+
+  // 6. Process "Frais supplémentaires" separately
   // Filter out "Frais supplémentaires" if it appears as a regular extra AND we already have it with "personne supplémentaire"
-  const fraisPresentAsPersonne = personneItems.some((p) =>
+  const fraisPresentAsPersonne = mergedPersonneItems.some((p) =>
     p.name.toLowerCase().includes("frais supplémentaires")
   );
 
-  const finalExtras = fraisPresentAsPersonne
-    ? processedExtras.filter(
-        (e) => !e.name.toLowerCase().includes("frais supplémentaires")
-      )
-    : processedExtras;
+  let finalExtras = [...processedExtras];
 
-  // If we filtered out "Frais supplémentaires", add it back as a separate item
   if (fraisPresentAsPersonne) {
-    const fraisItem = personneItems.find((p) =>
+    // Filter out any Frais supplémentaires from the regular extras
+    finalExtras = finalExtras.filter(
+      (e) => !e.name.toLowerCase().includes("frais supplémentaires")
+    );
+
+    // Add it back as a separate item
+    const fraisItem = mergedPersonneItems.find((p) =>
       p.name.toLowerCase().includes("frais supplémentaires")
     );
 
@@ -188,7 +257,7 @@ export function processExtrasWithPersons(priceElements) {
     }
   }
 
-  // Calculate extras total using only the base amount
+  // Calculate extras total including all extras
   const extrasTotal = finalExtras.reduce((sum, extra) => {
     return sum + parseFloat(extra.amount || 0); // Only use base amount, not extraPersonAmount
   }, 0);

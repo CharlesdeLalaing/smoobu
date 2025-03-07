@@ -2,6 +2,219 @@
 import React from "react";
 import { formatDate, formatPrice, getPortalName } from "../../utils/formatters";
 
+/**
+ * Calculates the total price for a booking using the most accurate method
+ * @param {Object} booking - The booking object
+ * @returns {number} - The calculated total price
+ */
+function calculateBookingTotal(booking) {
+  // Check if this is an Airbnb booking
+  const portalName =
+    booking.portalName || booking.channelName || booking.portal;
+  const isAirbnb = portalName === "Airbnb";
+
+  // Get price elements if available
+  const priceElements = booking.priceDetails?.priceElements || [];
+
+  // Calculate room price components
+  let basePrice = parseFloat(
+    booking.priceDetails?.basePrice || booking.basePrice || 0
+  );
+  let linenFee = parseFloat(
+    booking.priceDetails?.linenFee || booking.linenFee || 0
+  );
+  let longStayDiscount = parseFloat(
+    booking.priceDetails?.longStayDiscount || 0
+  );
+  let couponDiscount = parseFloat(
+    booking.priceDetails?.promoCode?.amount ||
+      booking.priceDetails?.couponDiscount ||
+      0
+  );
+
+  // For Airbnb, we need to extract the base price differently
+  if (isAirbnb && priceElements.length > 0) {
+    // Try to find the base price element
+    const basePriceElement = priceElements.find(
+      (el) =>
+        el && el.name && (el.name === "Base Price" || el.name === "base_price")
+    );
+
+    if (basePriceElement) {
+      basePrice = parseFloat(basePriceElement.amount) || 0;
+    }
+
+    // For Airbnb, reset other components that might not apply
+    longStayDiscount = 0;
+    couponDiscount = 0;
+  }
+
+  // Calculate room subtotal
+  const roomTotal = basePrice + linenFee - longStayDiscount - couponDiscount;
+
+  // Get clean extras
+  let displayExtras = [];
+
+  // If we have price elements, use those for a consistent display
+  if (booking.priceDetails?.priceElements?.length > 0) {
+    const priceElements = booking.priceDetails.priceElements;
+    displayExtras = getCleanExtrasFromPriceElements(priceElements, portalName);
+  }
+  // Otherwise fall back to the extras array
+  else if (booking.extras?.length > 0) {
+    displayExtras = booking.extras;
+  }
+
+  // Merge duplicate extras
+  const mergedExtras = mergeAndSortExtras(displayExtras);
+
+  // Calculate extras total
+  const extrasTotal = mergedExtras.reduce(
+    (sum, extra) => sum + parseFloat(extra.amount || 0),
+    0
+  );
+
+  // Calculate total price
+  return roomTotal + extrasTotal;
+}
+
+/**
+ * Gets a clean list of extras from price elements
+ * @param {Array} priceElements - Array of price elements from booking data
+ * @param {string} portalName - Portal name for special handling
+ * @returns {Array} - Clean list of extras for display
+ */
+function getCleanExtrasFromPriceElements(priceElements, portalName) {
+  if (!priceElements || !Array.isArray(priceElements)) return [];
+
+  // Define unwanted extras patterns
+  const unwantedPatterns = [
+    "cancellation",
+    "Cancellation",
+    "pass_through",
+    "PASS_THROUGH",
+    "service fee",
+    "Service Fee",
+    "host fee",
+    "Host Fee",
+    "guest fee",
+    "Guest Fee",
+    "cleaning fee",
+    "Cleaning Fee",
+    "LINEN_FEE",
+    "linen_fee",
+    "Base Price",
+    "base_price",
+    "Commission",
+    "commission",
+    "Tax",
+    "tax",
+    "VAT",
+    "vat",
+  ];
+
+  // Is this an Airbnb booking?
+  const isAirbnb = portalName === "Airbnb";
+
+  // Only include relevant price elements
+  const relevantElements = priceElements.filter((el) => {
+    if (!el || !el.amount || !el.name) return false;
+
+    // For Airbnb, be very selective
+    if (isAirbnb) {
+      // Only allow formules and specific extras
+      return (
+        el.name.toLowerCase().includes("formule") ||
+        el.name.toLowerCase().includes("anniversaire") ||
+        el.name.toLowerCase().includes("détente") ||
+        el.name.toLowerCase().includes("gourmet") ||
+        el.name.toLowerCase().includes("essentiel") ||
+        el.name.toLowerCase().includes("romantique")
+      );
+    } else {
+      // For non-Airbnb, filter out unwanted patterns
+      return (
+        el.amount > 0 &&
+        !el.name.includes("Prix de base") &&
+        !el.name.includes("Base price") &&
+        !el.name.includes("Code promo") &&
+        !el.name.includes("Réduction") &&
+        !unwantedPatterns.some((pattern) => el.name.includes(pattern))
+      );
+    }
+  });
+
+  // Use a Map for deduplication
+  const uniqueExtras = new Map();
+
+  // Process all extras
+  relevantElements.forEach((el) => {
+    // Create a clean key for the map
+    const cleanName = el.name.trim();
+
+    // If we already have this extra in our map
+    if (uniqueExtras.has(cleanName)) {
+      // For "Personne supplémentaire" extras, merge quantities and amounts
+      if (cleanName.includes("Personne supplémentaire")) {
+        const existingExtra = uniqueExtras.get(cleanName);
+
+        // Calculate total quantity and amount
+        const existingQuantity = parseInt(existingExtra.quantity) || 1;
+        const currentQuantity = parseInt(el.quantity) || 1;
+        const totalQuantity = existingQuantity + currentQuantity;
+
+        const existingAmount = parseFloat(existingExtra.amount) || 0;
+        const currentAmount = parseFloat(el.amount) || 0;
+        const totalAmount = existingAmount + currentAmount;
+
+        // Update the existing extra
+        existingExtra.quantity = totalQuantity;
+        existingExtra.amount = totalAmount;
+
+        // Update the map
+        uniqueExtras.set(cleanName, existingExtra);
+      }
+      // For other extras, only replace if this one has more data
+      else if (
+        parseFloat(el.amount) > parseFloat(uniqueExtras.get(cleanName).amount)
+      ) {
+        uniqueExtras.set(cleanName, {
+          name: cleanName,
+          amount: parseFloat(el.amount) || 0,
+          quantity: parseInt(el.quantity) || 1,
+          id: el.id,
+        });
+      }
+    }
+    // If this is a new extra, add it to the map
+    else {
+      uniqueExtras.set(cleanName, {
+        name: cleanName,
+        amount: parseFloat(el.amount) || 0,
+        quantity: parseInt(el.quantity) || 1,
+        id: el.id,
+      });
+    }
+  });
+
+  // Convert Map values to array
+  const result = Array.from(uniqueExtras.values());
+
+  // Special handling for duplicate "Frais supplémentaires"
+  const fraisElements = result.filter((e) =>
+    e.name.includes("Frais supplémentaires")
+  );
+  if (fraisElements.length > 1) {
+    // Keep only the first one
+    const toKeep = fraisElements[0];
+    return result.filter(
+      (e) => !e.name.includes("Frais supplémentaires") || e === toKeep
+    );
+  }
+
+  return result;
+}
+
 const BookingDetails = ({ booking }) => {
   // Guard clause to handle undefined booking
   if (!booking) {
@@ -13,6 +226,9 @@ const BookingDetails = ({ booking }) => {
       </div>
     );
   }
+
+  // Calculate the total price
+  const totalPrice = calculateBookingTotal(booking);
 
   return (
     <div className="p-4 bg-gray-50">
@@ -28,6 +244,13 @@ const BookingDetails = ({ booking }) => {
 
         {/* Column 4: Extras Details */}
         <ExtrasDetailsSection booking={booking} />
+      </div>
+
+      {/* Add total price display at the bottom */}
+      <div className="pr-6 mt-6 text-right">
+        <span className="text-lg font-bold">
+          Total: {formatPrice(totalPrice)}
+        </span>
       </div>
     </div>
   );
@@ -88,24 +311,79 @@ const BookingInfoSection = ({ booking }) => (
 );
 
 const PriceDetailsSection = ({ booking }) => {
-  // Get base price directly from booking data
-  const basePrice = booking.priceDetails?.basePrice || 0;
+  // Get portal name
+  const portalName =
+    booking.portalName || booking.channelName || booking.portal;
+  const isAirbnb = portalName === "Airbnb";
 
-  // Get linen fee
-  const linenFee = booking.priceDetails?.linenFee || 0;
+  // For Airbnb, we may need special handling
+  let basePrice = 0;
+  let linenFee = 0;
+  let longStayDiscount = 0;
+  let couponDiscount = 0;
 
-  // Get long stay discount
-  const longStayDiscount = booking.priceDetails?.longStayDiscount || 0;
+  if (isAirbnb) {
+    // For Airbnb, extract base price from price elements
+    const priceElements = booking.priceDetails?.priceElements || [];
 
-  // Get coupon discount
-  const couponDiscount = booking.priceDetails?.promoCode?.amount || 0;
+    // Find base price element
+    const basePriceElement = priceElements.find(
+      (el) =>
+        el && el.name && (el.name === "Base Price" || el.name === "base_price")
+    );
 
-  // Get commission
-  const commission = booking.priceDetails?.commission || 0;
+    if (basePriceElement) {
+      basePrice = parseFloat(basePriceElement.amount) || 0;
+    }
 
-  // Calculate total room price correctly
+    // Find linen fee
+    const linenFeeElement = priceElements.find(
+      (el) =>
+        el &&
+        el.name &&
+        (el.name.includes("LINEN_FEE") ||
+          el.name.includes("linen_fee") ||
+          el.name.includes("Linen Fee"))
+    );
+
+    if (linenFeeElement) {
+      linenFee = parseFloat(linenFeeElement.amount) || 0;
+    }
+
+    // Find commission (for display only)
+    const commissionElement = priceElements.find(
+      (el) =>
+        el &&
+        el.name &&
+        (el.name.includes("Cancellation Host Fee") ||
+          el.name.includes("Host Fee"))
+    );
+
+    if (commissionElement) {
+      booking.commission = parseFloat(commissionElement.amount) || 0;
+    }
+  } else {
+    // For non-Airbnb bookings, use the normal fields
+    basePrice = parseFloat(
+      booking.priceDetails?.basePrice || booking.basePrice || 0
+    );
+    linenFee = parseFloat(
+      booking.priceDetails?.linenFee || booking.linenFee || 0
+    );
+    longStayDiscount = parseFloat(booking.priceDetails?.longStayDiscount || 0);
+    couponDiscount = parseFloat(
+      booking.priceDetails?.promoCode?.amount ||
+        booking.priceDetails?.couponDiscount ||
+        0
+    );
+  }
+
+  // Calculate total room price
   const totalRoomPrice =
     basePrice + linenFee - longStayDiscount - couponDiscount;
+
+  // Get commission for display (if any)
+  const commission = parseFloat(booking.commission || 0);
 
   return (
     <div className="space-y-3">
@@ -134,10 +412,10 @@ const PriceDetailsSection = ({ booking }) => {
         )}
 
         {/* Coupon Discount (if applicable) */}
-        {booking.priceDetails?.promoCode && couponDiscount > 0 && (
+        {couponDiscount > 0 && booking.priceDetails?.promoCode && (
           <p className="text-sm text-green-600">
             <span className="block font-medium">
-              {booking.priceDetails.promoCode.name}:
+              {`Code promo: ${booking.priceDetails.promoCode.code || "PROMO"}:`}
             </span>
             {formatPrice(-couponDiscount)}
           </p>
@@ -163,7 +441,8 @@ const PriceDetailsSection = ({ booking }) => {
 
 const ExtrasDetailsSection = ({ booking }) => {
   // Get portal name
-  const portalName = booking.portalName || booking.channelName || "";
+  const portalName =
+    booking.portalName || booking.channelName || booking.portal;
 
   // Process and organize extras
   let displayExtras = [];
@@ -178,17 +457,17 @@ const ExtrasDetailsSection = ({ booking }) => {
     displayExtras = booking.extras;
   }
 
-  // Sort extras to keep related items together
-  const sortedExtras = sortExtras(displayExtras);
+  // Merge duplicate extras and sort them
+  const mergedAndSortedExtras = mergeAndSortExtras(displayExtras);
 
   // Calculate total
-  const extrasTotal = sortedExtras.reduce(
+  const extrasTotal = mergedAndSortedExtras.reduce(
     (sum, extra) => sum + parseFloat(extra.amount || 0),
     0
   );
 
   // Check if we have any extras to display
-  const hasExtras = sortedExtras.length > 0;
+  const hasExtras = mergedAndSortedExtras.length > 0;
 
   return (
     <div className="space-y-3">
@@ -198,7 +477,7 @@ const ExtrasDetailsSection = ({ booking }) => {
           <div className="text-sm">
             <span className="block mb-2 font-medium">Extras sélectionnés:</span>
             <ul className="space-y-2">
-              {sortedExtras.map((extra, index) => {
+              {mergedAndSortedExtras.map((extra, index) => {
                 // Check if this is a person extra
                 const isPersonExtra = extra.name.includes(
                   "Personne supplémentaire"
@@ -235,104 +514,48 @@ const ExtrasDetailsSection = ({ booking }) => {
 };
 
 /**
- * Gets a clean list of extras from price elements
- * @param {Array} priceElements - Array of price elements from booking data
- * @param {string} portalName - Portal name for special handling
- * @returns {Array} - Clean list of extras for display
+ * Merges duplicate extras before displaying them
+ * @param {Array} extras - Array of extras
+ * @returns {Array} - Array with duplicates merged
  */
-function getCleanExtrasFromPriceElements(priceElements, portalName) {
-  if (!priceElements || !Array.isArray(priceElements)) return [];
+function mergeAndSortExtras(extras) {
+  if (!extras || !Array.isArray(extras)) return [];
 
-  // Define unwanted extras patterns
-  const unwantedPatterns = [
-    "cancellation",
-    "Cancellation",
-    "pass_through",
-    "PASS_THROUGH",
-    "service fee",
-    "Service Fee",
-    "host fee",
-    "Host Fee",
-    "guest fee",
-    "Guest Fee",
-    "cleaning fee",
-    "Cleaning Fee",
-    "LINEN_FEE",
-    "linen_fee",
-    "Base Price",
-    "base_price",
-    "Commission",
-    "commission",
-    "Tax",
-    "tax",
-    "VAT",
-    "vat",
-  ];
+  // Create a map to track extras by name for deduplication
+  const mergedExtrasMap = new Map();
 
-  // Is this an Airbnb booking?
-  const isAirbnb = portalName === "Airbnb";
+  // First pass: merge duplicates by combining their amounts and quantities
+  extras.forEach((extra) => {
+    if (!extra.name) return;
 
-  // Only include relevant price elements
-  const relevantElements = priceElements.filter((el) => {
-    if (!el.amount || !el.name) return false;
+    // Clean up the name to handle slight variations
+    const cleanName = extra.name.trim();
 
-    // For Airbnb, be very selective
-    if (isAirbnb) {
-      // Only allow formules and specific extras
-      return (
-        el.name.toLowerCase().includes("formule") ||
-        el.name.toLowerCase().includes("anniversaire") ||
-        el.name.toLowerCase().includes("détente") ||
-        el.name.toLowerCase().includes("gourmet") ||
-        el.name.toLowerCase().includes("essentiel") ||
-        el.name.toLowerCase().includes("romantique")
-      );
+    if (mergedExtrasMap.has(cleanName)) {
+      // We found a duplicate - merge it with the existing one
+      const existingExtra = mergedExtrasMap.get(cleanName);
+
+      // Add the amounts
+      existingExtra.amount =
+        parseFloat(existingExtra.amount || 0) + parseFloat(extra.amount || 0);
+
+      // Add the quantities
+      existingExtra.quantity =
+        parseInt(existingExtra.quantity || 1) + parseInt(extra.quantity || 1);
+
+      // Update the map
+      mergedExtrasMap.set(cleanName, existingExtra);
     } else {
-      // For non-Airbnb, filter out unwanted patterns
-      return (
-        el.amount > 0 &&
-        !el.name.includes("Prix de base") &&
-        !el.name.includes("Base price") &&
-        !el.name.includes("Code promo") &&
-        !el.name.includes("Réduction") &&
-        !unwantedPatterns.some((pattern) => el.name.includes(pattern))
-      );
+      // New extra - add it to the map
+      mergedExtrasMap.set(cleanName, { ...extra });
     }
   });
 
-  // Use a Map for deduplication
-  const uniqueExtras = new Map();
+  // Get the merged extras
+  let mergedExtras = Array.from(mergedExtrasMap.values());
 
-  // Process all extras
-  relevantElements.forEach((el) => {
-    // Skip if we already have this exact name
-    if (uniqueExtras.has(el.name)) return;
-
-    // Add this extra
-    uniqueExtras.set(el.name, {
-      name: el.name,
-      amount: el.amount,
-      quantity: el.quantity || 1,
-      id: el.id,
-    });
-  });
-
-  // Convert Map values to array
-  const result = Array.from(uniqueExtras.values());
-
-  // Special handling for duplicate "Frais supplémentaires"
-  const fraisElements = result.filter((e) =>
-    e.name.includes("Frais supplémentaires")
-  );
-  if (fraisElements.length > 1) {
-    // Keep only the first one
-    const toKeep = fraisElements[0];
-    return result.filter(
-      (e) => !e.name.includes("Frais supplémentaires") || e === toKeep
-    );
-  }
-
-  return result;
+  // Now sort them using the same logic as before
+  return sortExtras(mergedExtras);
 }
 
 /**

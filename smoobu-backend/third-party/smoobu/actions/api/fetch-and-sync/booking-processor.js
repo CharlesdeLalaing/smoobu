@@ -5,7 +5,6 @@ import { roomNames } from "../../../../../config/config.js";
 import { mergeExtras, calculateExtrasTotal } from "./extras-merger.js";
 import { portalNames } from "../../../../../config/config.js";
 
-
 const getPortalName = (portal) => {
   // Handle null/undefined
   if (!portal) return "Website";
@@ -53,6 +52,68 @@ function cleanObject(obj) {
     }
   });
   return cleanedObj;
+}
+
+/**
+ * Merges duplicate items in priceElements array
+ * @param {Array} priceElements - Raw price elements array from API
+ * @returns {Array} - Price elements with duplicates merged
+ */
+function mergeDuplicatePriceElements(priceElements) {
+  if (!priceElements || !Array.isArray(priceElements)) {
+    return priceElements || [];
+  }
+
+  // Create a map to track elements by name
+  const elementsMap = new Map();
+
+  // Process each price element
+  priceElements.forEach((element) => {
+    if (!element.name) return;
+
+    const elementName = element.name.trim();
+
+    // If we already have this element in our map
+    if (elementsMap.has(elementName)) {
+      // Get the existing element
+      const existingElement = elementsMap.get(elementName);
+
+      // For "Personne supplémentaire" items, merge them
+      if (elementName.includes("Personne supplémentaire")) {
+        // Calculate merged quantity and amount
+        const existingQuantity = parseInt(existingElement.quantity) || 1;
+        const newQuantity = parseInt(element.quantity) || 1;
+        const totalQuantity = existingQuantity + newQuantity;
+
+        const existingAmount = parseFloat(existingElement.amount) || 0;
+        const newAmount = parseFloat(element.amount) || 0;
+        const totalAmount = existingAmount + newAmount;
+
+        // Update the existing element
+        existingElement.quantity = totalQuantity;
+        existingElement.amount = totalAmount;
+
+        console.log(
+          `Merged duplicate price element "${elementName}" - New quantity: ${totalQuantity}, Amount: ${totalAmount}€`
+        );
+
+        // Update the map
+        elementsMap.set(elementName, existingElement);
+      }
+      // For all other items, keep the most recent one
+      else if (element.id > existingElement.id) {
+        // New element has higher ID (likely more recent), so replace
+        elementsMap.set(elementName, element);
+      }
+    }
+    // This is a new element, add it to the map
+    else {
+      elementsMap.set(elementName, { ...element });
+    }
+  });
+
+  // Convert map back to array
+  return Array.from(elementsMap.values());
 }
 
 /**
@@ -221,6 +282,9 @@ export class BookingProcessor {
       priceElements.find((el) => el.name?.toLowerCase().includes("commission"))
         ?.amount || 0;
 
+    // Merge duplicate price elements
+    const mergedPriceElements = mergeDuplicatePriceElements(priceElements);
+
     return {
       smoobuId: smoobuId,
       smoobuReservationId: Number(smoobuId),
@@ -265,7 +329,7 @@ export class BookingProcessor {
           (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
           0
         ),
-        priceElements: priceElements,
+        priceElements: mergedPriceElements,
         promoCode: pricingInfo.promoCode,
         calculatedDiscounts: {
           longStay: pricingInfo.longStayDiscount,
