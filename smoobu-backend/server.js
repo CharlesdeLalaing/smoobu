@@ -1614,145 +1614,10 @@ app.post("/api/create-gift-voucher", verifyWordPressAuth, async (req, res) => {
 
 // Replace your current /api/rates endpoint with this one
 
-// app.post("/api/validate-voucher", async (req, res) => {
-//   try {
-//     const { code, amount, arrivalDate, departureDate } = req.body;
-//     console.log("Validating voucher with code:", code, "for amount:", amount);
-
-//     // Get voucher from Firebase
-//     const voucherQuery = await getDocs(
-//       query(collection(db, "coupons"), where("code", "==", code.toUpperCase()))
-//     );
-
-//     if (voucherQuery.empty) {
-//       console.log("No voucher found with code:", code);
-//       return res.status(404).json({
-//         valid: false,
-//         message: "Code invalide",
-//       });
-//     }
-
-//     const voucherDoc = voucherQuery.docs[0];
-//     const voucherData = voucherDoc.data();
-//     console.log("Found voucher:", voucherData);
-
-//     // If it's a gift voucher, perform specific validations
-//     if (voucherData.isGiftVoucher) {
-//       // Check if already used
-//       if (voucherData.usedCount > 0) {
-//         console.log("Gift voucher already used");
-//         return res.status(400).json({
-//           valid: false,
-//           message: "Ce bon cadeau a déjà été utilisé",
-//         });
-//       }
-
-//       // Check expiration - handle both Timestamp and regular date
-//       const expiryDate =
-//         voucherData.expiryDate?.toDate?.() || new Date(voucherData.expiryDate);
-//       if (expiryDate < new Date()) {
-//         console.log("Gift voucher expired");
-//         return res.status(400).json({
-//           valid: false,
-//           message: "Ce bon cadeau a expiré",
-//         });
-//       }
-
-//       // Check if booking amount is sufficient
-//       if (amount < voucherData.amount) {
-//         console.log("Booking amount insufficient");
-//         return res.status(400).json({
-//           valid: false,
-//           message: `Le montant de la réservation doit être supérieur au montant du bon cadeau (${voucherData.amount}€)`,
-//         });
-//       }
-//     }
-//     // Regular coupon validation
-//     else {
-//       // Check status
-//       if (voucherData.status !== "active" && code !== "POTES") {
-//         console.log("Coupon not active");
-//         return res.status(400).json({
-//           valid: false,
-//           message: "Ce code promo n'est plus valide",
-//         });
-//       }
-
-//       // Check validity period if set
-//       if (voucherData.validityStartDate && voucherData.validityEndDate && arrivalDate && departureDate) {
-//         const validityStart = voucherData.validityStartDate?.toDate?.() || new Date(voucherData.validityStartDate);
-//         const validityEnd = voucherData.validityEndDate?.toDate?.() || new Date(voucherData.validityEndDate);
-//         const bookingStart = new Date(arrivalDate);
-//         const bookingEnd = new Date(departureDate);
-
-//         // Check if booking dates are within validity period
-//         if (bookingStart > validityEnd || bookingEnd < validityStart) {
-//           const formattedStart = validityStart.toLocaleDateString('fr-BE', {
-//             year: 'numeric',
-//             month: 'long',
-//             day: 'numeric'
-//           });
-//           const formattedEnd = validityEnd.toLocaleDateString('fr-BE', {
-//             year: 'numeric',
-//             month: 'long',
-//             day: 'numeric'
-//           });
-          
-//           console.log("Booking dates outside validity period");
-//           return res.status(400).json({
-//             valid: false,
-//             message: `Ce code n'est valable que pour les séjours entre le ${formattedStart} et le ${formattedEnd}`,
-//           });
-//         }
-//       }
-
-//       // Check regular expiration if exists
-//       if (voucherData.expiryDate) {
-//         const expiryDate =
-//           voucherData.expiryDate?.toDate?.() || new Date(voucherData.expiryDate);
-//         if (expiryDate < new Date()) {
-//           console.log("Coupon expired");
-//           return res.status(400).json({
-//             valid: false,
-//             message: "Ce code promo a expiré",
-//           });
-//         }
-//       }
-//     }
-
-//     // Calculate discount based on type
-//     let discount = 0;
-//     if (voucherData.type === "percentage") {
-//       discount = (amount * voucherData.discount) / 100;
-//     } else {
-//       discount = voucherData.discount;
-//     }
-
-//     console.log("Voucher validated successfully");
-//     res.json({
-//       valid: true,
-//       code: voucherData.code,
-//       type: voucherData.type,
-//       isGiftVoucher: voucherData.isGiftVoucher || false,
-//       discount: discount,
-//       amount: voucherData.amount,
-//       percentageValue:
-//         voucherData.type === "percentage" ? voucherData.discount : null,
-//     });
-//   } catch (error) {
-//     console.error("Error validating voucher:", error);
-//     res.status(500).json({
-//       valid: false,
-//       message: "Erreur lors de la validation du bon cadeau",
-//     });
-//   }
-// });
-
 app.post("/api/validate-voucher", async (req, res) => {
   try {
     const { code, amount, arrivalDate, departureDate } = req.body;
     console.log("Validating voucher with code:", code, "for amount:", amount);
-    console.log("Dates for validation:", { arrivalDate, departureDate });
 
     // Get voucher from Firebase
     const voucherQuery = await getDocs(
@@ -1858,9 +1723,9 @@ app.post("/api/validate-voucher", async (req, res) => {
     // Calculate discount based on type
     let discount = 0;
     if (voucherData.type === "percentage") {
-      discount = (amount * voucherData.percentageValue) / 100;
+      discount = (amount * voucherData.discount) / 100;
     } else {
-      discount = voucherData.amount || voucherData.discount;
+      discount = voucherData.discount;
     }
 
     console.log("Voucher validated successfully");
@@ -1872,9 +1737,7 @@ app.post("/api/validate-voucher", async (req, res) => {
       discount: discount,
       amount: voucherData.amount,
       percentageValue:
-        voucherData.type === "percentage" ? voucherData.percentageValue : null,
-      validityStartDate: voucherData.validityStartDate,
-      validityEndDate: voucherData.validityEndDate
+        voucherData.type === "percentage" ? voucherData.discount : null,
     });
   } catch (error) {
     console.error("Error validating voucher:", error);
@@ -1884,7 +1747,6 @@ app.post("/api/validate-voucher", async (req, res) => {
     });
   }
 });
-
 app.get('/api/rates', async (req, res) => {
   try {
     const { apartments, start_date, end_date, adults, children } = req.query;

@@ -781,117 +781,7 @@ const handlePaymentSuccess = () => {
 // };
 
 
-// const handleApplyCoupon = async (couponCode) => {
-//   try {
-//     const couponsRef = collection(db, "coupons");
-//     const q = query(couponsRef, where("code", "==", couponCode.toUpperCase()));
-//     const querySnapshot = await getDocs(q);
-
-//     if (querySnapshot.empty) {
-//       return { error: "not_found" };
-//     }
-
-//     const couponDoc = querySnapshot.docs[0];
-//     const couponData = couponDoc.data();
-
-//     // Common validation
-//     if (couponData.status !== "active" && couponCode !== "POTES") {
-//       return { error: "inactive" };
-//     }
-
-//     if (couponData.usedCount && couponData.usedCount > 0 && couponCode !== "POTES") {
-//       return { error: "used" };
-//     }
-
-//     const expiryDate = couponData.expiryDate?.toDate?.() || new Date(couponData.expiryDate);
-//     if (expiryDate && expiryDate < new Date()) {
-//       return { error: "expired" };
-//     }
-
-//     // Date validation
-//     if (couponData.validityStartDate && couponData.validityEndDate) {
-//       if (!validateCouponPeriod(couponData, formData.arrivalDate, formData.departureDate)) {
-//         const validityStart = new Date(couponData.validityStartDate);
-//         const validityEnd = new Date(couponData.validityEndDate);
-//         const formattedStart = validityStart.toLocaleDateString('fr-BE', {
-//           year: 'numeric',
-//           month: 'long',
-//           day: 'numeric'
-//         });
-//         const formattedEnd = validityEnd.toLocaleDateString('fr-BE', {
-//           year: 'numeric',
-//           month: 'long',
-//           day: 'numeric'
-//         });
-//         return { 
-//           error: "invalid_dates", 
-//           message: `Ce code n'est valable que pour les séjours entre le ${formattedStart} et le ${formattedEnd}` 
-//         };
-//       }
-//     }
-
-//     // Get current price
-//     const currentRoomPrice = priceDetails?.[formData.apartmentId]?.finalPrice;
-//     if (!currentRoomPrice) {
-//       return { error: "invalid" };
-//     }
-
-//     // Calculate discount based on type
-//     let discount = 0;
-//     if (couponData.type === "percentage") {
-//       // For percentage discounts, use percentageValue and calculate against current price
-//       discount = (currentRoomPrice * (couponData.percentageValue || 0)) / 100;
-//     } else {
-//       // For fixed discounts, use the amount directly
-//       discount = couponData.amount || couponData.discount || 0;
-//     }
-
-//     // Apply the coupon
-//     setAppliedCoupon({
-//       id: couponDoc.id,
-//       code: couponCode.toUpperCase(),
-//       type: couponData.type,
-//       discount: discount,
-//       percentageValue: couponData.type === "percentage" ? couponData.percentageValue : null,
-//       currency: "EUR",
-//       validityStartDate: couponData.validityStartDate,
-//       validityEndDate: couponData.validityEndDate
-//     });
-
-//     // Update price details
-//     setPriceDetails((prev) => {
-//       if (!prev || !prev[formData.apartmentId]) return prev;
-
-//       const currentPriceDetails = prev[formData.apartmentId];
-//       const updatedPriceElements = [
-//         ...(currentPriceDetails.priceElements || []),
-//         {
-//           type: "discount",
-//           name: `Code promo (${couponCode.toUpperCase()}${couponData.type === "percentage" ? ` - ${couponData.percentageValue}%` : ''})`,
-//           amount: -discount,
-//           currencyCode: "EUR",
-//         },
-//       ];
-
-//       return {
-//         ...prev,
-//         [formData.apartmentId]: {
-//           ...currentPriceDetails,
-//           finalPrice: currentPriceDetails.finalPrice - discount,
-//           priceElements: updatedPriceElements,
-//         },
-//       };
-//     });
-
-//     setCoupon("");
-//     return { success: true };
-//   } catch (error) {
-//     console.error("Error applying coupon:", error);
-//     return { error: "invalid" };
-//   }
-// };
-
-const handleApplyCoupon = async (couponCode, arrivalDate, departureDate) => {
+const handleApplyCoupon = async (couponCode) => {
   try {
     const couponsRef = collection(db, "coupons");
     const q = query(couponsRef, where("code", "==", couponCode.toUpperCase()));
@@ -920,10 +810,7 @@ const handleApplyCoupon = async (couponCode, arrivalDate, departureDate) => {
 
     // Date validation
     if (couponData.validityStartDate && couponData.validityEndDate) {
-      const useArrivalDate = arrivalDate || formData.arrivalDate;
-      const useDepartureDate = departureDate || formData.departureDate;
-      
-      if (!validateCouponPeriod(couponData, useArrivalDate, useDepartureDate)) {
+      if (!validateCouponPeriod(couponData, formData.arrivalDate, formData.departureDate)) {
         const validityStart = new Date(couponData.validityStartDate);
         const validityEnd = new Date(couponData.validityEndDate);
         const formattedStart = validityStart.toLocaleDateString('fr-BE', {
