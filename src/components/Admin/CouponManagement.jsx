@@ -177,18 +177,56 @@ const CouponManagement = () => {
   };
 
   
+  // const handleEdit = (coupon) => {
+  //   if (coupon.isGiftVoucher) return; // Prevent editing gift vouchers
+  //   setEditingCoupon(coupon);
+  //   setFormData({
+  //     ...coupon,
+  //     expiryDate:
+  //       coupon.expiryDate instanceof Date
+  //         ? coupon.expiryDate.toISOString().split("T")[0]
+  //         : new Date(coupon.expiryDate).toISOString().split("T")[0],
+  //   });
+  //   setIsModalOpen(true);
+  // };
+
   const handleEdit = (coupon) => {
     if (coupon.isGiftVoucher) return; // Prevent editing gift vouchers
+    
+    // Convert dates to proper format for input fields
+    const formattedExpiryDate = coupon.expiryDate instanceof Date
+      ? coupon.expiryDate.toISOString().split("T")[0]
+      : new Date(coupon.expiryDate).toISOString().split("T")[0];
+      
+    // Convert validity dates from Firestore to format for input fields
+    let formattedValidityStartDate = "";
+    let formattedValidityEndDate = "";
+    
+    if (coupon.validityStartDate) {
+      const validityStartDate = convertToDate(coupon.validityStartDate);
+      if (validityStartDate) {
+        formattedValidityStartDate = validityStartDate.toISOString().split("T")[0];
+      }
+    }
+    
+    if (coupon.validityEndDate) {
+      const validityEndDate = convertToDate(coupon.validityEndDate);
+      if (validityEndDate) {
+        formattedValidityEndDate = validityEndDate.toISOString().split("T")[0];
+      }
+    }
+    
     setEditingCoupon(coupon);
     setFormData({
       ...coupon,
-      expiryDate:
-        coupon.expiryDate instanceof Date
-          ? coupon.expiryDate.toISOString().split("T")[0]
-          : new Date(coupon.expiryDate).toISOString().split("T")[0],
+      expiryDate: formattedExpiryDate,
+      validityStartDate: formattedValidityStartDate,
+      validityEndDate: formattedValidityEndDate
     });
+    
     setIsModalOpen(true);
   };
+
 
   const handleDelete = async (id) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer ce coupon ?")) {
@@ -201,6 +239,24 @@ const CouponManagement = () => {
     }
   };
 
+  // const handleCloseModal = () => {
+  //   setIsModalOpen(false);
+  //   setEditingCoupon(null);
+  //   setFormData({
+  //     code: "",
+  //     discount: "",
+  //     type: "fixed",
+  //     expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+  //       .toISOString()
+  //       .split("T")[0],
+  //     status: "active",
+  //     currency: "EUR",
+  //     usedCount: 0,
+  //     lastUsedDate: null,
+  //     usedBy: [],
+  //   });
+  // };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingCoupon(null);
@@ -211,6 +267,8 @@ const CouponManagement = () => {
       expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split("T")[0],
+      validityStartDate: "",
+      validityEndDate: "",
       status: "active",
       currency: "EUR",
       usedCount: 0,
@@ -218,6 +276,7 @@ const CouponManagement = () => {
       usedBy: [],
     });
   };
+  
 
   const formatDate = (date) => {
     if (!date) return "N/A";
