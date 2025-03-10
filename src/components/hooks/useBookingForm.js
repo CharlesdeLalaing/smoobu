@@ -225,12 +225,30 @@ const handleChange = async (e) => {
       setDateError("Please select both dates");
       return;
     }
-
+  
+    const numberOfNights = calculateNumberOfNights(startDate, endDate);
+    // console.log("Debugging dates:", {
+    //   formDataArrival: formData.arrivalDate,
+    //   formDataDeparture: formData.departureDate,
+    //   startDate: startDate,
+    //   endDate: endDate,
+    //   calculatedNights: numberOfNights,
+    // });
     setLoading(true);
     setError(null);
   
     try {
-
+      // console.log("Checking rates for:", {
+      //   dates: {
+      //     arrival: formData.arrivalDate,
+      //     departure: formData.departureDate,
+      //   },
+      //   guests: {
+      //     adults: formData.adults,
+      //     children: formData.children,
+      //   },
+      //   apartmentId: formData.apartmentId
+      // });
   
       const response = await api.get("/rates", {
         params: {
@@ -242,6 +260,12 @@ const handleChange = async (e) => {
         },
       });
   
+      // Detailed logging of the response
+      console.log("Full rates response:", response.data);
+      console.log("Price details for selected apartment:", 
+        response.data.priceDetails?.[formData.apartmentId]);
+      console.log("Original price:", 
+        response.data.priceDetails?.[formData.apartmentId]?.originalPrice);
   
       if (response.data.priceDetails) {
         setPriceDetails(response.data.priceDetails);

@@ -2,6 +2,7 @@ import { db } from "../../firebase-config.js"
 
 export async function deduplicateBookings(req, res) {
   try {
+    console.log("🟦 Starting deduplication process...");
 
     // Get all bookings from Firebase
     const bookingsSnapshot = await db.collection("bookings").get();
@@ -13,6 +14,7 @@ export async function deduplicateBookings(req, res) {
       });
     });
 
+    console.log(`🟦 Found ${bookings.length} total bookings in database`);
 
     // Group by smoobuId
     const bookingsBySmoobuId = {};
@@ -35,6 +37,8 @@ export async function deduplicateBookings(req, res) {
         bookings: group,
       }));
 
+    console.log(`🟦 Found ${duplicates.length} bookings with duplicates`);
+
     // Delete duplicates - keep only the most recently updated one for each smoobuId
     let deletedCount = 0;
     for (const duplicate of duplicates) {
@@ -47,13 +51,22 @@ export async function deduplicateBookings(req, res) {
 
       // Keep the first one (newest), delete the rest
       const [keep, ...toDelete] = duplicate.bookings;
-
+      console.log(
+        `🟨 Keeping booking ${keep.id} for smoobuId ${duplicate.smoobuId}`
+      );
 
       for (const booking of toDelete) {
+        console.log(
+          `🟥 Deleting duplicate booking ${booking.id} for smoobuId ${duplicate.smoobuId}`
+        );
         await db.collection("bookings").doc(booking.id).delete();
         deletedCount++;
       }
     }
+
+    console.log(
+      `🟩 Deduplication complete. Deleted ${deletedCount} duplicate bookings`
+    );
 
     res.json({
       success: true,
@@ -64,6 +77,7 @@ export async function deduplicateBookings(req, res) {
       },
     });
   } catch (error) {
+    console.error("🟥 Error during deduplication:", error);
     res.status(500).json({
       success: false,
       error: error.message,

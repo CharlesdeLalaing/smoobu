@@ -45,12 +45,18 @@ export async function generateBookingsReport(req, res) {
     const processedBookings = [];
     for (const booking of bookings) {
       try {
+        console.log(`Processing booking ${booking.id}`);
 
         // Skip if it's a blocked booking or cancelled booking
         if (
           booking.channelId === "Blocked" ||
           booking.type === "cancellation"
         ) {
+          console.log(
+            `Skipping ${
+              booking.channelId === "Blocked" ? "blocked" : "cancelled"
+            } booking ${booking.id}`
+          );
           continue;
         }
 

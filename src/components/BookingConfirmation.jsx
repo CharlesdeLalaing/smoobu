@@ -17,7 +17,9 @@ const BookingConfirmation = () => {
     if (storedBookingData) {
       try {
         const parsedData = JSON.parse(storedBookingData);
-
+        console.log("Parsed booking data:", parsedData);
+        console.log("Guest fees:", parsedData.guestFees);
+        console.log("Price breakdown:", parsedData.priceBreakdown);
         setBookingDetails(parsedData);
         setStatus("success");
         if (parsedData) {
@@ -43,7 +45,7 @@ const fetchBookingDetails = async (paymentIntentId) => {
 
   const attemptFetch = async () => {
     try {
-
+      console.log(`Attempt ${attempts + 1} to fetch booking details`);
 
       const response = await fetch(
         `${API_URL}/api/bookings/${paymentIntentId}`,
@@ -58,7 +60,9 @@ const fetchBookingDetails = async (paymentIntentId) => {
       if (response.status === 404) {
         attempts++;
         if (attempts < maxAttempts) {
-
+          console.log(
+            `Booking not found yet. Retrying in ${retryDelay / 1000} seconds...`
+          );
           setTimeout(attemptFetch, retryDelay);
           return;
         }
@@ -69,7 +73,9 @@ const fetchBookingDetails = async (paymentIntentId) => {
       if (data.error) {
         if (attempts < maxAttempts) {
           attempts++;
-
+          console.log(
+            `Error: ${data.error}. Retrying in ${retryDelay / 1000} seconds...`
+          );
           setTimeout(attemptFetch, retryDelay);
           return;
         }
@@ -81,7 +87,9 @@ const fetchBookingDetails = async (paymentIntentId) => {
     } catch (error) {
       if (attempts < maxAttempts) {
         attempts++;
-
+        console.log(
+          `Error: ${error.message}. Retrying in ${retryDelay / 1000} seconds...`
+        );
         setTimeout(attemptFetch, retryDelay);
       } else {
         console.error("Detailed error in fetchBookingDetails:", error);

@@ -24,7 +24,11 @@ const PaymentForm = ({ onSuccess, onError }) => {
     event.preventDefault();
 
     if (!stripe || !elements || !mounted) {
-
+      console.log("Not ready:", {
+        stripe: !!stripe,
+        elements: !!elements,
+        mounted,
+      });
       return;
     }
 

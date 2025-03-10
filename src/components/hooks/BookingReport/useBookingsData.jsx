@@ -56,7 +56,14 @@ export const useBookingsData = () => {
       const startDate = new Date(startYear, startMonth - 1, 1);
       const endDate = new Date(endYear, endMonth, 0, 23, 59, 59);
 
-
+      console.log("Fetching data with date range:", {
+        startMonth,
+        startYear,
+        endMonth,
+        endYear,
+        startDateStr: startDate.toISOString().split("T")[0],
+        endDateStr: endDate.toISOString().split("T")[0],
+      });
 
       // Create Firebase query
       const bookingsRef = collection(db, "bookings");
@@ -68,6 +75,7 @@ export const useBookingsData = () => {
       );
 
       const querySnapshot = await getDocs(q);
+      console.log(`Query returned ${querySnapshot.docs.length} documents`);
 
       // Create a map for deduplicated bookings
       const bookingMap = new Map();
