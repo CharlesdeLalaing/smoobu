@@ -101,7 +101,6 @@ export const sendBookingConfirmation = async (bookingData) => {
       html: emailContent,
     });
 
-    console.log("Confirmation email sent to:", bookingData.email);
   } catch (error) {
     console.error("Error sending confirmation email:", error);
   }

@@ -1,12 +1,5 @@
 export const isRoomAvailable = (roomId, startDate, endDate, availableDates, hasSearched = false) => {
-  // If we haven't searched yet, consider the room available
-  // console.log("isRoomAvailable check:", { 
-  //   roomId, 
-  //   startDate, 
-  //   endDate, 
-  //   hasAvailableDates: !!availableDates,
-  //   hasSearched 
-  // });
+
   if (!hasSearched) {
     return true;
   }

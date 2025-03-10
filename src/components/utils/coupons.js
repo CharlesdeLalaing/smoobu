@@ -192,7 +192,7 @@ export const initializeCoupons = async () => {
       }));
     }
     await Promise.all(batch);
-    console.log('Coupons added successfully');
+
   } catch (error) {
     console.error('Error:', error);
   }

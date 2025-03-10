@@ -20,11 +20,7 @@ const StripeWrapper = ({ clientSecret, children, onSuccess, onError }) => {
     },
   };
 
-  // Add console log to verify clientSecret
-  console.log(
-    "Initializing Stripe with clientSecret:",
-    clientSecret ? "present" : "missing"
-  );
+
 
   return (
     <Elements stripe={stripePromise} options={options}>
