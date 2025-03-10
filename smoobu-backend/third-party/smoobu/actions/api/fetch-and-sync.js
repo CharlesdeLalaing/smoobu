@@ -19,7 +19,10 @@ export async function fetchAndSync(req, res) {
       });
     }
 
-
+    console.log("🟦 Starting fetch and sync process...", {
+      startDate,
+      endDate,
+    });
 
     // Initialize dependencies
     const smoobuClient = new SmoobuClient();
@@ -50,7 +53,7 @@ export async function fetchAndSync(req, res) {
       );
     }
 
-
+    console.log("🟩 Sync process completed:", stats);
     return res.json({
       success: true,
       stats: stats,

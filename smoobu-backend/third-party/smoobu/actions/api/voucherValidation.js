@@ -4,7 +4,7 @@ import { db } from "../../../../firebase-config.js";
 export async function validateVoucher(req, res) {
   try {
     const { code, amount } = req.body;
-
+    console.log("Validating voucher with code:", code, "for amount:", amount);
 
     const voucherQuery = await getDocs(
       query(collection(db, "coupons"), where("code", "==", code.toUpperCase()))
@@ -20,11 +20,11 @@ export async function validateVoucher(req, res) {
 
     const voucherDoc = voucherQuery.docs[0];
     const voucherData = voucherDoc.data();
-
+    console.log("Found voucher:", voucherData);
 
     if (voucherData.isGiftVoucher) {
       if (voucherData.usedCount > 0) {
-
+        console.log("Gift voucher already used");
         return res.status(400).json({
           valid: false,
           message: "Ce bon cadeau a déjà été utilisé",
@@ -34,7 +34,7 @@ export async function validateVoucher(req, res) {
       const expiryDate =
         voucherData.expiryDate?.toDate?.() || new Date(voucherData.expiryDate);
       if (expiryDate < new Date()) {
-
+        console.log("Gift voucher expired");
         return res.status(400).json({
           valid: false,
           message: "Ce bon cadeau a expiré",
@@ -42,7 +42,7 @@ export async function validateVoucher(req, res) {
       }
 
       if (amount < voucherData.amount) {
-
+        console.log("Booking amount insufficient");
         return res.status(400).json({
           valid: false,
           message: `Le montant de la réservation doit être supérieur au montant du bon cadeau (${voucherData.amount}€)`,
@@ -50,7 +50,7 @@ export async function validateVoucher(req, res) {
       }
     } else {
       if (voucherData.status !== "active" && code !== "POTES") {
-
+        console.log("Coupon not active");
         return res.status(400).json({
           valid: false,
           message: "Ce code promo n'est plus valide",
@@ -62,7 +62,7 @@ export async function validateVoucher(req, res) {
           voucherData.expiryDate?.toDate?.() ||
           new Date(voucherData.expiryDate);
         if (expiryDate < new Date()) {
-         
+          console.log("Coupon expired");
           return res.status(400).json({
             valid: false,
             message: "Ce code promo a expiré",
@@ -78,7 +78,7 @@ export async function validateVoucher(req, res) {
       discount = voucherData.discount;
     }
 
-
+    console.log("Voucher validated successfully");
     res.json({
       valid: true,
       code: voucherData.code,

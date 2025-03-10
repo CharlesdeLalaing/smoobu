@@ -19,7 +19,13 @@ export async function generateBookingsReport(req, res) {
     ).getDate();
     const endDate = `${finalEndYear}-${finalEndMonth}-${lastDay}`;
 
-
+    console.log("=== START OF BOOKINGS REPORT REQUEST ===");
+    console.log("Request params:", {
+      startMonth: finalStartMonth,
+      startYear: finalStartYear,
+      endMonth: finalEndMonth,
+      endYear: finalEndYear,
+    });
 
     // Fetch bookings for the period
     const bookingsResponse = await axios.get(
@@ -39,7 +45,9 @@ export async function generateBookingsReport(req, res) {
     );
 
     const bookings = bookingsResponse.data.bookings || [];
-
+    console.log(
+      `Found ${bookings.length} bookings for period ${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`
+    );
 
     // Process each booking to get price elements and extras
     const processedBookings = [];

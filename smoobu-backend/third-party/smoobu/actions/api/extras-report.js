@@ -22,6 +22,14 @@ export async function generateExtrasReport(req, res) {
       "0"
     )}-${lastDay}`;
 
+    console.log("=== START OF REQUEST ===");
+    console.log("Request params:", {
+      startMonth,
+      startYear,
+      endMonth,
+      endYear,
+    });
+    console.log("Calculated dates:", { startDate, endDate });
 
     // Query Firebase for bookings in the date range
     const bookingsSnapshot = await db
@@ -38,6 +46,9 @@ export async function generateExtrasReport(req, res) {
       });
     });
 
+    console.log(
+      `Found ${bookings.length} bookings for period ${startMonth}/${startYear} - ${endMonth}/${endYear}`
+    );
 
     const extrasCount = {};
     let bookingsWithExtras = 0;
@@ -200,7 +211,14 @@ export async function generateExtrasReport(req, res) {
 
         if (displayExtras.length > 0) {
           bookingsWithExtras++;
-
+          console.log(
+            `Found ${displayExtras.length} extras in booking ${booking.id}:`,
+            displayExtras.map((a) => ({
+              name: a.name,
+              amount: a.amount,
+              quantity: a.quantity || 1,
+            }))
+          );
 
           // Process each extra for the report
           displayExtras.forEach((extra) => {
@@ -238,6 +256,14 @@ export async function generateExtrasReport(req, res) {
       }))
       .sort((a, b) => b.count - a.count);
 
+    console.log("=== PROCESSING SUMMARY ===");
+    console.log({
+      period: `${startMonth}/${startYear} - ${endMonth}/${endYear}`,
+      totalBookingsInPeriod: bookings.length,
+      bookingsWithExtras,
+      uniqueExtrasFound: reportData.length,
+      extrasList: reportData.map((d) => `${d.name}: ${d.count}`),
+    });
 
     res.json({
       startMonth,

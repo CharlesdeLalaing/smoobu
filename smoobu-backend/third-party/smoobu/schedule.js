@@ -34,7 +34,7 @@ export function setupScheduledTasks() {
           }
         }),
         json: (data) => {
-
+          console.log("🟩 Scheduled sync completed:", data.stats);
           return data;
         }
       };
