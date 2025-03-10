@@ -3,16 +3,13 @@ import cors from "cors";
 import * as dotenv from "dotenv";
 
 import { handleWebhook, pendingBookings } from "./third-party/stripe/webhook/index.js";
-import { deduplicateBookings } from "./third-party/firebase/deduplicate-bookings.js";
 import { fetchAndSync } from "./third-party/smoobu/actions/api/fetch-and-sync.js";
 import { setupScheduledTasks } from "./third-party/smoobu/schedule.js";
 
 import { handleCreateGiftVoucher } from "./third-party/wordpress/create-gift-voucher.js";
 import { validateVoucher } from "./third-party/smoobu/actions/api/voucherValidation.js";
-import { fetchDirectBookings } from "./third-party/smoobu/actions/api/fetch-direct-bookings.js";
 import { generateExtrasReport } from "./third-party/smoobu/actions/api/extras-report.js";
 
-import { generateBookingsReport } from "./third-party/smoobu/actions/api/booking-report.js";
 import { fetchApartments } from "./third-party/smoobu/actions/api/apartments.js";
 import { fetchApartmentsId } from "./third-party/smoobu/actions/api/apartment-id.js";
 import { fetchRates } from "./third-party/smoobu/actions/api/rates.js";
@@ -56,11 +53,8 @@ app.use(
   })
 );
 
-app.get("/api/deduplicate-bookings", deduplicateBookings);
-
 
 app.get("/api/fetch-and-sync", fetchAndSync);
-
 
 // Schedule automatic sync every 4 hours
 setupScheduledTasks();
@@ -69,11 +63,8 @@ app.post("/api/create-gift-voucher", handleCreateGiftVoucher);
 
 app.post("/api/validate-voucher", validateVoucher );
 
-app.get("/api/direct-bookings", fetchDirectBookings);
 
 app.get("/api/extras-report", generateExtrasReport);
-
-app.get("/api/bookings-report", generateBookingsReport);
 
 // AlexisVS: third-party/smobou/actions/api/apartments.js
 app.get("/api/apartments", fetchApartments);
@@ -81,29 +72,28 @@ app.get("/api/apartments", fetchApartments);
 app.get("/api/apartments/:id", fetchApartmentsId);
 
 
-// AlexisVS: third-party/smobou/actions/api/rates.js
+
 app.get("/api/rates", fetchRates);
 
 
-// AlexisVS: third-party/smobou/actions/api/create-payment-intent.js
+
 //CREATE PAYMENT INTENT
 app.post("/api/create-payment-intent", createPaymentIntent);
 
 app.get("/api/bookings/:paymentIntentId", getBookingByPaymentIntentId);
 
 
-// AlexisVS: third-party/smobou/actions/api/pending-bookings.js
+
 // Debug endpoint to check pending bookings
 app.get("/api/pending-bookings", (req, res) => {
   const bookings = Array.from(pendingBookings.entries());
   res.json(bookings);
 });
 
-// AlexisVS: remove
+// AlexisVS: remove Pour l'instant je garde quand même
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  // console.log(`Server running on port ${PORT}`);
-  // console.log('Webhook endpoint ready at /webhook');
+
 });
 
 // AlexisVS: third-party/smobou/actions/api/get-booking-history-email.js

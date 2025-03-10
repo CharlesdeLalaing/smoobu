@@ -7,7 +7,6 @@ export const validateWebhook = async (req, sig, webhookSecret) => {
     const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
     return { valid: true, event };
   } catch (err) {
-    console.error("🟥 Webhook validation error:", err.message);
     return { valid: false, error: err.message };
   }
 };

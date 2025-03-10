@@ -36,7 +36,7 @@ export function mergeExtras(existingData, newExtras, portalName) {
   newExtras.forEach((newExtra) => {
     // Skip unwanted extras
     if (isUnwantedExtra(newExtra.name)) {
-      console.log(`⛔ Skipping unwanted extra from API: ${newExtra.name}`);
+
       return;
     }
 
@@ -49,9 +49,7 @@ export function mergeExtras(existingData, newExtras, portalName) {
     existingData.extras.forEach((existingExtra) => {
       // Skip unwanted extras
       if (isUnwantedExtra(existingExtra.name)) {
-        console.log(
-          `⛔ Skipping unwanted extra from existing data: ${existingExtra.name}`
-        );
+
         return;
       }
 
@@ -67,9 +65,7 @@ export function mergeExtras(existingData, newExtras, portalName) {
 
         if (isPersonneExtra) {
           // Special handling for "Personne supplémentaire" extras - merge quantities and amounts
-          console.log(
-            `🔄 Merging duplicate Personne supplémentaire: ${existingName}`
-          );
+
 
           // Calculate total quantity and amount
           const newQuantity = parseInt(mappedExtra.quantity) || 1;
@@ -84,9 +80,7 @@ export function mergeExtras(existingData, newExtras, portalName) {
           mappedExtra.quantity = totalQuantity;
           mappedExtra.amount = totalAmount;
 
-          console.log(
-            `  New values: quantity=${totalQuantity}, amount=${totalAmount}€`
-          );
+
 
           // Preserve existing person data if available
           if (
@@ -95,7 +89,7 @@ export function mergeExtras(existingData, newExtras, portalName) {
             existingExtra.extraPersonPrice > 0 ||
             existingExtra.extraPersonAmount > 0
           ) {
-            console.log(`  Preserving extra person data for ${existingName}`);
+
             mappedExtra.extraPersonQuantity = existingExtra.extraPersonQuantity;
             mappedExtra.extraPersonPrice = existingExtra.extraPersonPrice;
             mappedExtra.extraPersonAmount = existingExtra.extraPersonAmount;
@@ -114,7 +108,7 @@ export function mergeExtras(existingData, newExtras, portalName) {
             existingExtra.extraPersonPrice > 0 ||
             existingExtra.extraPersonAmount > 0
           ) {
-            console.log(`Preserving extra person data for ${existingName}`);
+
 
             // Copy person data
             mappedExtra.extraPersonQuantity = existingExtra.extraPersonQuantity;
@@ -151,9 +145,7 @@ export function mergeExtras(existingData, newExtras, portalName) {
             name.includes("personnes"));
 
         if (isWantedExtra) {
-          console.log(
-            `✅ Adding wanted extra from existing data: ${existingName}`
-          );
+
           extrasMap.set(existingName, { ...existingExtra });
         } else {
           console.log(
@@ -179,18 +171,12 @@ export function mergeExtras(existingData, newExtras, portalName) {
         name.includes("pass_through") ||
         name.includes("linen_fee")
       ) {
-        console.log(`🔴 Removing unwanted Airbnb extra: ${extra.name}`);
+
         return false;
       }
       return true;
     });
 
-    console.log(
-      "Filtered mergedExtras from:",
-      mergedExtras.length,
-      "to:",
-      filteredMergedExtras.length
-    );
     mergedExtras = filteredMergedExtras;
   }
 
