@@ -7,11 +7,13 @@ import { formatDate, formatPrice, getPortalName } from "../../utils/formatters";
  * @param {Object} booking - The booking object
  * @returns {number} - The calculated total price
  */
+
 export function calculateBookingTotal(booking) {
-  // Check if this is an Airbnb booking
+  // Check if this is an Airbnb or Booking.com booking
   const portalName =
     booking.portalName || booking.channelName || booking.portal;
   const isAirbnb = portalName === "Airbnb";
+  const isBookingCom = portalName === "Booking.com";
 
   // Get price elements if available
   const priceElements = booking.priceDetails?.priceElements || [];
@@ -31,8 +33,9 @@ export function calculateBookingTotal(booking) {
       booking.priceDetails?.couponDiscount ||
       0
   );
+  let taxeDeSejour = 0;
 
-  // For Airbnb, we need to extract the base price differently
+  // For Airbnb, handle different price calculation
   if (isAirbnb && priceElements.length > 0) {
     // Try to find the base price element
     const basePriceElement = priceElements.find(
@@ -47,22 +50,46 @@ export function calculateBookingTotal(booking) {
     // For Airbnb, reset other components that might not apply
     longStayDiscount = 0;
     couponDiscount = 0;
+  } 
+  // For Booking.com, handle taxe de séjour specially
+  else if (isBookingCom) {
+    // Look for taxe de séjour in priceElements
+    const taxeElement = priceElements.find(
+      (el) => el && el.name && el.name.toLowerCase().includes("taxe de séjour")
+    );
+    
+    if (taxeElement) {
+      taxeDeSejour = parseFloat(taxeElement.amount) || 0;
+    }
   }
 
   // Calculate room subtotal
-  const roomTotal = basePrice + linenFee - longStayDiscount - couponDiscount;
+  let roomTotal = basePrice + linenFee - longStayDiscount - couponDiscount;
+  
+  // For Booking.com, include taxe de séjour in the room total
+  if (isBookingCom) {
+    roomTotal += taxeDeSejour;
+  }
 
   // Get clean extras
   let displayExtras = [];
 
   // If we have price elements, use those for a consistent display
-  if (booking.priceDetails?.priceElements?.length > 0) {
-    const priceElements = booking.priceDetails.priceElements;
+  if (priceElements.length > 0) {
     displayExtras = getCleanExtrasFromPriceElements(priceElements, portalName);
   }
   // Otherwise fall back to the extras array
   else if (booking.extras?.length > 0) {
     displayExtras = booking.extras;
+  }
+
+  // For Booking.com, remove TVA and taxe de séjour from extras since they're in the room price
+  if (isBookingCom) {
+    displayExtras = displayExtras.filter(
+      (extra) => 
+        !extra.name.includes("TVA") && 
+        !extra.name.toLowerCase().includes("taxe de séjour")
+    );
   }
 
   // Merge duplicate extras
@@ -315,12 +342,14 @@ const PriceDetailsSection = ({ booking }) => {
   const portalName =
     booking.portalName || booking.channelName || booking.portal;
   const isAirbnb = portalName === "Airbnb";
+  const isBookingCom = portalName === "Booking.com";
 
   // For Airbnb, we may need special handling
   let basePrice = 0;
   let linenFee = 0;
   let longStayDiscount = 0;
   let couponDiscount = 0;
+  let taxeDeSejour = 0;
 
   if (isAirbnb) {
     // For Airbnb, extract base price from price elements
@@ -362,8 +391,23 @@ const PriceDetailsSection = ({ booking }) => {
     if (commissionElement) {
       booking.commission = parseFloat(commissionElement.amount) || 0;
     }
+  } else if (isBookingCom) {
+    // For Booking.com bookings
+    basePrice = parseFloat(
+      booking.priceDetails?.basePrice || booking.basePrice || 0
+    );
+
+    // Look for taxe de séjour in priceElements
+    const priceElements = booking.priceDetails?.priceElements || [];
+    const taxeElement = priceElements.find(
+      (el) => el && el.name && el.name.toLowerCase().includes("taxe de séjour")
+    );
+
+    if (taxeElement) {
+      taxeDeSejour = parseFloat(taxeElement.amount) || 0;
+    }
   } else {
-    // For non-Airbnb bookings, use the normal fields
+    // For non-Airbnb/non-Booking.com bookings, use the normal fields
     basePrice = parseFloat(
       booking.priceDetails?.basePrice || booking.basePrice || 0
     );
@@ -403,6 +447,14 @@ const PriceDetailsSection = ({ booking }) => {
           </p>
         )}
 
+        {/* Taxe de Séjour for Booking.com (if applicable) */}
+        {isBookingCom && taxeDeSejour > 0 && (
+          <p className="text-sm">
+            <span className="block font-medium">Taxe de séjour:</span>
+            {formatPrice(taxeDeSejour)}
+          </p>
+        )}
+
         {/* Long Stay Discount (if applicable) */}
         {longStayDiscount > 0 && (
           <p className="text-sm text-red-600">
@@ -424,7 +476,11 @@ const PriceDetailsSection = ({ booking }) => {
         {/* Total Room Price */}
         <div className="pt-2 mt-4 border-t border-gray-200">
           <span className="block text-sm font-medium">Total chambre:</span>
-          <span className="text-sm">{formatPrice(totalRoomPrice)}</span>
+          <span className="text-sm">
+            {isBookingCom
+              ? formatPrice(basePrice + taxeDeSejour)
+              : formatPrice(totalRoomPrice)}
+          </span>
         </div>
 
         {/* Commission (Displayed but NOT added to total) */}
@@ -443,6 +499,7 @@ const ExtrasDetailsSection = ({ booking }) => {
   // Get portal name
   const portalName =
     booking.portalName || booking.channelName || booking.portal;
+  const isBookingCom = portalName === "Booking.com";
 
   // Process and organize extras
   let displayExtras = [];
@@ -451,10 +508,28 @@ const ExtrasDetailsSection = ({ booking }) => {
   if (booking.priceDetails?.priceElements?.length > 0) {
     const priceElements = booking.priceDetails.priceElements;
     displayExtras = getCleanExtrasFromPriceElements(priceElements, portalName);
+
+    // For Booking.com, remove TVA and taxe de séjour from extras
+    if (isBookingCom) {
+      displayExtras = displayExtras.filter(
+        (extra) =>
+          !extra.name.includes("TVA") &&
+          !extra.name.toLowerCase().includes("taxe de séjour")
+      );
+    }
   }
   // Otherwise fall back to the extras array
   else if (booking.extras?.length > 0) {
     displayExtras = booking.extras;
+
+    // For Booking.com, filter out TVA from extras
+    if (isBookingCom) {
+      displayExtras = displayExtras.filter(
+        (extra) =>
+          !extra.name.includes("TVA") &&
+          !extra.name.toLowerCase().includes("taxe de séjour")
+      );
+    }
   }
 
   // Merge duplicate extras and sort them
