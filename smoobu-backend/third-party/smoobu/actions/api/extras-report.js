@@ -1,4 +1,4 @@
-import axios from "axios";
+import { db } from "../../../../firebase-config.js";
 import { extrasFrenchNames } from "../../../../config/config.js"; // Adjust the path as needed
 
 export async function generateExtrasReport(req, res) {
@@ -14,6 +14,7 @@ export async function generateExtrasReport(req, res) {
       return frenchName ? frenchName[1] : name;
     };
 
+    // Calculate start and end dates
     const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}-01`;
     const lastDay = new Date(endYear, parseInt(endMonth), 0).getDate();
     const endDate = `${endYear}-${String(endMonth).padStart(
@@ -30,138 +31,217 @@ export async function generateExtrasReport(req, res) {
     });
     console.log("Calculated dates:", { startDate, endDate });
 
-    const bookingsResponse = await axios.get(
-      "https://login.smoobu.com/api/reservations",
-      {
-        headers: {
-          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-          "Cache-Control": "no-cache",
-        },
-        params: {
-          arrivalFrom: startDate,
-          arrivalTo: endDate,
-          excludeBlocked: true,
-          showCancellation: false,
-        },
-      }
-    );
+    // Query Firebase for bookings in the date range
+    const bookingsSnapshot = await db
+      .collection("bookings")
+      .where("arrivalDate", ">=", startDate)
+      .where("arrivalDate", "<=", endDate)
+      .get();
 
-    console.log("Smoobu API Response:", bookingsResponse.data);
-    console.log(
-      "Number of bookings:",
-      bookingsResponse.data.bookings?.length || 0
-    );
+    const bookings = [];
+    bookingsSnapshot.forEach((doc) => {
+      bookings.push({
+        id: doc.id,
+        ...doc.data(),
+      });
+    });
 
-    const bookings = bookingsResponse.data.bookings || [];
     console.log(
       `Found ${bookings.length} bookings for period ${startMonth}/${startYear} - ${endMonth}/${endYear}`
     );
 
     const extrasCount = {};
-    let processedCount = 0;
     let bookingsWithExtras = 0;
+
+    // Define unwanted extras patterns similar to BookingDetails.js
+    const unwantedPatterns = [
+      "cancellation",
+      "Cancellation",
+      "pass_through",
+      "PASS_THROUGH",
+      "service fee",
+      "Service Fee",
+      "host fee",
+      "Host Fee",
+      "guest fee",
+      "Guest Fee",
+      "cleaning fee",
+      "Cleaning Fee",
+      "LINEN_FEE",
+      "linen_fee",
+      "Base Price",
+      "base_price",
+      "Commission",
+      "commission",
+      "Tax",
+      "tax",
+      "VAT",
+      "vat",
+    ];
 
     for (const booking of bookings) {
       try {
-        processedCount++;
-        console.log(
-          `Processing booking ${booking.id} (${booking.arrival} - ${booking.departure})`
-        );
+        // Get portal name
+        const portalName = booking.portalName || booking.channelName || "";
+        const isAirbnb = portalName === "Airbnb";
+        const isBookingCom = portalName === "Booking.com";
 
-        const priceElementsResponse = await axios.get(
-          `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`,
-          {
-            headers: {
-              "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
-              "Cache-Control": "no-cache",
-            },
+        // Process extras using the same approach as BookingDetails.js
+        let displayExtras = [];
+
+        // If we have price elements, use those for a consistent display
+        if (booking.priceDetails?.priceElements?.length > 0) {
+          const priceElements = booking.priceDetails.priceElements;
+
+          // Only include relevant price elements
+          const relevantElements = priceElements.filter((el) => {
+            if (!el || !el.amount || !el.name) return false;
+
+            // For Airbnb, be very selective
+            if (isAirbnb) {
+              // Only allow formules and specific extras
+              return (
+                el.name.toLowerCase().includes("formule") ||
+                el.name.toLowerCase().includes("anniversaire") ||
+                el.name.toLowerCase().includes("détente") ||
+                el.name.toLowerCase().includes("gourmet") ||
+                el.name.toLowerCase().includes("essentiel") ||
+                el.name.toLowerCase().includes("romantique")
+              );
+            } else {
+              // For non-Airbnb, filter out unwanted patterns
+              return (
+                el.amount > 0 &&
+                !el.name.includes("Prix de base") &&
+                !el.name.includes("Base price") &&
+                !el.name.includes("Code promo") &&
+                !el.name.includes("Réduction") &&
+                !unwantedPatterns.some((pattern) => el.name.includes(pattern))
+              );
+            }
+          });
+
+          // Use a Map for deduplication
+          const uniqueExtras = new Map();
+
+          // Process all extras
+          relevantElements.forEach((el) => {
+            // Create a clean key for the map
+            const cleanName = el.name.trim();
+
+            // If we already have this extra in our map
+            if (uniqueExtras.has(cleanName)) {
+              // For "Personne supplémentaire" extras, merge quantities and amounts
+              if (cleanName.includes("Personne supplémentaire")) {
+                const existingExtra = uniqueExtras.get(cleanName);
+
+                // Calculate total quantity and amount
+                const existingQuantity = parseInt(existingExtra.quantity) || 1;
+                const currentQuantity = parseInt(el.quantity) || 1;
+                const totalQuantity = existingQuantity + currentQuantity;
+
+                const existingAmount = parseFloat(existingExtra.amount) || 0;
+                const currentAmount = parseFloat(el.amount) || 0;
+                const totalAmount = existingAmount + currentAmount;
+
+                // Update the existing extra
+                existingExtra.quantity = totalQuantity;
+                existingExtra.amount = totalAmount;
+
+                // Update the map
+                uniqueExtras.set(cleanName, existingExtra);
+              }
+              // For other extras, only replace if this one has more data
+              else if (
+                parseFloat(el.amount) >
+                parseFloat(uniqueExtras.get(cleanName).amount)
+              ) {
+                uniqueExtras.set(cleanName, {
+                  name: cleanName,
+                  amount: parseFloat(el.amount) || 0,
+                  quantity: parseInt(el.quantity) || 1,
+                  id: el.id,
+                });
+              }
+            }
+            // If this is a new extra, add it to the map
+            else {
+              uniqueExtras.set(cleanName, {
+                name: cleanName,
+                amount: parseFloat(el.amount) || 0,
+                quantity: parseInt(el.quantity) || 1,
+                id: el.id,
+              });
+            }
+          });
+
+          // Convert Map values to array
+          displayExtras = Array.from(uniqueExtras.values());
+
+          // Special handling for duplicate "Frais supplémentaires"
+          const fraisElements = displayExtras.filter((e) =>
+            e.name.includes("Frais supplémentaires")
+          );
+          if (fraisElements.length > 1) {
+            // Keep only the first one
+            const toKeep = fraisElements[0];
+            displayExtras = displayExtras.filter(
+              (e) => !e.name.includes("Frais supplémentaires") || e === toKeep
+            );
           }
-        );
+        }
+        // Otherwise fall back to the extras array
+        else if (booking.extras?.length > 0) {
+          displayExtras = booking.extras.filter((extra) => {
+            if (!extra.name) return false;
+            return !unwantedPatterns.some((pattern) =>
+              extra.name.toLowerCase().includes(pattern.toLowerCase())
+            );
+          });
+        }
 
-        const extraNames = [
-          "L'essentiel (pour 2) - Personne supplémentaire",
-          "Le détente gourmet (pour 2) - Personne supplémentaire",
-          "La raclette en détente (pour 2) - Personne supplémentaire",
-          "Le romantique gourmet (pour 2) - Personne supplémentaire",
-          "La raclette romantique (pour 2) - Personne supplémentaire",
-          "Le barbecue détente (pour 2) - Personne supplémentaire",
-          "Le romantique barbecue (pour 2) - Personne supplémentaire",
-          "Formule petit-déjeuner (2 pers) - Personne supplémentaire",
-          "Formule gourmet (2 pers) - Personne supplémentaire",
-          "Formule raclette (2 pers) - Personne supplémentaire",
-          "Formule barbecue (2 pers) - Personne supplémentaire",
-          "Formule SPA (2 pers) - Personne supplémentaire",
-          "Formule anniversaire (pour 2) - Personne supplémentaire",
-          "L'essentiel (pour 2)",
-          "Le détente gourmet (pour 2)",
-          "La raclette en détente (pour 2)",
-          "Le romantique gourmet (pour 2)",
-          "La raclette romantique (pour 2)",
-          "Le barbecue détente (pour 2)",
-          "Le romantique barbecue (pour 2)",
-          "Formule planche apéro (2 pers)",
-          "Formule passion (pour 2)",
-          "Formule anniversaire (pour 2)",
-          "Formule petit-déjeuner (2 pers)",
-          "Formule gourmet (2 pers)",
-          "Formule raclette (2 pers)",
-          "Formule barbecue (2 pers)",
-          "Formule SPA (2 pers)",
-          "Formule SPA + bouteille (2 pers)",
-          "Boulettes de viande sauce liégeoise",
-          "Boulette de viande sauce tomate",
-          "Waterzooi de volaille",
-          "Chili végétarien",
-          "Velouté de carotte et cumin",
-          "Brut de Bioul",
-          "Cortil Barco",
-          "Terre Charlot",
-          "Houblonde Triple",
-          "Houblonde Blonde",
-          "Houblonde White IPA",
-          "Brune du Condroz",
-          "Ambrée du Condroz",
-          "Blanche du Condroz",
-          "Jus de pomme « Pom d'Happy »",
-          "Ritchie Citron/Framboise",
-          "Ritchie Orange/Vanille",
-          "Ritchie Cola",
-          "Ritchie Cola Zéro",
-        ];
+        // For Booking.com, remove TVA and taxe de séjour from extras
+        if (isBookingCom) {
+          displayExtras = displayExtras.filter(
+            (extra) =>
+              !extra.name.includes("TVA") &&
+              !extra.name.toLowerCase().includes("taxe de séjour")
+          );
+        }
 
-        const addons = (priceElementsResponse.data.priceElements || []).filter(
-          (element) =>
-            element.type === "addon" || extraNames.includes(element.name)
-        );
-
-        if (addons.length > 0) {
+        if (displayExtras.length > 0) {
           bookingsWithExtras++;
           console.log(
-            `Found ${addons.length} extras in booking ${booking.id}:`,
-            addons.map((a) => ({
+            `Found ${displayExtras.length} extras in booking ${booking.id}:`,
+            displayExtras.map((a) => ({
               name: a.name,
               amount: a.amount,
               quantity: a.quantity || 1,
             }))
           );
-        }
 
-        addons.forEach((addon) => {
-          const normalizedName = normalizeExtraName(addon.name);
-          if (!extrasCount[normalizedName]) {
-            extrasCount[normalizedName] = {
-              count: 0,
-              totalAmount: 0,
-              details: {
-                calculationType: addon.calculationType || 0,
-                optional: true,
-                type: addon.type,
-              },
-            };
-          }
-          extrasCount[normalizedName].count += addon.quantity || 1;
-          extrasCount[normalizedName].totalAmount += addon.amount;
-        });
+          // Process each extra for the report
+          displayExtras.forEach((extra) => {
+            if (!extra.name) return;
+
+            const normalizedName = normalizeExtraName(extra.name);
+            if (!extrasCount[normalizedName]) {
+              extrasCount[normalizedName] = {
+                count: 0,
+                totalAmount: 0,
+                details: {
+                  type: extra.type || "addon",
+                  optional: true,
+                },
+              };
+            }
+            const quantity = parseInt(extra.quantity) || 1;
+            const amount = parseFloat(extra.amount) || 0;
+
+            extrasCount[normalizedName].count += quantity;
+            extrasCount[normalizedName].totalAmount += amount;
+          });
+        }
       } catch (error) {
         console.error(`Error processing booking ${booking.id}:`, error.message);
       }
@@ -180,7 +260,6 @@ export async function generateExtrasReport(req, res) {
     console.log({
       period: `${startMonth}/${startYear} - ${endMonth}/${endYear}`,
       totalBookingsInPeriod: bookings.length,
-      processedBookings: processedCount,
       bookingsWithExtras,
       uniqueExtrasFound: reportData.length,
       extrasList: reportData.map((d) => `${d.name}: ${d.count}`),
