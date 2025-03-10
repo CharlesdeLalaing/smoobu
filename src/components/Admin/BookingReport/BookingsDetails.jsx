@@ -7,7 +7,7 @@ import { formatDate, formatPrice, getPortalName } from "../../utils/formatters";
  * @param {Object} booking - The booking object
  * @returns {number} - The calculated total price
  */
-function calculateBookingTotal(booking) {
+export function calculateBookingTotal(booking) {
   // Check if this is an Airbnb booking
   const portalName =
     booking.portalName || booking.channelName || booking.portal;

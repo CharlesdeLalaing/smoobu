@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import BookingDetails from "./BookingsDetails";
 import { formatDate, formatPrice, getPortalName } from "../../utils/formatters";
+import { calculateBookingTotal } from "./BookingsDetails";
 
 const BookingsTable = ({
   data,
@@ -176,41 +177,11 @@ const BookingsTable = ({
   );
 };
 
-// Helper function to calculate the total price
-// Helper function to calculate the total price
+
 const calculateTotalPrice = (booking) => {
-  // 1. Use stored price if available (from fetch and sync)
-  if (booking.price && !isNaN(parseFloat(booking.price))) {
-    return formatPrice(parseFloat(booking.price));
-  }
-  
-  // 2. Use totalPriceWithExtras as a fallback
-  if (booking.totalPriceWithExtras && !isNaN(parseFloat(booking.totalPriceWithExtras))) {
-    return formatPrice(parseFloat(booking.totalPriceWithExtras));
-  }
-  
-  // 3. Calculate from components as a last resort
-  // Base room price
-  const basePrice = parseFloat(booking.basePrice || booking.priceDetails?.basePrice || 0);
-  
-  // Add linen fee
-  const linenFee = parseFloat(booking.linenFee || booking.priceDetails?.linenFee || 0);
-  
-  // Subtract discounts (ensure they're treated as positive values)
-  const longStayDiscount = Math.abs(parseFloat(booking.priceDetails?.longStayDiscount || 0));
-  const couponDiscount = Math.abs(parseFloat(booking.priceDetails?.couponDiscount || 
-                               booking.priceDetails?.promoCode?.amount || 0));
-  
-  // Calculate room total
-  const roomTotal = basePrice + linenFee - longStayDiscount - couponDiscount;
-  
-  // Get extras total (directly from the precomputed value)
-  const extrasTotal = parseFloat(booking.priceDetails?.extrasTotal || 0);
-  
-  // Calculate final price
-  const finalPrice = roomTotal + extrasTotal;
-  
-  return formatPrice(finalPrice);
+  // Use the exact same calculation function as in BookingDetails
+  const total = calculateBookingTotal(booking);
+  return formatPrice(total);
 };
 
 export default BookingsTable;
