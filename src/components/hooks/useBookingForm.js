@@ -99,16 +99,28 @@ const calculateGuestFees = (adults, children, settings) => {
 
   // Add this helper function near the top of useBookingForm
 const validateCouponPeriod = (coupon, arrivalDate, departureDate) => {
-  if (!coupon || !coupon.validityStartDate || !coupon.validityEndDate) return true;
-  
-  const validityStart = new Date(coupon.validityStartDate);
-  const validityEnd = new Date(coupon.validityEndDate);
+  if (!coupon || !coupon.validityStartDate || !coupon.validityEndDate)
+    return true;
+
+  // Properly convert Firestore timestamps to JavaScript Date objects
+  const validityStart =
+    coupon.validityStartDate?.toDate?.() || new Date(coupon.validityStartDate);
+  const validityEnd =
+    coupon.validityEndDate?.toDate?.() || new Date(coupon.validityEndDate);
+
+  // For debugging
+  console.log("Validating coupon period:", {
+    validityStart,
+    validityEnd,
+    bookingStart: new Date(arrivalDate),
+    bookingEnd: new Date(departureDate),
+  });
+
   const bookingStart = new Date(arrivalDate);
   const bookingEnd = new Date(departureDate);
-  
+
   return bookingStart <= validityEnd && bookingEnd >= validityStart;
 };
-
 
 // const handleChange = async (e) => {
 //   const { name, value } = e.target;
@@ -806,33 +818,52 @@ const handleApplyCoupon = async (couponCode) => {
       return { error: "inactive" };
     }
 
-    if (couponData.usedCount && couponData.usedCount > 0 && couponCode !== "POTES") {
+    if (
+      couponData.usedCount &&
+      couponData.usedCount > 0 &&
+      couponCode !== "POTES"
+    ) {
       return { error: "used" };
     }
 
-    const expiryDate = couponData.expiryDate?.toDate?.() || new Date(couponData.expiryDate);
+    const expiryDate =
+      couponData.expiryDate?.toDate?.() || new Date(couponData.expiryDate);
     if (expiryDate && expiryDate < new Date()) {
       return { error: "expired" };
     }
 
     // Date validation
     if (couponData.validityStartDate && couponData.validityEndDate) {
-      if (!validateCouponPeriod(couponData, formData.arrivalDate, formData.departureDate)) {
-        const validityStart = new Date(couponData.validityStartDate);
-        const validityEnd = new Date(couponData.validityEndDate);
-        const formattedStart = validityStart.toLocaleDateString('fr-BE', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
+      if (
+        !validateCouponPeriod(
+          couponData,
+          formData.arrivalDate,
+          formData.departureDate
+        )
+      ) {
+        // Properly convert Firestore timestamps to JavaScript Date objects
+        const validityStart =
+          couponData.validityStartDate?.toDate?.() ||
+          new Date(couponData.validityStartDate);
+        const validityEnd =
+          couponData.validityEndDate?.toDate?.() ||
+          new Date(couponData.validityEndDate);
+
+        const formattedStart = validityStart.toLocaleDateString("fr-BE", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
         });
-        const formattedEnd = validityEnd.toLocaleDateString('fr-BE', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
+
+        const formattedEnd = validityEnd.toLocaleDateString("fr-BE", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
         });
-        return { 
-          error: "invalid_dates", 
-          message: `Ce code n'est valable que pour les séjours entre le ${formattedStart} et le ${formattedEnd}` 
+
+        return {
+          error: "invalid_dates",
+          message: `Ce code n'est valable que pour les séjours entre le ${formattedStart} et le ${formattedEnd}`,
         };
       }
     }
@@ -859,10 +890,11 @@ const handleApplyCoupon = async (couponCode) => {
       code: couponCode.toUpperCase(),
       type: couponData.type,
       discount: discount,
-      percentageValue: couponData.type === "percentage" ? couponData.percentageValue : null,
+      percentageValue:
+        couponData.type === "percentage" ? couponData.percentageValue : null,
       currency: "EUR",
       validityStartDate: couponData.validityStartDate,
-      validityEndDate: couponData.validityEndDate
+      validityEndDate: couponData.validityEndDate,
     });
 
     // Update price details
@@ -874,7 +906,11 @@ const handleApplyCoupon = async (couponCode) => {
         ...(currentPriceDetails.priceElements || []),
         {
           type: "discount",
-          name: `Code promo (${couponCode.toUpperCase()}${couponData.type === "percentage" ? ` - ${couponData.percentageValue}%` : ''})`,
+          name: `Code promo (${couponCode.toUpperCase()}${
+            couponData.type === "percentage"
+              ? ` - ${couponData.percentageValue}%`
+              : ""
+          })`,
           amount: -discount,
           currencyCode: "EUR",
         },

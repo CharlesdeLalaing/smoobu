@@ -332,7 +332,7 @@
             "placeholder": "Entrez votre code de promotion",
             "button": "Appliquer",
             "appliedStart": "Code promo  ",
-            "appliedEnd": "Appliqé ",
+            "appliedEnd": "Appliqué ",
             "appliedCurrency": "€",
             "error": "Code promo invalide"
         }
