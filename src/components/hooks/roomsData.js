@@ -31,6 +31,15 @@ import Logis_img_5 from "../../assets/Chambres/Le Logis/logis_5.webp";
 import Logis_img_6 from "../../assets/Chambres/Le Logis/logis_6.webp";
 import Logis_img_7 from "../../assets/Chambres/Le Logis/logis_7.webp";
 
+
+import Cabane_img_1 from "../../assets/Chambres/La Cabane/Cabane_1.webp";
+import Cabane_img_2 from "../../assets/Chambres/La Cabane/Cabane_2.webp";
+import Cabane_img_3 from "../../assets/Chambres/La Cabane/Cabane_3.webp";
+import Cabane_img_4 from "../../assets/Chambres/La Cabane/Cabane_4.webp";
+import Cabane_img_5 from "../../assets/Chambres/La Cabane/Cabane_5.webp";
+import Cabane_img_6 from "../../assets/Chambres/La Cabane/Cabane_6.webp";
+
+
 // Feature Icons
 import bed from "../../assets/Chambres/icons8-bed-50.png";
 import dog from "../../assets/Chambres/icons8-dog-50.png";
@@ -229,11 +238,11 @@ export const roomsData = {
     nameKey: "rooms.names.cabane",
     description: "rooms.descriptions.cabane",
     images: {
-      main: dome_img_1,
-      secondary: dome_img_2,
-      tertiary: dome_img_3,
-      quaternary: dome_img_4,
-      quinary: dome_img_5,
+      main: Cabane_img_1,
+      secondary: Cabane_img_2,
+      tertiary: Cabane_img_3,
+      quaternary: Cabane_img_4,
+      quinary: Cabane_img_5,
     },
     maxGuests: 2,
     features: [
