@@ -8,7 +8,6 @@ export function setupScheduledTasks() {
   // Schedule automatic sync every 12 hours
   cron.schedule("0 */12 * * *", async () => {
     try {
-      console.log("🟦 Starting scheduled sync...", new Date().toISOString());
       
       // Calculate date range for the past 1 year (365 days)
       const endDate = new Date().toISOString().split("T")[0];

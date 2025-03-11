@@ -14,7 +14,7 @@ import { wait } from "../../../helpers/wait.js";
 let pendingBookings = new Map();
 
 export const handleWebhook = async (req, res) => {
-  console.log("🟦 Webhook received:", new Date().toISOString());
+
 
   const sig = req.headers["stripe-signature"];
   const webhookSecret =
@@ -42,17 +42,13 @@ export const handleWebhook = async (req, res) => {
 
   try {
     const paymentIntent = event.data.object;
-    console.log("🟦 Payment Intent metadata:", paymentIntent.metadata);
+
 
     const bookingReference = paymentIntent.metadata.bookingReference;
-    console.log("🟦 Booking Reference:", bookingReference);
+
 
     const bookingData = pendingBookings.get(bookingReference);
-    console.log("🟦 Retrieved booking data:", {
-      hasBookingData: !!bookingData,
-      couponData: bookingData?.couponApplied,
-      bookingReference,
-    });
+
 
     if (!bookingData) {
       console.error("No booking data found for reference:", bookingReference);

@@ -12,11 +12,7 @@ export async function createPaymentIntent(req, res) {
 
     let totalPrice = Number(bookingData.basePrice);
 
-    console.log("Starting price calculation:", {
-      basePrice: bookingData.basePrice,
-      guestFees: bookingData.guestFees,
-      extras: bookingData.extras,
-    });
+
 
     totalPrice += Number(bookingData.guestFees || 0);
 
@@ -40,25 +36,6 @@ export async function createPaymentIntent(req, res) {
       totalPrice -= Number(bookingData.priceDetails.discount);
     }
 
-    console.log("Final price calculation:", {
-      totalPrice,
-      breakdown: {
-        basePrice: Number(bookingData.basePrice),
-        guestFees: Number(bookingData.guestFees || 0),
-        extrasTotal:
-          bookingData.extras?.reduce((sum, extra) => {
-            return (
-              sum +
-              Number(extra.amount) +
-              Number(extra.extraPersonPrice) * Number(extra.extraPersonQuantity)
-            );
-          }, 0) || 0,
-        couponDiscount: bookingData.couponApplied
-          ? Number(bookingData.couponApplied.discount)
-          : 0,
-        longStayDiscount: Number(bookingData.priceDetails?.discount || 0),
-      },
-    });
 
     const bookingReference = `BOOKING-${Date.now()}-${Math.random()
       .toString(36)

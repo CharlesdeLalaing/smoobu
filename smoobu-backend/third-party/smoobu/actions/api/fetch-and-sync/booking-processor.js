@@ -93,9 +93,7 @@ function mergeDuplicatePriceElements(priceElements) {
         existingElement.quantity = totalQuantity;
         existingElement.amount = totalAmount;
 
-        console.log(
-          `Merged duplicate price element "${elementName}" - New quantity: ${totalQuantity}, Amount: ${totalAmount}€`
-        );
+
 
         // Update the map
         elementsMap.set(elementName, existingElement);
@@ -136,7 +134,7 @@ export class BookingProcessor {
     try {
       // Normalize booking ID
       const smoobuId = normalizeBookingId(booking.id);
-      console.log(`🔄 Processing booking ${smoobuId}`);
+
 
       // Check for existing booking
       const existingBookings = existingBookingMap.get(smoobuId) || [];
@@ -149,9 +147,7 @@ export class BookingProcessor {
       const priceElements = await this.smoobuClient.fetchPriceElements(
         smoobuId
       );
-      console.log(
-        `🟦 Fetched ${priceElements.length} price elements for booking ${smoobuId}`
-      );
+
 
       // Extract pricing info and extras
       const pricingInfo = extractPricingInfo(priceElements);
@@ -159,7 +155,7 @@ export class BookingProcessor {
 
       // Special handling for Airbnb bookings
       if (booking.channel?.name === "Airbnb" || portalName === "Airbnb") {
-        console.log(`🔄 Special handling for Airbnb booking ${smoobuId}`);
+
         this._handleAirbnbExtras(extrasData);
       }
 
@@ -180,9 +176,7 @@ export class BookingProcessor {
       if (existingBookings.length === 0) {
         // Add new booking
         await this.repository.createBooking(cleanBookingDoc);
-        console.log(
-          `🟩 Added new booking ${smoobuId} (${portalName}): ${bookingDoc.guestName}`
-        );
+
         stats.added++;
       } else if (existingBookings.length === 1) {
         // Update single existing booking
@@ -233,10 +227,7 @@ export class BookingProcessor {
       0
     );
 
-    console.log(
-      "Restricted Airbnb extras to:",
-      filteredExtras.map((e) => e.name)
-    );
+
   }
 
   /**
@@ -400,9 +391,7 @@ export class BookingProcessor {
     const cleanUpdatedDoc = cleanObject(updatedBookingDoc);
     await this.repository.updateBooking(docId, cleanUpdatedDoc);
 
-    console.log(
-      `🟦 Updated booking ${newBookingData.smoobuId} (${portalName}): ${newBookingData.guestName} with ${mergedExtras.length} extras`
-    );
+
   }
 
   /**
@@ -419,9 +408,7 @@ export class BookingProcessor {
     portalName,
     extrasData
   ) {
-    console.log(
-      `⚠️ Found ${existingBookings.length} potential duplicates for booking ${newBookingData.smoobuId}. Will update without deleting.`
-    );
+   
 
     // Sort by updatedAt (newest first)
     existingBookings.sort((a, b) => {
@@ -439,8 +426,6 @@ export class BookingProcessor {
       extrasData
     );
 
-    console.log(
-      `🟦 Updated most recent booking ${mostRecent.id} - DISABLED duplicate deletion`
-    );
+
   }
 }

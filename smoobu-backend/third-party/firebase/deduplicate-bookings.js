@@ -14,7 +14,6 @@ export async function deduplicateBookings(req, res) {
       });
     });
 
-    console.log(`🟦 Found ${bookings.length} total bookings in database`);
 
     // Group by smoobuId
     const bookingsBySmoobuId = {};
@@ -37,7 +36,6 @@ export async function deduplicateBookings(req, res) {
         bookings: group,
       }));
 
-    console.log(`🟦 Found ${duplicates.length} bookings with duplicates`);
 
     // Delete duplicates - keep only the most recently updated one for each smoobuId
     let deletedCount = 0;
@@ -64,9 +62,6 @@ export async function deduplicateBookings(req, res) {
       }
     }
 
-    console.log(
-      `🟩 Deduplication complete. Deleted ${deletedCount} duplicate bookings`
-    );
 
     res.json({
       success: true,

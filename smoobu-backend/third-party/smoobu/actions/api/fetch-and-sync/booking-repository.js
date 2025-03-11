@@ -44,9 +44,6 @@ export class BookingRepository {
       }
     });
 
-    console.log(
-      `🟦 Found ${existingBookingMap.size} existing Smoobu bookings in database`
-    );
 
     return existingBookingMap;
   }
