@@ -4,6 +4,7 @@ dotenv.config();
 
 export const roomNames = {
   1946282: "Le Dôme des Libellules",
+  2565753: "La Cabane du Chêne",
   1644643: "La Bulle du Ruisseau",
   1946279: "Le Moulin",
   1946276: "La Chambre de Blé",
@@ -76,6 +77,20 @@ export const discountSettings = {
     maxGuests: 8,
     extraChildPerNight: 20,
     lengthOfStayDiscount: { minNights: 3, discountPercentage: 30 },
+  },
+  2565753: {
+    // Cabane du chêne
+    cleaningFee: 0,
+    prepayment: 0,
+    minDaysBetweenBookingAndArrival: 1,
+    extraGuestsPerNight: 0, // No extra fees
+    startingAtGuest: 2,
+    maxGuests: 2,
+    extraChildPerNight: 0,
+    lengthOfStayDiscount: {
+      minNights: 0,
+      discountPercentage: 0,
+    },
   },
 };
 

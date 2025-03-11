@@ -79,7 +79,7 @@ export const PropertyDetails = ({
   };
 
   const sortRooms = (rooms) => {
-    const customOrder = [1946282, 1644643, 1946279, 1946276, 1946270];
+    const customOrder = [2565753, 1946282, 1644643, 1946279, 1946276, 1946270];
     
     return [...rooms].sort((a, b) => {
       if (a.id === formData.apartmentId) return -1;
@@ -154,11 +154,11 @@ export const PropertyDetails = ({
     const getCapacityMessage = () => {
       if (isOverCapacity) {
         return (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-            <p className="text-red-600 font-medium">
+          <div className="p-4 mb-4 border border-red-200 rounded-md bg-red-50">
+            <p className="font-medium text-red-600">
               {t('propertyDetails.capacityExceeded.title')}
             </p>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="mt-2 text-sm text-gray-600">
               {t('propertyDetails.capacityExceeded.message', {
                 maxGuests: room.maxGuests,
                 selectedGuests: totalGuests
@@ -178,7 +178,7 @@ export const PropertyDetails = ({
       
       if (extraGuests > 0) {
         return (
-          <div className="text-sm text-gray-600 mt-2">
+          <div className="mt-2 text-sm text-gray-600">
             {t('propertyDetails.extraGuestFee', {
               count: extraGuests,
               fee: settings.extraGuestsPerNight,
@@ -223,11 +223,11 @@ export const PropertyDetails = ({
         {getCapacityMessage()}
 
         {startDate && endDate && !isAvailable && room.unavailableReason === 'dates' && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-            <p className="text-red-600 font-medium">
+          <div className="p-4 mb-4 border border-red-200 rounded-md bg-red-50">
+            <p className="font-medium text-red-600">
               {t('propertyDetails.roomUnavailable.title')}
             </p>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="mt-2 text-sm text-gray-600">
               {t('propertyDetails.roomUnavailable.message')}
             </p>
           </div>
@@ -235,7 +235,7 @@ export const PropertyDetails = ({
 
         {formData.apartmentId === room.id ? (
           <div className="flex flex-col h-full">
-            <div className="flex justify-around border-b border-grey-300 mb-4">
+            <div className="flex justify-around mb-4 border-b border-grey-300">
               <button
                 type="button"
                 className={`py-2 px-4 ${
@@ -284,8 +284,8 @@ export const PropertyDetails = ({
                     </Slider>
                   </div>
 
-                  <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
-                    <div className="features-list flex w-full">
+                  <div className="w-full mt-4 overflow-x-auto features-container font-cormorant">
+                    <div className="flex w-full features-list">
                       {room.features.map((feature, index) => {
                         let translatedTitle = feature.value ? 
                           Array.isArray(feature.value) ?
@@ -306,7 +306,7 @@ export const PropertyDetails = ({
                                 filter: "invert(100%)"
                               }}
                             />
-                            <span className="text-sm mt-2 text-white whitespace-nowrap">
+                            <span className="mt-2 text-sm text-white whitespace-nowrap">
                               {translatedTitle}
                             </span>
                           </div>
@@ -318,12 +318,12 @@ export const PropertyDetails = ({
               )}
 
               {activeTab === "priceDetails" && roomPriceDetails && (
-                <div className="h-full overflow-y-auto sm:overflow-visible md:overflow-y-auto relative">
+                <div className="relative h-full overflow-y-auto sm:overflow-visible md:overflow-y-auto">
                   <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[130px] xl:left-[450px]">
                     <img 
                       src={Fox}
                       alt="Squirrel"
-                      className="w-24 md:w-32 lg:w-40 h-auto"
+                      className="w-24 h-auto md:w-32 lg:w-40"
                     />
                   </div>
                   <div className="my-5">
@@ -335,7 +335,7 @@ export const PropertyDetails = ({
                     </h2>
                   </div>
                   <div className="flex items-center justify-left sm:mb-2 md:mb-4 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
-                    <img src={Group} alt="Profile Icon" className="w-6 h-6 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-4" />
+                    <img src={Group} alt="Profile Icon" className="w-6 h-6 mr-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                     <span className="text-[18px] sm:text-sm md:text-base font-light text-black">
                       {totalGuests}{" "}
                       {totalGuests > 1 
@@ -345,7 +345,7 @@ export const PropertyDetails = ({
                   </div>
 
                   <div className="flex items-center justify-left sm:mb-2 md:mb-10 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
-                    <img src={Calendar} alt="Calendar Icon" className="w-6 h-6 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-4" />
+                    <img src={Calendar} alt="Calendar Icon" className="w-6 h-6 mr-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                     <div className="flex items-center text-[18px] sm:text-sm md:text-base font-light text-black">
                       {startDate && <span>{formatDate(startDate)}</span>}
                       {(startDate || endDate) && <span className="mx-2 sm:mx-1 md:mx-1.5">→</span>}
@@ -393,8 +393,8 @@ export const PropertyDetails = ({
                 </Slider>
               </div>
 
-              <div className="features-container overflow-x-auto w-full mt-4 font-cormorant">
-                <div className="features-list flex w-full">
+              <div className="w-full mt-4 overflow-x-auto features-container font-cormorant">
+                <div className="flex w-full features-list">
                   {room.features.map((feature, index) => {
                     let translatedTitle = feature.value ? 
                       Array.isArray(feature.value) ?
@@ -415,7 +415,7 @@ export const PropertyDetails = ({
                             filter: "invert(100%)"
                           }}
                         />
-                        <span className="text-sm mt-2 text-white whitespace-nowrap">
+                        <span className="mt-2 text-sm text-white whitespace-nowrap">
                           {translatedTitle}
                         </span>
                       </div>
@@ -427,7 +427,7 @@ export const PropertyDetails = ({
 
             <div className="w-full xl:w-3/5">
               <CalendarRoom roomId={room.id} />
-              <p className="text-gray-600 my-4 font-cormorant">{t(room.description)}</p>
+              <p className="my-4 text-gray-600 font-cormorant">{t(room.description)}</p>
               {getGuestFeeInfo()}
               <button
                 type="button"
@@ -474,7 +474,7 @@ export const PropertyDetails = ({
             {filteredAvailableRooms.map((room) => (
               <div key={room.id} className="space-y-4">
                 {formData.apartmentId !== room.id && (
-                  <div className="text-left mb-4">
+                  <div className="mb-4 text-left">
                     <h4 className="font-montserrat text-xl md:text-1xl lg:text-2xl mb-4 text-[#D3B574]">
                       {t(room.type)}
                     </h4>
@@ -494,11 +494,11 @@ export const PropertyDetails = ({
       )}
 
       {!showOnlySelected && filteredUnavailableRooms.length > 0 && (
-        <div className="mt-0 py-10">
+        <div className="py-10 mt-0">
           <div className="grid grid-cols-1 gap-20 w-[100%] mx-auto relative">
             {filteredUnavailableRooms.map((room) => (
               <div key={room.id} className="space-y-4">
-                <div className="text-left mb-4">
+                <div className="mb-4 text-left">
                   <h4 className="font-montserrat text-xl text-[#D3B574] md:text-xl lg:text-2xl mb-4">
                     {t(room.type)}
                   </h4>

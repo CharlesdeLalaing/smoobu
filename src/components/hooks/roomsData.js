@@ -53,11 +53,15 @@ export const roomsData = {
       secondary: dome_img_2,
       tertiary: dome_img_3,
       quaternary: dome_img_4,
-      quinary: dome_img_5
+      quinary: dome_img_5,
     },
     maxGuests: 4,
     features: [
-      { icon: people, title: "rooms.features.maxGuestsWithChildren", value: [2, 2] },
+      {
+        icon: people,
+        title: "rooms.features.maxGuestsWithChildren",
+        value: [2, 2],
+      },
       { icon: bed, title: "rooms.features.bedKing" },
       { icon: dog, title: "rooms.features.pets" },
       { icon: toilet, title: "rooms.features.dryToilet" },
@@ -67,15 +71,16 @@ export const roomsData = {
     size: "40m²",
     calendarData: {
       id: "1946282",
-      verification: "8dedff27d1d2b0d2872fb29c6ba8c480a5a23b80a7a712c846f6198df9fc9efb",
+      verification:
+        "8dedff27d1d2b0d2872fb29c6ba8c480a5a23b80a7a712c846f6198df9fc9efb",
       urls: {
         en: "https://login.smoobu.com/en/cockpit/widget/single-calendar/1946282",
         fr: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/1946282",
-        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1946282"
-      }
-    }
+        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1946282",
+      },
+    },
   },
-  
+
   1644643: {
     id: 1644643,
     type: "rooms.types.unusual",
@@ -87,7 +92,7 @@ export const roomsData = {
       tertiary: Bulle_img_3,
       quaternary: Bulle_img_4,
       quinary: Bulle_img_5,
-      senary: Bulle_img_6
+      senary: Bulle_img_6,
     },
     maxGuests: 2,
     features: [
@@ -100,13 +105,14 @@ export const roomsData = {
     size: "30m²",
     calendarData: {
       id: "1644643",
-      verification: "d70371945b04df2e536bb400d92cacf6d8570999a385af194dd64661801f9b46",
+      verification:
+        "d70371945b04df2e536bb400d92cacf6d8570999a385af194dd64661801f9b46",
       urls: {
         en: "https://login.smoobu.com/en/cockpit/widget/single-calendar/1644643",
         fr: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/1644643",
-        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1644643"
-      }
-    }
+        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1644643",
+      },
+    },
   },
 
   1946279: {
@@ -121,9 +127,13 @@ export const roomsData = {
       quaternary: Moulin_img_4,
       quinary: Moulin_img_5,
     },
-    maxGuests: 4,  // Updated to match correct capacity (2 adults + 2 children)
+    maxGuests: 4, // Updated to match correct capacity (2 adults + 2 children)
     features: [
-      { icon: people, title: "rooms.features.maxGuestsWithChildren", value: [2, 2] },
+      {
+        icon: people,
+        title: "rooms.features.maxGuestsWithChildren",
+        value: [2, 2],
+      },
       { icon: bed, title: "rooms.features.bedQueen" },
       { icon: dog, title: "rooms.features.pets" },
       { icon: shower, title: "rooms.features.bathroom" },
@@ -133,13 +143,14 @@ export const roomsData = {
     size: "30m²",
     calendarData: {
       id: "1946279",
-      verification: "5ef22b823e6c18979c1585d55bf5061d6ea312e1f2a2979fba3ae2657fde3d92",
+      verification:
+        "5ef22b823e6c18979c1585d55bf5061d6ea312e1f2a2979fba3ae2657fde3d92",
       urls: {
         en: "https://login.smoobu.com/en/cockpit/widget/single-calendar/1946279",
         fr: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/1946279",
-        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1946279"
-      }
-    }
+        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1946279",
+      },
+    },
   },
 
   1946276: {
@@ -154,7 +165,7 @@ export const roomsData = {
       quaternary: Ble_img_4,
       quinary: Ble_img_5,
     },
-    maxGuests: 4,  // Updated to match correct capacity (4 total)
+    maxGuests: 4, // Updated to match correct capacity (4 total)
     features: [
       { icon: people, title: "rooms.features.maxGuests", value: 4 },
       { icon: bed, title: "rooms.features.bedKingAndSingle" },
@@ -167,13 +178,14 @@ export const roomsData = {
     size: "30m²",
     calendarData: {
       id: "1946276",
-      verification: "fcee1e857b4c7c0814ac06951737c53a3cb6a04b4ef66fed5717b2d013ed0b4b",
+      verification:
+        "fcee1e857b4c7c0814ac06951737c53a3cb6a04b4ef66fed5717b2d013ed0b4b",
       urls: {
         en: "https://login.smoobu.com/en/cockpit/widget/single-calendar/1946276",
         fr: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/1946276",
-        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1946276"
-      }
-    }
+        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1946276",
+      },
+    },
   },
 
   1946270: {
@@ -188,7 +200,7 @@ export const roomsData = {
       quaternary: Logis_img_4,
       quinary: Logis_img_5,
       senary: Logis_img_6,
-      septenary: Logis_img_7
+      septenary: Logis_img_7,
     },
     maxGuests: 8,
     features: [
@@ -202,12 +214,46 @@ export const roomsData = {
     size: "30m²",
     calendarData: {
       id: "1946270",
-      verification: "7d848002b5314b96a1b0f56b859443aaab0e1a892b6de144078389a1dea3cc4f",
+      verification:
+        "7d848002b5314b96a1b0f56b859443aaab0e1a892b6de144078389a1dea3cc4f",
       urls: {
         en: "https://login.smoobu.com/en/cockpit/widget/single-calendar/1946270",
         fr: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/1946270",
-        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1946270"
-      }
-    }
+        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1946270",
+      },
+    },
+  },
+  2565753: {
+    id: 2565753,
+    type: "rooms.types.unusual",
+    nameKey: "rooms.names.cabane",
+    description: "rooms.descriptions.cabane",
+    images: {
+      main: dome_img_1,
+      secondary: dome_img_2,
+      tertiary: dome_img_3,
+      quaternary: dome_img_4,
+      quinary: dome_img_5,
+    },
+    maxGuests: 2,
+    features: [
+      { icon: people, title: "rooms.features.maxGuests", value: 2 },
+      { icon: bed, title: "rooms.features.bedQueen" },
+      { icon: dog, title: "rooms.features.pets" },
+      { icon: toilet, title: "rooms.features.dryToilet" },
+      { icon: heater, title: "rooms.features.gasheater" },
+      { icon: fire, title: "rooms.features.brazier" },
+    ],
+    size: "30m²",
+    calendarData: {
+      id: "2565753",
+      verification:
+        "7dacb43460304922d9b25a6d2da973d40c738de66652a429ccaf65412e95be86",
+      urls: {
+        en: "https://login.smoobu.com/en/cockpit/widget/single-calendar/2565753",
+        fr: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/2565753",
+        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/2565753",
+      },
+    },
   },
 };
