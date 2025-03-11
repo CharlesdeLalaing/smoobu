@@ -463,15 +463,22 @@ const handleChange = async (e) => {
       //   apartmentId: formData.apartmentId
       // });
   
-      const response = await api.get("/rates", {
-        params: {
-          apartments: formData.apartmentId || ["2565753", "1946282", "1644643", "1946279", "1946276", "1946270"],
-          start_date: formData.arrivalDate,
-          end_date: formData.departureDate,
-          adults: formData.adults,
-          children: formData.children,
-        },
-      });
+ const response = await api.get("/rates", {
+   params: {
+     apartments: formData.apartmentId || [
+       "2565753",
+       "1946282",
+       "1644643",
+       "1946279",
+       "1946276",
+       "1946270",
+     ],
+     start_date: formData.arrivalDate,
+     end_date: formData.departureDate,
+     adults: formData.adults,
+     children: formData.children,
+   },
+ });
   
       // Detailed logging of the response
       console.log("Full rates response:", response.data);

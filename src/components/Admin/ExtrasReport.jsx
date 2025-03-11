@@ -3,8 +3,7 @@ import { Calendar, Search, Download } from "lucide-react";
 import axios from "axios";
 import * as XLSX from "xlsx";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://booking-9u8u.onrender.com";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 const ExtrasReport = () => {
   const [startMonth, setStartMonth] = useState(new Date().getMonth() + 1);
@@ -157,8 +156,8 @@ const ExtrasReport = () => {
     }
 
     return (
-      <div className="w-full max-w-7xl p-3 mx-auto md:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="w-full p-3 mx-auto max-w-7xl md:p-6">
+        <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Calendar className="w-6 h-6 text-[#678D73]" />
             <h1 className="text-xl font-bold md:text-2xl">Rapport des Extras</h1>
