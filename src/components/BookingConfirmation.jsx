@@ -10,6 +10,8 @@ const BookingConfirmation = () => {
   const [bookingDetails, setBookingDetails] = useState(null);
   const [searchParams] = useSearchParams();
   const paymentIntent = searchParams.get("payment_intent");
+  const [displayPrice, setDisplayPrice] = useState(null);
+  const [priceCalculated, setPriceCalculated] = useState(false);
 
   useEffect(() => {
     const storedBookingData = localStorage.getItem("bookingData");
@@ -18,88 +20,160 @@ const BookingConfirmation = () => {
       try {
         const parsedData = JSON.parse(storedBookingData);
         console.log("Parsed booking data:", parsedData);
-        console.log("Guest fees:", parsedData.guestFees);
-        console.log("Price breakdown:", parsedData.priceBreakdown);
         setBookingDetails(parsedData);
         setStatus("success");
-        if (parsedData) {
-          localStorage.removeItem("bookingData");
-        }
+        localStorage.removeItem("bookingData");
       } catch (error) {
         console.error("Error parsing booking data:", error);
         setStatus("error");
       }
-    } else {
-      if (paymentIntent) {
-        fetchBookingDetails(paymentIntent);
-      }
+    } else if (paymentIntent) {
+      fetchBookingDetails(paymentIntent);
     }
   }, [paymentIntent]);
 
+  // Calculate the price once and only once when bookingDetails is available
+  useEffect(() => {
+    if (bookingDetails && !priceCalculated) {
+      calculateAndSetFinalPrice(bookingDetails);
+      setPriceCalculated(true);
+    }
+  }, [bookingDetails, priceCalculated]);
+
+  const calculateAndSetFinalPrice = (data) => {
+    // First try to get the price directly from the server response
+    if (data.price) {
+      console.log("Using server-provided price:", data.price);
+      setDisplayPrice(parseFloat(data.price));
+      return;
+    }
+
+    // Otherwise calculate it properly
+    console.log("Calculating final price from components...");
+
+    // Base price
+    const basePrice = parseFloat(
+      data.priceBreakdown?.basePrice ||
+        data.basePrice ||
+        data.priceDetails?.basePrice ||
+        0
+    );
+    console.log("Base price:", basePrice);
+
+    // Guest fees
+    const guestFees = parseFloat(data.guestFees || 0);
+    console.log("Guest fees:", guestFees);
+
+    // Extras total including extra person charges
+    let extrasTotal = 0;
+    if (data.extras && Array.isArray(data.extras)) {
+      extrasTotal = data.extras.reduce((sum, extra) => {
+        const extraAmount = parseFloat(extra.amount || 0);
+        const extraPersonAmount =
+          extra.extraPersonQuantity > 0
+            ? parseFloat(extra.extraPersonAmount || 0)
+            : 0;
+        return sum + extraAmount + extraPersonAmount;
+      }, 0);
+    }
+    console.log("Extras total:", extrasTotal);
+
+    // Long stay discount
+    const longStayDiscount = parseFloat(
+      data.priceBreakdown?.longStayDiscount ||
+        data.priceDetails?.longStayDiscount ||
+        data.priceDetails?.discount ||
+        0
+    );
+    console.log("Long stay discount:", longStayDiscount);
+
+    // Coupon discount
+    const couponDiscount = parseFloat(
+      data.priceBreakdown?.couponDiscount ||
+        data.priceDetails?.couponDiscount ||
+        data.couponApplied?.discount ||
+        0
+    );
+    console.log("Coupon discount:", couponDiscount);
+
+    // Calculate final price
+    const finalPrice =
+      basePrice + guestFees + extrasTotal - longStayDiscount - couponDiscount;
+    console.log("Calculated final price:", finalPrice);
+
+    setDisplayPrice(finalPrice);
+  };
+
   const API_URL = "http://localhost:3000";
 
-const fetchBookingDetails = async (paymentIntentId) => {
-  let attempts = 0;
-  const maxAttempts = 5;
-  const retryDelay = 2000; // 2 seconds
+  const fetchBookingDetails = async (paymentIntentId) => {
+    let attempts = 0;
+    const maxAttempts = 5;
+    const retryDelay = 2000; // 2 seconds
 
-  const attemptFetch = async () => {
-    try {
-      console.log(`Attempt ${attempts + 1} to fetch booking details`);
+    const attemptFetch = async () => {
+      try {
+        console.log(`Attempt ${attempts + 1} to fetch booking details`);
 
-      const response = await fetch(
-        `${API_URL}/api/bookings/${paymentIntentId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
+        const response = await fetch(
+          `${API_URL}/api/bookings/${paymentIntentId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.status === 404) {
+          attempts++;
+          if (attempts < maxAttempts) {
+            console.log(
+              `Booking not found yet. Retrying in ${
+                retryDelay / 1000
+              } seconds...`
+            );
+            setTimeout(attemptFetch, retryDelay);
+            return;
+          }
         }
-      );
 
-      if (response.status === 404) {
-        attempts++;
-        if (attempts < maxAttempts) {
-          console.log(
-            `Booking not found yet. Retrying in ${retryDelay / 1000} seconds...`
-          );
-          setTimeout(attemptFetch, retryDelay);
-          return;
+        const data = await response.json();
+
+        if (data.error) {
+          if (attempts < maxAttempts) {
+            attempts++;
+            console.log(
+              `Error: ${data.error}. Retrying in ${
+                retryDelay / 1000
+              } seconds...`
+            );
+            setTimeout(attemptFetch, retryDelay);
+            return;
+          }
+          throw new Error(data.error);
         }
-      }
 
-      const data = await response.json();
-
-      if (data.error) {
+        setBookingDetails(data);
+        setStatus("success");
+      } catch (error) {
         if (attempts < maxAttempts) {
           attempts++;
           console.log(
-            `Error: ${data.error}. Retrying in ${retryDelay / 1000} seconds...`
+            `Error: ${error.message}. Retrying in ${
+              retryDelay / 1000
+            } seconds...`
           );
           setTimeout(attemptFetch, retryDelay);
-          return;
+        } else {
+          console.error("Detailed error in fetchBookingDetails:", error);
+          setStatus("error");
         }
-        throw new Error(data.error);
       }
+    };
 
-      setBookingDetails(data);
-      setStatus("success");
-    } catch (error) {
-      if (attempts < maxAttempts) {
-        attempts++;
-        console.log(
-          `Error: ${error.message}. Retrying in ${retryDelay / 1000} seconds...`
-        );
-        setTimeout(attemptFetch, retryDelay);
-      } else {
-        console.error("Detailed error in fetchBookingDetails:", error);
-        setStatus("error");
-      }
-    }
+    attemptFetch();
   };
-
-  attemptFetch();
-};
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -121,6 +195,7 @@ const fetchBookingDetails = async (paymentIntentId) => {
   };
 
   const formatPrice = (price) => {
+    if (price === null || price === undefined) return "0.00";
     const numberPrice = typeof price === "string" ? parseFloat(price) : price;
     return typeof numberPrice === "number" ? numberPrice.toFixed(2) : "0.00";
   };
@@ -262,7 +337,10 @@ const fetchBookingDetails = async (paymentIntentId) => {
               {t(
                 "bookingConfirmation.success.sections.priceDetails.basePrice",
                 {
-                  price: formatPrice(bookingDetails?.priceBreakdown?.basePrice),
+                  price: formatPrice(
+                    bookingDetails?.priceBreakdown?.basePrice ||
+                      bookingDetails?.basePrice
+                  ),
                 }
               )}
             </p>
@@ -300,15 +378,20 @@ const fetchBookingDetails = async (paymentIntentId) => {
             })}
 
             {/* Long stay discount */}
-            {bookingDetails?.priceDetails?.discount > 0 && (
+            {(bookingDetails?.priceDetails?.discount > 0 ||
+              bookingDetails?.priceDetails?.longStayDiscount > 0) && (
               <p className="discount-text">
                 {t(
                   "bookingConfirmation.success.sections.priceDetails.longStayDiscount",
                   {
                     percentage:
-                      bookingDetails.priceDetails.settings.lengthOfStayDiscount
-                        .discountPercentage,
-                    amount: formatPrice(bookingDetails.priceDetails.discount),
+                      bookingDetails.priceDetails?.settings
+                        ?.lengthOfStayDiscount?.discountPercentage || 40,
+                    amount: formatPrice(
+                      bookingDetails.priceDetails?.discount ||
+                        bookingDetails.priceDetails?.longStayDiscount ||
+                        0
+                    ),
                   }
                 )}
               </p>
@@ -323,7 +406,12 @@ const fetchBookingDetails = async (paymentIntentId) => {
                       {
                         code: bookingDetails.couponApplied.code,
                         amount: formatPrice(
-                          Number(bookingDetails.priceBreakdown.couponDiscount)
+                          Number(
+                            bookingDetails?.priceBreakdown?.couponDiscount ||
+                              bookingDetails?.priceDetails?.couponDiscount ||
+                              bookingDetails.couponApplied.discount ||
+                              0
+                          )
                         ),
                       }
                     )
@@ -332,7 +420,12 @@ const fetchBookingDetails = async (paymentIntentId) => {
                       {
                         code: bookingDetails.couponApplied.code,
                         amount: formatPrice(
-                          Number(bookingDetails.priceBreakdown.couponDiscount)
+                          Number(
+                            bookingDetails?.priceBreakdown?.couponDiscount ||
+                              bookingDetails?.priceDetails?.couponDiscount ||
+                              bookingDetails.couponApplied.discount ||
+                              0
+                          )
                         ),
                       }
                     )}
@@ -342,42 +435,7 @@ const fetchBookingDetails = async (paymentIntentId) => {
             <div className="total-section">
               <p className="total-text">
                 {t("bookingConfirmation.success.sections.priceDetails.total", {
-                  price: formatPrice(
-                    (() => {
-                      // Base price of the room
-                      const basePrice = parseFloat(
-                        bookingDetails?.priceBreakdown?.basePrice || 0
-                      );
-
-                      // Guest fees for additional room guests
-                      const guestFees = parseFloat(
-                        bookingDetails?.guestFees || 0
-                      );
-
-                      // Calculate extras total including their extra person fees
-                      const extrasTotal =
-                        bookingDetails?.extras?.reduce((sum, extra) => {
-                          const baseAmount = parseFloat(extra.amount || 0);
-                          const extraPersonAmount =
-                            extra.extraPersonQuantity > 0
-                              ? parseFloat(extra.extraPersonAmount || 0)
-                              : 0;
-                          return sum + baseAmount + extraPersonAmount;
-                        }, 0) || 0;
-
-                      // Calculate all discounts
-                      const discounts =
-                        parseFloat(
-                          bookingDetails?.priceBreakdown?.longStayDiscount || 0
-                        ) +
-                        parseFloat(
-                          bookingDetails?.priceBreakdown?.couponDiscount || 0
-                        );
-
-                      // Final total should be: base price + guest fees + extras total - discounts
-                      return basePrice + guestFees + extrasTotal - discounts;
-                    })()
-                  ),
+                  price: formatPrice(displayPrice),
                 })}
               </p>
               <p>
