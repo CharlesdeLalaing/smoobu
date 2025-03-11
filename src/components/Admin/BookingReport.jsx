@@ -72,8 +72,6 @@ const BookingsReport = () => {
             Rapport des Réservations Smoobu
           </h1>
         </div>
-      );
-    }
 
         <ActionButtons
           onExport={handleExport}
