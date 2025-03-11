@@ -2,7 +2,6 @@ import { db } from "../../firebase-config.js"
 
 export async function deduplicateBookings(req, res) {
   try {
-    console.log("🟦 Starting deduplication process...");
 
     // Get all bookings from Firebase
     const bookingsSnapshot = await db.collection("bookings").get();

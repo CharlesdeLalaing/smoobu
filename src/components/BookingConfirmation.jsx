@@ -19,7 +19,6 @@ const BookingConfirmation = () => {
     if (storedBookingData) {
       try {
         const parsedData = JSON.parse(storedBookingData);
-        console.log("Parsed booking data:", parsedData);
         setBookingDetails(parsedData);
         setStatus("success");
         localStorage.removeItem("bookingData");
@@ -43,13 +42,11 @@ const BookingConfirmation = () => {
   const calculateAndSetFinalPrice = (data) => {
     // First try to get the price directly from the server response
     if (data.price) {
-      console.log("Using server-provided price:", data.price);
+
       setDisplayPrice(parseFloat(data.price));
       return;
     }
 
-    // Otherwise calculate it properly
-    console.log("Calculating final price from components...");
 
     // Base price
     const basePrice = parseFloat(
@@ -58,11 +55,11 @@ const BookingConfirmation = () => {
         data.priceDetails?.basePrice ||
         0
     );
-    console.log("Base price:", basePrice);
+
 
     // Guest fees
     const guestFees = parseFloat(data.guestFees || 0);
-    console.log("Guest fees:", guestFees);
+
 
     // Extras total including extra person charges
     let extrasTotal = 0;
@@ -76,7 +73,7 @@ const BookingConfirmation = () => {
         return sum + extraAmount + extraPersonAmount;
       }, 0);
     }
-    console.log("Extras total:", extrasTotal);
+
 
     // Long stay discount
     const longStayDiscount = parseFloat(
@@ -85,7 +82,7 @@ const BookingConfirmation = () => {
         data.priceDetails?.discount ||
         0
     );
-    console.log("Long stay discount:", longStayDiscount);
+
 
     // Coupon discount
     const couponDiscount = parseFloat(
@@ -94,12 +91,12 @@ const BookingConfirmation = () => {
         data.couponApplied?.discount ||
         0
     );
-    console.log("Coupon discount:", couponDiscount);
+
 
     // Calculate final price
     const finalPrice =
       basePrice + guestFees + extrasTotal - longStayDiscount - couponDiscount;
-    console.log("Calculated final price:", finalPrice);
+
 
     setDisplayPrice(finalPrice);
   };
@@ -113,7 +110,7 @@ const BookingConfirmation = () => {
 
     const attemptFetch = async () => {
       try {
-        console.log(`Attempt ${attempts + 1} to fetch booking details`);
+
 
         const response = await fetch(
           `${API_URL}/api/bookings/${paymentIntentId}`,
@@ -128,11 +125,7 @@ const BookingConfirmation = () => {
         if (response.status === 404) {
           attempts++;
           if (attempts < maxAttempts) {
-            console.log(
-              `Booking not found yet. Retrying in ${
-                retryDelay / 1000
-              } seconds...`
-            );
+
             setTimeout(attemptFetch, retryDelay);
             return;
           }
@@ -143,11 +136,7 @@ const BookingConfirmation = () => {
         if (data.error) {
           if (attempts < maxAttempts) {
             attempts++;
-            console.log(
-              `Error: ${data.error}. Retrying in ${
-                retryDelay / 1000
-              } seconds...`
-            );
+
             setTimeout(attemptFetch, retryDelay);
             return;
           }
@@ -159,11 +148,7 @@ const BookingConfirmation = () => {
       } catch (error) {
         if (attempts < maxAttempts) {
           attempts++;
-          console.log(
-            `Error: ${error.message}. Retrying in ${
-              retryDelay / 1000
-            } seconds...`
-          );
+
           setTimeout(attemptFetch, retryDelay);
         } else {
           console.error("Detailed error in fetchBookingDetails:", error);

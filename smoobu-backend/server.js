@@ -102,8 +102,7 @@ app.get("/api/pending-bookings", (req, res) => {
 // AlexisVS: remove
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  // console.log(`Server running on port ${PORT}`);
-  // console.log('Webhook endpoint ready at /webhook');
+
 });
 
 // AlexisVS: third-party/smobou/actions/api/get-booking-history-email.js

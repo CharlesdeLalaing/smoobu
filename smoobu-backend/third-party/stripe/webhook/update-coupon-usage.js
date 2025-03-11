@@ -54,11 +54,6 @@ export const updateCouponUsage = async (bookingData) => {
         updatedAt: new Date().toISOString(),
       });
 
-      console.log("🟩 Coupon update successful:", {
-        couponId: couponDoc.id,
-        code: bookingData.couponApplied.code,
-        newStatus: "inactive",
-      });
     }
 
     return { success: true };

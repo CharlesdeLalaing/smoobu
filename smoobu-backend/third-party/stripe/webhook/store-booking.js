@@ -38,23 +38,10 @@ export const storeBookingInFirebase = async (
       reservationId
     );
 
-    console.log("🔍 Final booking document structure:", {
-      id: bookingDoc.smoobuReservationId,
-      paymentIntentId: bookingDoc.paymentIntentId,
-      price: bookingDoc.price,
-      basePrice: bookingDoc.basePrice,
-      priceDetailsBasePrice: bookingDoc.priceDetails.basePrice,
-      extrasTotal: bookingDoc.priceDetails.extrasTotal,
-      longStayDiscount: bookingDoc.priceDetails.longStayDiscount,
-      couponDiscount: bookingDoc.priceDetails.couponDiscount,
-      hasPromoCode: !!bookingDoc.priceDetails.promoCode,
-      hasAppliedCoupon: !!bookingDoc.appliedCoupon,
-      extrasCount: bookingDoc.extras?.length || 0,
-    });
+
 
     const docRef = await db.collection("bookings").add(bookingDoc);
 
-    console.log("🟩 Booking stored in Firebase with ID:", docRef.id);
 
     // Send confirmation email
     await sendBookingConfirmation(bookingDoc);
