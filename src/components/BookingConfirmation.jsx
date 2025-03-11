@@ -10,6 +10,8 @@ const BookingConfirmation = () => {
   const [bookingDetails, setBookingDetails] = useState(null);
   const [searchParams] = useSearchParams();
   const paymentIntent = searchParams.get("payment_intent");
+  const [displayPrice, setDisplayPrice] = useState(null);
+  const [priceCalculated, setPriceCalculated] = useState(false);
 
   useEffect(() => {
     const storedBookingData = localStorage.getItem("bookingData");
@@ -17,57 +19,145 @@ const BookingConfirmation = () => {
     if (storedBookingData) {
       try {
         const parsedData = JSON.parse(storedBookingData);
-        console.log("Parsed booking data:", parsedData);
-        console.log("Guest fees:", parsedData.guestFees);
-        console.log("Price breakdown:", parsedData.priceBreakdown);
         setBookingDetails(parsedData);
         setStatus("success");
-        if (parsedData) {
-          localStorage.removeItem("bookingData");
-        }
+        localStorage.removeItem("bookingData");
       } catch (error) {
         console.error("Error parsing booking data:", error);
         setStatus("error");
       }
-    } else {
-      if (paymentIntent) {
-        fetchBookingDetails(paymentIntent);
-      }
+    } else if (paymentIntent) {
+      fetchBookingDetails(paymentIntent);
     }
   }, [paymentIntent]);
 
-  const API_URL = "https://booking-9u8u.onrender.com";
+  // Calculate the price once and only once when bookingDetails is available
+  useEffect(() => {
+    if (bookingDetails && !priceCalculated) {
+      calculateAndSetFinalPrice(bookingDetails);
+      setPriceCalculated(true);
+    }
+  }, [bookingDetails, priceCalculated]);
+
+  const calculateAndSetFinalPrice = (data) => {
+    // First try to get the price directly from the server response
+    if (data.price) {
+
+      setDisplayPrice(parseFloat(data.price));
+      return;
+    }
+
+
+    // Base price
+    const basePrice = parseFloat(
+      data.priceBreakdown?.basePrice ||
+        data.basePrice ||
+        data.priceDetails?.basePrice ||
+        0
+    );
+
+
+    // Guest fees
+    const guestFees = parseFloat(data.guestFees || 0);
+
+
+    // Extras total including extra person charges
+    let extrasTotal = 0;
+    if (data.extras && Array.isArray(data.extras)) {
+      extrasTotal = data.extras.reduce((sum, extra) => {
+        const extraAmount = parseFloat(extra.amount || 0);
+        const extraPersonAmount =
+          extra.extraPersonQuantity > 0
+            ? parseFloat(extra.extraPersonAmount || 0)
+            : 0;
+        return sum + extraAmount + extraPersonAmount;
+      }, 0);
+    }
+
+
+    // Long stay discount
+    const longStayDiscount = parseFloat(
+      data.priceBreakdown?.longStayDiscount ||
+        data.priceDetails?.longStayDiscount ||
+        data.priceDetails?.discount ||
+        0
+    );
+
+
+    // Coupon discount
+    const couponDiscount = parseFloat(
+      data.priceBreakdown?.couponDiscount ||
+        data.priceDetails?.couponDiscount ||
+        data.couponApplied?.discount ||
+        0
+    );
+
+
+    // Calculate final price
+    const finalPrice =
+      basePrice + guestFees + extrasTotal - longStayDiscount - couponDiscount;
+
+
+    setDisplayPrice(finalPrice);
+  };
+
+  const API_URL = "http://localhost:3000";
 
   const fetchBookingDetails = async (paymentIntentId) => {
-    try {
-      console.log("Starting to fetch booking details");
-      console.log("API URL:", `${API_URL}/api/bookings/${paymentIntentId}`);
+    let attempts = 0;
+    const maxAttempts = 5;
+    const retryDelay = 2000; // 2 seconds
 
-      const response = await fetch(
-        `${API_URL}/api/bookings/${paymentIntentId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
+    const attemptFetch = async () => {
+      try {
+
+
+        const response = await fetch(
+          `${API_URL}/api/bookings/${paymentIntentId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.status === 404) {
+          attempts++;
+          if (attempts < maxAttempts) {
+
+            setTimeout(attemptFetch, retryDelay);
+            return;
+          }
         }
-      );
 
-      console.log("Response status:", response.status);
-      const data = await response.json();
-      console.log("Response data:", data);
+        const data = await response.json();
 
-      if (data.error) {
-        console.error("API returned error:", data.error);
-        throw new Error(data.error);
+        if (data.error) {
+          if (attempts < maxAttempts) {
+            attempts++;
+
+            setTimeout(attemptFetch, retryDelay);
+            return;
+          }
+          throw new Error(data.error);
+        }
+
+        setBookingDetails(data);
+        setStatus("success");
+      } catch (error) {
+        if (attempts < maxAttempts) {
+          attempts++;
+
+          setTimeout(attemptFetch, retryDelay);
+        } else {
+          console.error("Detailed error in fetchBookingDetails:", error);
+          setStatus("error");
+        }
       }
+    };
 
-      setBookingDetails(data);
-      setStatus("success");
-    } catch (error) {
-      console.error("Detailed error in fetchBookingDetails:", error);
-      setStatus("error");
-    }
+    attemptFetch();
   };
 
   const formatDate = (dateString) => {
@@ -90,6 +180,7 @@ const BookingConfirmation = () => {
   };
 
   const formatPrice = (price) => {
+    if (price === null || price === undefined) return "0.00";
     const numberPrice = typeof price === "string" ? parseFloat(price) : price;
     return typeof numberPrice === "number" ? numberPrice.toFixed(2) : "0.00";
   };
@@ -231,7 +322,10 @@ const BookingConfirmation = () => {
               {t(
                 "bookingConfirmation.success.sections.priceDetails.basePrice",
                 {
-                  price: formatPrice(bookingDetails?.priceBreakdown?.basePrice),
+                  price: formatPrice(
+                    bookingDetails?.priceBreakdown?.basePrice ||
+                      bookingDetails?.basePrice
+                  ),
                 }
               )}
             </p>
@@ -269,15 +363,20 @@ const BookingConfirmation = () => {
             })}
 
             {/* Long stay discount */}
-            {bookingDetails?.priceDetails?.discount > 0 && (
+            {(bookingDetails?.priceDetails?.discount > 0 ||
+              bookingDetails?.priceDetails?.longStayDiscount > 0) && (
               <p className="discount-text">
                 {t(
                   "bookingConfirmation.success.sections.priceDetails.longStayDiscount",
                   {
                     percentage:
-                      bookingDetails.priceDetails.settings.lengthOfStayDiscount
-                        .discountPercentage,
-                    amount: formatPrice(bookingDetails.priceDetails.discount),
+                      bookingDetails.priceDetails?.settings
+                        ?.lengthOfStayDiscount?.discountPercentage || 40,
+                    amount: formatPrice(
+                      bookingDetails.priceDetails?.discount ||
+                        bookingDetails.priceDetails?.longStayDiscount ||
+                        0
+                    ),
                   }
                 )}
               </p>
@@ -292,7 +391,12 @@ const BookingConfirmation = () => {
                       {
                         code: bookingDetails.couponApplied.code,
                         amount: formatPrice(
-                          Number(bookingDetails.priceBreakdown.couponDiscount)
+                          Number(
+                            bookingDetails?.priceBreakdown?.couponDiscount ||
+                              bookingDetails?.priceDetails?.couponDiscount ||
+                              bookingDetails.couponApplied.discount ||
+                              0
+                          )
                         ),
                       }
                     )
@@ -301,18 +405,22 @@ const BookingConfirmation = () => {
                       {
                         code: bookingDetails.couponApplied.code,
                         amount: formatPrice(
-                          Number(bookingDetails.priceBreakdown.couponDiscount)
+                          Number(
+                            bookingDetails?.priceBreakdown?.couponDiscount ||
+                              bookingDetails?.priceDetails?.couponDiscount ||
+                              bookingDetails.couponApplied.discount ||
+                              0
+                          )
                         ),
                       }
                     )}
               </p>
             )}
 
-            {/* Total */}
             <div className="total-section">
               <p className="total-text">
                 {t("bookingConfirmation.success.sections.priceDetails.total", {
-                  price: formatPrice(bookingDetails?.price),
+                  price: formatPrice(displayPrice),
                 })}
               </p>
               <p>

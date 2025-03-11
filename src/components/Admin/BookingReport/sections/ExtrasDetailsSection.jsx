@@ -1,0 +1,98 @@
+import { formatPrice } from "../../../utils/formatters";
+import { getCleanExtrasFromPriceElements, mergeAndSortExtras } from "../utils/extrasUtils";
+
+
+const ExtrasDetailsSection = ({ booking }) => {
+  // Get portal name
+  const portalName =
+    booking.portalName || booking.channelName || booking.portal;
+  const isBookingCom = portalName === "Booking.com";
+
+  // Process and organize extras
+  let displayExtras = [];
+
+  // If we have price elements, use those for a consistent display
+  if (booking.priceDetails?.priceElements?.length > 0) {
+    const priceElements = booking.priceDetails.priceElements;
+    displayExtras = getCleanExtrasFromPriceElements(priceElements, portalName);
+
+    // For Booking.com, remove TVA and taxe de séjour from extras
+    if (isBookingCom) {
+      displayExtras = displayExtras.filter(
+        (extra) =>
+          !extra.name.includes("TVA") &&
+          !extra.name.toLowerCase().includes("taxe de séjour")
+      );
+    }
+  }
+  // Otherwise fall back to the extras array
+  else if (booking.extras?.length > 0) {
+    displayExtras = booking.extras;
+
+    // For Booking.com, filter out TVA from extras
+    if (isBookingCom) {
+      displayExtras = displayExtras.filter(
+        (extra) =>
+          !extra.name.includes("TVA") &&
+          !extra.name.toLowerCase().includes("taxe de séjour")
+      );
+    }
+  }
+
+  // Merge duplicate extras and sort them
+  const mergedAndSortedExtras = mergeAndSortExtras(displayExtras);
+
+  // Calculate total
+  const extrasTotal = mergedAndSortedExtras.reduce(
+    (sum, extra) => sum + parseFloat(extra.amount || 0),
+    0
+  );
+
+  // Check if we have any extras to display
+  const hasExtras = mergedAndSortedExtras.length > 0;
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold text-gray-900">Détails Extras</h3>
+      <div className="space-y-2">
+        {hasExtras ? (
+          <div className="text-sm">
+            <span className="block mb-2 font-medium">Extras sélectionnés:</span>
+            <ul className="space-y-2">
+              {mergedAndSortedExtras.map((extra, index) => {
+                // Check if this is a person extra
+                const isPersonExtra = extra.name.includes(
+                  "Personne supplémentaire"
+                );
+
+                return (
+                  <li
+                    key={`extra-item-${index}`}
+                    className={
+                      isPersonExtra
+                        ? "ml-4 text-indigo-700 break-words"
+                        : "break-words"
+                    }
+                  >
+                    • {extra.name}{" "}
+                    {extra.quantity > 1 && `(${extra.quantity}x)`}:{" "}
+                    {formatPrice(extra.amount)}
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="pt-2 mt-4 border-t border-gray-200">
+              <span className="font-medium">Total Extras:</span>
+              <span className="block">{formatPrice(extrasTotal)}</span>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">Aucun extra sélectionné</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ExtrasDetailsSection;
