@@ -5,10 +5,7 @@ import axios from "axios";
  */
 export class SmoobuClient {
   constructor(apiKey = null) {
-    this.apiKey =
-      apiKey ||
-      process.env.SMOOBU_API_KEY ||
-      "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o";
+    this.apiKey = apiKey || process.env.SMOOBU_API_KEY;
   }
 
   /**
@@ -18,8 +15,6 @@ export class SmoobuClient {
    * @returns {Promise<Array>} - Array of booking objects
    */
   async fetchBookings(startDate, endDate) {
-
-
     const response = await axios.get(
       "https://login.smoobu.com/api/reservations",
       {
@@ -38,7 +33,6 @@ export class SmoobuClient {
     );
 
     const bookings = response.data.bookings || [];
-
 
     return bookings;
   }

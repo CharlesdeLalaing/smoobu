@@ -14,14 +14,9 @@ import { wait } from "../../../helpers/wait.js";
 let pendingBookings = new Map();
 
 export const handleWebhook = async (req, res) => {
-
-
   const sig = req.headers["stripe-signature"];
-  const webhookSecret =
-    process.env.STRIPE_WEBHOOK_SECRET ||
-    "whsec_d9b86273072de6b319134fbc08752e2b4e66bae72aaa2cf4cb7db1411974c20a";
-  const apiKey =
-    process.env.SMOOBU_API_KEY || "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o";
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const apiKey = process.env.SMOOBU_API_KEY;
 
   // Step 1: Validate the webhook
   const { valid, event, error } = await validateWebhook(
@@ -43,12 +38,9 @@ export const handleWebhook = async (req, res) => {
   try {
     const paymentIntent = event.data.object;
 
-
     const bookingReference = paymentIntent.metadata.bookingReference;
 
-
     const bookingData = pendingBookings.get(bookingReference);
-
 
     if (!bookingData) {
       console.error("No booking data found for reference:", bookingReference);
@@ -156,4 +148,3 @@ export const handleWebhook = async (req, res) => {
 
 // Export pendingBookings to be accessed from outside
 export { pendingBookings };
-

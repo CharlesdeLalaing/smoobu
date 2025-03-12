@@ -7,7 +7,7 @@ export async function fetchApartmentsId (req, res) {
       `https://login.smoobu.com/api/apartments/${req.params.id}`,
       {
         headers: {
-          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+          "Api-Key": process.env.SMOOBU_API_KEY,
           "Content-Type": "application/json",
         },
       }

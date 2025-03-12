@@ -22,7 +22,7 @@ export async function fetchRates(req, res) {
 
     const response = await axios.get("https://login.smoobu.com/api/rates", {
       headers: {
-        "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+        "Api-Key": process.env.SMOOBU_API_KEY,
         "Content-Type": "application/json",
       },
       params: {

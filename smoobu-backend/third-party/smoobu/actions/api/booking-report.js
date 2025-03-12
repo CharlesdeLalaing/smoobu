@@ -32,7 +32,7 @@ export async function generateBookingsReport(req, res) {
       "https://login.smoobu.com/api/reservations",
       {
         headers: {
-          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+          "Api-Key": process.env.SMOOBU_API_KEY,
           "Cache-Control": "no-cache",
         },
         params: {
@@ -73,7 +73,7 @@ export async function generateBookingsReport(req, res) {
           `https://login.smoobu.com/api/reservations/${booking.id}/price-elements`,
           {
             headers: {
-              "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+              "Api-Key": process.env.SMOOBU_API_KEY,
               "Cache-Control": "no-cache",
             },
           }

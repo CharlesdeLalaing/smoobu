@@ -59,7 +59,7 @@ export const addGuestFeesToReservation = async (
       },
       {
         headers: {
-          "Api-Key": "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+          "Api-Key": apiKey || process.env.SMOOBU_API_KEY,
           "Content-Type": "application/json",
         },
       }

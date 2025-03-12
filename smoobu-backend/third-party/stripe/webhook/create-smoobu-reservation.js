@@ -25,9 +25,7 @@ export const createSmoobuReservation = async (bookingData) => {
       },
       {
         headers: {
-          "Api-Key":
-            process.env.SMOOBU_API_KEY ||
-            "UZFV5QRY0ExHUfJi3c1DIG8Bpwet1X4knWa8rMkj6o",
+          "Api-Key": process.env.SMOOBU_API_KEY,
           "Content-Type": "application/json",
         },
       }

@@ -174,9 +174,9 @@ export const useBookingsData = () => {
     try {
       setLoading(true);
 
-      // FIXED: Call your backend proxy endpoint instead of Smoobu directly
+      // UPDATED: Call your production server endpoint instead of localhost
       const response = await axios.get(
-        "http://localhost:3000/api/fetch-and-sync", // Your backend proxy endpoint
+        "https://booking-9u8u.onrender.com/api/fetch-and-sync",
         {
           params: {
             startDate: new Date(startYear - 1, startMonth - 1, 1)
@@ -209,8 +209,9 @@ export const useBookingsData = () => {
     try {
       setDeduplicating(true);
 
+      // UPDATED: Call your production server endpoint instead of localhost
       const response = await axios.get(
-        "http://localhost:3000/api/deduplicate-bookings"
+        "https://booking-9u8u.onrender.com/api/deduplicate-bookings"
       );
 
       if (response.data.success) {
