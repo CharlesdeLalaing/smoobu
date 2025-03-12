@@ -217,7 +217,7 @@ export const addDiscountsToReservation = async (
       );
       await wait(1000);
     } catch (discountError) {
-      console.error("🟥 Failed to add long stay discount:", discountError);
+      console.error("🟥 Failed to add long stay discountt:", discountError);
       results.longStay = false;
     }
   }
