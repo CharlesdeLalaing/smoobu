@@ -36,7 +36,6 @@ export function mergeExtras(existingData, newExtras, portalName) {
   newExtras.forEach((newExtra) => {
     // Skip unwanted extras
     if (isUnwantedExtra(newExtra.name)) {
-
       return;
     }
 
@@ -49,24 +48,21 @@ export function mergeExtras(existingData, newExtras, portalName) {
     existingData.extras.forEach((existingExtra) => {
       // Skip unwanted extras
       if (isUnwantedExtra(existingExtra.name)) {
-
         return;
       }
 
       const existingName = existingExtra.name;
 
-      // Check if this is a "Personne supplémentaire" extra
-      const isPersonneExtra =
-        existingName && existingName.includes("Personne supplémentaire");
+      // Check if this is a mergeable extra (any package, formule, etc.)
+      const isMergeableExtra = shouldMergeExtras(existingName);
 
       // If we already have this extra in our map (from newExtras)
       if (extrasMap.has(existingName)) {
         const mappedExtra = extrasMap.get(existingName);
 
-        if (isPersonneExtra) {
-          // Special handling for "Personne supplémentaire" extras - merge quantities and amounts
-
-
+        if (isMergeableExtra) {
+          // Special handling for mergeable extras - combine quantities and amounts
+          
           // Calculate total quantity and amount
           const newQuantity = parseInt(mappedExtra.quantity) || 1;
           const existingQuantity = parseInt(existingExtra.quantity) || 1;
@@ -80,8 +76,6 @@ export function mergeExtras(existingData, newExtras, portalName) {
           mappedExtra.quantity = totalQuantity;
           mappedExtra.amount = totalAmount;
 
-
-
           // Preserve existing person data if available
           if (
             existingExtra.hasExtraPerson ||
@@ -89,7 +83,6 @@ export function mergeExtras(existingData, newExtras, portalName) {
             existingExtra.extraPersonPrice > 0 ||
             existingExtra.extraPersonAmount > 0
           ) {
-
             mappedExtra.extraPersonQuantity = existingExtra.extraPersonQuantity;
             mappedExtra.extraPersonPrice = existingExtra.extraPersonPrice;
             mappedExtra.extraPersonAmount = existingExtra.extraPersonAmount;
@@ -108,8 +101,6 @@ export function mergeExtras(existingData, newExtras, portalName) {
             existingExtra.extraPersonPrice > 0 ||
             existingExtra.extraPersonAmount > 0
           ) {
-
-
             // Copy person data
             mappedExtra.extraPersonQuantity = existingExtra.extraPersonQuantity;
             mappedExtra.extraPersonPrice = existingExtra.extraPersonPrice;
@@ -145,7 +136,6 @@ export function mergeExtras(existingData, newExtras, portalName) {
             name.includes("personnes"));
 
         if (isWantedExtra) {
-
           extrasMap.set(existingName, { ...existingExtra });
         } else {
           console.log(
@@ -171,17 +161,42 @@ export function mergeExtras(existingData, newExtras, portalName) {
         name.includes("pass_through") ||
         name.includes("linen_fee")
       ) {
-
         return false;
       }
       return true;
     });
 
-
     mergedExtras = filteredMergedExtras;
   }
 
   return mergedExtras;
+}
+
+/**
+ * Helper function to determine if an extra should be merged (quantities combined)
+ * @param {string} extraName - Name of the extra to check
+ * @returns {boolean} - True if extra should be merged, false otherwise
+ */
+function shouldMergeExtras(extraName) {
+  if (!extraName) return false;
+  
+  const name = extraName.toLowerCase();
+  return (
+    name.includes("personne supplémentaire") ||
+    name.includes("formule") ||
+    name.includes("essentiel") ||
+    name.includes("détente") ||
+    name.includes("gourmet") ||
+    name.includes("romantique") ||
+    name.includes("barbecue") ||
+    name.includes("anniversaire") ||
+    name.includes("petit-déjeuner") ||
+    name.includes("raclette") ||
+    name.includes("bouteille") ||
+    name.includes("champagne") ||
+    name.includes("spa") ||
+    name.includes("massage")
+  );
 }
 
 /**

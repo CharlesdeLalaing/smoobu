@@ -59,6 +59,11 @@ function cleanObject(obj) {
  * @param {Array} priceElements - Raw price elements array from API
  * @returns {Array} - Price elements with duplicates merged
  */
+/**
+ * Merges duplicate items in priceElements array
+ * @param {Array} priceElements - Raw price elements array from API
+ * @returns {Array} - Price elements with duplicates merged
+ */
 function mergeDuplicatePriceElements(priceElements) {
   if (!priceElements || !Array.isArray(priceElements)) {
     return priceElements || [];
@@ -78,8 +83,23 @@ function mergeDuplicatePriceElements(priceElements) {
       // Get the existing element
       const existingElement = elementsMap.get(elementName);
 
-      // For "Personne supplémentaire" items, merge them
-      if (elementName.includes("Personne supplémentaire")) {
+      // For extras/packages, merge them
+      if (
+        elementName.includes("Personne supplémentaire") ||
+        elementName.includes("Formule") ||
+        elementName.includes("essentiel") ||
+        elementName.includes("détente") ||
+        elementName.includes("gourmet") ||
+        elementName.includes("romantique") ||
+        elementName.includes("barbecue") ||
+        elementName.includes("anniversaire") ||
+        elementName.includes("petit-déjeuner") ||
+        elementName.includes("raclette") ||
+        elementName.includes("bouteille") ||
+        elementName.includes("champagne") ||
+        elementName.includes("spa") ||
+        elementName.includes("massage")
+      ) {
         // Calculate merged quantity and amount
         const existingQuantity = parseInt(existingElement.quantity) || 1;
         const newQuantity = parseInt(element.quantity) || 1;
@@ -92,8 +112,6 @@ function mergeDuplicatePriceElements(priceElements) {
         // Update the existing element
         existingElement.quantity = totalQuantity;
         existingElement.amount = totalAmount;
-
-
 
         // Update the map
         elementsMap.set(elementName, existingElement);
@@ -130,11 +148,17 @@ export class BookingProcessor {
    * @param {Object} stats - Statistics object to update
    * @returns {Promise<Object>} - Updated stats
    */
+  /**
+   * Processes a single booking
+   * @param {Object} booking - Booking data from Smoobu API
+   * @param {Map} existingBookingMap - Map of existing bookings
+   * @param {Object} stats - Statistics object to update
+   * @returns {Promise<Object>} - Updated stats
+   */
   async processBooking(booking, existingBookingMap, stats) {
     try {
       // Normalize booking ID
       const smoobuId = normalizeBookingId(booking.id);
-
 
       // Check for existing booking
       const existingBookings = existingBookingMap.get(smoobuId) || [];
@@ -148,14 +172,15 @@ export class BookingProcessor {
         smoobuId
       );
 
+      // Merge duplicate price elements first
+      const mergedPriceElements = mergeDuplicatePriceElements(priceElements);
 
-      // Extract pricing info and extras
-      const pricingInfo = extractPricingInfo(priceElements);
-      const extrasData = processExtrasWithPersons(priceElements);
+      // Extract pricing info and extras (using merged price elements)
+      const pricingInfo = extractPricingInfo(mergedPriceElements);
+      const extrasData = processExtrasWithPersons(mergedPriceElements);
 
       // Special handling for Airbnb bookings
       if (booking.channel?.name === "Airbnb" || portalName === "Airbnb") {
-
         this._handleAirbnbExtras(extrasData);
       }
 
@@ -166,7 +191,7 @@ export class BookingProcessor {
         portalName,
         pricingInfo,
         extrasData,
-        priceElements
+        mergedPriceElements // Use merged price elements here
       );
 
       // Clean the document
@@ -226,10 +251,19 @@ export class BookingProcessor {
       (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
       0
     );
-
-
   }
 
+  /**
+   * Creates a booking document from raw data
+   * @param {Object} booking - Raw booking data from API
+   * @param {string} smoobuId - Normalized booking ID
+   * @param {string} portalName - Portal name
+   * @param {Object} pricingInfo - Extracted pricing info
+   * @param {Object} extrasData - Extracted extras data
+   * @param {Array} priceElements - Price elements array
+   * @returns {Object} - Formatted booking document
+   * @private
+   */
   /**
    * Creates a booking document from raw data
    * @param {Object} booking - Raw booking data from API
@@ -276,6 +310,22 @@ export class BookingProcessor {
     // Merge duplicate price elements
     const mergedPriceElements = mergeDuplicatePriceElements(priceElements);
 
+    // Recalculate extras total based on merged price elements
+    // This ensures the extras total reflects the merged quantities
+    const mergedExtrasTotal = extrasData.extras.reduce((sum, extra) => {
+      // Find the corresponding merged element for this extra
+      const mergedElement = mergedPriceElements.find(
+        (el) => el.name === extra.name
+      );
+
+      // Use the merged amount if found, otherwise use the original amount
+      const amount = mergedElement
+        ? Math.abs(parseFloat(mergedElement.amount) || 0)
+        : Math.abs(parseFloat(extra.amount) || 0);
+
+      return sum + amount;
+    }, 0);
+
     return {
       smoobuId: smoobuId,
       smoobuReservationId: Number(smoobuId),
@@ -316,10 +366,7 @@ export class BookingProcessor {
         longStayDiscount: pricingInfo.longStayDiscount,
         couponDiscount: pricingInfo.couponDiscount,
         discount: pricingInfo.longStayDiscount,
-        extrasTotal: extrasData.extras.reduce(
-          (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
-          0
-        ),
+        extrasTotal: mergedExtrasTotal, // Use the recalculated total
         priceElements: mergedPriceElements,
         promoCode: pricingInfo.promoCode,
         calculatedDiscounts: {
@@ -390,8 +437,6 @@ export class BookingProcessor {
     // Clean and update
     const cleanUpdatedDoc = cleanObject(updatedBookingDoc);
     await this.repository.updateBooking(docId, cleanUpdatedDoc);
-
-
   }
 
   /**
@@ -408,8 +453,6 @@ export class BookingProcessor {
     portalName,
     extrasData
   ) {
-   
-
     // Sort by updatedAt (newest first)
     existingBookings.sort((a, b) => {
       const dateA = new Date(a.updatedAt || a.createdAt || 0);
@@ -425,7 +468,5 @@ export class BookingProcessor {
       portalName,
       extrasData
     );
-
-
   }
 }
