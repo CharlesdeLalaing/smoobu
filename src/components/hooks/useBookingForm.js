@@ -394,13 +394,25 @@ const handleChange = async (e) => {
 
 
 
-  const handleExtraChange = (extraId, quantity) => {
-    if (quantity < 0) return;
-    setSelectedExtras((prev) => ({
-      ...prev,
-      [extraId]: quantity,
-    }));
-  };
+const handleExtraChange = (extraId, quantity) => {
+  if (quantity < 0) return;
+
+  setSelectedExtras((prev) => {
+    const updatedExtras = { ...prev, [extraId]: quantity };
+
+    // If we're setting a main item to 0 (removing it)
+    if (!extraId.endsWith("-extra") && quantity === 0) {
+      // Also remove any extra person associated with this item
+      const extraPersonId = `${extraId}-extra`;
+      if (prev[extraPersonId]) {
+        updatedExtras[extraPersonId] = 0;
+      }
+    }
+
+    return updatedExtras;
+  });
+};
+
 
   const createSelectedExtrasArray = () => {
     // First, gather all base extras with their extra person info
