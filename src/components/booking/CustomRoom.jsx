@@ -32,16 +32,6 @@ export const CalendarRoom = ({
     setShowNextMonth(windowWidth >= 768); // Show two calendars on tablets and above
   }, [windowWidth]);
 
-  // Force calendar re-render when availability data changes
-  useEffect(() => {
-    if (roomId && availableDates && availableDates[roomId]) {
-      console.log("CalendarRoom: Processing availability data for rendering");
-
-      // Force re-render to update calendar colors
-      setDisplayMonth(new Date(displayMonth));
-    }
-  }, [availableDates, roomId, displayMonth]);
-
   // Calculate next month for dual calendar view
   const nextMonth = new Date(displayMonth);
   nextMonth.setMonth(nextMonth.getMonth() + 1);
@@ -79,33 +69,6 @@ export const CalendarRoom = ({
             />
           </div>
         )}
-      </div>
-
-      <div className="flex items-center mt-4 space-x-4">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-[#e2f0d9]"></div>
-          <span className="text-sm">{t("calendar.available")}</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div
-            className="w-4 h-4"
-            style={{
-              background:
-                "linear-gradient(135deg, #ffcccc 25%, transparent 25%, transparent 50%, #ffcccc 50%, #ffcccc 75%, transparent 75%)",
-              backgroundSize: "8px 8px",
-            }}
-          ></div>
-          <span className="text-sm">{t("calendar.unavailable")}</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div
-            className="w-4 h-4"
-            style={{
-              background: "linear-gradient(135deg, #e2f0d9 50%, #ffcccc 50%)",
-            }}
-          ></div>
-          <span className="text-sm">{t("calendar.partiallyAvailable")}</span>
-        </div>
       </div>
 
       <div className="mt-4 text-sm text-gray-600">

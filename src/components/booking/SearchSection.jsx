@@ -30,7 +30,7 @@ export const SearchSection = ({
   };
 
   const handleDateChange = (date, isStart) => {
-    resetAvailability(); // Reset availability when dates change
+
     handleDateSelect(date, isStart); 
   };
 
@@ -55,7 +55,7 @@ export const SearchSection = ({
       <div className="p-6 mx-auto bg-[#fbfdfb] rounded-lg shadow">
         <div className="grid items-end grid-cols-1 gap-4 md:grid-cols-5">
           {/* Arrival */}
-          <div className="md:col-span-1 w-full">
+          <div className="w-full md:col-span-1">
             <label className="block mb-1 text-sm font-medium text-gray-600">
               {t("search.arrival")}
             </label>
@@ -80,7 +80,7 @@ export const SearchSection = ({
           </div>
 
           {/* Departure */}
-          <div className="md:col-span-1 w-full">
+          <div className="w-full md:col-span-1">
             <label className="block mb-1 text-sm font-medium text-gray-600">
               {t("search.departure")}
             </label>
