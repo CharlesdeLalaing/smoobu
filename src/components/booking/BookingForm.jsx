@@ -176,7 +176,22 @@ const BookingForm = () => {
     };
 
     loadInitialAvailability();
+    console.log("Current availableDates state:", availableDates);
   }, []);
+
+  useEffect(() => {
+    console.log("availableDates updated:", availableDates);
+    // Check if we have data for room 1946276
+    if (availableDates && availableDates["1946276"]) {
+      console.log(
+        "Data for room 1946276:",
+        Object.keys(availableDates["1946276"]).length,
+        "dates loaded"
+      );
+    } else {
+      console.log("Still no data for room 1946276");
+    }
+  }, [availableDates]);
 
   const handleRoomSelect = async (roomId) => {
     try {

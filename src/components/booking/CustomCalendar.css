@@ -1,3 +1,5 @@
+/* CustomCalendar.css - Complete styling for the calendar component */
+
 .custom-calendar {
   font-family: 'Montserrat', sans-serif;
   margin-bottom: 2rem;
@@ -102,53 +104,75 @@
   cursor: pointer;
 }
 
+/* Unavailable days styling - striped pattern */
 .calendar-day.unavailable {
   background: linear-gradient(135deg, #ffcccc 25%, transparent 25%, transparent 50%, #ffcccc 50%, #ffcccc 75%, transparent 75%);
   background-size: 8px 8px;
   color: #777;
+  cursor: not-allowed;
 }
 
+/* Check-in only days - diagonal from bottom-left to top-right */
+.calendar-day.checkin-only {
+  background: linear-gradient(135deg, #ffcccc 50%, #e2f0d9 50%);
+}
+
+/* Checkout only days - diagonal from top-left to bottom-right */
+.calendar-day.checkout-only {
+  background: linear-gradient(135deg, #e2f0d9 50%, #ffcccc 50%);
+  cursor: pointer;
+}
+
+/* General partially available styling (fallback) */
 .calendar-day.partially-available {
   background: linear-gradient(135deg, #e2f0d9 50%, #ffcccc 50%);
 }
 
-.calendar-day.partially-available.selected {
-  background: #668E73;
-  color: white;
-  font-weight: bold;
-}
-
-.calendar-day.partially-available.clickable:hover {
-  cursor: pointer;
-  background: linear-gradient(135deg, rgba(102, 142, 115, 0.4) 50%, rgba(102, 142, 115, 0.2) 50%);
-}
-
-.calendar-day.available, 
-.calendar-day.clickable {
+/* Regular available days */
+.calendar-day:not(.unavailable):not(.checkout-only):not(.checkin-only):not(.partially-available) {
   background-color: #e2f0d9;
 }
 
+/* Selected date styling */
 .calendar-day.selected {
-  background-color: #668E73;
+  background-color: #668E73 !important;
   color: white;
   font-weight: bold;
 }
 
-.calendar-day.partially-available.in-range {
-  background: linear-gradient(135deg, rgba(102, 142, 115, 0.2) 50%, rgba(102, 142, 115, 0.1) 50%);
-}
-
-/* Make sure legend matches the calendar display */
-.legend-color.partially-available {
-  background: linear-gradient(135deg, #e2f0d9 50%, #ffcccc 50%);
-}
-
+/* Styling for dates in selected range */
 .calendar-day.in-range {
   background-color: rgba(102, 142, 115, 0.2);
 }
 
+/* Styling for dates in hover range */
 .calendar-day.in-hover-range {
   background-color: rgba(102, 142, 115, 0.1);
+}
+
+/* Special hover states for partially available days */
+.calendar-day.checkin-only.clickable:hover,
+.calendar-day.checkout-only.clickable:hover,
+.calendar-day.partially-available.clickable:hover {
+  opacity: 0.8;
+}
+
+/* Selected state overrides for partially available days */
+.calendar-day.checkin-only.selected,
+.calendar-day.checkout-only.selected,
+.calendar-day.partially-available.selected {
+  background: #668E73 !important;
+  color: white;
+  font-weight: bold;
+}
+
+/* Range state for partially available days */
+.calendar-day.checkin-only.in-range {
+  background: linear-gradient(45deg, rgba(102, 142, 115, 0.2) 50%, rgba(102, 142, 115, 0.1) 50%);
+}
+
+.calendar-day.checkout-only.in-range {
+  background: linear-gradient(135deg, rgba(102, 142, 115, 0.2) 50%, rgba(102, 142, 115, 0.1) 50%);
 }
 
 .calendar-day-number {
@@ -186,6 +210,111 @@
   background-size: 8px 8px;
 }
 
+/* Update legend for partially available days */
 .legend-color.partially-available {
   background: linear-gradient(135deg, #e2f0d9 50%, #ffcccc 50%);
+}
+
+/* Add a hover effect to make selected dates more visible */
+.calendar-day:hover .calendar-day-number {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+/* Today's date style */
+.calendar-day.today {
+  box-shadow: inset 0 0 0 2px #668E73;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .calendar-day {
+    height: 35px;
+  }
+  
+  .calendar-day-number {
+    font-size: 0.75rem;
+  }
+  
+  .calendar-legend {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* STRONG OVERRIDES FOR CHECKOUT DAYS */
+/* These rules ensure checkout days always display correctly */
+
+/* Maximum strength override for checkout days */
+.calendar-day[data-status="checkout-only"],
+.calendar-days-grid .calendar-day.checkout-only,
+div.calendar-day.checkout-only {
+  background: linear-gradient(135deg, #e2f0d9 50%, #ffcccc 50%) !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+
+/* Make sure checkout days are never shown as unavailable */
+.calendar-day.checkout-only.unavailable {
+  background: linear-gradient(135deg, #e2f0d9 50%, #ffcccc 50%) !important;
+}
+
+/* Make sure the selected state still overrides everything */
+.calendar-day.selected {
+  background-color: #668E73 !important;
+  color: white !important;
+  font-weight: bold !important;
+}
+
+/* Override for checkout-only days even when other classes are applied */
+.calendar-day.checkout-only.clickable,
+.calendar-day.checkout-only.available,
+.calendar-day.checkout-only:not(.selected) {
+  background: linear-gradient(135deg, #e2f0d9 50%, #ffcccc 50%) !important;
+}
+
+.calendar-day.past-date,
+.calendar-day.today {
+  background-color: #f1f1f1 !important;
+  color: #aaa;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Ensure the styling applies even with other classes */
+.calendar-day.past-date.available,
+.calendar-day.today.available {
+  background-color: #f1f1f1 !important;
+  color: #aaa !important;
+  cursor: not-allowed !important;
+}
+
+/* Add a subtle border to today's date for visibility */
+.calendar-day.today {
+  text-decoration: none;
+}
+
+/* Make sure the selected state overrides EVERYTHING - highest priority */
+.calendar-day.selected,
+.calendar-days-grid .calendar-day.selected,
+div.calendar-day.selected,
+.calendar-day.checkout-only.selected,
+.calendar-day.checkin-only.selected,
+.calendar-day.partially-available.selected,
+.calendar-day.unavailable.selected {
+  background-color: #668E73 !important;
+  background-image: none !important;
+  background: #668E73 !important;
+  color: white !important;
+  font-weight: bold !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+
+/* Ensure no gradients or patterns show through */
+.calendar-day.selected::before,
+.calendar-day.selected::after {
+  display: none !important;
 }
