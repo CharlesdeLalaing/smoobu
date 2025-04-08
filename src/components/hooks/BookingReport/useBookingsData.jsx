@@ -234,100 +234,120 @@ export const useBookingsData = () => {
     }
   };
 
-  const handleExport = () => {
-    const wsData = [
-      [
-        "ID",
-        "Client",
-        "Création",
-        "Portail",
-        "Email",
-        "Téléphone",
-        "Adresse",
-        "Adulte",
-        "Enfant",
-        "Arrivée",
-        "Check-in",
-        "Départ",
-        "Nombre de nuits",
-        "Prix de base",
-        "Nom coupon",
-        "Valeur coupon",
-        "Frais de linge",
-        "Promotion long séjour",
-        "Commission",
-        "Liste des extras",
-        "Total des extras",
-        "Prix total",
-      ],
-      ...reportData.map((booking) => [
-        booking.id,
-        booking.guest,
-        new Date(booking.created).toLocaleDateString("fr-FR"),
-        booking.portal,
-        booking.email || "",
-        booking.phone || "",
-        booking.address || "",
-        booking.adults,
-        booking.children,
-        new Date(booking.checkIn).toLocaleDateString("fr-FR"),
-        booking.arrivalTime || "",
-        new Date(booking.checkOut).toLocaleDateString("fr-FR"),
-        booking.nights,
-        booking.priceDetails?.basePrice || 0,
-        booking.priceDetails?.promoCode?.name || "",
-        booking.priceDetails?.promoCode?.amount || "",
-        booking.priceDetails?.linenFee || "",
-        booking.priceDetails?.longStayDiscount || "",
-        booking.commission || "",
-        booking.extras?.map((e) => `${e.name} (${e.quantity}x)`).join(", ") ||
-          "",
-        booking.extras?.reduce(
-          (sum, extra) => sum + parseFloat(extra.amount || 0),
-          0
-        ) || 0,
-        booking.price,
-      ]),
-    ];
+const handleExport = () => {
+  const wsData = [
+    [
+      "ID",
+      "Client",
+      "Création",
+      "Portail",
+      "Logement", // Added property name column
+      "Email",
+      "Téléphone",
+      "Adresse",
+      "Adulte",
+      "Enfant",
+      "Arrivée",
+      "Check-in",
+      "Départ",
+      "Nombre de nuits",
+      "Prix de base",
+      "Nom coupon",
+      "Valeur coupon",
+      "Frais de linge",
+      "Promotion long séjour",
+      "Commission",
+      "Liste des extras",
+      "Total des extras",
+      "Prix total",
+      "Prix final sans coupon", // Added new column
+    ],
+    ...reportData.map((booking) => [
+      booking.id,
+      booking.guest,
+      new Date(booking.created).toLocaleDateString("fr-FR"),
+      booking.portal,
+      booking.property || "", // Added property name data
+      booking.email || "",
+      booking.phone || "",
+      booking.address || "",
+      booking.adults,
+      booking.children,
+      new Date(booking.checkIn).toLocaleDateString("fr-FR"),
+      booking.arrivalTime || "",
+      new Date(booking.checkOut).toLocaleDateString("fr-FR"),
+      booking.nights,
+      booking.priceDetails?.basePrice || 0,
+      booking.priceDetails?.promoCode?.name || "",
+      booking.priceDetails?.promoCode?.amount || "",
+      booking.priceDetails?.linenFee || "",
+      booking.priceDetails?.longStayDiscount || "",
+      booking.commission || "",
+      booking.extras?.map((e) => `${e.name} (${e.quantity}x)`).join(", ") || "",
+      booking.extras?.reduce(
+        (sum, extra) => sum + parseFloat(extra.amount || 0),
+        0
+      ) || 0,
+      booking.price,
+      // Calculate price without coupon discount: final price + coupon amount
+      parseFloat(booking.price || 0) +
+        parseFloat(booking.priceDetails?.promoCode?.amount || 0),
+    ]),
+  ];
 
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-    const colWidths = [
-      { wch: 15 }, // ID de réservation
-      { wch: 25 }, // Client
-      { wch: 20 }, // Création de la réservation
-      { wch: 20 }, // Portail de réservation
-      { wch: 30 }, // Email du client
-      { wch: 20 }, // Téléphone du client
-      { wch: 35 }, // Adresse du client
-      { wch: 15 }, // Nombre d'adulte
-      { wch: 15 }, // Nombre d'enfant
-      { wch: 15 }, // Arrivée
-      { wch: 15 }, // Check-in
-      { wch: 15 }, // Départ
-      { wch: 15 }, // Nombre de nuits
-      { wch: 15 }, // Prix de base
-      { wch: 20 }, // Nom du coupon
-      { wch: 15 }, // Valeur du coupon
-      { wch: 15 }, // Frais de linge
-      { wch: 20 }, // Promotion de long séjour
-      { wch: 15 }, // Commission
-      { wch: 50 }, // Liste des extras
-      { wch: 15 }, // Total des extras
-      { wch: 15 }, // Prix total de la chambre
-    ];
+  const colWidths = [
+    { wch: 15 }, // ID de réservation
+    { wch: 25 }, // Client
+    { wch: 20 }, // Création de la réservation
+    { wch: 20 }, // Portail de réservation
+    { wch: 25 }, // Nom du logement (Added)
+    { wch: 30 }, // Email du client
+    { wch: 20 }, // Téléphone du client
+    { wch: 35 }, // Adresse du client
+    { wch: 15 }, // Nombre d'adulte
+    { wch: 15 }, // Nombre d'enfant
+    { wch: 15 }, // Arrivée
+    { wch: 15 }, // Check-in
+    { wch: 15 }, // Départ
+    { wch: 15 }, // Nombre de nuits
+    { wch: 15 }, // Prix de base
+    { wch: 20 }, // Nom du coupon
+    { wch: 15 }, // Valeur du coupon
+    { wch: 15 }, // Frais de linge
+    { wch: 20 }, // Promotion de long séjour
+    { wch: 15 }, // Commission
+    { wch: 50 }, // Liste des extras
+    { wch: 15 }, // Total des extras
+    { wch: 15 }, // Prix total de la chambre
+    { wch: 18 }, // Prix final sans coupon (Added)
+  ];
 
-    ws["!cols"] = colWidths;
+  ws["!cols"] = colWidths;
 
-    XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
+  // Apply currency formatting to numeric columns
+  const priceColumns = [14, 16, 17, 18, 19, 21, 22, 23]; // Columns with price values (0-based index)
+  priceColumns.forEach((col) => {
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+    for (let row = 1; row <= range.e.r; row++) {
+      // Start from row 1 (skip header)
+      const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+      if (ws[cellRef] && typeof ws[cellRef].v === "number") {
+        ws[cellRef].z = "0.00 €"; // Apply Euro currency format
+      }
+    }
+  });
 
-    const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
-    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
-    const fileName = `rapport-reservations_${startDate}_${endDate}.xlsx`;
+  XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
 
-    XLSX.writeFile(wb, fileName);
-  };
+  const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
+  const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
+  const fileName = `rapport-reservations_${startDate}_${endDate}.xlsx`;
+
+  XLSX.writeFile(wb, fileName);
+};
 
   return {
     reportData,
