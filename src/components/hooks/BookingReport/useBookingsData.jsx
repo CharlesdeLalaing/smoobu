@@ -313,10 +313,13 @@ const handleExport = () => {
         0
       );
 
-      // Format extras list for Excel - this should match the UI display pattern
-      // In UI it appears to not show the quantity in parentheses, it's part of the name already
+      // Format extras list for Excel to match UI display pattern
+      // For quantities > 1, we need to show (nx) after the name
       const extrasList = mergedAndSortedExtras
-        .map((extra) => extra.name)
+        .map((extra) => {
+          const quantity = parseInt(extra.quantity || 1, 10);
+          return quantity > 1 ? `${extra.name} (${quantity}x)` : extra.name;
+        })
         .join(", ");
 
       return [
