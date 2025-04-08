@@ -5,6 +5,7 @@ import { db } from "../../../firebase.js";
 import * as XLSX from "xlsx";
 import axios from "axios";
 import { processBookingData } from "../../utils/bookingProcessors.js";
+import { getCleanExtrasFromPriceElements, mergeAndSortExtras } from "../../Admin/BookingReport/utils/extrasUtils.js";
 
 export const useBookingsData = () => {
   const [reportData, setReportData] = useState([]);
@@ -241,7 +242,7 @@ const handleExport = () => {
       "Client",
       "Création",
       "Portail",
-      "Logement", // Added property name column
+      "Logement",
       "Email",
       "Téléphone",
       "Adresse",
@@ -260,39 +261,93 @@ const handleExport = () => {
       "Liste des extras",
       "Total des extras",
       "Prix total",
-      "Prix final sans coupon", // Added new column
+      "Prix final sans coupon",
     ],
-    ...reportData.map((booking) => [
-      booking.id,
-      booking.guest,
-      new Date(booking.created).toLocaleDateString("fr-FR"),
-      booking.portal,
-      booking.property || "", // Added property name data
-      booking.email || "",
-      booking.phone || "",
-      booking.address || "",
-      booking.adults,
-      booking.children,
-      new Date(booking.checkIn).toLocaleDateString("fr-FR"),
-      booking.arrivalTime || "",
-      new Date(booking.checkOut).toLocaleDateString("fr-FR"),
-      booking.nights,
-      booking.priceDetails?.basePrice || 0,
-      booking.priceDetails?.promoCode?.name || "",
-      booking.priceDetails?.promoCode?.amount || "",
-      booking.priceDetails?.linenFee || "",
-      booking.priceDetails?.longStayDiscount || "",
-      booking.commission || "",
-      booking.extras?.map((e) => `${e.name} (${e.quantity}x)`).join(", ") || "",
-      booking.extras?.reduce(
+    ...reportData.map((booking) => {
+      // Process extras using the same logic as ExtrasDetailsSection
+      const portalName =
+        booking.portalName || booking.channelName || booking.portal;
+      const isBookingCom = portalName === "Booking.com";
+
+      // Process and organize extras
+      let displayExtras = [];
+
+      // If we have price elements, use those for a consistent display
+      if (booking.priceDetails?.priceElements?.length > 0) {
+        const priceElements = booking.priceDetails.priceElements;
+        displayExtras = getCleanExtrasFromPriceElements(
+          priceElements,
+          portalName
+        );
+
+        // For Booking.com, remove TVA and taxe de séjour from extras
+        if (isBookingCom) {
+          displayExtras = displayExtras.filter(
+            (extra) =>
+              !extra.name.includes("TVA") &&
+              !extra.name.toLowerCase().includes("taxe de séjour")
+          );
+        }
+      }
+      // Otherwise fall back to the extras array
+      else if (booking.extras?.length > 0) {
+        displayExtras = booking.extras;
+
+        // For Booking.com, filter out TVA from extras
+        if (isBookingCom) {
+          displayExtras = displayExtras.filter(
+            (extra) =>
+              !extra.name.includes("TVA") &&
+              !extra.name.toLowerCase().includes("taxe de séjour")
+          );
+        }
+      }
+
+      // Merge duplicate extras and sort them
+      const mergedAndSortedExtras = mergeAndSortExtras(displayExtras);
+
+      // Calculate total - IMPORTANT: This needs to match the UI calculation method
+      // The UI appears to just sum the base amounts, NOT multiply by quantity
+      const extrasTotal = mergedAndSortedExtras.reduce(
         (sum, extra) => sum + parseFloat(extra.amount || 0),
         0
-      ) || 0,
-      booking.price,
-      // Calculate price without coupon discount: final price + coupon amount
-      parseFloat(booking.price || 0) +
-        parseFloat(booking.priceDetails?.promoCode?.amount || 0),
-    ]),
+      );
+
+      // Format extras list for Excel - this should match the UI display pattern
+      // In UI it appears to not show the quantity in parentheses, it's part of the name already
+      const extrasList = mergedAndSortedExtras
+        .map((extra) => extra.name)
+        .join(", ");
+
+      return [
+        booking.id,
+        booking.guest,
+        new Date(booking.created).toLocaleDateString("fr-FR"),
+        booking.portal,
+        booking.property || "",
+        booking.email || "",
+        booking.phone || "",
+        booking.address || "",
+        booking.adults,
+        booking.children,
+        new Date(booking.checkIn).toLocaleDateString("fr-FR"),
+        booking.arrivalTime || "",
+        new Date(booking.checkOut).toLocaleDateString("fr-FR"),
+        booking.nights,
+        booking.priceDetails?.basePrice || 0,
+        booking.priceDetails?.promoCode?.name || "",
+        booking.priceDetails?.promoCode?.amount || "",
+        booking.priceDetails?.linenFee || "",
+        booking.priceDetails?.longStayDiscount || "",
+        booking.commission || "",
+        extrasList || "", // Using our processed extras list WITHOUT quantity in parentheses
+        extrasTotal || 0, // Using our calculated extras total
+        booking.price,
+        // Calculate price without coupon discount: final price + coupon amount
+        parseFloat(booking.price || 0) +
+          parseFloat(booking.priceDetails?.promoCode?.amount || 0),
+      ];
+    }),
   ];
 
   const wb = XLSX.utils.book_new();
@@ -303,7 +358,7 @@ const handleExport = () => {
     { wch: 25 }, // Client
     { wch: 20 }, // Création de la réservation
     { wch: 20 }, // Portail de réservation
-    { wch: 25 }, // Nom du logement (Added)
+    { wch: 25 }, // Nom du logement
     { wch: 30 }, // Email du client
     { wch: 20 }, // Téléphone du client
     { wch: 35 }, // Adresse du client
@@ -322,7 +377,7 @@ const handleExport = () => {
     { wch: 50 }, // Liste des extras
     { wch: 15 }, // Total des extras
     { wch: 15 }, // Prix total de la chambre
-    { wch: 18 }, // Prix final sans coupon (Added)
+    { wch: 18 }, // Prix final sans coupon
   ];
 
   ws["!cols"] = colWidths;
