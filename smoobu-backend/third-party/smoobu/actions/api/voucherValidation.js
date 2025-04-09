@@ -88,7 +88,12 @@ export async function validateVoucher(req, res) {
         });
       }
     } else {
-      if (voucherData.status !== "active" && code !== "POTES") {
+      // Modified logic to handle unlimited coupons
+      // Check if the coupon is unlimited or the POTES code
+      const isUnlimitedCoupon = voucherData.isUnlimited || code === "POTES";
+
+      // Only check active status for non-unlimited coupons
+      if (voucherData.status !== "active" && !isUnlimitedCoupon) {
         return res.status(400).json({
           valid: false,
           error: "inactive",
@@ -120,6 +125,7 @@ export async function validateVoucher(req, res) {
       code: voucherData.code,
       type: voucherData.type,
       isGiftVoucher: voucherData.isGiftVoucher || false,
+      isUnlimited: voucherData.isUnlimited || false, // Include this in the response
       discount: discount,
       amount: voucherData.amount,
       percentageValue:

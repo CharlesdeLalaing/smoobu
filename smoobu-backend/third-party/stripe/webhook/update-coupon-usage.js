@@ -4,18 +4,15 @@ export const updateCouponUsage = async (bookingData) => {
   if (!bookingData.couponApplied?.code) {
     return { success: true, message: "No coupon to update" };
   }
-
   try {
     console.log("🟨 Starting coupon update process:", {
       couponCode: bookingData.couponApplied.code,
       couponData: bookingData.couponApplied,
     });
-
     const couponsRef = db.collection("coupons");
     const couponQuery = await couponsRef
       .where("code", "==", bookingData.couponApplied.code)
       .get();
-
     if (couponQuery.empty) {
       console.error(
         "🟥 Coupon document not found for code:",
@@ -23,8 +20,9 @@ export const updateCouponUsage = async (bookingData) => {
       );
       return { success: false, message: "Coupon not found" };
     }
-
     const couponDoc = couponQuery.docs[0];
+    const couponData = couponDoc.data();
+
     const usageRecord = {
       email: bookingData.email,
       name: `${bookingData.firstName} ${bookingData.lastName}`,
@@ -33,13 +31,20 @@ export const updateCouponUsage = async (bookingData) => {
       discountApplied: bookingData.couponApplied.discount,
     };
 
-    // Special handling for POTES coupon (reusable)
-    if (bookingData.couponApplied.code === "POTES") {
+    // Check if this is an unlimited coupon or the POTES code
+    const isUnlimitedCoupon =
+      couponData.isUnlimited || bookingData.couponApplied.code === "POTES";
+
+    if (isUnlimitedCoupon) {
+      // For unlimited coupons, just record the usage without marking as inactive
       await couponDoc.ref.update({
         usageHistory: FieldValue.arrayUnion(usageRecord),
+        usedCount: FieldValue.increment(1),
+        lastUsedDate: new Date().toISOString(),
+        lastUsedBy: bookingData.email,
+        updatedAt: new Date().toISOString(),
       });
-
-      console.log("🟩 POTES coupon usage recorded:", {
+      console.log("🟩 Unlimited coupon usage recorded:", {
         couponId: couponDoc.id,
         code: bookingData.couponApplied.code,
       });
@@ -53,9 +58,7 @@ export const updateCouponUsage = async (bookingData) => {
         usageHistory: FieldValue.arrayUnion(usageRecord),
         updatedAt: new Date().toISOString(),
       });
-
     }
-
     return { success: true };
   } catch (error) {
     console.error("🟥 Error updating coupon:", {
