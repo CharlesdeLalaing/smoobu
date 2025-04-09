@@ -1,6 +1,6 @@
 /**
  * Enhanced transformer to match Smoobu's calendar behavior
- * Specifically addresses the April 10-11 issue
+ * Removes special case for April dates
  *
  * @param {Object} apiData - The original API response data
  * @returns {Object} - Enhanced data with check-in/checkout days correctly marked
@@ -49,7 +49,6 @@ export const enhanceAvailabilityData = (apiData) => {
       bookingBlocks.push(currentBlock);
     }
 
-    console.log(`Identified booking blocks for room ${roomId}:`, bookingBlocks);
 
     // Second pass: Mark checkout days (day before block start) and check-in days (day after block end)
     bookingBlocks.forEach((block) => {
@@ -65,9 +64,6 @@ export const enhanceAvailabilityData = (apiData) => {
 
       // Mark checkout day if it exists in our data and is available
       if (roomData[checkoutDay] && roomData[checkoutDay].available > 0) {
-        console.log(
-          `Marking ${checkoutDay} as checkout-only (day before booking block)`
-        );
         result.data[roomId][checkoutDay] = {
           ...roomData[checkoutDay],
           checkoutOnly: true,
@@ -76,50 +72,12 @@ export const enhanceAvailabilityData = (apiData) => {
 
       // Mark check-in day if it exists in our data and is available
       if (roomData[checkinDay] && roomData[checkinDay].available > 0) {
-        console.log(
-          `Marking ${checkinDay} as check-in-only (day after booking block)`
-        );
         result.data[roomId][checkinDay] = {
           ...roomData[checkinDay],
           checkinOnly: true,
         };
       }
     });
-
-    // Special case for April 10-11 to match Smoobu
-    // If April 10 is available and April 11 is unavailable, make April 10 fully available (not partially)
-    if (
-      roomData["2025-04-10"] &&
-      roomData["2025-04-10"].available > 0 &&
-      roomData["2025-04-11"] &&
-      roomData["2025-04-11"].available === 0
-    ) {
-      // Check if April 9 is also available - if so, April 10 should be checkout-only
-      // Otherwise, April 10 should be fully available
-      if (roomData["2025-04-09"] && roomData["2025-04-09"].available > 0) {
-        console.log(`Marking April 10 as checkout-only to match Smoobu`);
-        result.data[roomId]["2025-04-10"] = {
-          ...roomData["2025-04-10"],
-          checkoutOnly: true,
-        };
-      } else {
-        // Remove any checkout/check-in markers to make it fully available
-        console.log(`Making April 10 fully available to match Smoobu`);
-        result.data[roomId]["2025-04-10"] = {
-          ...roomData["2025-04-10"],
-          checkoutOnly: false,
-          checkinOnly: false,
-        };
-
-        // If there was a previous update that added these flags, remove them
-        if (result.data[roomId]["2025-04-10"].checkoutOnly) {
-          delete result.data[roomId]["2025-04-10"].checkoutOnly;
-        }
-        if (result.data[roomId]["2025-04-10"].checkinOnly) {
-          delete result.data[roomId]["2025-04-10"].checkinOnly;
-        }
-      }
-    }
 
     // Another common pattern: if a date is both checkinOnly and checkoutOnly
     // (which can happen with single-day gaps), prioritize based on surrounding context

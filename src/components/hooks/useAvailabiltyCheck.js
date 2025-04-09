@@ -65,28 +65,6 @@ export const useAvailabilityCheck = (formData) => {
         },
       });
 
-      console.log("API Response structure:", {
-        hasData: !!response.data,
-        hasPriceDetails: response.data && !!response.data.priceDetails,
-        hasDetailedData: response.data && !!response.data.data,
-      });
-
-      // Debug raw API data for April for each apartment
-      if (response.data && response.data.data) {
-        apartmentIds.forEach((roomId) => {
-          if (response.data.data[roomId]) {
-            console.log(
-              `Raw April data for room ${roomId}:`,
-              Object.keys(response.data.data[roomId])
-                .filter((date) => date.startsWith("2025-04"))
-                .reduce((obj, key) => {
-                  obj[key] = response.data.data[roomId][key];
-                  return obj;
-                }, {})
-            );
-          }
-        });
-      }
 
       // Transform the API response to identify check-in and checkout days
       const enhancedResponse = enhanceAvailabilityData(response.data);

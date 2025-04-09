@@ -21,13 +21,6 @@ const CustomCalendar = ({
   const [calendarDays, setCalendarDays] = useState([]);
   const [hoveredDate, setHoveredDate] = useState(null);
 
-  console.log("CustomCalendar rendered", {
-    roomId,
-    hasAvailableDates: !!availableDates,
-    startDate,
-    endDate,
-    hasSearched,
-  });
 
   // Days of the week header
   const daysOfWeek = ["LU", "MA", "ME", "JE", "VE", "SA", "DI"];
@@ -86,66 +79,7 @@ const CustomCalendar = ({
     return roomData[prevDateStr] && roomData[prevDateStr].checkoutOnly === true;
   };
 
-  const debugCalendarData = () => {
-    if (roomId && availableDates && availableDates[roomId]) {
-      console.log("=== DEBUG CALENDAR DATA ===");
-      console.log("Calendar data for room:", roomId);
 
-      // Add this new debug section
-      console.log("RAW AVAILABILITY DATA:");
-      for (let day = 10; day <= 26; day++) {
-        const date = new Date(2025, 3, day); // April
-        const dateStr = formatDate(date);
-        if (availableDates[roomId][dateStr]) {
-          console.log(
-            `April ${day} raw data: `,
-            availableDates[roomId][dateStr]
-          );
-        }
-      }
-
-      // Examine specific checkout days
-      console.log("CHECKOUT DAY ANALYSIS - CORRECTED PATTERN:");
-      [
-        "2025-04-10",
-        "2025-04-11",
-        "2025-04-17",
-        "2025-04-18",
-        "2025-04-24",
-        "2025-04-25",
-      ].forEach((dateStr) => {
-        const date = new Date(dateStr);
-
-        // Get previous day
-        const prevDay = new Date(date);
-        prevDay.setDate(prevDay.getDate() - 1);
-        const prevDateStr = formatDate(prevDay);
-
-        // Get next day
-        const nextDay = new Date(date);
-        nextDay.setDate(nextDay.getDate() + 1);
-        const nextDateStr = formatDate(nextDay);
-
-        if (availableDates[roomId][dateStr]) {
-          console.log(`${dateStr} analysis:`, {
-            prevDay: prevDateStr,
-            prevDayHasFlag:
-              availableDates[roomId][prevDateStr]?.checkoutOnly === true,
-            thisDay: dateStr,
-            thisDayData: availableDates[roomId][dateStr],
-            thisDayHasFlag:
-              availableDates[roomId][dateStr].checkoutOnly === true,
-            isDetectedAsCheckout: isSmoobuCheckoutDay(date),
-            displayedAs: isSmoobuCheckoutDay(date)
-              ? "checkout-only"
-              : "available",
-          });
-        }
-      });
-
-      console.log("========================");
-    }
-  };
 
   // Check if a date is available
   const isDateAvailable = (date) => {
@@ -259,39 +193,28 @@ const CustomCalendar = ({
   };
 
   // Check if a date can be clicked with proper checkout handling
-const isDateClickable = (date) => {
-  // Calculate tomorrow (today + 1 day)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const isDateClickable = (date) => {
+    // Calculate tomorrow (today + 1 day)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
 
-  // Don't allow selecting today or dates in the past
-  // Only allow selecting tomorrow and future dates
-  if (date < tomorrow) {
-    return false;
-  }
-
-  // During initial render or before search, allow all future dates
-  if (!hasSearched) {
-    return true;
-  }
-
-  // For selecting a start date (or first date in a new selection)
-  if (!startDate || (startDate && endDate)) {
-    // Checkout-only dates cannot be used as start dates
-    if (isSmoobuCheckoutDay(date)) {
+    // Don't allow selecting today or dates in the past
+    // Only allow selecting tomorrow and future dates
+    if (date < tomorrow) {
       return false;
     }
-    return isDateAvailable(date);
-  }
 
-  // For selecting an end date
-  if (startDate && !endDate) {
-    // If selecting a date before current start, handle as new start date
-    if (date < startDate) {
+    // During initial render or before search, allow all future dates
+    if (!hasSearched) {
+      return true;
+    }
+
+    // For selecting a start date (or first date in a new selection)
+    if (!startDate || (startDate && endDate)) {
       // Checkout-only dates cannot be used as start dates
       if (isSmoobuCheckoutDay(date)) {
         return false;
@@ -299,62 +222,76 @@ const isDateClickable = (date) => {
       return isDateAvailable(date);
     }
 
-    // If it's the day immediately after the start date, always allow it
-    const dayAfterStart = new Date(startDate);
-    dayAfterStart.setDate(dayAfterStart.getDate() + 1);
-    if (formatDate(date) === formatDate(dayAfterStart)) {
-      return true;
+    // For selecting an end date
+    if (startDate && !endDate) {
+      // If selecting a date before current start, handle as new start date
+      if (date < startDate) {
+        // Checkout-only dates cannot be used as start dates
+        if (isSmoobuCheckoutDay(date)) {
+          return false;
+        }
+        return isDateAvailable(date);
+      }
+
+      // If it's the day immediately after the start date, always allow it
+      const dayAfterStart = new Date(startDate);
+      dayAfterStart.setDate(dayAfterStart.getDate() + 1);
+      if (formatDate(date) === formatDate(dayAfterStart)) {
+        return true;
+      }
+
+      // For other dates, check if the range (excluding the end date) is available
+      return isRoomAvailable(
+        roomId,
+        startDate,
+        date,
+        availableDates,
+        hasSearched
+      );
     }
 
-    // For other dates, check if the range (excluding the end date) is available
-    return isRoomAvailable(
-      roomId,
-      startDate,
-      date,
-      availableDates,
-      hasSearched
-    );
-  }
-
-  return isDateAvailable(date);
-};
+    return isDateAvailable(date);
+  };
 
   // Handle date click
-  const handleDateClick = (date) => {
-    console.log("Date clicked:", formatDate(date));
-    console.log("Is clickable:", isDateClickable(date));
 
-    // Check if date is clickable
-    if (!isDateClickable(date)) {
-      console.log("Date not clickable - returning");
-      return;
-    }
+const handleDateClick = (date) => {
+  // Add more detailed debugging with just roomId
+  console.log(`[Room ${roomId}] Date clicked:`, formatDate(date));
+  console.log(`[Room ${roomId}] Current state:`, { startDate, endDate });
 
-    // Convert to noon to avoid timezone issues
-    const selectedDate = new Date(date);
-    selectedDate.setHours(12, 0, 0, 0);
+  // Check if date is clickable
+  if (!isDateClickable(date)) {
+    console.log(`[Room ${roomId}] Date not clickable - returning`);
+    return;
+  }
 
-    console.log("Selected date (noon):", selectedDate);
-    console.log("Current state - startDate:", startDate, "endDate:", endDate);
+  // Convert to noon to avoid timezone issues
+  const selectedDate = new Date(date);
+  selectedDate.setHours(12, 0, 0, 0);
 
-    // If no start date is selected, or if both dates are selected (new selection)
-    if (!startDate || (startDate && endDate)) {
-      console.log("Setting as START date");
-      onDateSelect(selectedDate, true);
-    } else {
-      // If start date is selected but no end date
-      // Ensure end date is after start date
-      if (selectedDate < new Date(startDate)) {
-        console.log(
-          "Selected date is before start date - setting as new START date"
-        );
-        onDateSelect(selectedDate, true);
-      } else {
-        console.log("Setting as END date");
-        onDateSelect(selectedDate, false);
-      }
-    }
-  };
+  // The key fix: Always pass the roomId explicitly when calling onDateSelect
+  // This ensures the parent component knows which room this date selection is for
+
+  if (startDate && endDate) {
+    // Clear end date first with explicit roomId
+    onDateSelect(null, false, roomId);
+
+    // Set new start date with explicit roomId
+    setTimeout(() => {
+      onDateSelect(selectedDate, true, roomId);
+    }, 0);
+    return;
+  }
+
+  if (!startDate) {
+    onDateSelect(selectedDate, true, roomId);
+  } else if (selectedDate < new Date(startDate)) {
+    onDateSelect(selectedDate, true, roomId);
+  } else {
+    onDateSelect(selectedDate, false, roomId);
+  }
+};
 
   // Handle mouse enter on a date
   const handleDateMouseEnter = (date) => {
@@ -368,44 +305,6 @@ const isDateClickable = (date) => {
     setHoveredDate(null);
   };
 
-  // Verify availability data on component mount or data change
-  useEffect(() => {
-    if (roomId && availableDates && availableDates[roomId]) {
-      const roomData = availableDates[roomId];
-      console.log(`Availability data for room ${roomId}:`);
-      console.log("Number of dates with data:", Object.keys(roomData).length);
-
-      // Debug calendar data for April
-      debugCalendarData();
-
-      // Check for dates with unavailability
-      const unavailableDates = Object.entries(roomData)
-        .filter(
-          ([_, data]) => data.available !== undefined && data.available <= 0
-        )
-        .map(([date]) => date);
-
-      console.log("Unavailable dates:", unavailableDates);
-
-      // Check for partially available dates
-      const partiallyAvailableDates = Object.entries(roomData)
-        .filter(([date]) => isDatePartiallyAvailable(new Date(date)))
-        .map(([date]) => date);
-
-      console.log("Partially available dates:", partiallyAvailableDates);
-
-      // Check current month data
-      const currentMonth = currentDate.getMonth();
-      const datesInCurrentMonth = Object.keys(roomData).filter(
-        (dateStr) => new Date(dateStr).getMonth() === currentMonth
-      );
-
-      console.log(
-        `Dates with data in current month (${currentMonth + 1}):`,
-        datesInCurrentMonth.length > 0 ? datesInCurrentMonth : "none"
-      );
-    }
-  }, [roomId, availableDates, currentDate]);
 
 
   const isPastOrToday = (date) => {
@@ -432,7 +331,6 @@ const isDateClickable = (date) => {
       date.getFullYear() === today.getFullYear()
     );
   };
-
 
   // Generate calendar days for the current month
   useEffect(() => {
