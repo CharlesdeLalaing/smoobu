@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import { useTranslation } from "react-i18next";
 import "./CustomCalendar.css";
 import {
@@ -532,4 +532,23 @@ const CustomCalendar = ({
   );
 };
 
-export default CustomCalendar;
+// Export with memo to prevent unnecessary re-renders
+export default memo(CustomCalendar, (prevProps, nextProps) => {
+  // Custom comparison function - return true if props are "equal" to prevent re-render
+  return (
+    prevProps.roomId === nextProps.roomId &&
+    prevProps.startDate === nextProps.startDate &&
+    prevProps.endDate === nextProps.endDate &&
+    prevProps.hasSearched === nextProps.hasSearched &&
+    // Deep comparison for availableDates only if roomId matches
+    (prevProps.availableDates === nextProps.availableDates ||
+      !prevProps.roomId ||
+      !nextProps.roomId ||
+      !prevProps.availableDates ||
+      !nextProps.availableDates ||
+      !prevProps.availableDates[prevProps.roomId] ||
+      !nextProps.availableDates[nextProps.roomId] ||
+      JSON.stringify(prevProps.availableDates[prevProps.roomId]) ===
+        JSON.stringify(nextProps.availableDates[nextProps.roomId]))
+  );
+});

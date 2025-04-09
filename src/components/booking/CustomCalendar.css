@@ -318,3 +318,21 @@ div.calendar-day.selected,
 .calendar-day.selected::after {
   display: none !important;
 }
+
+/* Add these at the end of your CustomCalendar.css file */
+
+/* Add transitions to calendar days for smoother state changes */
+.calendar-day {
+  transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+/* Apply transitions to all state changes */
+.calendar-day.selected,
+.calendar-day.in-range,
+.calendar-day.in-hover-range,
+.calendar-day.unavailable,
+.calendar-day.partially-available,
+.calendar-day.checkout-only,
+.calendar-day.checkin-only {
+  transition: all 0.15s ease;
+}
