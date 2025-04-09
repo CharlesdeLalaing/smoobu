@@ -15,7 +15,12 @@ export const useAvailabilityCheck = (formData) => {
     setHasSearched(false);
   };
 
-  const checkAvailability = async (startDate, endDate) => {
+  const checkAvailability = async (
+    startDate,
+    endDate,
+    roomId = null,
+    preserveExistingData = false
+  ) => {
     if (!startDate || !endDate) {
       return null;
     }
@@ -28,6 +33,11 @@ export const useAvailabilityCheck = (formData) => {
 
     setLoading(true);
     setError(null);
+
+    // Store current data if we need to preserve it
+    const currentAvailableDates = preserveExistingData
+      ? { ...availableDates }
+      : {};
 
     try {
       const apartmentIds = [
@@ -65,7 +75,6 @@ export const useAvailabilityCheck = (formData) => {
         },
       });
 
-
       // Transform the API response to identify check-in and checkout days
       const enhancedResponse = enhanceAvailabilityData(response.data);
 
@@ -76,49 +85,69 @@ export const useAvailabilityCheck = (formData) => {
       if (enhancedResponse) {
         // First, check if we have priceDetails
         if (enhancedResponse.priceDetails) {
-          // Get a copy of current available dates to preserve them
-          const currentAvailableDates = { ...availableDates };
+          // CRITICAL CHANGE: Handle data preservation differently
+          if (preserveExistingData) {
+            // Create a merged structure from current and new data
+            const mergedAvailableDates = { ...currentAvailableDates };
 
-          // Create a structure for the new dates
-          const newAvailableRooms = {};
-
-          // Add price details rooms to available rooms
-          Object.keys(enhancedResponse.priceDetails).forEach((roomId) => {
-            // If we already have data for this room, preserve it
-            if (currentAvailableDates && currentAvailableDates[roomId]) {
-              newAvailableRooms[roomId] = { ...currentAvailableDates[roomId] };
-            } else {
-              // Create new data for this room
-              newAvailableRooms[roomId] = {};
-            }
-          });
-
-          // If we have new availability data, merge it
-          if (enhancedResponse.data) {
-            // For each room in the response data
-            Object.keys(enhancedResponse.data).forEach((roomId) => {
-              // If the room is in our available rooms
-              if (roomId in newAvailableRooms) {
-                // Get the current room data from our state
-                const currentRoomData = newAvailableRooms[roomId] || {};
-
-                // Get the new room data from the API
-                const newRoomData = enhancedResponse.data[roomId];
-
-                // Merge the new data with existing data
-                // This ensures we don't lose existing availability info
-                newAvailableRooms[roomId] = {
-                  ...currentRoomData,
-                  ...newRoomData,
-                };
+            // Add price details rooms to available rooms
+            Object.keys(enhancedResponse.priceDetails).forEach((roomId) => {
+              // Ensure the room exists in our merged data
+              if (!mergedAvailableDates[roomId]) {
+                mergedAvailableDates[roomId] = {};
               }
             });
+
+            // If we have new availability data, merge it (don't replace)
+            if (enhancedResponse.data) {
+              // For each room in the response data
+              Object.keys(enhancedResponse.data).forEach((roomId) => {
+                // Ensure the room exists in our merged data
+                if (!mergedAvailableDates[roomId]) {
+                  mergedAvailableDates[roomId] = {};
+                }
+
+                // Get the new room data
+                const newRoomData = enhancedResponse.data[roomId];
+
+                // Merge the new data with existing data (don't replace)
+                mergedAvailableDates[roomId] = {
+                  ...mergedAvailableDates[roomId],
+                  ...newRoomData,
+                };
+              });
+            }
+
+            console.log(
+              "Updated availableDates structure (MERGED):",
+              mergedAvailableDates
+            );
+            setAvailableDates(mergedAvailableDates);
+          } else {
+            // Original behavior - getting complete new data
+            const newAvailableRooms = {};
+
+            // Add price details rooms to available rooms
+            Object.keys(enhancedResponse.priceDetails).forEach((roomId) => {
+              newAvailableRooms[roomId] = {};
+            });
+
+            // If we have new availability data, add it
+            if (enhancedResponse.data) {
+              Object.keys(enhancedResponse.data).forEach((roomId) => {
+                if (roomId in newAvailableRooms) {
+                  newAvailableRooms[roomId] = enhancedResponse.data[roomId];
+                }
+              });
+            }
+
+            console.log(
+              "Updated availableDates structure (NEW):",
+              newAvailableRooms
+            );
+            setAvailableDates(newAvailableRooms);
           }
 
-          console.log("Updated availableDates structure:", newAvailableRooms);
-
-
-          setAvailableDates(newAvailableRooms);
           setHasSearched(true);
           return enhancedResponse;
         }
@@ -126,21 +155,36 @@ export const useAvailabilityCheck = (formData) => {
         else if (enhancedResponse.data) {
           console.log("No price details, but we have availability data");
 
-          // Merge with existing data instead of replacing
-          const currentAvailableDates = { ...availableDates };
-          const newAvailableDates = {};
+          if (preserveExistingData) {
+            // Merge with existing data instead of replacing
+            const mergedAvailableDates = { ...currentAvailableDates };
 
-          // For each room in the response
-          Object.keys(enhancedResponse.data).forEach((roomId) => {
-            // Preserve existing data for this room
-            newAvailableDates[roomId] = {
-              ...(currentAvailableDates[roomId] || {}),
-              ...enhancedResponse.data[roomId],
-            };
+            // For each room in the response
+            Object.keys(enhancedResponse.data).forEach((roomId) => {
+              // Ensure the room exists in our merged data
+              if (!mergedAvailableDates[roomId]) {
+                mergedAvailableDates[roomId] = {};
+              }
 
-          });
+              // Merge the new data
+              mergedAvailableDates[roomId] = {
+                ...mergedAvailableDates[roomId],
+                ...enhancedResponse.data[roomId],
+              };
+            });
 
-          setAvailableDates(newAvailableDates);
+            setAvailableDates(mergedAvailableDates);
+          } else {
+            // Original behavior
+            const newAvailableDates = {};
+
+            Object.keys(enhancedResponse.data).forEach((roomId) => {
+              newAvailableDates[roomId] = enhancedResponse.data[roomId];
+            });
+
+            setAvailableDates(newAvailableDates);
+          }
+
           setHasSearched(true);
           return enhancedResponse;
         }

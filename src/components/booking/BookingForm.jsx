@@ -297,147 +297,143 @@ const BookingForm = () => {
     }
   };
 
-  // Add this function to your BookingForm component
 
-  // This goes in your parent component (BookingForm, etc.)
-  const handleDateSelect = async (date, isStart, selectedRoomId) => {
+ const handleDateSelect = async (date, isStart, selectedRoomId) => {
+   console.log("handleDateSelect called with:", {
+     date,
+     isStart,
+     selectedRoomId,
+   });
+   console.log("Current availableDates:", availableDates);
 
+   // Preserve the existing availability data
+   const currentAvailableDates = { ...availableDates };
 
-    // IMPORTANT: If a room ID is passed, make sure to update/maintain it
-    if (selectedRoomId) {
-      // This ensures the room selection doesn't change when picking dates
+   // IMPORTANT: If a room ID is passed, make sure to update/maintain it
+   if (selectedRoomId) {
+     // This ensures the room selection doesn't change when picking dates
+     handleChange({
+       target: {
+         name: "roomId",
+         value: selectedRoomId,
+       },
+     });
+   }
 
+   try {
+     // Handle date clearing
+     if (!date) {
+       if (isStart) {
+         setStartDate(null);
+         setEndDate(null);
+         handleChange({ target: { name: "arrivalDate", value: "" } });
+         handleChange({ target: { name: "departureDate", value: "" } });
+       } else {
+         setEndDate(null);
+         handleChange({ target: { name: "departureDate", value: "" } });
+       }
+       setDateError("");
+       return;
+     }
 
+     // Create a new date at midnight in the local timezone
+     const year = date.getFullYear();
+     const month = date.getMonth();
+     const day = date.getDate();
+     const selectedDate = new Date(year, month, day, 0, 0, 0, 0);
 
-      // If you need to update a form field with the room ID
-      handleChange({
-        target: {
-          name: "roomId",
-          value: selectedRoomId,
-        },
-      });
-    }
+     if (isStart) {
+       // Setting start date
+       console.log("Setting as START date");
+       setStartDate(selectedDate);
 
-    try {
-      // Store the current availability data before making any changes
-      const currentAvailableDates = { ...availableDates };
+       // If there's already an end date that's earlier than the new start date,
+       // clear the end date to avoid invalid date ranges
+       if (endDate && selectedDate >= endDate) {
+         setEndDate(null);
+         handleChange({ target: { name: "departureDate", value: "" } });
+       }
 
-      // Handle date clearing
-      if (!date) {
-        if (isStart) {
-          setStartDate(null);
-          setEndDate(null);
-          handleChange({ target: { name: "arrivalDate", value: "" } });
-          handleChange({ target: { name: "departureDate", value: "" } });
-          // Don't reset availability - keep the current data
-        } else {
-          setEndDate(null);
-          handleChange({ target: { name: "departureDate", value: "" } });
-        }
-        setDateError("");
-        return;
-      }
+       // Format date for form data
+       const formattedDate = `${year}-${(month + 1)
+         .toString()
+         .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+       handleChange({
+         target: {
+           name: "arrivalDate",
+           value: formattedDate,
+         },
+       });
+     } else {
+       // Setting end date
+       console.log("Setting as END date");
+       setEndDate(selectedDate);
 
-      // Create a new date at midnight in the local timezone
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const day = date.getDate();
-      const selectedDate = new Date(year, month, day, 0, 0, 0, 0);
+       // Format date for form data
+       const formattedDate = `${year}-${(month + 1)
+         .toString()
+         .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+       handleChange({
+         target: {
+           name: "departureDate",
+           value: formattedDate,
+         },
+       });
+     }
 
- 
+     // Get updated dates for availability check
+     const updatedStartDate = isStart ? selectedDate : startDate;
+     const updatedEndDate = isStart ? endDate : selectedDate;
 
-      if (isStart) {
-        // Setting start date
-        console.log("Setting as START date");
-        setStartDate(selectedDate);
+     // Only check availability if both dates are set
+     if (updatedStartDate && updatedEndDate) {
+       console.log(
+         "Both dates set, checking availability for room:",
+         selectedRoomId
+       );
 
-        // If there's already an end date that's earlier than the new start date,
-        // clear the end date to avoid invalid date ranges
-        if (endDate && selectedDate >= endDate) {
-          setEndDate(null);
-          handleChange({ target: { name: "departureDate", value: "" } });
-        }
+       try {
+         // Call availability check but tell it to preserve the existing data
+         // We need to modify checkAvailability to accept this parameter
+         const preserveExistingData = true;
+         const newAvailabilityData = await checkAvailability(
+           updatedStartDate,
+           updatedEndDate,
+           selectedRoomId,
+           true
+         );
 
-        // Format date for form data
-        const formattedDate = `${year}-${(month + 1)
-          .toString()
-          .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-        handleChange({
-          target: {
-            name: "arrivalDate",
-            value: formattedDate,
-          },
-        });
-      } else {
-        // Setting end date
-        console.log("Setting as END date");
-        setEndDate(selectedDate);
+         // If we got new data with pricing
+         if (newAvailabilityData && newAvailabilityData.priceDetails) {
+           // Use the new price details
+           setPriceDetails(newAvailabilityData.priceDetails);
+           setShowPriceDetails(true);
+           setIsAvailable(true);
 
-        // Format date for form data
-        const formattedDate = `${year}-${(month + 1)
-          .toString()
-          .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-        handleChange({
-          target: {
-            name: "departureDate",
-            value: formattedDate,
-          },
-        });
-      }
-
-      // Get updated dates for availability check
-      const updatedStartDate = isStart ? selectedDate : startDate;
-      const updatedEndDate = isStart ? endDate : selectedDate;
-
-      // IMPORTANT: When checking availability, pass the selected room ID
-      // Only check availability if both dates are set
-      if (updatedStartDate && updatedEndDate) {
-        console.log(
-          "Both dates set, checking availability for room:",
-          selectedRoomId
-        );
-
-        try {
-          // Call availability check but preserve existing data
-          // Pass the selectedRoomId to ensure availability is checked for the correct room
-          const newAvailabilityData = await checkAvailability(
-            updatedStartDate,
-            updatedEndDate,
-            selectedRoomId // Make sure your checkAvailability function accepts this parameter
-          );
-
-          // If we got new data, merge it with existing data instead of replacing
-          if (newAvailabilityData && newAvailabilityData.priceDetails) {
-            // Use the new price details but keep existing availability data
-            setPriceDetails(newAvailabilityData.priceDetails);
-            setShowPriceDetails(true);
-            setIsAvailable(true);
-
-            // DON'T reset or replace availableDates here
-            // Instead, we'll modify checkAvailability to preserve existing data
-          } else {
-            setDateError("No rates available for selected dates");
-            setIsAvailable(false);
-            // Still keep showing the container
-            setShowPriceDetails(true);
-          }
-        } catch (err) {
-          console.error("Error checking availability:", err);
-          setError("Error checking availability");
-          // Keep showing the UI with the error message
-          setShowPriceDetails(true);
-        }
-      } else {
-        // Keep showing price details while user selects second date
-        setShowPriceDetails(true);
-      }
-    } catch (error) {
-      console.error("Error in handleDateSelect:", error);
-      setError("An error occurred while processing the date selection");
-      // Maintain UI visibility even on error
-      setShowPriceDetails(true);
-    }
-  };
+           // The merging is now handled inside checkAvailability
+         } else {
+           setDateError("No rates available for selected dates");
+           setIsAvailable(false);
+           // Still keep showing the container
+           setShowPriceDetails(true);
+         }
+       } catch (err) {
+         console.error("Error checking availability:", err);
+         setError("Error checking availability");
+         // Keep showing the UI with the error message
+         setShowPriceDetails(true);
+       }
+     } else {
+       // Keep showing price details while user selects second date
+       setShowPriceDetails(true);
+     }
+   } catch (error) {
+     console.error("Error in handleDateSelect:", error);
+     setError("An error occurred while processing the date selection");
+     // Maintain UI visibility even on error
+     setShowPriceDetails(true);
+   }
+ };
 
   // Make sure to include this in your propertyDetailsProps object:
 

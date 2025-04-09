@@ -20,7 +20,14 @@ const CustomCalendar = ({
   const [currentDate, setCurrentDate] = useState(initialMonth || new Date());
   const [calendarDays, setCalendarDays] = useState([]);
   const [hoveredDate, setHoveredDate] = useState(null);
+  const [lastAvailableDates, setLastAvailableDates] = useState({});
 
+  // Store last valid availability data when it changes
+  useEffect(() => {
+    if (availableDates && roomId && availableDates[roomId]) {
+      setLastAvailableDates(availableDates);
+    }
+  }, [availableDates, roomId]);
 
   // Days of the week header
   const daysOfWeek = ["LU", "MA", "ME", "JE", "VE", "SA", "DI"];
@@ -54,6 +61,25 @@ const CustomCalendar = ({
   };
 
   /**
+   * Get the most recent valid availability data
+   * Uses current data or falls back to last valid data if needed
+   */
+  const getAvailabilityData = () => {
+    // Check if current availability data is valid
+    if (availableDates && roomId && availableDates[roomId]) {
+      return availableDates;
+    }
+
+    // Fall back to last valid data
+    if (lastAvailableDates && roomId && lastAvailableDates[roomId]) {
+      return lastAvailableDates;
+    }
+
+    // If nothing else is available, return an empty object
+    return {};
+  };
+
+  /**
    * CORRECTED PATTERN DETECTION:
    *
    * In Smoobu's calendar:
@@ -61,10 +87,13 @@ const CustomCalendar = ({
    * 2. The date with the flag should be fully available (white)
    */
   const isSmoobuCheckoutDay = (date) => {
-    if (!roomId || !availableDates || !availableDates[roomId]) return false;
+    if (!roomId) return false;
+
+    const availabilityData = getAvailabilityData();
+    if (!availabilityData || !availabilityData[roomId]) return false;
 
     const dateStr = formatDate(date);
-    const roomData = availableDates[roomId];
+    const roomData = availabilityData[roomId];
 
     // Don't process dates we have no data for
     if (!(dateStr in roomData)) return false;
@@ -79,17 +108,16 @@ const CustomCalendar = ({
     return roomData[prevDateStr] && roomData[prevDateStr].checkoutOnly === true;
   };
 
-
-
   // Check if a date is available
   const isDateAvailable = (date) => {
     // Check if we have the necessary data
-    if (!roomId || !availableDates || !availableDates[roomId]) {
+    const availabilityData = getAvailabilityData();
+    if (!roomId || !availabilityData || !availabilityData[roomId]) {
       return true; // Default to available when no data
     }
 
     const dateStr = formatDate(date);
-    const roomData = availableDates[roomId];
+    const roomData = availabilityData[roomId];
 
     // If we don't have data for this specific date, consider it available
     if (!(dateStr in roomData)) {
@@ -130,7 +158,7 @@ const CustomCalendar = ({
   const isDatePartiallyAvailable = (date) => {
     return (
       isSmoobuCheckoutDay(date) ||
-      isDateCheckinOnly(date, roomId, availableDates)
+      isDateCheckinOnly(date, roomId, getAvailabilityData())
     );
   };
 
@@ -245,7 +273,7 @@ const CustomCalendar = ({
         roomId,
         startDate,
         date,
-        availableDates,
+        getAvailabilityData(),
         hasSearched
       );
     }
@@ -254,44 +282,46 @@ const CustomCalendar = ({
   };
 
   // Handle date click
+  const handleDateClick = (date) => {
+    // Add more detailed debugging with just roomId
+    console.log(`[Room ${roomId}] Date clicked:`, formatDate(date));
+    console.log(`[Room ${roomId}] Current state:`, { startDate, endDate });
+    console.log(
+      `[Room ${roomId}] Availability data preserved:`,
+      getAvailabilityData()
+    );
 
-const handleDateClick = (date) => {
-  // Add more detailed debugging with just roomId
-  console.log(`[Room ${roomId}] Date clicked:`, formatDate(date));
-  console.log(`[Room ${roomId}] Current state:`, { startDate, endDate });
+    // Check if date is clickable
+    if (!isDateClickable(date)) {
+      console.log(`[Room ${roomId}] Date not clickable - returning`);
+      return;
+    }
 
-  // Check if date is clickable
-  if (!isDateClickable(date)) {
-    console.log(`[Room ${roomId}] Date not clickable - returning`);
-    return;
-  }
+    // Convert to noon to avoid timezone issues
+    const selectedDate = new Date(date);
+    selectedDate.setHours(12, 0, 0, 0);
 
-  // Convert to noon to avoid timezone issues
-  const selectedDate = new Date(date);
-  selectedDate.setHours(12, 0, 0, 0);
+    // The key fix: Always pass the roomId explicitly when calling onDateSelect
+    // This ensures the parent component knows which room this date selection is for
+    if (startDate && endDate) {
+      // Clear end date first with explicit roomId
+      onDateSelect(null, false, roomId);
 
-  // The key fix: Always pass the roomId explicitly when calling onDateSelect
-  // This ensures the parent component knows which room this date selection is for
+      // Set new start date with explicit roomId
+      setTimeout(() => {
+        onDateSelect(selectedDate, true, roomId);
+      }, 0);
+      return;
+    }
 
-  if (startDate && endDate) {
-    // Clear end date first with explicit roomId
-    onDateSelect(null, false, roomId);
-
-    // Set new start date with explicit roomId
-    setTimeout(() => {
+    if (!startDate) {
       onDateSelect(selectedDate, true, roomId);
-    }, 0);
-    return;
-  }
-
-  if (!startDate) {
-    onDateSelect(selectedDate, true, roomId);
-  } else if (selectedDate < new Date(startDate)) {
-    onDateSelect(selectedDate, true, roomId);
-  } else {
-    onDateSelect(selectedDate, false, roomId);
-  }
-};
+    } else if (selectedDate < new Date(startDate)) {
+      onDateSelect(selectedDate, true, roomId);
+    } else {
+      onDateSelect(selectedDate, false, roomId);
+    }
+  };
 
   // Handle mouse enter on a date
   const handleDateMouseEnter = (date) => {
@@ -304,8 +334,6 @@ const handleDateClick = (date) => {
   const handleDateMouseLeave = () => {
     setHoveredDate(null);
   };
-
-
 
   const isPastOrToday = (date) => {
     const today = new Date();
@@ -408,14 +436,16 @@ const handleDateClick = (date) => {
             const isPast = isPastOrToday(date);
             const isTodayDate = isToday(date);
 
-            // Get availability data
-            const roomData = roomId && availableDates && availableDates[roomId];
+            // Get availability data using our helper function
+            const availabilityData = getAvailabilityData();
+            const roomData =
+              roomId && availabilityData && availabilityData[roomId];
             const dateData = roomData ? roomData[dateStr] : null;
 
             // Determine date status for styling - follow Smoobu's visual pattern
             const isAvailable = isDateAvailable(date);
             const isCheckout = isSmoobuCheckoutDay(date);
-            const isCheckin = isDateCheckinOnly(date, roomId, availableDates);
+            const isCheckin = isDateCheckinOnly(date, roomId, availabilityData);
             const isPartial = isDatePartiallyAvailable(date);
             const isSelected = isDateSelected(date);
             const isInRange = isDateInRange(date);
