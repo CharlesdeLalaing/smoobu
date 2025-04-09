@@ -49,50 +49,38 @@ export const PropertyDetails = ({
 
 
 
-  const getUnavailableDatesMessage = (roomId) => {
-    if (!availableDates || !availableDates[roomId] || !startDate || !endDate) return null;
 
-    const unavailableDates = [];
-    let currentDate = new Date(startDate);
-    const endDateTime = new Date(endDate);
 
-    while (currentDate <= endDateTime) {
-      const dateStr = currentDate.toISOString().split("T")[0];
-      const dayData = availableDates[roomId][dateStr];
+const sortRooms = (rooms) => {
+  const customOrder = [2565753, 1946282, 1644643, 1946279, 1946276, 1946270];
 
-      if (!dayData || dayData.available === 0) {
-        unavailableDates.push(new Date(dateStr));
-      }
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
+  return [...rooms].sort((a, b) => {
+    if (a.id === formData.apartmentId) return -1;
+    if (b.id === formData.apartmentId) return 1;
 
-    if (unavailableDates.length > 0) {
-      const formatDate = (date) =>
-        date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+    const indexA = customOrder.indexOf(a.id);
+    const indexB = customOrder.indexOf(b.id);
 
-      return (
-        <div className="p-3 mb-4 text-sm text-red-600 rounded-md bg-red-50">
-          <span className="font-medium">{t('propertyDetails.unavailableDates')}</span>
-          {unavailableDates.map(formatDate).join(", ")}
-        </div>
-      );
-    }
-    return null;
-  };
+    return indexA - indexB;
+  });
+};
 
-  const sortRooms = (rooms) => {
-    const customOrder = [2565753, 1946282, 1644643, 1946279, 1946276, 1946270];
-    
-    return [...rooms].sort((a, b) => {
-      if (a.id === formData.apartmentId) return -1;
-      if (b.id === formData.apartmentId) return 1;
-      
-      const indexA = customOrder.indexOf(a.id);
-      const indexB = customOrder.indexOf(b.id);
-      
-      return indexA - indexB;
-    });
-  };
+// Use a single consistent array of rooms instead of splitting by availability
+const allRooms = Object.values(roomsData);
+const sortedRooms = sortRooms(allRooms);
+
+// Filter rooms based on selection criteria, not availability
+const filteredRooms = sortedRooms.filter((room) => {
+  if (showOnlySelected && formData.apartmentId) {
+    return room.id === formData.apartmentId;
+  }
+
+  if (showOnlyUnselected) {
+    return room.id !== formData.apartmentId;
+  }
+
+  return true;
+});
 
   const groupedRooms = Object.values(roomsData).reduce(
     (acc, room) => {
@@ -153,11 +141,13 @@ export const PropertyDetails = ({
     const roomPriceDetails = priceDetails && priceDetails[room.id];
     const isOverCapacity = totalGuests > room.maxGuests;
 
-    const handleCalendarDateSelect = (date, isStart) => {
-      if (handleDateSelect) {
-        handleDateSelect(date, isStart);
-      }
-    };
+const handleCalendarDateSelect = (date, isStart) => {
+  if (handleDateSelect) {
+    // Call handleDateSelect but with null as the third parameter
+    // This avoids updating the room selection when clicking calendar dates
+    handleDateSelect(date, isStart, null);
+  }
+};
 
     const getCapacityMessage = () => {
       if (isOverCapacity) {
@@ -507,17 +497,49 @@ export const PropertyDetails = ({
     );
   };
 
-  return (
-    <div className="space-y-8 bg-[#fbfdfb]">
-      {filteredAvailableRooms.length > 0 && (
-        <div>
-          {!showOnlySelected && !showOnlyUnselected && (
-            <h2 className="text-xl font-semibold text-[#668E73] mb-6">
-              {t('rooms.availableRooms')}
-            </h2>
-          )}
-          <div className="grid grid-cols-1 gap-20 w-[100%] mx-auto relative">
-            {filteredAvailableRooms.map((room) => (
+return (
+  <div className="space-y-8 bg-[#fbfdfb]">
+    {filteredRooms.length > 0 && (
+      <div>
+        {!showOnlySelected && !showOnlyUnselected && (
+          <h2 className="text-xl font-semibold text-[#668E73] mb-6">
+            {t("rooms.allRooms")}
+          </h2>
+        )}
+        <div className="grid grid-cols-1 gap-20 w-[100%] mx-auto relative">
+          {filteredRooms.map((room) => {
+            // Check availability here
+            const isRoomAvailableForDates = isRoomAvailable(
+              room.id,
+              startDate,
+              endDate,
+              availableDates,
+              hasSearched
+            );
+
+            // Check capacity
+            const totalGuests =
+              (parseInt(formData.adults) || 0) +
+              (parseInt(formData.children) || 0);
+            const canAccommodateGuests = totalGuests <= room.maxGuests;
+
+            const isAvailable = canAccommodateGuests && isRoomAvailableForDates;
+
+            // Set unavailable reason if needed
+            let unavailableReason = null;
+            if (!canAccommodateGuests) {
+              unavailableReason = "capacity";
+            } else if (!isRoomAvailableForDates) {
+              unavailableReason = "dates";
+            }
+
+            // Add the unavailable reason to the room object
+            const roomWithAvailability = {
+              ...room,
+              unavailableReason,
+            };
+
+            return (
               <div key={room.id} className="space-y-4">
                 {formData.apartmentId !== room.id && (
                   <div className="mb-4 text-left">
@@ -529,41 +551,22 @@ export const PropertyDetails = ({
                     </h3>
                   </div>
                 )}
-                <RoomCard 
-                  room={room} 
-                  isAvailable={isRoomAvailable(room.id, startDate, endDate, availableDates, hasSearched)} 
+                <RoomCard
+                  room={roomWithAvailability}
+                  isAvailable={isAvailable}
                 />
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      )}
+      </div>
+    )}
 
-      {!showOnlySelected && filteredUnavailableRooms.length > 0 && (
-        <div className="py-10 mt-0">
-          <div className="grid grid-cols-1 gap-20 w-[100%] mx-auto relative">
-            {filteredUnavailableRooms.map((room) => (
-              <div key={room.id} className="space-y-4">
-                <div className="mb-4 text-left">
-                  <h4 className="font-montserrat text-xl text-[#D3B574] md:text-xl lg:text-2xl mb-4">
-                    {t(room.type)}
-                  </h4>
-                  <h3 className="font-cormorant text-3xl text-gray-800 mb-2 md:text-2xl lg:text-[40px] font-light">
-                    {t(room.nameKey)}
-                  </h3>
-                </div>
-                <RoomCard room={room} isAvailable={false} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {loading && (
-        <div className="flex justify-center">
-          <div className="text-[#668E73]">{t('propertyDetails.loading')}</div>
-        </div>
-      )}
-    </div>
-  );
+    {loading && (
+      <div className="flex justify-center">
+        <div className="text-[#668E73]">{t("propertyDetails.loading")}</div>
+      </div>
+    )}
+  </div>
+);
 };
