@@ -1,6 +1,7 @@
-/* CustomCalendar.css - Complete styling for the calendar component */
+/* CustomCalendar.css - Complete styling for the unified calendar component */
 
-.custom-calendar {
+/* Unified calendar container */
+.unified-calendar {
   font-family: 'Montserrat', sans-serif;
   margin-bottom: 2rem;
   border: 1px solid #e2e8f0;
@@ -10,7 +11,8 @@
   overflow: hidden;
 }
 
-.calendar-header {
+/* Shared navigation controls */
+.calendar-navigation-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -19,27 +21,13 @@
   color: white;
 }
 
-.calendar-navigation {
-  display: flex;
-  flex-direction: column;
-}
-
-.calendar-year {
-  font-size: 0.875rem;
-  opacity: 0.9;
-}
-
-.calendar-month {
+.calendar-date-range {
   font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: 1px;
 }
 
-.calendar-controls {
-  display: flex;
-  gap: 0.5rem;
-}
-
+/* Calendar navigation buttons */
 .calendar-nav-btn {
   width: 32px;
   height: 32px;
@@ -59,10 +47,61 @@
   background-color: rgba(255, 255, 255, 0.4);
 }
 
-.calendar-body {
+/* Months container - responsive layout */
+.calendar-months-container {
+  display: flex;
+  flex-direction: column;
   padding: 1rem;
 }
 
+@media (min-width: 768px) {
+  .calendar-months-container {
+    flex-direction: row;
+    gap: 1.5rem;
+  }
+}
+
+/* Month containers */
+.calendar-month-half {
+  flex: 1;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .calendar-month-half {
+    margin-bottom: 0;
+  }
+}
+
+.calendar-month-full {
+  width: 100%;
+}
+
+/* Individual month styling */
+.custom-calendar-month {
+  width: 100%;
+}
+
+.calendar-header-month {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 0.5rem;
+}
+
+.calendar-month {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.calendar-year {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+/* Calendar days header (day names) */
 .calendar-days-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -77,18 +116,21 @@
   padding: 0.5rem 0;
 }
 
+/* Calendar days grid */
 .calendar-days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
 }
 
+/* Calendar day cells */
 .calendar-day {
   position: relative;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
 .calendar-day.empty {
@@ -179,6 +221,7 @@
   font-size: 0.875rem;
 }
 
+/* Shared legend at the bottom */
 .calendar-legend {
   display: flex;
   justify-content: center;
@@ -319,13 +362,6 @@ div.calendar-day.selected,
   display: none !important;
 }
 
-/* Add these at the end of your CustomCalendar.css file */
-
-/* Add transitions to calendar days for smoother state changes */
-.calendar-day {
-  transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
-}
-
 /* Apply transitions to all state changes */
 .calendar-day.selected,
 .calendar-day.in-range,
@@ -335,4 +371,21 @@ div.calendar-day.selected,
 .calendar-day.checkout-only,
 .calendar-day.checkin-only {
   transition: all 0.15s ease;
+}
+
+/* Add specific styling for the calendar-room component */
+.calendar-room {
+  margin-bottom: 2rem;
+}
+
+.calendar-room h3 {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Fix any potential spacing issues between the two calendar months */
+@media (min-width: 768px) {
+  .calendar-month-half + .calendar-month-half {
+    padding-left: 0.5rem;
+    border-left: 1px solid #e2e8f0;
+  }
 }
