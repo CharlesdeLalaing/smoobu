@@ -5,6 +5,7 @@ import { db } from "../../../firebase.js";
 import * as XLSX from "xlsx";
 import axios from "axios";
 import { processBookingData } from "../../utils/bookingProcessors.js";
+import { getCleanExtrasFromPriceElements, mergeAndSortExtras } from "../../Admin/BookingReport/utils/extrasUtils.js";
 
 export const useBookingsData = () => {
   const [reportData, setReportData] = useState([]);
@@ -234,37 +235,99 @@ export const useBookingsData = () => {
     }
   };
 
-  const handleExport = () => {
-    const wsData = [
-      [
-        "ID",
-        "Client",
-        "Création",
-        "Portail",
-        "Email",
-        "Téléphone",
-        "Adresse",
-        "Adulte",
-        "Enfant",
-        "Arrivée",
-        "Check-in",
-        "Départ",
-        "Nombre de nuits",
-        "Prix de base",
-        "Nom coupon",
-        "Valeur coupon",
-        "Frais de linge",
-        "Promotion long séjour",
-        "Commission",
-        "Liste des extras",
-        "Total des extras",
-        "Prix total",
-      ],
-      ...reportData.map((booking) => [
+const handleExport = () => {
+  const wsData = [
+    [
+      "ID",
+      "Client",
+      "Création",
+      "Portail",
+      "Logement",
+      "Email",
+      "Téléphone",
+      "Adresse",
+      "Adulte",
+      "Enfant",
+      "Arrivée",
+      "Check-in",
+      "Départ",
+      "Nombre de nuits",
+      "Prix de base",
+      "Nom coupon",
+      "Valeur coupon",
+      "Frais de linge",
+      "Promotion long séjour",
+      "Commission",
+      "Liste des extras",
+      "Total des extras",
+      "Prix total",
+      "Prix final sans coupon",
+    ],
+    ...reportData.map((booking) => {
+      // Process extras using the same logic as ExtrasDetailsSection
+      const portalName =
+        booking.portalName || booking.channelName || booking.portal;
+      const isBookingCom = portalName === "Booking.com";
+
+      // Process and organize extras
+      let displayExtras = [];
+
+      // If we have price elements, use those for a consistent display
+      if (booking.priceDetails?.priceElements?.length > 0) {
+        const priceElements = booking.priceDetails.priceElements;
+        displayExtras = getCleanExtrasFromPriceElements(
+          priceElements,
+          portalName
+        );
+
+        // For Booking.com, remove TVA and taxe de séjour from extras
+        if (isBookingCom) {
+          displayExtras = displayExtras.filter(
+            (extra) =>
+              !extra.name.includes("TVA") &&
+              !extra.name.toLowerCase().includes("taxe de séjour")
+          );
+        }
+      }
+      // Otherwise fall back to the extras array
+      else if (booking.extras?.length > 0) {
+        displayExtras = booking.extras;
+
+        // For Booking.com, filter out TVA from extras
+        if (isBookingCom) {
+          displayExtras = displayExtras.filter(
+            (extra) =>
+              !extra.name.includes("TVA") &&
+              !extra.name.toLowerCase().includes("taxe de séjour")
+          );
+        }
+      }
+
+      // Merge duplicate extras and sort them
+      const mergedAndSortedExtras = mergeAndSortExtras(displayExtras);
+
+      // Calculate total - IMPORTANT: This needs to match the UI calculation method
+      // The UI appears to just sum the base amounts, NOT multiply by quantity
+      const extrasTotal = mergedAndSortedExtras.reduce(
+        (sum, extra) => sum + parseFloat(extra.amount || 0),
+        0
+      );
+
+      // Format extras list for Excel to match UI display pattern
+      // For quantities > 1, we need to show (nx) after the name
+      const extrasList = mergedAndSortedExtras
+        .map((extra) => {
+          const quantity = parseInt(extra.quantity || 1, 10);
+          return quantity > 1 ? `${extra.name} (${quantity}x)` : extra.name;
+        })
+        .join(", ");
+
+      return [
         booking.id,
         booking.guest,
         new Date(booking.created).toLocaleDateString("fr-FR"),
         booking.portal,
+        booking.property || "",
         booking.email || "",
         booking.phone || "",
         booking.address || "",
@@ -280,54 +343,69 @@ export const useBookingsData = () => {
         booking.priceDetails?.linenFee || "",
         booking.priceDetails?.longStayDiscount || "",
         booking.commission || "",
-        booking.extras?.map((e) => `${e.name} (${e.quantity}x)`).join(", ") ||
-          "",
-        booking.extras?.reduce(
-          (sum, extra) => sum + parseFloat(extra.amount || 0),
-          0
-        ) || 0,
+        extrasList || "", // Using our processed extras list WITHOUT quantity in parentheses
+        extrasTotal || 0, // Using our calculated extras total
         booking.price,
-      ]),
-    ];
+        // Calculate price without coupon discount: final price + coupon amount
+        parseFloat(booking.price || 0) +
+          parseFloat(booking.priceDetails?.promoCode?.amount || 0),
+      ];
+    }),
+  ];
 
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-    const colWidths = [
-      { wch: 15 }, // ID de réservation
-      { wch: 25 }, // Client
-      { wch: 20 }, // Création de la réservation
-      { wch: 20 }, // Portail de réservation
-      { wch: 30 }, // Email du client
-      { wch: 20 }, // Téléphone du client
-      { wch: 35 }, // Adresse du client
-      { wch: 15 }, // Nombre d'adulte
-      { wch: 15 }, // Nombre d'enfant
-      { wch: 15 }, // Arrivée
-      { wch: 15 }, // Check-in
-      { wch: 15 }, // Départ
-      { wch: 15 }, // Nombre de nuits
-      { wch: 15 }, // Prix de base
-      { wch: 20 }, // Nom du coupon
-      { wch: 15 }, // Valeur du coupon
-      { wch: 15 }, // Frais de linge
-      { wch: 20 }, // Promotion de long séjour
-      { wch: 15 }, // Commission
-      { wch: 50 }, // Liste des extras
-      { wch: 15 }, // Total des extras
-      { wch: 15 }, // Prix total de la chambre
-    ];
+  const colWidths = [
+    { wch: 15 }, // ID de réservation
+    { wch: 25 }, // Client
+    { wch: 20 }, // Création de la réservation
+    { wch: 20 }, // Portail de réservation
+    { wch: 25 }, // Nom du logement
+    { wch: 30 }, // Email du client
+    { wch: 20 }, // Téléphone du client
+    { wch: 35 }, // Adresse du client
+    { wch: 15 }, // Nombre d'adulte
+    { wch: 15 }, // Nombre d'enfant
+    { wch: 15 }, // Arrivée
+    { wch: 15 }, // Check-in
+    { wch: 15 }, // Départ
+    { wch: 15 }, // Nombre de nuits
+    { wch: 15 }, // Prix de base
+    { wch: 20 }, // Nom du coupon
+    { wch: 15 }, // Valeur du coupon
+    { wch: 15 }, // Frais de linge
+    { wch: 20 }, // Promotion de long séjour
+    { wch: 15 }, // Commission
+    { wch: 50 }, // Liste des extras
+    { wch: 15 }, // Total des extras
+    { wch: 15 }, // Prix total de la chambre
+    { wch: 18 }, // Prix final sans coupon
+  ];
 
-    ws["!cols"] = colWidths;
+  ws["!cols"] = colWidths;
 
-    XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
+  // Apply currency formatting to numeric columns
+  const priceColumns = [14, 16, 17, 18, 19, 21, 22, 23]; // Columns with price values (0-based index)
+  priceColumns.forEach((col) => {
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+    for (let row = 1; row <= range.e.r; row++) {
+      // Start from row 1 (skip header)
+      const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+      if (ws[cellRef] && typeof ws[cellRef].v === "number") {
+        ws[cellRef].z = "0.00 €"; // Apply Euro currency format
+      }
+    }
+  });
 
-    const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
-    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
-    const fileName = `rapport-reservations_${startDate}_${endDate}.xlsx`;
+  XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
 
-    XLSX.writeFile(wb, fileName);
-  };
+  const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
+  const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
+  const fileName = `rapport-reservations_${startDate}_${endDate}.xlsx`;
+
+  XLSX.writeFile(wb, fileName);
+};
 
   return {
     reportData,

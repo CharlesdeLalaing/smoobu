@@ -30,6 +30,7 @@ const CouponManagement = () => {
     validityEndDate: "",
     status: "active",
     currency: "EUR",
+    isUnlimited : false,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -140,89 +141,91 @@ const CouponManagement = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      // Create safe dates, ensuring valid Date objects before creating Timestamps
-      const safeDate = (dateStr) => {
-        if (!dateStr) return null;
-        const date = new Date(dateStr);
-        return isNaN(date.getTime()) ? null : Timestamp.fromDate(date);
-      };
-
-      const data = {
-        ...formData,
-        code: formData.code.toUpperCase(),
-        dateCreated: editingCoupon
-          ? editingCoupon.dateCreated instanceof Date
-            ? Timestamp.fromDate(editingCoupon.dateCreated)
-            : editingCoupon.dateCreated
-          : Timestamp.now(),
-        expiryDate: safeDate(formData.expiryDate),
-        validityStartDate: formData.validityStartDate
-          ? safeDate(formData.validityStartDate)
-          : null,
-        validityEndDate: formData.validityEndDate
-          ? safeDate(formData.validityEndDate)
-          : null,
-        usedCount: editingCoupon ? formData.usedCount : 0,
-        lastUsedDate:
-          editingCoupon && editingCoupon.lastUsedDate
-            ? editingCoupon.lastUsedDate instanceof Date
-              ? Timestamp.fromDate(editingCoupon.lastUsedDate)
-              : editingCoupon.lastUsedDate
-            : null,
-        usedBy: editingCoupon ? formData.usedBy || [] : [],
-        currency: "EUR",
-        type: formData.type,
-        status: formData.status || "active",
-      };
-
-      // Handle discount values based on type
-      if (formData.type === "percentage") {
-        data.percentageValue = Number(formData.discount);
-        data.discount = Number(formData.discount); // Keep for backwards compatibility
-        data.amount = null; // Clear amount field for percentage discounts
-      } else {
-        data.amount = Number(formData.discount);
-        data.discount = Number(formData.discount); // Keep for backwards compatibility
-        data.percentageValue = null; // Clear percentage field for fixed discounts
-      }
-
-      if (editingCoupon) {
-        await updateDoc(doc(db, "coupons", editingCoupon.id), data);
-      } else {
-        await addDoc(collection(db, "coupons"), data);
-      }
-
-      await fetchCoupons();
-      handleCloseModal();
-    } catch (error) {
-      console.error("Error saving coupon:", error);
-      alert(`Erreur lors de l'enregistrement : ${error.message}`);
-    }
-  };
-
-  const handleEdit = (coupon) => {
-    if (coupon.isGiftVoucher) return; // Prevent editing gift vouchers
-
-    // Create a new formData object with properly formatted dates
-    const updatedFormData = {
-      ...coupon,
-      expiryDate: formatDateForInput(coupon.expiryDate),
-      validityStartDate: formatDateForInput(coupon.validityStartDate),
-      validityEndDate: formatDateForInput(coupon.validityEndDate),
-      // Make sure discount is correctly set based on type
-      discount:
-        coupon.type === "percentage"
-          ? coupon.percentageValue || coupon.discount
-          : coupon.amount || coupon.discount,
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    // Create safe dates, ensuring valid Date objects before creating Timestamps
+    const safeDate = (dateStr) => {
+      if (!dateStr) return null;
+      const date = new Date(dateStr);
+      return isNaN(date.getTime()) ? null : Timestamp.fromDate(date);
     };
 
-    setEditingCoupon(coupon);
-    setFormData(updatedFormData);
-    setIsModalOpen(true);
+    const data = {
+      ...formData,
+      code: formData.code.toUpperCase(),
+      dateCreated: editingCoupon
+        ? editingCoupon.dateCreated instanceof Date
+          ? Timestamp.fromDate(editingCoupon.dateCreated)
+          : editingCoupon.dateCreated
+        : Timestamp.now(),
+      expiryDate: safeDate(formData.expiryDate),
+      validityStartDate: formData.validityStartDate
+        ? safeDate(formData.validityStartDate)
+        : null,
+      validityEndDate: formData.validityEndDate
+        ? safeDate(formData.validityEndDate)
+        : null,
+      usedCount: editingCoupon ? formData.usedCount : 0,
+      lastUsedDate:
+        editingCoupon && editingCoupon.lastUsedDate
+          ? editingCoupon.lastUsedDate instanceof Date
+            ? Timestamp.fromDate(editingCoupon.lastUsedDate)
+            : editingCoupon.lastUsedDate
+          : null,
+      usedBy: editingCoupon ? formData.usedBy || [] : [],
+      currency: "EUR",
+      type: formData.type,
+      status: formData.status || "active",
+      isUnlimited: formData.isUnlimited, // Include the isUnlimited field
+    };
+
+    // Handle discount values based on type
+    if (formData.type === "percentage") {
+      data.percentageValue = Number(formData.discount);
+      data.discount = Number(formData.discount); // Keep for backwards compatibility
+      data.amount = null; // Clear amount field for percentage discounts
+    } else {
+      data.amount = Number(formData.discount);
+      data.discount = Number(formData.discount); // Keep for backwards compatibility
+      data.percentageValue = null; // Clear percentage field for fixed discounts
+    }
+
+    if (editingCoupon) {
+      await updateDoc(doc(db, "coupons", editingCoupon.id), data);
+    } else {
+      await addDoc(collection(db, "coupons"), data);
+    }
+
+    await fetchCoupons();
+    handleCloseModal();
+  } catch (error) {
+    console.error("Error saving coupon:", error);
+    alert(`Erreur lors de l'enregistrement : ${error.message}`);
+  }
+};
+
+const handleEdit = (coupon) => {
+  if (coupon.isGiftVoucher) return; // Prevent editing gift vouchers
+
+  // Create a new formData object with properly formatted dates
+  const updatedFormData = {
+    ...coupon,
+    expiryDate: formatDateForInput(coupon.expiryDate),
+    validityStartDate: formatDateForInput(coupon.validityStartDate),
+    validityEndDate: formatDateForInput(coupon.validityEndDate),
+    // Make sure discount is correctly set based on type
+    discount:
+      coupon.type === "percentage"
+        ? coupon.percentageValue || coupon.discount
+        : coupon.amount || coupon.discount,
+    isUnlimited: coupon.isUnlimited || false, // Set isUnlimited from coupon data with default
   };
+
+  setEditingCoupon(coupon);
+  setFormData(updatedFormData);
+  setIsModalOpen(true);
+};
 
   const handleDelete = async (id) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer ce coupon ?")) {
@@ -252,6 +255,7 @@ const CouponManagement = () => {
       usedCount: 0,
       lastUsedDate: null,
       usedBy: [],
+      isUnlimited: false,
     });
   };
 
@@ -406,15 +410,22 @@ const CouponManagement = () => {
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        coupon.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {coupon.status === "active" ? "Actif" : "Utilisé"}
-                    </span>
+                    <div className="flex flex-col space-y-1">
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          coupon.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {coupon.status === "active" ? "Actif" : "Utilisé"}
+                      </span>
+                      {coupon.isUnlimited && (
+                        <span className="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-full">
+                          Illimité
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex gap-2">
@@ -568,6 +579,28 @@ const CouponManagement = () => {
                   <option value="active">Actif</option>
                   <option value="inactive">Inactif</option>
                 </select>
+              </div>
+              <div className="flex items-center gap-2 mt-4">
+                <input
+                  type="checkbox"
+                  id="isUnlimited"
+                  checked={formData.isUnlimited}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isUnlimited: e.target.checked })
+                  }
+                  className="w-4 h-4 text-[#678D73] rounded focus:ring-[#678D73]"
+                />
+                <label htmlFor="isUnlimited" className="text-sm font-medium">
+                  Coupon à usage illimité
+                </label>
+                <div className="ml-2">
+                  <span
+                    className="inline-block p-1 text-xs text-gray-500 bg-gray-100 rounded-full cursor-help"
+                    title="Si coché, ce coupon pourra être utilisé plusieurs fois, comme le code 'POTES'"
+                  >
+                    ?
+                  </span>
+                </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">
                 <button
