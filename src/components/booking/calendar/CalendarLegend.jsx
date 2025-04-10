@@ -14,8 +14,12 @@ export const CalendarLegend = ({ t }) => {
         <span>{t("calendar.unavailable")}</span>
       </div>
       <div className="legend-item">
+        <div className="legend-color partially-available-checkIn"></div>
+        <span>{t("calendar.partiallyAvailableCheckIn")}</span>
+      </div>
+      <div className="legend-item">
         <div className="legend-color partially-available"></div>
-        <span>{t("calendar.partiallyAvailable")}</span>
+        <span>{t("calendar.partiallyAvailableCheckOut")}</span>
       </div>
     </div>
   );

@@ -22,6 +22,15 @@
           "giftCard": "Cadeaubon"
         }
       },
+          "calendar": {
+      "availability": "Beschikbaarheid",
+      "available": "Beschikbaar",
+      "unavailable": "Niet beschikbaar",
+      "partiallyAvailable": "Alleen uitchecken",
+      "partiallyAvailableCheckIn": "Alleen inchecken",
+      "partiallyAvailableCheckOut": "Alleen uitchecken",
+      "instructions": "Selecteer uw aankomst- en vertrekdatum"
+    },
       "search": {
         "title": "Selecteer uw data",
         "arrival": "Aankomst",

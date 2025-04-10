@@ -258,6 +258,10 @@
   background: linear-gradient(135deg, #e2f0d9 50%, #ffcccc 50%);
 }
 
+.legend-color.partially-available-checkIn {
+  background: linear-gradient(315deg, #e2f0d9 50%, #ffcccc 50%);
+}
+
 /* Add a hover effect to make selected dates more visible */
 .calendar-day:hover .calendar-day-number {
   transform: scale(1.1);
@@ -388,4 +392,41 @@ div.calendar-day.selected,
     padding-left: 0.5rem;
     border-left: 1px solid #e2e8f0;
   }
+}
+
+.calendar-date-range-centered {
+  text-align: center;
+  font-weight: bold;
+  margin: 10px 0;
+  font-size: 1.5rem;
+  padding: 5px;
+}
+
+/* Update the navigation controls to remove content */
+.calendar-navigation-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #668E73; /* Keep the green background */
+  padding: 10px;
+  border-radius: 4px 4px 0 0;
+}
+
+/* Keep the buttons as they were */
+.calendar-nav-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+/* Ensure the middle section still takes space but has no content */
+.calendar-date-range {
+  flex: 1;
 }

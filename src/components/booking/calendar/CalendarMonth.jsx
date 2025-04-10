@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { getMonthName } from "../../utils/dateUtils";
+import i18next from "i18next";
 import { CalendarDay } from "./CalendarDay";
 import { AvailabilityService } from "../services/AvailabilityService";
 
@@ -15,14 +15,26 @@ export const CalendarMonth = ({
   onDateMouseEnter,
   onDateMouseLeave,
 }) => {
-  const daysOfWeek = ["LU", "MA", "ME", "JE", "VE", "SA", "DI"];
+  // Get current language from i18next
+  const currentLocale = i18next.language || "fr";
+
+  // Days of week for different languages
+  const daysOfWeekByLocale = {
+    fr: ["LU", "MA", "ME", "JE", "VE", "SA", "DI"],
+    en: ["MO", "TU", "WE", "TH", "FR", "SA", "SU"],
+    nl: ["MA", "DI", "WO", "DO", "VR", "ZA", "ZO"],
+  };
+
+  // Use the appropriate days based on the current locale (with fallback to French)
+  const daysOfWeek = daysOfWeekByLocale[currentLocale] || daysOfWeekByLocale.fr;
+
+  // Get localized month name
+  const getLocalizedMonthName = (date) => {
+    return date.toLocaleString(currentLocale, { month: "long" }).toUpperCase();
+  };
 
   return (
     <div className="custom-calendar-month">
-      <div className="calendar-header-month">
-        <span className="calendar-month">{getMonthName(monthDate)}</span>
-        <span className="calendar-year">{monthDate.getFullYear()}</span>
-      </div>
 
       <div className="calendar-days-header">
         {daysOfWeek.map((day, index) => (
@@ -31,7 +43,6 @@ export const CalendarMonth = ({
           </div>
         ))}
       </div>
-
       <div className="calendar-days-grid">
         {calendarDays.map((dayObj, index) => (
           <CalendarDay

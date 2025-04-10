@@ -22,6 +22,15 @@
           "giftCard": "Bon cadeau"
         }
       },
+         "calendar": {
+      "availability": "Disponibilité",
+      "available": "Disponible",
+      "unavailable": "Indisponible",
+      "partiallyAvailable": "Départ uniquement",
+      "partiallyAvailableCheckIn": "Check-in uniquement",
+      "partiallyAvailableCheckOut": "Check-out uniquement",
+      "instructions": "Sélectionnez vos dates d'arrivée et de départ"
+    },
       "search": {
         "title": "Sélectionnez vos dates",
         "arrival": "Arrivée",

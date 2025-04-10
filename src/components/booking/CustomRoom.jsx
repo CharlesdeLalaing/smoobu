@@ -9,6 +9,7 @@ import { generateCalendarMonth } from "../utils/dateUtils";
 import { CalendarNavigation } from "./calendar/CalendarNavigation";
 import { CalendarMonth } from "./calendar/CalendarMonth";
 import { CalendarLegend } from "./calendar/CalendarLegend";
+import i18next from "i18next";
 import "./CustomCalendar.css";
 
 export const CalendarRoom = memo(
@@ -96,8 +97,6 @@ export const CalendarRoom = memo(
 
     return (
       <div className="calendar-room">
-
-
         {/* Unified calendar container */}
         <div className="unified-calendar">
           {/* Shared navigation controls */}
@@ -106,6 +105,7 @@ export const CalendarRoom = memo(
             nextMonth={nextMonth}
             prevMonthPair={prevMonthPair}
             nextMonthPair={nextMonthPair}
+            showTwoCalendars={showTwoCalendars}
           />
 
           {/* Calendar months container */}
@@ -142,6 +142,7 @@ export const CalendarRoom = memo(
                   onDateClick={handleDateClick}
                   onDateMouseEnter={handleDateMouseEnter}
                   onDateMouseLeave={handleDateMouseLeave}
+                  locale={i18next.language}
                 />
               </div>
             )}
@@ -149,10 +150,6 @@ export const CalendarRoom = memo(
 
           {/* Shared legend for both calendars */}
           <CalendarLegend t={t} />
-        </div>
-
-        <div className="mt-4 text-sm text-gray-600">
-          <p>{t("calendar.instructions")}</p>
         </div>
       </div>
     );
