@@ -251,7 +251,7 @@ export const roomsData = {
     maxGuests: 8,
     features: [
       { icon: people, title: "rooms.features.maxGuests", value: 8 },
-      { icon: bed, title: "rooms.features.bedDoubleKing" },
+      { icon: bedd, title: "rooms.features.bedDoubleKing" },
       { icon: dog, title: "rooms.features.pets" },
       { icon: shower, title: "rooms.features.twoBathrooms" },
       { icon: spoon, title: "rooms.features.kitchen" },
