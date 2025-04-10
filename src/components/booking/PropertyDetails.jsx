@@ -1,14 +1,13 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import Slider from "react-slick";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 import { roomsData } from "../hooks/roomsData";
 import { isRoomAvailable } from "../hooks/roomUtils";
 import { PriceDetails } from "./PriceDetails";
 import { CalendarRoom } from "./CustomRoom";
 
-
-import Squirell from '../../assets/GlobalImg/squirrel.webp';
-import Fox from '../../assets/GlobalImg/fox.webp';
+import Squirell from "../../assets/GlobalImg/squirrel.webp";
+import Fox from "../../assets/GlobalImg/fox.webp";
 
 import Calendar from "../../assets/icons8-calendar-50.png";
 import Group from "../../assets/icons8-group-48.png";
@@ -32,73 +31,78 @@ export const PropertyDetails = ({
   hasSearched,
   handleDateSelect,
   handleCalendarDateSelect,
+  calendarViewMonth, // Added prop for parent's calendar view state
+  onCalendarViewChange, // Added prop for parent's calendar view state handler
 }) => {
   const { t } = useTranslation();
-  const totalGuests = (parseInt(formData.adults) || 0) + (parseInt(formData.children) || 0);
-
+  const totalGuests =
+    (parseInt(formData.adults) || 0) + (parseInt(formData.children) || 0);
 
   const scrollTo = () => {
     setTimeout(() => {
-      const element = document.getElementById('main-container');
+      const element = document.getElementById("main-container");
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 100);
   };
 
+  const sortRooms = (rooms) => {
+    const customOrder = [2565753, 1946282, 1644643, 1946279, 1946276, 1946270];
 
+    return [...rooms].sort((a, b) => {
+      if (a.id === formData.apartmentId) return -1;
+      if (b.id === formData.apartmentId) return 1;
 
+      const indexA = customOrder.indexOf(a.id);
+      const indexB = customOrder.indexOf(b.id);
 
+      return indexA - indexB;
+    });
+  };
 
+  // Use a single consistent array of rooms instead of splitting by availability
+  const allRooms = Object.values(roomsData);
+  const sortedRooms = sortRooms(allRooms);
 
-const sortRooms = (rooms) => {
-  const customOrder = [2565753, 1946282, 1644643, 1946279, 1946276, 1946270];
+  // Filter rooms based on selection criteria, not availability
+  const filteredRooms = sortedRooms.filter((room) => {
+    if (showOnlySelected && formData.apartmentId) {
+      return room.id === formData.apartmentId;
+    }
 
-  return [...rooms].sort((a, b) => {
-    if (a.id === formData.apartmentId) return -1;
-    if (b.id === formData.apartmentId) return 1;
+    if (showOnlyUnselected) {
+      return room.id !== formData.apartmentId;
+    }
 
-    const indexA = customOrder.indexOf(a.id);
-    const indexB = customOrder.indexOf(b.id);
-
-    return indexA - indexB;
+    return true;
   });
-};
-
-// Use a single consistent array of rooms instead of splitting by availability
-const allRooms = Object.values(roomsData);
-const sortedRooms = sortRooms(allRooms);
-
-// Filter rooms based on selection criteria, not availability
-const filteredRooms = sortedRooms.filter((room) => {
-  if (showOnlySelected && formData.apartmentId) {
-    return room.id === formData.apartmentId;
-  }
-
-  if (showOnlyUnselected) {
-    return room.id !== formData.apartmentId;
-  }
-
-  return true;
-});
 
   const groupedRooms = Object.values(roomsData).reduce(
     (acc, room) => {
       // First check if room can accommodate the group size
       const canAccommodateGuests = totalGuests <= room.maxGuests;
-      
+
       // Then check availability
       if (!canAccommodateGuests) {
         acc.unavailable.push({
           ...room,
-          unavailableReason: 'capacity'
+          unavailableReason: "capacity",
         });
-      } else if (isRoomAvailable(room.id, startDate, endDate, availableDates, hasSearched)) {
+      } else if (
+        isRoomAvailable(
+          room.id,
+          startDate,
+          endDate,
+          availableDates,
+          hasSearched
+        )
+      ) {
         acc.available.push(room);
       } else {
         acc.unavailable.push({
           ...room,
-          unavailableReason: 'dates'
+          unavailableReason: "dates",
         });
       }
       return acc;
@@ -111,20 +115,26 @@ const filteredRooms = sortedRooms.filter((room) => {
 
   const filteredAvailableRooms = (() => {
     if (showOnlySelected && formData.apartmentId) {
-      const selectedRoom = [...groupedRooms.available, ...groupedRooms.unavailable]
-        .find(room => room.id === formData.apartmentId);
+      const selectedRoom = [
+        ...groupedRooms.available,
+        ...groupedRooms.unavailable,
+      ].find((room) => room.id === formData.apartmentId);
       return selectedRoom ? [selectedRoom] : [];
     }
 
     if (showOnlyUnselected) {
-      return groupedRooms.available.filter(room => room.id !== formData.apartmentId);
+      return groupedRooms.available.filter(
+        (room) => room.id !== formData.apartmentId
+      );
     }
 
-    return groupedRooms.available.filter(room => room.id !== formData.apartmentId);
+    return groupedRooms.available.filter(
+      (room) => room.id !== formData.apartmentId
+    );
   })();
 
   const filteredUnavailableRooms = groupedRooms.unavailable.filter(
-    room => room.id !== formData.apartmentId
+    (room) => room.id !== formData.apartmentId
   );
 
   const formatDate = (dateString) => {
@@ -141,12 +151,44 @@ const RoomCard = ({ room, isAvailable }) => {
   const roomPriceDetails = priceDetails && priceDetails[room.id];
   const isOverCapacity = totalGuests > room.maxGuests;
 
+  // SOLUTION: Use localStorage to remember calendar view for each room
+  const getRoomCalendarKey = (roomId) => `room-calendar-view-${roomId}`;
+
+  // Initialize with saved view or default to current date
+  const [roomCalendarViewMonth, setRoomCalendarViewMonth] = useState(() => {
+    try {
+      const savedView = localStorage.getItem(getRoomCalendarKey(room.id));
+      return savedView ? new Date(savedView) : new Date();
+    } catch (e) {
+      console.error("Error retrieving calendar view:", e);
+      return new Date();
+    }
+  });
+
+  // Save the view whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        getRoomCalendarKey(room.id),
+        roomCalendarViewMonth.toISOString()
+      );
+    } catch (e) {
+      console.error("Error saving calendar view:", e);
+    }
+  }, [roomCalendarViewMonth, room.id]);
+
+  // Handler for calendar view changes
+  const handleRoomCalendarViewChange = useCallback((newViewMonth) => {
+    setRoomCalendarViewMonth(newViewMonth);
+  }, []);
+
   // Use useCallback to prevent recreation of this function on every render
   const handleCalendarDateSelect = useCallback(
     (date, isStart) => {
       if (handleDateSelect) {
-        // Pass null as third parameter to avoid changing room selection
-        handleDateSelect(date, isStart, null);
+        // Pass the date and isStart flag but NOT the view month
+        // This prevents interference with the parent's view state
+        handleDateSelect(date, isStart);
       }
     },
     [handleDateSelect]
@@ -453,6 +495,7 @@ const RoomCard = ({ room, isAvailable }) => {
           </div>
 
           <div className="w-full xl:w-3/5">
+            {/* Update CalendarRoom with view state props */}
             <CalendarRoom
               roomId={room.id}
               availableDates={availableDates}
@@ -460,6 +503,8 @@ const RoomCard = ({ room, isAvailable }) => {
               endDate={endDate}
               onDateSelect={handleCalendarDateSelect}
               hasSearched={hasSearched}
+              controlledViewMonth={roomCalendarViewMonth}
+              onViewMonthChange={handleRoomCalendarViewChange}
             />
             <p className="my-4 text-gray-600 font-cormorant">
               {t(room.description)}
@@ -497,76 +542,77 @@ const RoomCard = ({ room, isAvailable }) => {
   );
 };
 
-return (
-  <div className="space-y-8 bg-[#fbfdfb]">
-    {filteredRooms.length > 0 && (
-      <div>
-        {!showOnlySelected && !showOnlyUnselected && (
-          <h2 className="text-xl font-semibold text-[#668E73] mb-6">
-            {t("rooms.allRooms")}
-          </h2>
-        )}
-        <div className="grid grid-cols-1 gap-20 w-[100%] mx-auto relative">
-          {filteredRooms.map((room) => {
-            // Check availability here
-            const isRoomAvailableForDates = isRoomAvailable(
-              room.id,
-              startDate,
-              endDate,
-              availableDates,
-              hasSearched
-            );
+  return (
+    <div className="space-y-8 bg-[#fbfdfb]">
+      {filteredRooms.length > 0 && (
+        <div>
+          {!showOnlySelected && !showOnlyUnselected && (
+            <h2 className="text-xl font-semibold text-[#668E73] mb-6">
+              {t("rooms.allRooms")}
+            </h2>
+          )}
+          <div className="grid grid-cols-1 gap-20 w-[100%] mx-auto relative">
+            {filteredRooms.map((room) => {
+              // Check availability here
+              const isRoomAvailableForDates = isRoomAvailable(
+                room.id,
+                startDate,
+                endDate,
+                availableDates,
+                hasSearched
+              );
 
-            // Check capacity
-            const totalGuests =
-              (parseInt(formData.adults) || 0) +
-              (parseInt(formData.children) || 0);
-            const canAccommodateGuests = totalGuests <= room.maxGuests;
+              // Check capacity
+              const totalGuests =
+                (parseInt(formData.adults) || 0) +
+                (parseInt(formData.children) || 0);
+              const canAccommodateGuests = totalGuests <= room.maxGuests;
 
-            const isAvailable = canAccommodateGuests && isRoomAvailableForDates;
+              const isAvailable =
+                canAccommodateGuests && isRoomAvailableForDates;
 
-            // Set unavailable reason if needed
-            let unavailableReason = null;
-            if (!canAccommodateGuests) {
-              unavailableReason = "capacity";
-            } else if (!isRoomAvailableForDates) {
-              unavailableReason = "dates";
-            }
+              // Set unavailable reason if needed
+              let unavailableReason = null;
+              if (!canAccommodateGuests) {
+                unavailableReason = "capacity";
+              } else if (!isRoomAvailableForDates) {
+                unavailableReason = "dates";
+              }
 
-            // Add the unavailable reason to the room object
-            const roomWithAvailability = {
-              ...room,
-              unavailableReason,
-            };
+              // Add the unavailable reason to the room object
+              const roomWithAvailability = {
+                ...room,
+                unavailableReason,
+              };
 
-            return (
-              <div key={room.id} className="space-y-4">
-                {formData.apartmentId !== room.id && (
-                  <div className="mb-4 text-left">
-                    <h4 className="font-montserrat text-xl md:text-1xl lg:text-2xl mb-4 text-[#D3B574]">
-                      {t(room.type)}
-                    </h4>
-                    <h3 className="font-cormorant text-3xl text-gray-800 mb-2 md:text-2xl lg:text-[40px] font-light">
-                      {t(room.nameKey)}
-                    </h3>
-                  </div>
-                )}
-                <RoomCard
-                  room={roomWithAvailability}
-                  isAvailable={isAvailable}
-                />
-              </div>
-            );
-          })}
+              return (
+                <div key={room.id} className="space-y-4">
+                  {formData.apartmentId !== room.id && (
+                    <div className="mb-4 text-left">
+                      <h4 className="font-montserrat text-xl md:text-1xl lg:text-2xl mb-4 text-[#D3B574]">
+                        {t(room.type)}
+                      </h4>
+                      <h3 className="font-cormorant text-3xl text-gray-800 mb-2 md:text-2xl lg:text-[40px] font-light">
+                        {t(room.nameKey)}
+                      </h3>
+                    </div>
+                  )}
+                  <RoomCard
+                    room={roomWithAvailability}
+                    isAvailable={isAvailable}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    )}
+      )}
 
-    {loading && (
-      <div className="flex justify-center">
-        <div className="text-[#668E73]">{t("propertyDetails.loading")}</div>
-      </div>
-    )}
-  </div>
-);
+      {loading && (
+        <div className="flex justify-center">
+          <div className="text-[#668E73]">{t("propertyDetails.loading")}</div>
+        </div>
+      )}
+    </div>
+  );
 };

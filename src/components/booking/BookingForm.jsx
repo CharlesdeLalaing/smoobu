@@ -1,5 +1,5 @@
-import React, {useEffect, useCallback} from "react";
-import { useTranslation } from 'react-i18next';
+import React, { useEffect, useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { HeaderSection } from "./HeaderSection";
 import { SearchSection, RoomNavigation } from "./SearchSection";
 import { PropertyDetails } from "./PropertyDetails";
@@ -15,51 +15,13 @@ import { ErrorMessage } from "./ErrorMessage";
 import { LoadingSpinner } from "./LoadingSpinner";
 import StripeWrapper from "../StripeWrapper";
 import { useNavigate } from "react-router-dom";
-import { isRoomAvailable } from "../hooks/roomUtils";  // Add this line
+import { isRoomAvailable } from "../hooks/roomUtils"; // Add this line
 import { roomsData } from "../hooks/roomsData";
 
 const BookingForm = () => {
   const navigate = useNavigate();
-  // const {
-  //   formData,
-  //   currentStep,
-  //   error,
-  //   loading,
-  //   isAvailable,
-  //   showPriceDetails,
-  //   successMessage,
-  //   priceDetails,
-  //   showPayment,
-  //   clientSecret,
-  //   selectedExtras,
-  //   dateError,
-  //   startDate,
-  //   endDate,
-  //   appliedCoupon,
-  //   selectedCategory,
-  //   setSelectedCategory,
-  //   handleChange,
-  //   handleExtraChange,
-  //   handleCheckAvailability,
-  //   handleSubmit,
-  //   nextStep,
-  //   prevStep,
-  //   isStepValid,
-  //   handlePaymentSuccess,
-  //   setError,
-  //   setStartDate,
-  //   setIsAvailable,
-  //   setEndDate,
-  //   setDateError,
-  //   setCurrentStep,
-  //   setPriceDetails,
-  //   setShowPriceDetails,
-  //   setShowPayment,
-  //   setFormData,
-  //   handleApplyCoupon,
-  // } = useBookingForm();
-
-  const { t } = useTranslation();
+  // Added calendar view month state
+  const [calendarViewMonth, setCalendarViewMonth] = useState(new Date());
 
   const {
     formData,
@@ -100,14 +62,7 @@ const BookingForm = () => {
     handleApplyCoupon,
   } = useBookingForm();
 
-  // const {
-  //   availableDates,
-  //   loading: availabilityLoading,
-  //   error: availabilityError,
-  //   hasSearched,
-  //   checkAvailability,
-  //   resetAvailability,
-  // } = useAvailabilityCheck(formData);
+  const { t } = useTranslation();
 
   const {
     availableDates,
@@ -118,58 +73,32 @@ const BookingForm = () => {
     resetAvailability,
   } = useAvailabilityCheck(formData);
 
-  // const handleRoomSelect = async (roomId) => {
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     apartmentId: roomId,
-  //   }));
-
-  //   if (startDate && endDate) {
-  //     try {
-  //       if (priceDetails && priceDetails[roomId]) {
-  //         const roomPriceDetails = priceDetails[roomId];
-  //         setFormData((prev) => ({
-  //           ...prev,
-  //           price: roomPriceDetails.finalPrice,
-  //         }));
-  //         setShowPriceDetails(true);
-  //       } else {
-  //         await handleAvailabilityCheck();
-  //       }
-  //     } catch (err) {
-  //       console.error("Error updating prices:", err);
-  //       setError("Failed to update prices for the selected room");
-  //     }
-  //   }
-
-  //   if (!formData.apartmentId) {
-  //     setCurrentStep(1);
-  //   }
-  // };
+  // Added handler for calendar view changes
+  const handleCalendarViewChange = useCallback((newViewMonth) => {
+    setCalendarViewMonth(newViewMonth);
+  }, []);
 
   // In BookingForm.jsx, add this useEffect
   useEffect(() => {
     // Load initial availability data when component mounts
     const loadInitialAvailability = async () => {
       try {
-        // Create date range for current month plus next month
+        // Create date range for current month plus next 12 months
         const today = new Date();
         const startOfRange = new Date(today.getFullYear(), today.getMonth(), 1);
         const endOfRange = new Date(
           today.getFullYear(),
-          today.getMonth() + 2,
+          today.getMonth() + 12,
           0
         );
 
         // Use the existing checkAvailability function
         await checkAvailability(startOfRange, endOfRange);
-
         // This should populate availableDates through the existing state update
       } catch (error) {
         console.error("Error loading initial availability data:", error);
       }
     };
-
     loadInitialAvailability();
   }, []);
 
@@ -287,13 +216,18 @@ const BookingForm = () => {
     }
   };
 
-  // In BookingForm.jsx
+  // Modified handleDateSelect to preserve calendar view month
   const handleDateSelect = useCallback(
-    async (date, isStart, selectedRoomId) => {
+    async (date, isStart, currentViewMonth) => {
+      // Preserve the calendar view month if it's provided
+      if (currentViewMonth) {
+        setCalendarViewMonth(currentViewMonth);
+      }
+
       console.log("handleDateSelect called with:", {
         date,
         isStart,
-        selectedRoomId,
+        currentViewMonth, // Log the view month
       });
       console.log("Current availableDates:", availableDates);
 
@@ -302,19 +236,19 @@ const BookingForm = () => {
 
       // IMPORTANT: Only update the selected room if selectedRoomId is provided
       // and the user explicitly clicked the "Select this room" button
-      if (selectedRoomId) {
+      if (currentViewMonth && typeof currentViewMonth === "string") {
         // Update apartmentId
         handleChange({
           target: {
             name: "apartmentId",
-            value: selectedRoomId,
+            value: currentViewMonth,
           },
         });
 
         // Update form data
         setFormData((prev) => ({
           ...prev,
-          apartmentId: selectedRoomId,
+          apartmentId: currentViewMonth,
         }));
       }
 
@@ -387,13 +321,16 @@ const BookingForm = () => {
         if (updatedStartDate && updatedEndDate) {
           console.log(
             "Both dates set, checking availability for room:",
-            selectedRoomId || formData.apartmentId
+            currentViewMonth || formData.apartmentId
           );
 
           try {
             // Call availability check but preserve existing data
             // Pass the current room ID (either from parameter or form data)
-            const roomIdToCheck = selectedRoomId || formData.apartmentId;
+            const roomIdToCheck =
+              currentViewMonth && typeof currentViewMonth === "string"
+                ? currentViewMonth
+                : formData.apartmentId;
             const preserveExistingData = true;
 
             const newAvailabilityData = await checkAvailability(
@@ -463,13 +400,11 @@ const BookingForm = () => {
       setIsAvailable,
       setDateError,
       setError,
+      setCalendarViewMonth, // Add this new dependency
     ]
   );
 
-  // Make sure to include this in your propertyDetailsProps object:
-
   // Add this function to check if the currently selected room is available
-
   const isSelectedRoomAvailable = () => {
     // If no room is selected, it's not available
     if (!formData.apartmentId) return false;
@@ -503,6 +438,10 @@ const BookingForm = () => {
     setStartDate,
     setEndDate,
     setFormData,
+    availableDates, // Add this prop
+    hasSearched, // Add this prop
+    calendarViewMonth, // Add this prop
+    onCalendarViewChange: handleCalendarViewChange, // Add this prop
   };
 
   const propertyDetailsProps = {
@@ -518,6 +457,8 @@ const BookingForm = () => {
     loading: availabilityLoading,
     hasSearched,
     handleDateSelect,
+    calendarViewMonth, // Add this prop
+    onCalendarViewChange: handleCalendarViewChange, // Add this prop
   };
 
   const extrasSectionProps = {

@@ -210,26 +210,26 @@ export const useAvailabilityCheck = (formData) => {
   };
 
   // Function to load initial availability data
-  const loadInitialAvailability = async () => {
-    try {
-      // Create date range for current month plus next month
-      const today = new Date();
-      const startOfRange = new Date(today.getFullYear(), today.getMonth(), 1);
-      const endOfRange = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+const loadInitialAvailability = async () => {
+  try {
+    // Create date range for current month plus next 12 months
+    const today = new Date();
+    const startOfRange = new Date(today.getFullYear(), today.getMonth(), 1);
 
-      console.log("Loading initial availability data for date range:", {
-        start: startOfRange.toISOString().split("T")[0],
-        end: endOfRange.toISOString().split("T")[0],
-      });
+    // End range is 12 months from start
+    const endOfRange = new Date(today.getFullYear(), today.getMonth() + 12, 0);
 
-      // Use the existing checkAvailability function
-      await checkAvailability(startOfRange, endOfRange);
+    console.log("Loading availability data for full year:", {
+      start: startOfRange.toISOString().split("T")[0],
+      end: endOfRange.toISOString().split("T")[0],
+    });
 
-      // This should populate availableDates through the existing state update
-    } catch (error) {
-      console.error("Error loading initial availability data:", error);
-    }
-  };
+    // Use the existing checkAvailability function
+    await checkAvailability(startOfRange, endOfRange);
+  } catch (error) {
+    console.error("Error loading full year availability data:", error);
+  }
+};
 
   return {
     availableDates,
