@@ -280,6 +280,7 @@ export const roomsData = {
       tertiary: Cabane_img_3,
       quaternary: Cabane_img_4,
       quinary: Cabane_img_5,
+      senary: Cabane_img_6,
     },
     maxGuests: 2,
     features: [
