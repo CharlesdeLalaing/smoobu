@@ -5,7 +5,7 @@ export const CalendarNavigation = ({
   nextMonth,
   prevMonthPair,
   nextMonthPair,
-  showTwoCalendars, // Add this new prop
+  showTwoCalendars,
 }) => {
   // Get current language from i18next
   const currentLocale = i18next.language || "fr";
@@ -15,42 +15,44 @@ export const CalendarNavigation = ({
     return date.toLocaleString(currentLocale, { month: "long" }).toUpperCase();
   };
 
-  return (
-    <>
-      {/* Green navigation bar */}
-      <div className="calendar-navigation-controls">
-        <button
-          type="button"
-          className="calendar-nav-btn"
-          onClick={prevMonthPair}
-        >
-          &lt;
-        </button>
-        <div className="calendar-date-range">{/* Empty space */}</div>
-        <button
-          type="button"
-          className="calendar-nav-btn"
-          onClick={nextMonthPair}
-        >
-          &gt;
-        </button>
-      </div>
+  // Format the month and year with appropriate styling
+  const formatMonthYear = (date) => {
+    return (
+      <>
+        {getLocalizedMonthName(date)}{" "}
+        <span className="month-year">{date.getFullYear()}</span>
+      </>
+    );
+  };
 
-      {/* Centered date range underneath */}
-      <div className="calendar-date-range-centered">
-        {showTwoCalendars ? (
-          // Show both months on larger screens
-          <>
-            {getLocalizedMonthName(viewMonth)} {viewMonth.getFullYear()} -{" "}
-            {getLocalizedMonthName(nextMonth)} {nextMonth.getFullYear()}
-          </>
-        ) : (
-          // Show only current month on mobile
-          <>
-            {getLocalizedMonthName(viewMonth)} {viewMonth.getFullYear()}
-          </>
-        )}
-      </div>
-    </>
+  return (
+    <div className="calendar-navigation-controls">
+      <button
+        type="button"
+        className="calendar-nav-btn"
+        onClick={prevMonthPair}
+      >
+        &lt;
+      </button>
+
+      {showTwoCalendars ? (
+        <div className="calendar-months-header">
+          <div className="left-month">{formatMonthYear(viewMonth)}</div>
+          <div className="right-month">{formatMonthYear(nextMonth)}</div>
+        </div>
+      ) : (
+        <div className="calendar-month-header-mobile">
+          {formatMonthYear(viewMonth)}
+        </div>
+      )}
+
+      <button
+        type="button"
+        className="calendar-nav-btn"
+        onClick={nextMonthPair}
+      >
+        &gt;
+      </button>
+    </div>
   );
 };

@@ -430,3 +430,70 @@ div.calendar-day.selected,
 .calendar-date-range {
   flex: 1;
 }
+
+/* Container for both month names in desktop view */
+.calendar-months-header {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  font-weight: bold;
+}
+
+/* Left aligned month for first calendar */
+.left-month {
+  width: 50%;
+  text-align: center;
+  font-size: 1.25rem;
+  letter-spacing: 1px;
+}
+
+/* Right aligned month for second calendar */
+.right-month {
+  width: 50%;
+  text-align: center;
+  font-size: 1.25rem;
+  letter-spacing: 1px;
+}
+
+/* Single month display for mobile */
+.calendar-month-header-mobile {
+  flex: 1;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1.25rem;
+  letter-spacing: 1px;
+}
+
+/* Styling for month header - make year smaller and not bold */
+.calendar-month-header-mobile, 
+.left-month, 
+.right-month {
+  font-size: 1.25rem;
+  letter-spacing: 1px;
+}
+
+/* Make year smaller and not bold */
+.month-year {
+  font-weight: normal;
+  font-size: 0.9rem;
+  margin-left: 5px;
+  opacity: 0.9;
+}
+
+/* Fix legend layout on mobile */
+@media (max-width: 640px) {
+  .calendar-legend {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+  
+  .legend-item {
+    width: calc(50% - 0.75rem); /* Two items per row with gap */
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+}
