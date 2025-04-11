@@ -497,7 +497,7 @@ const RoomCard = ({ room, isAvailable }) => {
           <div className="w-full xl:w-3/5">
             {/* Update CalendarRoom with view state props */}
             <CalendarRoom
-              roomId={room.id}
+              roomId={String(room.id)}
               availableDates={availableDates}
               startDate={startDate}
               endDate={endDate}

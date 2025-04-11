@@ -60,10 +60,7 @@ export const useAvailabilityCheck = (formData) => {
       const formattedStartDate = formatDate(startDate);
       const formattedEndDate = formatDate(endDate);
 
-      console.log("Checking availability for:", {
-        startDate: formattedStartDate,
-        endDate: formattedEndDate,
-      });
+
 
       const response = await api.get("/rates", {
         params: {
@@ -78,8 +75,6 @@ export const useAvailabilityCheck = (formData) => {
       // Transform the API response to identify check-in and checkout days
       const enhancedResponse = enhanceAvailabilityData(response.data);
 
-      // Debug the transformed data
-      console.log("Enhanced API response:", enhancedResponse);
 
       // Process the enhanced API response
       if (enhancedResponse) {
@@ -118,10 +113,7 @@ export const useAvailabilityCheck = (formData) => {
               });
             }
 
-            console.log(
-              "Updated availableDates structure (MERGED):",
-              mergedAvailableDates
-            );
+
             setAvailableDates(mergedAvailableDates);
           } else {
             // Original behavior - getting complete new data
@@ -141,10 +133,7 @@ export const useAvailabilityCheck = (formData) => {
               });
             }
 
-            console.log(
-              "Updated availableDates structure (NEW):",
-              newAvailableRooms
-            );
+
             setAvailableDates(newAvailableRooms);
           }
 
@@ -153,7 +142,7 @@ export const useAvailabilityCheck = (formData) => {
         }
         // If we only have data (no priceDetails)
         else if (enhancedResponse.data) {
-          console.log("No price details, but we have availability data");
+  
 
           if (preserveExistingData) {
             // Merge with existing data instead of replacing

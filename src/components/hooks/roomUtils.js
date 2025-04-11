@@ -37,13 +37,8 @@ export const isRoomAvailable = (
   // This is because the checkout date doesn't need to be fully available
   const endDateTimeForChecking = new Date(endDate);
   endDateTimeForChecking.setDate(endDateTimeForChecking.getDate() - 1);
-  const endForChecking = formatDate(endDateTimeForChecking);
 
-  console.log(
-    `Checking availability from ${formatDate(
-      startDate
-    )} to ${endForChecking} (excluding checkout)`
-  );
+
 
   // Check availability for all dates EXCEPT the checkout date
   let currentDate = new Date(startDate);

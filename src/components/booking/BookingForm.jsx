@@ -224,15 +224,7 @@ const BookingForm = () => {
         setCalendarViewMonth(currentViewMonth);
       }
 
-      console.log("handleDateSelect called with:", {
-        date,
-        isStart,
-        currentViewMonth, // Log the view month
-      });
-      console.log("Current availableDates:", availableDates);
 
-      // Preserve the existing availability data
-      const currentAvailableDates = { ...availableDates };
 
       // IMPORTANT: Only update the selected room if selectedRoomId is provided
       // and the user explicitly clicked the "Select this room" button
