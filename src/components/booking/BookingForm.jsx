@@ -1,5 +1,5 @@
-import React from "react";
-import { useTranslation } from 'react-i18next';
+import { useEffect, useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { HeaderSection } from "./HeaderSection";
 import { SearchSection, RoomNavigation } from "./SearchSection";
 import { PropertyDetails } from "./PropertyDetails";
@@ -14,60 +14,20 @@ import { NavigationButtons } from "./NavigationButtons";
 import { ErrorMessage } from "./ErrorMessage";
 import { LoadingSpinner } from "./LoadingSpinner";
 import StripeWrapper from "../StripeWrapper";
-import { useNavigate } from "react-router-dom";
-import { isRoomAvailable } from "../hooks/roomUtils";  // Add this line
+import { isRoomAvailable } from "../hooks/roomUtils"; // Add this line
 import { roomsData } from "../hooks/roomsData";
 
 const BookingForm = () => {
-  const navigate = useNavigate();
-  // const {
-  //   formData,
-  //   currentStep,
-  //   error,
-  //   loading,
-  //   isAvailable,
-  //   showPriceDetails,
-  //   successMessage,
-  //   priceDetails,
-  //   showPayment,
-  //   clientSecret,
-  //   selectedExtras,
-  //   dateError,
-  //   startDate,
-  //   endDate,
-  //   appliedCoupon,
-  //   selectedCategory,
-  //   setSelectedCategory,
-  //   handleChange,
-  //   handleExtraChange,
-  //   handleCheckAvailability,
-  //   handleSubmit,
-  //   nextStep,
-  //   prevStep,
-  //   isStepValid,
-  //   handlePaymentSuccess,
-  //   setError,
-  //   setStartDate,
-  //   setIsAvailable,
-  //   setEndDate,
-  //   setDateError,
-  //   setCurrentStep,
-  //   setPriceDetails,
-  //   setShowPriceDetails,
-  //   setShowPayment,
-  //   setFormData,
-  //   handleApplyCoupon,
-  // } = useBookingForm();
 
-  const { t } = useTranslation();
-
+  // Added calendar view month state
+  const [calendarViewMonth, setCalendarViewMonth] = useState(new Date());
 
   const {
     formData,
     currentStep,
     error,
     loading,
-    isAvailable,
+  
     showPriceDetails,
     successMessage,
     priceDetails,
@@ -82,7 +42,6 @@ const BookingForm = () => {
     setSelectedCategory,
     handleChange,
     handleExtraChange,
-    handleCheckAvailability,
     handleSubmit,
     nextStep,
     prevStep,
@@ -96,19 +55,11 @@ const BookingForm = () => {
     setCurrentStep,
     setPriceDetails,
     setShowPriceDetails,
-    setShowPayment,
     setFormData,
     handleApplyCoupon,
   } = useBookingForm();
 
-  // const {
-  //   availableDates,
-  //   loading: availabilityLoading,
-  //   error: availabilityError,
-  //   hasSearched,
-  //   checkAvailability,
-  //   resetAvailability,
-  // } = useAvailabilityCheck(formData);
+  const { t } = useTranslation();
 
   const {
     availableDates,
@@ -119,45 +70,45 @@ const BookingForm = () => {
     resetAvailability,
   } = useAvailabilityCheck(formData);
 
-  // const handleRoomSelect = async (roomId) => {
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     apartmentId: roomId,
-  //   }));
+  // Added handler for calendar view changes
+  const handleCalendarViewChange = useCallback((newViewMonth) => {
+    setCalendarViewMonth(newViewMonth);
+  }, []);
 
-  //   if (startDate && endDate) {
-  //     try {
-  //       if (priceDetails && priceDetails[roomId]) {
-  //         const roomPriceDetails = priceDetails[roomId];
-  //         setFormData((prev) => ({
-  //           ...prev,
-  //           price: roomPriceDetails.finalPrice,
-  //         }));
-  //         setShowPriceDetails(true);
-  //       } else {
-  //         await handleAvailabilityCheck();
-  //       }
-  //     } catch (err) {
-  //       console.error("Error updating prices:", err);
-  //       setError("Failed to update prices for the selected room");
-  //     }
-  //   }
+  // In BookingForm.jsx, add this useEffect
+  useEffect(() => {
+    // Load initial availability data when component mounts
+    const loadInitialAvailability = async () => {
+      try {
+        // Create date range for current month plus next 12 months
+        const today = new Date();
+        const startOfRange = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfRange = new Date(
+          today.getFullYear(),
+          today.getMonth() + 12,
+          0
+        );
 
-  //   if (!formData.apartmentId) {
-  //     setCurrentStep(1);
-  //   }
-  // };
+        // Use the existing checkAvailability function
+        await checkAvailability(startOfRange, endOfRange);
+        // This should populate availableDates through the existing state update
+      } catch (error) {
+        console.error("Error loading initial availability data:", error);
+      }
+    };
+    loadInitialAvailability();
+  }, []);
 
   const handleRoomSelect = async (roomId) => {
     try {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         apartmentId: roomId,
       }));
 
       if (startDate && endDate) {
         if (priceDetails && priceDetails[roomId]) {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             price: priceDetails[roomId].finalPrice,
           }));
@@ -180,13 +131,12 @@ const BookingForm = () => {
         const offset = 100;
         const elementPosition = roomElement.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - offset;
-        
+
         window.scrollTo({
           top: offsetPosition,
-          behavior: "smooth"
+          behavior: "smooth",
         });
       }
-
     } catch (err) {
       console.error("Errors in handleRoomSelect:", err);
       setError("Failed to update room selection. Please try again.");
@@ -194,28 +144,34 @@ const BookingForm = () => {
       setShowPriceDetails(false);
     }
   };
-  
+
   const handleAvailabilityCheck = async () => {
-    // console.log('handleAvailabilityCheck called with:', {
-    //   startDate,
-    //   endDate,
-    //   formDataDates: {
-    //     arrival: formData.arrivalDate,
-    //     departure: formData.departureDate
-    //   }
-    // });
-  
     if (!startDate || !endDate) {
       setDateError("Please select both arrival and departure dates");
       return;
     }
-  
+
     setError("");
     setDateError("");
-  
+
     try {
-      const availabilityData = await checkAvailability(startDate, endDate);
-      // console.log('Availability data received:', availabilityData);
+      // Format dates consistently to ensure no timezone issues
+
+      // Create consistent date objects at noon to avoid timezone issues
+      const createConsistentDate = (date) => {
+        if (!date) return null;
+        const d = new Date(date);
+        d.setHours(12, 0, 0, 0);
+        return d;
+      };
+
+      const startDateForCheck = createConsistentDate(startDate);
+      const endDateForCheck = createConsistentDate(endDate);
+
+      const availabilityData = await checkAvailability(
+        startDateForCheck,
+        endDateForCheck
+      );
 
       if (availabilityData) {
         if (availabilityData.priceDetails) {
@@ -251,127 +207,206 @@ const BookingForm = () => {
     }
   };
 
-const handleDateSelect = async (date, isStart) => {
-  try {
-    // Handle date clearing
-    if (!date) {
-      if (isStart) {
-        setStartDate(null);
-        setEndDate(null);
-        handleChange({ target: { name: "arrivalDate", value: "" } });
-        handleChange({ target: { name: "departureDate", value: "" } });
-        resetAvailability();
-      } else {
-        setEndDate(null);
-        handleChange({ target: { name: "departureDate", value: "" } });
-      }
-      setDateError("");
-      // Keep showing price details if they exist
-      return;
-    }
-
-    // Set the selected date (set to noon to avoid timezone issues)
-    const selectedDate = new Date(date.setHours(12, 0, 0, 0));
-
-    if (isStart) {
-      // Setting start date
-      setStartDate(selectedDate);
-
-      // If there's already an end date that's earlier than the new start date,
-      // clear the end date to avoid invalid date ranges
-      if (endDate && selectedDate >= endDate) {
-        setEndDate(null);
-        handleChange({ target: { name: "departureDate", value: "" } });
+  // Modified handleDateSelect to preserve calendar view month
+  const handleDateSelect = useCallback(
+    async (date, isStart, currentViewMonth) => {
+      // Preserve the calendar view month if it's provided
+      if (currentViewMonth) {
+        setCalendarViewMonth(currentViewMonth);
       }
 
-      handleChange({
-        target: {
-          name: "arrivalDate",
-          value: selectedDate.toISOString().split("T")[0],
-        },
-      });
 
-      // Only reset availability if needed
-      if (!endDate) {
-        resetAvailability();
+
+      // IMPORTANT: Only update the selected room if selectedRoomId is provided
+      // and the user explicitly clicked the "Select this room" button
+      if (currentViewMonth && typeof currentViewMonth === "string") {
+        // Update apartmentId
+        handleChange({
+          target: {
+            name: "apartmentId",
+            value: currentViewMonth,
+          },
+        });
+
+        // Update form data
+        setFormData((prev) => ({
+          ...prev,
+          apartmentId: currentViewMonth,
+        }));
       }
-    } else {
-      // Setting end date
-      setEndDate(selectedDate);
-      handleChange({
-        target: {
-          name: "departureDate",
-          value: selectedDate.toISOString().split("T")[0],
-        },
-      });
-    }
-
-    // Get updated dates for availability check
-    const updatedStartDate = isStart ? selectedDate : startDate;
-    const updatedEndDate = isStart ? null : selectedDate;
-
-    // Only check availability if both dates are set
-    if (updatedStartDate && updatedEndDate) {
-      console.log("Both dates set, checking availability:", {
-        start: updatedStartDate,
-        end: updatedEndDate,
-      });
 
       try {
-        const availabilityData = await checkAvailability(
-          updatedStartDate,
-          updatedEndDate
-        );
+        // Handle date clearing
+        if (!date) {
+          if (isStart) {
+            setStartDate(null);
+            setEndDate(null);
+            handleChange({ target: { name: "arrivalDate", value: "" } });
+            handleChange({ target: { name: "departureDate", value: "" } });
+          } else {
+            setEndDate(null);
+            handleChange({ target: { name: "departureDate", value: "" } });
+          }
+          setDateError("");
+          return;
+        }
 
-        if (availabilityData?.priceDetails) {
-          setPriceDetails(availabilityData.priceDetails);
-          setShowPriceDetails(true);
-          setIsAvailable(true);
+        // Create a new date at midnight in the local timezone
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const day = date.getDate();
+        const selectedDate = new Date(year, month, day, 0, 0, 0, 0);
 
-          // Update price if a room is already selected
-          if (
-            formData.apartmentId &&
-            availabilityData.priceDetails[formData.apartmentId]
-          ) {
-            setFormData((prev) => ({
-              ...prev,
-              price:
-                availabilityData.priceDetails[formData.apartmentId].finalPrice,
-            }));
+        if (isStart) {
+          // Setting start date
+          console.log("Setting as START date");
+          setStartDate(selectedDate);
+
+          // If there's already an end date that's earlier than the new start date,
+          // clear the end date to avoid invalid date ranges
+          if (endDate && selectedDate >= endDate) {
+            setEndDate(null);
+            handleChange({ target: { name: "departureDate", value: "" } });
+          }
+
+          // Format date for form data
+          const formattedDate = `${year}-${(month + 1)
+            .toString()
+            .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+          handleChange({
+            target: {
+              name: "arrivalDate",
+              value: formattedDate,
+            },
+          });
+        } else {
+          // Setting end date
+          console.log("Setting as END date");
+          setEndDate(selectedDate);
+
+          // Format date for form data
+          const formattedDate = `${year}-${(month + 1)
+            .toString()
+            .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+          handleChange({
+            target: {
+              name: "departureDate",
+              value: formattedDate,
+            },
+          });
+        }
+
+        // Get updated dates for availability check
+        const updatedStartDate = isStart ? selectedDate : startDate;
+        const updatedEndDate = isStart ? endDate : selectedDate;
+
+        // Only check availability if both dates are set
+        if (updatedStartDate && updatedEndDate) {
+          console.log(
+            "Both dates set, checking availability for room:",
+            currentViewMonth || formData.apartmentId
+          );
+
+          try {
+            // Call availability check but preserve existing data
+            // Pass the current room ID (either from parameter or form data)
+            const roomIdToCheck =
+              currentViewMonth && typeof currentViewMonth === "string"
+                ? currentViewMonth
+                : formData.apartmentId;
+            const preserveExistingData = true;
+
+            const newAvailabilityData = await checkAvailability(
+              updatedStartDate,
+              updatedEndDate,
+              roomIdToCheck,
+              preserveExistingData
+            );
+
+            // If we got new data, merge it with existing data instead of replacing completely
+            if (newAvailabilityData && newAvailabilityData.priceDetails) {
+              // Use the new price details
+              setPriceDetails(newAvailabilityData.priceDetails);
+              setShowPriceDetails(true);
+
+              // Check if the current room is available in the results
+              const isCurrentRoomAvailable =
+                roomIdToCheck &&
+                newAvailabilityData.priceDetails[roomIdToCheck];
+
+              setIsAvailable(isCurrentRoomAvailable);
+
+              // If the current room has pricing, update the form data price
+              if (isCurrentRoomAvailable) {
+                setFormData((prev) => ({
+                  ...prev,
+                  price:
+                    newAvailabilityData.priceDetails[roomIdToCheck].finalPrice,
+                }));
+              }
+            } else {
+              setDateError("No rates available for selected dates");
+              setIsAvailable(false);
+              // Still keep showing the container
+              setShowPriceDetails(true);
+            }
+          } catch (err) {
+            console.error("Error checking availability:", err);
+            setError("Error checking availability");
+            // Keep showing the UI with the error message
+            setShowPriceDetails(true);
           }
         } else {
-          // Keep showing the UI with unavailability message
-          setDateError("No rates available for selected dates");
-          setIsAvailable(false);
-          setPriceDetails(null);
-          setShowPriceDetails(true); // Keep the container visible
+          // Keep showing price details while user selects second date
+          setShowPriceDetails(true);
         }
-      } catch (err) {
-        console.error("Error checking availability:", err);
-        setError("Error checking availability");
-        setIsAvailable(false);
-        setPriceDetails(null);
-        // Keep the container visible
+      } catch (error) {
+        console.error("Error in handleDateSelect:", error);
+        setError("An error occurred while processing the date selection");
+        // Maintain UI visibility even on error
         setShowPriceDetails(true);
       }
-    } else {
-      // Keep showing price details while user selects second date
-      setShowPriceDetails(true);
-    }
-  } catch (error) {
-    console.error("Error in handleDateSelect:", error);
-    setError("An error occurred while processing the date selection");
-    // Maintain UI visibility even on error
-    setShowPriceDetails(true);
-  }
-};
+    },
+    [
+      // Add dependencies this function relies on
+      availableDates,
+      startDate,
+      endDate,
+      formData.apartmentId,
+      setStartDate,
+      setEndDate,
+      handleChange,
+      setFormData,
+      checkAvailability,
+      setPriceDetails,
+      setShowPriceDetails,
+      setIsAvailable,
+      setDateError,
+      setError,
+      setCalendarViewMonth, // Add this new dependency
+    ]
+  );
 
-     // Add this function to check if the currently selected room is available
+  // Add this function to check if the currently selected room is available
   const isSelectedRoomAvailable = () => {
-    if (!formData.apartmentId || !startDate || !endDate) return false;
+    // If no room is selected, it's not available
+    if (!formData.apartmentId) return false;
 
-    // Use the existing isRoomAvailable function from your roomUtils
-    return isRoomAvailable(formData.apartmentId, startDate, endDate, availableDates, hasSearched);
+    // If no dates are selected, default to false
+    if (!startDate && !endDate) return false;
+
+    // KEY FIX: If only one date is selected, consider the room available
+    if (startDate && !endDate) return true;
+    if (!startDate && endDate) return true;
+
+    // Both dates selected, check actual availability
+    return isRoomAvailable(
+      formData.apartmentId,
+      startDate,
+      endDate,
+      availableDates,
+      hasSearched
+    );
   };
 
   const searchSectionProps = {
@@ -383,9 +418,13 @@ const handleDateSelect = async (date, isStart) => {
     dateError,
     handleCheckAvailability: handleAvailabilityCheck,
     resetAvailability,
-    setStartDate,  // Add this
-    setEndDate,    // Add this
-    setFormData    // Add this
+    setStartDate,
+    setEndDate,
+    setFormData,
+    availableDates, // Add this prop
+    hasSearched, // Add this prop
+    calendarViewMonth, // Add this prop
+    onCalendarViewChange: handleCalendarViewChange, // Add this prop
   };
 
   const propertyDetailsProps = {
@@ -400,6 +439,9 @@ const handleDateSelect = async (date, isStart) => {
     availableDates,
     loading: availabilityLoading,
     hasSearched,
+    handleDateSelect,
+    calendarViewMonth, // Add this prop
+    onCalendarViewChange: handleCalendarViewChange, // Add this prop
   };
 
   const extrasSectionProps = {
@@ -460,7 +502,10 @@ const handleDateSelect = async (date, isStart) => {
               <RoomNavigation {...roomNavigationProps} />
             </div>
 
-            <div className="space-y-8 px-[2%] md:px-[5%] py-[1%]">
+            <div
+              className="space-y-8 px-[2%] md:px-[5%] py-[1%]"
+              style={{ backgroundColor: "#FBFDFB" }}
+            >
               {formData.apartmentId && (
                 <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
                   <div className="w-full h-full lg:w-1/2">

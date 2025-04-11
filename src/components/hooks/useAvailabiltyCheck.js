@@ -1,53 +1,7 @@
+// useAvailabilityCheck.js
 import { useState } from "react";
 import { api } from "../utils/api";
-
-// Helper function for checking room availability
-// Helper function for checking room availability
-export const isRoomAvailable = (roomId, startDate, endDate, availableDates, hasSearched = false) => {
-  // Early return if essential data is missing
-  if (!availableDates || !startDate || !endDate || !hasSearched) {
-    return false;
-  }
-  
-  const roomData = availableDates[roomId];
-  if (!roomData) {
-    return false;
-  }
-  
-  // Convert dates to ISO string format (YYYY-MM-DD)
-  const start = new Date(startDate).toISOString().split("T")[0];
-  const end = new Date(endDate).toISOString().split("T")[0];
-  
-  // For booking systems, we typically don't check the end date (checkout date)
-  // because guests will leave in the morning and new guests can check in on the same day
-  let currentDate = new Date(start);
-  const endDateTime = new Date(end);
-  
-  // Adjust to exclude the checkout date from availability check
-  endDateTime.setDate(endDateTime.getDate() - 1); 
-  
-  while (currentDate <= endDateTime) {
-    const dateStr = currentDate.toISOString().split("T")[0];
-    const dayData = roomData[dateStr];
-    
-    if (!dayData || dayData.available === 0) {
-      return false;
-    }
-    
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-  
-  // Specific check for the checkout date - it only needs to be available for checkout
-  // This isn't needed with most booking systems, but keeping it here in case your API handles this specifically
-  const checkoutDateStr = end;
-  const checkoutDayData = roomData[checkoutDateStr];
-  
-  // For checkout dates, we allow partial availability
-  // Your API might indicate this in a special way or you may need to add additional logic 
-  // based on your specific data structure
-  
-  return true;
-}
+import { enhanceAvailabilityData } from "./availabilityTransformer"; // Import the transformer
 
 // Main hook for availability checking
 export const useAvailabilityCheck = (formData) => {
@@ -62,12 +16,16 @@ export const useAvailabilityCheck = (formData) => {
     setHasSearched(false);
   };
 
-  const checkAvailability = async (startDate, endDate) => {
+  const checkAvailability = async (
+    startDate,
+    endDate,
+    roomId = null,
+    preserveExistingData = false
+  ) => {
     if (!startDate || !endDate) {
       return null;
     }
 
-    // Validate date range
     if (startDate >= endDate) {
       setError("Departure date must be after arrival date");
       return null;
@@ -76,26 +34,29 @@ export const useAvailabilityCheck = (formData) => {
     setLoading(true);
     setError(null);
 
+    // Store current data if we need to preserve it
+    const currentAvailableDates = preserveExistingData
+      ? { ...availableDates }
+      : {};
+
     try {
-      const apartmentIds = [
-        "2565753", // La Cabane du Chêne
-        "1946282", // Le Dôme des Libellules
-        "1644643", // La Bulle du Ruisseau
-        "1946279", // Le Moulin
-        "1946276", // La Chambre de Blé
-        "1946270", // Le Logis
-      ];
+const apartmentIds = [
+  "2565753", // La Cabane du Chêne
+  "1946282", // Le Dôme des Libellules
+  "1644643", // La Bulle du Ruisseau
+  "1946279", // Le Moulin
+  "1946276", // La Chambre de Blé
+  "1946270", // Le Logis
+];
+      const formatDate = (date) => {
+        const d = new Date(date);
+        return `${d.getFullYear()}-${(d.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
+      };
 
-      // Format dates as YYYY-MM-DD
-      const formattedStartDate = startDate.toISOString().split("T")[0];
-      const formattedEndDate = endDate.toISOString().split("T")[0];
-
-      console.log("Checking availability for:", {
-        startDate: formattedStartDate,
-        endDate: formattedEndDate,
-        adults: formData.adults || 1,
-        children: formData.children || 0,
-      });
+      const formattedStartDate = formatDate(startDate);
+      const formattedEndDate = formatDate(endDate);
 
       const response = await api.get("/rates", {
         params: {
@@ -107,73 +68,120 @@ export const useAvailabilityCheck = (formData) => {
         },
       });
 
-      console.log("API Response:", response.data);
+      const enhancedResponse = enhanceAvailabilityData(response.data);
 
-      // Process API response
-      if (response.data) {
-        // First, check if we have priceDetails (which indicates availability)
-        if (response.data.priceDetails) {
-          // Available rooms will have price details
-          const availableRooms = {};
+      if (enhancedResponse) {
+        // ---- START: Handling preserveExistingData ----
+        if (preserveExistingData) {
+          const mergedAvailableDates = { ...currentAvailableDates };
 
-          // Create a structure for available dates by room
-          Object.keys(response.data.priceDetails).forEach((roomId) => {
-            // Extract date range from start/end dates
-            const dateRange = {};
-            let currentDate = new Date(formattedStartDate);
-            const lastDate = new Date(formattedEndDate);
-
-            while (currentDate <= lastDate) {
-              const dateKey = currentDate.toISOString().split("T")[0];
-              // Mark as available
-              dateRange[dateKey] = { available: 1 };
-              currentDate.setDate(currentDate.getDate() + 1);
-            }
-
-            availableRooms[roomId] = dateRange;
-          });
-
-          // Use the data from API if available
-          if (response.data.data) {
-            // Merge with the detailed availability data
-            Object.keys(response.data.data).forEach((roomId) => {
-              if (availableRooms[roomId]) {
-                availableRooms[roomId] = {
-                  ...availableRooms[roomId],
-                  ...response.data.data[roomId],
-                };
+          // Ensure room keys from priceDetails exist in the merged object
+          if (enhancedResponse.priceDetails) {
+            Object.keys(enhancedResponse.priceDetails).forEach((roomId) => {
+              if (!mergedAvailableDates[roomId]) {
+                mergedAvailableDates[roomId] = {};
               }
             });
           }
 
-          setAvailableDates(availableRooms);
-          setHasSearched(true);
-          return response.data;
-        }
-        // If we have data but no priceDetails, we still want to process the availability data
-        else if (response.data.data) {
-          setAvailableDates(response.data.data);
-          setHasSearched(true);
-          return response.data;
-        }
-        // No availability data found
-        else {
-          setError("No availability data found");
-          setHasSearched(true);
-          return null;
-        }
-      }
+          // Process the availability data (if present)
+          if (enhancedResponse.data) {
+            Object.keys(enhancedResponse.data).forEach((roomId) => {
+              // Get the existing map of dates for this room (or empty object)
+              const existingRoomDataMap = mergedAvailableDates[roomId] || {};
+              // Get the new map of dates for this room (only dates in the new fetch)
+              const newRoomDataMap = enhancedResponse.data[roomId] || {};
 
-      setError("Invalid response from server");
-      return null;
+              // Iterate through ONLY the dates present in the NEW data map
+              for (const dateKey in newRoomDataMap) {
+                // Get the existing data for this specific date (if any)
+                const existingDateInfo = existingRoomDataMap[dateKey] || {};
+                // Get the new data for this specific date
+                const newDateInfo = newRoomDataMap[dateKey];
+
+                // *** DETAILED MERGE LOGIC FOR EACH DATE ***
+                existingRoomDataMap[dateKey] = {
+                  ...existingDateInfo, // Start with existing data (includes old flags)
+                  ...newDateInfo, // Overwrite with new data (price, availability etc.)
+
+                  // --- Explicitly preserve crucial flags ---
+                  // Keep checkoutOnly if it was true before AND the new data doesn't set it to false
+                  checkoutOnly:
+                    existingDateInfo.checkoutOnly === true &&
+                    newDateInfo.checkoutOnly !== false
+                      ? true
+                      : newDateInfo.checkoutOnly, // Otherwise use the new value (or undefined)
+
+                  // Keep checkinOnly if it was true before AND the new data doesn't set it to false
+                  checkinOnly:
+                    existingDateInfo.checkinOnly === true &&
+                    newDateInfo.checkinOnly !== false
+                      ? true
+                      : newDateInfo.checkinOnly, // Otherwise use the new value (or undefined)
+                  // Add any other flags you need to preserve in the same way here
+                };
+                // *** END OF DETAILED MERGE LOGIC ***
+              }
+              // Update the room's data map in the main merged object
+              mergedAvailableDates[roomId] = existingRoomDataMap;
+            });
+          }
+          // Update state with the carefully merged data
+          setAvailableDates(mergedAvailableDates);
+        } else {
+          // ---- START: Handling !preserveExistingData (Original logic - Replace state) ----
+          let newAvailableData = {};
+          // If we have priceDetails, use its keys to structure the data
+          if (enhancedResponse.priceDetails) {
+            newAvailableData = {};
+            Object.keys(enhancedResponse.priceDetails).forEach((roomId) => {
+              // Initialize room, potentially populate with data if available
+              newAvailableData[roomId] = enhancedResponse.data?.[roomId] || {};
+            });
+          } else if (enhancedResponse.data) {
+            // If no priceDetails, just use the data structure
+            newAvailableData = enhancedResponse.data;
+          }
+          setAvailableDates(newAvailableData);
+          // ---- END: Handling !preserveExistingData ----
+        }
+
+        setHasSearched(true);
+        return enhancedResponse; // Return the full response including priceDetails
+      } else {
+        // Handle case where enhancedResponse is null/undefined
+        setError("Invalid response structure after enhancement");
+        setHasSearched(true); // Still mark as searched even if error
+        return null;
+      }
     } catch (error) {
       console.error("Error fetching availability:", error);
       setError(
         error.response?.data?.error || "Unable to fetch availability data"
       );
+      // Potentially clear dates if error is critical? Or leave as is?
+      // setAvailableDates({}); // Optional: clear dates on error
       return null;
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to load initial availability data (no change needed here)
+  const loadInitialAvailability = async () => {
+    try {
+      const today = new Date();
+      const startOfRange = new Date(today.getFullYear(), today.getMonth(), 1);
+      const endOfRange = new Date(
+        today.getFullYear(),
+        today.getMonth() + 12,
+        0
+      );
+      // Use checkAvailability WITHOUT preserveExistingData flag
+      await checkAvailability(startOfRange, endOfRange);
+    } catch (error) {
+      console.error("Error loading full year availability data:", error);
+      // Handle error appropriately, maybe set an error state
     }
   };
 
@@ -184,6 +192,8 @@ export const useAvailabilityCheck = (formData) => {
     hasSearched,
     checkAvailability,
     resetAvailability,
+    loadInitialAvailability, // You might not need to export this if only used internally
+    // Export setters only if needed by other components, often not necessary
     setHasSearched,
     setAvailableDates,
     setError,

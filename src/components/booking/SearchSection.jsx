@@ -1,16 +1,13 @@
 import React from "react";
 import DatePicker from "react-datepicker";
 import { Listbox } from "@headlessui/react";
-
 import { useTranslation } from "react-i18next";
 import "./datepicker-custom.css";
-
-
 import { GuestSelect } from "./GuestSelect";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { adultes, childrenOptions } from "../utils/constants";
-
 import Bird from "../../assets/GlobalImg/bird.webp";
+import { CalendarRoom } from "./CustomRoom"; // Import CalendarRoom
 
 export const SearchSection = ({
   formData,
@@ -21,6 +18,10 @@ export const SearchSection = ({
   handleCheckAvailability,
   dateError,
   resetAvailability,
+  availableDates, // Added prop
+  hasSearched, // Added prop
+  calendarViewMonth, // Added prop
+  onCalendarViewChange, // Added prop
 }) => {
   const { t, i18n } = useTranslation();
 
@@ -30,14 +31,12 @@ export const SearchSection = ({
   };
 
   const handleDateChange = (date, isStart) => {
-    resetAvailability(); // Reset availability when dates change
-    handleDateSelect(date, isStart); 
+    // Pass null as currentViewMonth since this is a different calendar widget
+    handleDateSelect(date, isStart, null);
   };
 
   return (
-    <div
-      className="relative w-4/5 mx-auto text-center md:w-full lg:w-4/5 font-montserrat bg-[#668E73] px-0 py-[60px] md:px-5"
-    >
+    <div className="relative w-4/5 mx-auto text-center md:w-full lg:w-4/5 font-montserrat bg-[#668E73] px-0 py-[60px] md:px-5">
       {/* Squirrel Image */}
       <div className="absolute top-[65px] left-[-50px] sm:top-[70px] sm:left-[-30px] xs:left-[-50px] md:top-8 md:left-[-20px] lg:top-4 lg:left-[-50px]">
         <img
@@ -55,7 +54,7 @@ export const SearchSection = ({
       <div className="p-6 mx-auto bg-[#fbfdfb] rounded-lg shadow">
         <div className="grid items-end grid-cols-1 gap-4 md:grid-cols-5">
           {/* Arrival */}
-          <div className="md:col-span-1 w-full">
+          <div className="w-full md:col-span-1">
             <label className="block mb-1 text-sm font-medium text-gray-600">
               {t("search.arrival")}
             </label>
@@ -80,7 +79,7 @@ export const SearchSection = ({
           </div>
 
           {/* Departure */}
-          <div className="md:col-span-1 w-full">
+          <div className="w-full md:col-span-1">
             <label className="block mb-1 text-sm font-medium text-gray-600">
               {t("search.departure")}
             </label>
@@ -104,18 +103,6 @@ export const SearchSection = ({
             <label className="block mb-1 text-sm font-medium text-gray-600">
               {t("search.adults")}
             </label>
-            {/* <select
-              name="adults"
-              value={formData.adults}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
-            >
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select> */}
             <Listbox
               value={formData.adults}
               onChange={(value) =>
@@ -167,18 +154,6 @@ export const SearchSection = ({
             <label className="block mb-1 text-sm font-medium text-gray-600">
               {t("search.children")}
             </label>
-            {/* <select
-              name="children"
-              value={formData.children}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
-            >
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select> */}
             <Listbox
               value={formData.children}
               onChange={(value) =>
@@ -237,6 +212,8 @@ export const SearchSection = ({
           </div>
         </div>
       </div>
+
+      {/* Add CalendarRoom component if needed */}
     </div>
   );
 };
@@ -246,12 +223,12 @@ export const RoomNavigation = ({ rooms, onRoomSelect }) => {
 
   // Predefined room IDs in the desired order
   const orderedRoomIds = [
-    "2565753",  // La Cabane du Chêne
-    "1946282",  // Le Dôme des Libellules
-    "1644643",  // La Bulle du Ruisseau
-    "1946279",  // Le Moulin
-    "1946276",  // La Chambre de Blé
-    "1946270"   // Le Logis
+    "2565753", // La Cabane du Chêne
+    "1946282", // Le Dôme des Libellules
+    "1644643", // La Bulle du Ruisseau
+    "1946279", // Le Moulin
+    "1946276", // La Chambre de Blé
+    "1946270", // Le Logis
   ];
 
   // Find rooms in the predefined order
@@ -261,12 +238,10 @@ export const RoomNavigation = ({ rooms, onRoomSelect }) => {
   }, {});
 
   return (
-    <div
-      className="flex flex-wrap justify-center gap-2 sm:gap-4 my-4 sm:my-8 pb-[40px] sm:pb-[60px] font-montserrat"
-    >
+    <div className="flex flex-wrap justify-center gap-2 sm:gap-4 my-4 sm:my-8 pb-[40px] sm:pb-[60px] font-montserrat">
       {orderedRoomIds
-        .filter(id => roomIdToRoom[id])
-        .map(id => {
+        .filter((id) => roomIdToRoom[id])
+        .map((id) => {
           const room = roomIdToRoom[id];
           return (
             <button

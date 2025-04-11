@@ -1,0 +1,475 @@
+/* CustomCalendar.css - Complete styling for the unified calendar component */
+
+/* Unified calendar container */
+.unified-calendar {
+  font-family: 'Montserrat', sans-serif;
+  margin-bottom: 2rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  overflow: hidden;
+}
+
+/* Shared navigation controls */
+.calendar-navigation-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #668E73;
+  color: white;
+  border-radius: 4px 4px 0 0;
+}
+
+.calendar-date-range {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  flex: 1;
+}
+
+/* Calendar navigation buttons */
+.calendar-nav-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.calendar-nav-btn:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Months container - responsive layout */
+.calendar-months-container {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .calendar-months-container {
+    flex-direction: row;
+    gap: 1.5rem;
+  }
+  
+  .calendar-month-half + .calendar-month-half {
+    padding-left: 0.5rem;
+    border-left: 1px solid #e2e8f0;
+  }
+}
+
+/* Month containers */
+.calendar-month-half {
+  flex: 1;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .calendar-month-half {
+    margin-bottom: 0;
+  }
+}
+
+.calendar-month-full {
+  width: 100%;
+}
+
+/* Individual month styling */
+.custom-calendar-month {
+  width: 100%;
+}
+
+.calendar-header-month {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 0.5rem;
+}
+
+.calendar-month {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.calendar-year {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+/* Calendar days header (day names) */
+.calendar-days-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 0.5rem;
+}
+
+.calendar-day-header {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4a5568;
+  padding: 0.5rem 0;
+}
+
+/* Calendar days grid */
+.calendar-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+/* Calendar day cells */
+.calendar-day {
+  position: relative;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  border-radius: 4px;
+}
+
+.calendar-day.empty {
+  background-color: #f9fafb;
+}
+
+.calendar-day:not(.empty) {
+  cursor: default;
+}
+
+.calendar-day.clickable {
+  cursor: pointer;
+}
+
+/* Day number text */
+.calendar-day-number {
+  font-size: 0.875rem;
+}
+
+/* Hover effect for day numbers - moved outside specific selectors for better compatibility */
+.calendar-day:hover .calendar-day-number {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+/* Unavailable days styling - striped pattern */
+.calendar-day.unavailable {
+  background: linear-gradient(135deg, #ffcccc 25%, transparent 25%, transparent 50%, #ffcccc 50%, #ffcccc 75%, transparent 75%);
+  background-size: 8px 8px;
+  color: #777;
+  cursor: not-allowed;
+}
+
+/* Check-in only days - diagonal from bottom-left to top-right */
+.calendar-day.checkin-only {
+  background: linear-gradient(135deg, #ffcccc 50%, #e2f0d9 50%);
+}
+
+/* Checkout only days - diagonal from top-left to bottom-right */
+.calendar-day.checkout-only {
+  background: linear-gradient(135deg, #e2f0d9 50%, #ffcccc 50%);
+  cursor: pointer;
+}
+
+/* General partially available styling (fallback) */
+.calendar-day.partially-available {
+  background: linear-gradient(135deg, #e2f0d9 50%, #ffcccc 50%);
+}
+
+/* Regular available days */
+.calendar-day:not(.unavailable):not(.checkout-only):not(.checkin-only):not(.partially-available) {
+  background-color: #e2f0d9;
+}
+
+/* Past dates */
+.calendar-day.past-date {
+  background-color: #f1f1f1 !important;
+  color: #aaa;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Today's date style */
+.calendar-day.today {
+  background-color: #f1f1f1 !important;
+  color: #aaa;
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: inset 0 0 0 2px #668E73;
+  text-decoration: none;
+}
+
+/* Selected date styling - highest priority */
+.calendar-day.selected {
+  background-color: #668E73 !important;
+  background-image: none !important;
+  background: #668E73 !important;
+  color: white !important;
+  font-weight: bold !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+}
+
+/* In-range styling */
+.calendar-day.in-range {
+  background-color: rgba(102, 142, 115, 0.2) !important;
+  background-image: none !important;
+  background: rgba(102, 142, 115, 0.2) !important;
+  color: inherit;
+  position: relative;
+}
+
+/* Special case for today when in range */
+.calendar-day.today.in-range {
+  background-color: rgba(102, 142, 115, 0.2) !important;
+  color: inherit !important;
+  box-shadow: inset 0 0 0 2px #668E73;
+}
+
+/* Add a red dot indicator for unavailable dates within a range - with high specificity */
+.calendar-day.unavailable.in-range::after,
+.calendar-days-grid .calendar-day.unavailable.in-range::after,
+div.calendar-day.unavailable.in-range::after {
+  content: "" !important;
+  position: absolute !important;
+  bottom: 3px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 6px !important;
+  height: 6px !important;
+  background-color: #e74c3c !important;
+  border-radius: 50% !important;
+  display: block !important;
+  z-index: 5 !important;
+}
+
+/* Hover range styling - Fixed with !important to ensure it works with partially available dates */
+.calendar-day.in-hover-range {
+  background-color: rgba(102, 142, 115, 0.1) !important;
+  background-image: none !important;
+  background: rgba(102, 142, 115, 0.1) !important;
+  z-index: 1;
+  position: relative;
+}
+
+/* NEW: Ensure hover range works on all date types */
+.calendar-day.partially-available.in-hover-range,
+.calendar-day.checkin-only.in-hover-range,
+.calendar-day.checkout-only.in-hover-range,
+.calendar-day.unavailable.in-hover-range {
+  background: rgba(102, 142, 115, 0.1) !important;
+  background-image: none !important;
+  position: relative;
+}
+
+/* Add a visual indicator for hover on partially available dates */
+.calendar-day.partially-available.in-hover-range::before,
+.calendar-day.checkin-only.in-hover-range::before,
+.calendar-day.checkout-only.in-hover-range::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(102, 142, 115, 0.2);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Shared legend at the bottom */
+.calendar-legend {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  gap: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background-color: #f9fafb;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.legend-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.legend-color.available {
+  background-color: #e2f0d9;
+}
+
+.legend-color.unavailable {
+  background: linear-gradient(135deg, #ffcccc 25%, transparent 25%, transparent 50%, #ffcccc 50%, #ffcccc 75%, transparent 75%);
+  background-size: 8px 8px;
+}
+
+.legend-color.partially-available {
+  background: linear-gradient(135deg, #e2f0d9 50%, #ffcccc 50%);
+}
+
+.legend-color.partially-available-checkIn {
+  background: linear-gradient(315deg, #e2f0d9 50%, #ffcccc 50%);
+}
+
+/* Calendar date range centered display */
+.calendar-date-range-centered {
+  text-align: center;
+  font-weight: bold;
+  margin: 10px 0;
+  font-size: 1.5rem;
+  padding: 5px;
+}
+
+/* Container for both month names in desktop view */
+.calendar-months-header {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  font-weight: bold;
+}
+
+/* Left aligned month for first calendar */
+.left-month {
+  width: 50%;
+  text-align: center;
+  font-size: 1.25rem;
+  letter-spacing: 1px;
+}
+
+/* Right aligned month for second calendar */
+.right-month {
+  width: 50%;
+  text-align: center;
+  font-size: 1.25rem;
+  letter-spacing: 1px;
+}
+
+/* Single month display for mobile */
+.calendar-month-header-mobile {
+  flex: 1;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1.25rem;
+  letter-spacing: 1px;
+}
+
+/* Make year smaller and not bold */
+.month-year {
+  font-weight: normal;
+  font-size: 0.9rem;
+  margin-left: 5px;
+  opacity: 0.9;
+}
+
+/* Add specific styling for the calendar-room component */
+.calendar-room {
+  margin-bottom: 2rem;
+}
+
+.calendar-room h3 {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .calendar-day {
+    height: 35px;
+  }
+  
+  .calendar-day-number {
+    font-size: 0.75rem;
+  }
+  
+  .calendar-legend {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+  
+  .legend-item {
+    width: calc(50% - 0.75rem); /* Two items per row with gap */
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* CSS to mark unavailable dates within a selected range */
+
+/* Base styling for all dates in the range */
+.calendar-day.in-range {
+  background-color: rgba(102, 142, 115, 0.2) !important;
+  background-image: none !important;
+  position: relative; /* For positioning the dot */
+}
+
+/* Add a red dot indicator for unavailable dates within a range */
+.calendar-day.unavailable.in-range::after,
+.calendar-day.checkin-only.in-range::after,
+.calendar-day.checkout-only.in-range::after,
+.calendar-day.partially-available.in-range::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: #e74c3c; /* Red dot */
+  border-radius: 50%;
+  z-index: 5;
+}
+
+/* Make sure selected endpoints still override everything */
+.calendar-day.selected {
+  background-color: #668E73 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove the red dot from selected days */
+.calendar-day.selected::after {
+  display: none !important;
+}
+
+/* NEW: Ensure hover works on dates that are part of hover range */
+.calendar-day.in-hover-range:hover {
+  background-color: rgba(102, 142, 115, 0.3) !important;
+}
+
+/* NEW: Fix for partially available dates in hover range */
+.calendar-day.partially-available.in-hover-range,
+.calendar-day.checkin-only.in-hover-range,
+.calendar-day.checkout-only.in-hover-range {
+  cursor: pointer;
+}
+
+/* NEW: Ensure the hover transform works properly on all day types */
+.calendar-day.partially-available:hover .calendar-day-number,
+.calendar-day.checkin-only:hover .calendar-day-number,
+.calendar-day.checkout-only:hover .calendar-day-number,
+.calendar-day.in-hover-range:hover .calendar-day-number {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
