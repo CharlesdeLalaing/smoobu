@@ -52,7 +52,7 @@ export const SearchSection = ({
 
       {/* Search Form */}
       <div className="p-6 mx-auto bg-[#fbfdfb] rounded-lg shadow">
-        <div className="grid items-end grid-cols-1 gap-4 md:grid-cols-5">
+        <div className="grid items-end grid-cols-1 gap-4 md:grid-cols-4">
           {/* Arrival */}
           <div className="w-full md:col-span-1">
             <label className="block mb-1 text-sm font-medium text-gray-600">
@@ -198,17 +198,6 @@ export const SearchSection = ({
                 </Listbox.Options>
               </div>
             </Listbox>
-          </div>
-
-          {/* Search Button */}
-          <div className="md:col-span-1">
-            <button
-              onClick={handleCheckAvailability}
-              type="button"
-              className="w-full p-2 h-12 bg-[#668E73] text-white rounded hover:bg-[#557963] transition-colors"
-            >
-              {t("search.search")}
-            </button>
           </div>
         </div>
       </div>
