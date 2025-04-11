@@ -6,7 +6,7 @@ import { isRoomAvailable } from "../hooks/roomUtils";
 import { PriceDetails } from "./PriceDetails";
 import { CalendarRoom } from "./CustomRoom";
 
-import Squirell from "../../assets/GlobalImg/squirrel.webp";
+
 import Fox from "../../assets/GlobalImg/fox.webp";
 
 import Calendar from "../../assets/icons8-calendar-50.png";
@@ -20,7 +20,6 @@ export const PropertyDetails = ({
   startDate,
   endDate,
   priceDetails,
-  showPriceDetails,
   selectedExtras,
   appliedCoupon,
   onRoomSelect,
@@ -30,9 +29,7 @@ export const PropertyDetails = ({
   showOnlyUnselected = false,
   hasSearched,
   handleDateSelect,
-  handleCalendarDateSelect,
-  calendarViewMonth, // Added prop for parent's calendar view state
-  onCalendarViewChange, // Added prop for parent's calendar view state handler
+
 }) => {
   const { t } = useTranslation();
   const totalGuests =
@@ -112,30 +109,6 @@ export const PropertyDetails = ({
 
   groupedRooms.available = sortRooms(groupedRooms.available);
   groupedRooms.unavailable = sortRooms(groupedRooms.unavailable);
-
-  const filteredAvailableRooms = (() => {
-    if (showOnlySelected && formData.apartmentId) {
-      const selectedRoom = [
-        ...groupedRooms.available,
-        ...groupedRooms.unavailable,
-      ].find((room) => room.id === formData.apartmentId);
-      return selectedRoom ? [selectedRoom] : [];
-    }
-
-    if (showOnlyUnselected) {
-      return groupedRooms.available.filter(
-        (room) => room.id !== formData.apartmentId
-      );
-    }
-
-    return groupedRooms.available.filter(
-      (room) => room.id !== formData.apartmentId
-    );
-  })();
-
-  const filteredUnavailableRooms = groupedRooms.unavailable.filter(
-    (room) => room.id !== formData.apartmentId
-  );
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);

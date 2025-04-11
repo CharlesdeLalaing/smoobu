@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HeaderSection } from "./HeaderSection";
 import { SearchSection, RoomNavigation } from "./SearchSection";
@@ -14,12 +14,11 @@ import { NavigationButtons } from "./NavigationButtons";
 import { ErrorMessage } from "./ErrorMessage";
 import { LoadingSpinner } from "./LoadingSpinner";
 import StripeWrapper from "../StripeWrapper";
-import { useNavigate } from "react-router-dom";
 import { isRoomAvailable } from "../hooks/roomUtils"; // Add this line
 import { roomsData } from "../hooks/roomsData";
 
 const BookingForm = () => {
-  const navigate = useNavigate();
+
   // Added calendar view month state
   const [calendarViewMonth, setCalendarViewMonth] = useState(new Date());
 
@@ -28,7 +27,7 @@ const BookingForm = () => {
     currentStep,
     error,
     loading,
-    isAvailable,
+  
     showPriceDetails,
     successMessage,
     priceDetails,
@@ -43,7 +42,6 @@ const BookingForm = () => {
     setSelectedCategory,
     handleChange,
     handleExtraChange,
-    handleCheckAvailability,
     handleSubmit,
     nextStep,
     prevStep,
@@ -57,7 +55,6 @@ const BookingForm = () => {
     setCurrentStep,
     setPriceDetails,
     setShowPriceDetails,
-    setShowPayment,
     setFormData,
     handleApplyCoupon,
   } = useBookingForm();
@@ -159,12 +156,6 @@ const BookingForm = () => {
 
     try {
       // Format dates consistently to ensure no timezone issues
-      const formatDateToYYYYMMDD = (date) => {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, "0");
-        const day = date.getDate().toString().padStart(2, "0");
-        return `${year}-${month}-${day}`;
-      };
 
       // Create consistent date objects at noon to avoid timezone issues
       const createConsistentDate = (date) => {

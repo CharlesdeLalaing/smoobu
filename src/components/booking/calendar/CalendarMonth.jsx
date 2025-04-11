@@ -28,10 +28,6 @@ export const CalendarMonth = ({
   // Use the appropriate days based on the current locale (with fallback to French)
   const daysOfWeek = daysOfWeekByLocale[currentLocale] || daysOfWeekByLocale.fr;
 
-  // Get localized month name
-  const getLocalizedMonthName = (date) => {
-    return date.toLocaleString(currentLocale, { month: "long" }).toUpperCase();
-  };
 
   return (
     <div className="custom-calendar-month">

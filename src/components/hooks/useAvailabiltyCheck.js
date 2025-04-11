@@ -208,10 +208,6 @@ const loadInitialAvailability = async () => {
     // End range is 12 months from start
     const endOfRange = new Date(today.getFullYear(), today.getMonth() + 12, 0);
 
-    console.log("Loading availability data for full year:", {
-      start: startOfRange.toISOString().split("T")[0],
-      end: endOfRange.toISOString().split("T")[0],
-    });
 
     // Use the existing checkAvailability function
     await checkAvailability(startOfRange, endOfRange);
