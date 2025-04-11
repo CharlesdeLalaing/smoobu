@@ -387,7 +387,7 @@
           "plural": "personen"
         },
         "selectDatePrompt": "Selecteer een datum",
-        "selectRoom": "Selecteer deze kamer",
+        "selectRoom": "Boek deze kamer",
         "unavailableForDates": "Niet beschikbaar voor deze data",
         "extraGuestFee": "Extra toeslag van {{fee}}€ per persoon vanaf {{threshold}} gasten ({{count}} extra gast(en))",
         

@@ -387,7 +387,7 @@
             "plural": "people"
             },
             "selectDatePrompt": "Please select a date",
-            "selectRoom": "Select this room",
+            "selectRoom": "Book this room",
             "unavailableForDates": "Not available for these dates",
             "loading": "Loading...",
             "extraGuestFee": "Extra fee of {{fee}}€ per person after {{threshold}} guests ({{count}} extra guest(s))",
