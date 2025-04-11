@@ -7,7 +7,8 @@ import { GuestSelect } from "./GuestSelect";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { adultes, childrenOptions } from "../utils/constants";
 import Bird from "../../assets/GlobalImg/bird.webp";
-import { CalendarRoom } from "./CustomRoom"; // Import CalendarRoom
+import { CheckCircleIcon, XCircleIcon, ClockIcon } from "@heroicons/react/20/solid";
+import { isRoomAvailable } from "../hooks/roomUtils";
 
 export const SearchSection = ({
   formData,
@@ -207,7 +208,15 @@ export const SearchSection = ({
   );
 };
 
-export const RoomNavigation = ({ rooms, onRoomSelect }) => {
+export const RoomNavigation = ({
+  rooms,
+  onRoomSelect,
+  startDate,
+  endDate,
+  availableDates = {}, // Updated to match actual data structure (object, not array)
+  hasSearched = false,
+  selectedRoomId = null,
+}) => {
   const { t } = useTranslation();
 
   // Predefined room IDs in the desired order
@@ -226,20 +235,103 @@ export const RoomNavigation = ({ rooms, onRoomSelect }) => {
     return acc;
   }, {});
 
+  // Function to determine if a room is available
+  const checkRoomAvailability = (roomId) => {
+    // If no dates are selected, all rooms should be clickable
+    if (!startDate || !endDate) return true;
+
+    // Use the existing utility function
+    return isRoomAvailable(
+      roomId,
+      startDate,
+      endDate,
+      availableDates,
+      hasSearched
+    );
+  };
+
+  // Function to determine availability status
+  const getRoomAvailabilityStatus = (roomId) => {
+    // If we haven't searched yet, return 'unknown'
+    if (!hasSearched || !startDate || !endDate) {
+      return "unknown";
+    }
+
+    // Check if room is fully available
+    if (
+      isRoomAvailable(roomId, startDate, endDate, availableDates, hasSearched)
+    ) {
+      return "available";
+    }
+
+    // Not fully available, but might have some dates available
+    if (availableDates[roomId]) {
+      return "partial";
+    }
+
+    // No availability at all
+    return "unavailable";
+  };
+
   return (
     <div className="flex flex-wrap justify-center gap-2 sm:gap-4 my-4 sm:my-8 pb-[40px] sm:pb-[60px] font-montserrat">
       {orderedRoomIds
         .filter((id) => roomIdToRoom[id])
         .map((id) => {
           const room = roomIdToRoom[id];
+          const availabilityStatus = getRoomAvailabilityStatus(room.id);
+          const isSelected = selectedRoomId === room.id;
+
           return (
             <button
               key={room.id}
               type="button"
               onClick={() => onRoomSelect(room.id)}
-              className="px-3 sm:px-6 py-2 sm:py-4 mb-4 sm:mb-6 text-sm sm:text-base text-white transition-all rounded-full bg-[#ffffff30] hover:bg-white hover:text-[#668E73] border border-[#668E73]"
+              className={`
+                relative px-3 sm:px-6 py-2 sm:py-4 mb-4 sm:mb-6 
+                text-sm sm:text-base transition-all rounded-full 
+                border ${isSelected ? "border-2" : "border"} border-[#668E73]
+                ${
+                  availabilityStatus === "unknown"
+                    ? "bg-[#ffffff30] hover:bg-white hover:text-[#668E73] text-white"
+                    : availabilityStatus === "available"
+                    ? "bg-[#ffffff30] hover:bg-white hover:text-[#668E73] text-white"
+                    : availabilityStatus === "partial"
+                    ? "bg-[#f1d6aa] hover:bg-[#e9c88b] text-[#8b6d34] hover:text-[#6b542a]"
+                    : "bg-[#f3f4f6] text-gray-500 hover:bg-gray-200"
+                }
+                ${isSelected ? "ring-2 ring-[#668E73] ring-opacity-50" : ""}
+              `}
+              disabled={availabilityStatus === "unavailable" && hasSearched}
+              title={
+                !hasSearched
+                  ? t("room.selectDates")
+                  : availabilityStatus === "available"
+                  ? t("room.available")
+                  : availabilityStatus === "partial"
+                  ? t("room.partiallyAvailable")
+                  : t("room.unavailable")
+              }
             >
-              {t(room.nameKey)}
+              <div className="flex items-center">
+                {hasSearched && availabilityStatus !== "unknown" && (
+                  <>
+                    {availabilityStatus === "available" ? (
+                      <CheckCircleIcon className="w-5 h-5 mr-2 text-green-500" />
+                    ) : (
+                      <XCircleIcon
+                        className={`w-5 h-5 mr-2 ${
+                          availabilityStatus === "partial"
+                            ? "text-amber-600"
+                            : "text-red-500"
+                        }`}
+                      />
+                    )}
+                  </>
+                )}
+                {t(room.nameKey)}
+                {isSelected && <span className="ml-2 text-xs">•</span>}
+              </div>
             </button>
           );
         })}

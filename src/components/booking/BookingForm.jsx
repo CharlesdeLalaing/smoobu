@@ -476,6 +476,11 @@ const BookingForm = () => {
 
   const roomNavigationProps = {
     rooms: Object.values(roomsData),
+  startDate,
+  endDate,
+  availableDates,
+  hasSearched,
+  selectedRoomId: formData.apartmentId,
     onRoomSelect: (roomId) => {
       const element = document.getElementById(`room-${roomId}`);
       if (element) {
