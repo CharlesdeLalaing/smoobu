@@ -480,6 +480,7 @@ const BookingForm = () => {
   endDate,
   availableDates,
   hasSearched,
+  formData,
   selectedRoomId: formData.apartmentId,
     onRoomSelect: (roomId) => {
       const element = document.getElementById(`room-${roomId}`);

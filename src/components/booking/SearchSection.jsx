@@ -7,7 +7,7 @@ import { GuestSelect } from "./GuestSelect";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { adultes, childrenOptions } from "../utils/constants";
 import Bird from "../../assets/GlobalImg/bird.webp";
-import { CheckCircleIcon, XCircleIcon, ClockIcon } from "@heroicons/react/20/solid";
+import { CheckCircleIcon, XCircleIcon, UserIcon } from "@heroicons/react/20/solid";
 import { isRoomAvailable } from "../hooks/roomUtils";
 
 export const SearchSection = ({
@@ -216,8 +216,13 @@ export const RoomNavigation = ({
   availableDates = {}, // Updated to match actual data structure (object, not array)
   hasSearched = false,
   selectedRoomId = null,
+  formData = {}, // Add formData to access guest count
 }) => {
   const { t } = useTranslation();
+
+  // Calculate total guests from formData
+  const totalGuests =
+    (parseInt(formData.adults) || 0) + (parseInt(formData.children) || 0);
 
   // Predefined room IDs in the desired order
   const orderedRoomIds = [
@@ -237,7 +242,7 @@ export const RoomNavigation = ({
 
   // Function to determine if a room is available
   const checkRoomAvailability = (roomId) => {
-    // If no dates are selected, all rooms should be clickable
+    // If no dates are selected, consider availability based only on capacity
     if (!startDate || !endDate) return true;
 
     // Use the existing utility function
@@ -250,8 +255,20 @@ export const RoomNavigation = ({
     );
   };
 
+  // Function to check if room has enough capacity
+  const checkRoomCapacity = (room) => {
+    if (!totalGuests) return true; // If no guests selected, consider all rooms as valid
+    return totalGuests <= room.maxGuests;
+  };
+
   // Function to determine availability status
-  const getRoomAvailabilityStatus = (roomId) => {
+  const getRoomAvailabilityStatus = (room) => {
+    // First check capacity
+    const hasCapacity = checkRoomCapacity(room);
+    if (!hasCapacity) {
+      return "capacity";
+    }
+
     // If we haven't searched yet, return 'unknown'
     if (!hasSearched || !startDate || !endDate) {
       return "unknown";
@@ -259,13 +276,13 @@ export const RoomNavigation = ({
 
     // Check if room is fully available
     if (
-      isRoomAvailable(roomId, startDate, endDate, availableDates, hasSearched)
+      isRoomAvailable(room.id, startDate, endDate, availableDates, hasSearched)
     ) {
       return "available";
     }
 
     // Not fully available, but might have some dates available
-    if (availableDates[roomId]) {
+    if (availableDates[room.id]) {
       return "partial";
     }
 
@@ -279,7 +296,7 @@ export const RoomNavigation = ({
         .filter((id) => roomIdToRoom[id])
         .map((id) => {
           const room = roomIdToRoom[id];
-          const availabilityStatus = getRoomAvailabilityStatus(room.id);
+          const availabilityStatus = getRoomAvailabilityStatus(room);
           const isSelected = selectedRoomId === room.id;
 
           return (
@@ -298,11 +315,12 @@ export const RoomNavigation = ({
                     ? "bg-[#ffffff30] hover:bg-white hover:text-[#668E73] text-white"
                     : availabilityStatus === "partial"
                     ? "bg-[#f1d6aa] hover:bg-[#e9c88b] text-[#8b6d34] hover:text-[#6b542a]"
+                    : availabilityStatus === "capacity"
+                    ? "bg-[#f3e1e1] hover:bg-[#efd4d4] text-[#9c5151] hover:text-[#7e4141]"
                     : "bg-[#f3f4f6] text-gray-500 hover:bg-gray-200"
                 }
                 ${isSelected ? "ring-2 ring-[#668E73] ring-opacity-50" : ""}
               `}
-              disabled={availabilityStatus === "unavailable" && hasSearched}
               title={
                 !hasSearched
                   ? t("room.selectDates")
@@ -310,6 +328,11 @@ export const RoomNavigation = ({
                   ? t("room.available")
                   : availabilityStatus === "partial"
                   ? t("room.partiallyAvailable")
+                  : availabilityStatus === "capacity"
+                  ? t("room.capacityExceeded", {
+                      max: room.maxGuests,
+                      current: totalGuests,
+                    })
                   : t("room.unavailable")
               }
             >
@@ -318,6 +341,8 @@ export const RoomNavigation = ({
                   <>
                     {availabilityStatus === "available" ? (
                       <CheckCircleIcon className="w-5 h-5 mr-2 text-green-500" />
+                    ) : availabilityStatus === "capacity" ? (
+                      <UserIcon className="w-5 h-5 mr-2 text-red-500" />
                     ) : (
                       <XCircleIcon
                         className={`w-5 h-5 mr-2 ${
@@ -330,7 +355,14 @@ export const RoomNavigation = ({
                   </>
                 )}
                 {t(room.nameKey)}
-                {isSelected && <span className="ml-2 text-xs">•</span>}
+                {room.maxGuests && totalGuests > 0 && (
+                  <span className="ml-2 text-xs">
+                    ({room.maxGuests} {t("search.maxGuestsShort")})
+                  </span>
+                )}
+                {isSelected && (
+                  <span className="ml-2 text-xs font-bold">•</span>
+                )}
               </div>
             </button>
           );

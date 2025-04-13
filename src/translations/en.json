@@ -40,7 +40,8 @@
             "search": "Search",
             "selectDate": "Select a date",
             "maxGuestsExceeded": "The maximum number of people is {{max}}",
-            "select": "Select"
+            "select": "Select",
+            "maxGuestsShort": "max"
         },
         "rooms": {
             "types": {

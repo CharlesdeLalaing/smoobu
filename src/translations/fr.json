@@ -41,7 +41,8 @@
         "selectDate": "Sélectionnez une date",
         "selectNumber": "Sélectionnez un nombre",
         "maxGuestsExceeded": "Le nombre maximum de personnes est de {{max}}",
-        "select": "Sélectionner"
+        "select": "Sélectionner",
+        "maxGuestsShort": "max"
       },
       "rooms": {
         "types": {
