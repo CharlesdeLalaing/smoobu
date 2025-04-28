@@ -405,7 +405,7 @@ const RoomCard = ({ room, isAvailable }) => {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col xl:flex-row gap-10 w-[90%] mx-auto">
+        <div className="flex flex-col xl:flex-row gap-10 w-[94%] mx-auto">
           <div className="w-full xl:w-2/5">
             <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
               {Object.values(room.images).map((image, index) => (
@@ -479,6 +479,7 @@ const RoomCard = ({ room, isAvailable }) => {
               controlledViewMonth={roomCalendarViewMonth}
               onViewMonthChange={handleRoomCalendarViewChange}
             />
+            
             <p className="my-4 text-gray-600 font-cormorant">
               {t(room.description)}
             </p>

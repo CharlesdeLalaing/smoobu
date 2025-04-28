@@ -1,6 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { isToday, isPastOrToday, formatDate, isSameDate } from "../../utils/dateUtils";
+import {
+  isToday,
+  isPastOrToday,
+  formatDate,
+  isSameDate,
+} from "../../utils/dateUtils";
 import { isDateCheckinOnly } from "../../hooks/roomUtils";
 import { AvailabilityService } from "../services/AvailabilityService";
 
@@ -15,6 +20,9 @@ export const CalendarDay = ({
   onDateClick,
   onDateMouseEnter,
   onDateMouseLeave,
+  // Assuming currency is passed down or globally available, e.g., 'EUR'
+  // For simplicity, let's hardcode it here, but ideally get it from props/context
+  currency = "€", // Or '$', '£', etc.
 }) => {
   if (dayObj.empty) {
     return (
@@ -28,11 +36,24 @@ export const CalendarDay = ({
   const date = dayObj.date;
   const dateStr = formatDate(date);
 
-  // Add checks for past dates and today
   const isPast = isPastOrToday(date);
   const isTodayDate = isToday(date);
 
-  // Determine date status for styling - follow Smoobu's visual pattern
+  // --- Get the price for this day ---
+  const price = availabilityService.getPriceForDate(date);
+  // --- Format the price for display ---
+  const formattedPrice =
+    price !== null
+      ? price.toLocaleString(undefined, {
+          // Use locale formatting
+          style: "currency",
+          currency: currency === "€" ? "EUR" : "USD", // Map symbol to code
+          minimumFractionDigits: 0, // Optional: Adjust decimals
+          maximumFractionDigits: 0, // Optional: Adjust decimals
+        })
+      : null; // Or set to ''
+
+  // Determine date status (your existing logic)
   const isAvailable = availabilityService.isDateAvailable(
     date,
     startDate,
@@ -58,66 +79,55 @@ export const CalendarDay = ({
     startDate,
     endDate,
     true
-  );
+  ); // Assuming true for hasSearched here
 
-  // Build classes - apply them in the correct order
+  // Build classes (your existing logic)
   let classNames = "calendar-day";
-
-  // Add past or today classes first
-  if (isPast) {
-    classNames += isTodayDate ? " today" : " past-date";
-  }
-
-  if (!isAvailable) {
-    classNames += " unavailable";
-  } else if (isCheckout) {
-    classNames += " checkout-only";
-  } else if (isCheckin) {
-    classNames += " checkin-only";
-  } else if (isPartial) {
-    classNames += " partially-available";
-  }
-
+  if (isPast) classNames += isTodayDate ? " today" : " past-date";
+  if (!isAvailable && !isPartial)
+    classNames +=
+      " unavailable"; // Adjusted logic from previous discussion might be needed here
+  else if (isCheckout) classNames += " checkout-only";
+  else if (isCheckin) classNames += " checkin-only";
+  else if (isPartial) classNames += " partially-available";
   if (isSelected) classNames += " selected";
   if (isInRange) classNames += " in-range";
   if (isInHoverRange) classNames += " in-hover-range";
   if (isClickable) classNames += " clickable";
 
-  // Add data attributes for debugging
-  const dataStatus = isCheckout
-    ? "checkout-only"
-    : !isAvailable
-    ? "unavailable"
-    : isCheckin
-    ? "check-in-only"
-    : isPartial
-    ? "partially-available"
-    : "available";
+  // --- Determine if price should be shown ---
+  // Don't show price for past dates, or if no price exists
+  const showPrice = !isPast && formattedPrice !== null;
+  // Optional: You might also hide price on 'unavailable' days depending on preference
+  // const showPrice = !isPast && formattedPrice !== null && (isAvailable || isPartial);
 
   return (
     <div
       key={`day-${monthDate.getMonth()}-${date.getDate()}`}
       className={classNames}
-      onClick={() => onDateClick(date)}
+      onClick={() => isClickable && onDateClick(date)} // Only trigger click if clickable
       onMouseEnter={() => onDateMouseEnter(date)}
       onMouseLeave={onDateMouseLeave}
       data-date={dateStr}
-      data-status={dataStatus}
-      style={{
-        backgroundColor: isSelected
-          ? "#668E73"
-          : isInRange
-          ? "rgba(102, 142, 115, 0.2)"
-          : undefined,
-        color: isSelected ? "#ffffff" : undefined,
-        fontWeight: isSelected ? "bold" : undefined,
-      }}
+      // data-status={dataStatus} // Keep if needed
+      // Remove inline styles if managed by classes
     >
-      <span className="calendar-day-number">{date.getDate()}</span>
+      {/* --- Container for Number and Price (using Flexbox) --- */}
+      <div className="day-content">
+        <span className="calendar-day-number">{date.getDate()}</span>
+        {/* --- Conditionally render the price --- */}
+        {showPrice && (
+          <span className="calendar-day-price">
+            {/* Display formatted price */}
+            {formattedPrice}
+          </span>
+        )}
+      </div>
     </div>
   );
 };
 
+// --- PropTypes (add currency if passed as prop) ---
 CalendarDay.propTypes = {
   dayObj: PropTypes.shape({
     date: PropTypes.instanceOf(Date),

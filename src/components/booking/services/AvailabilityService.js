@@ -11,6 +11,27 @@ export class AvailabilityService {
     return this.availableDates;
   }
 
+  getPriceForDate(date) {
+    if (!this.roomId || !date) return null; // Basic validation
+
+    const availabilityData = this.getAvailabilityData();
+    if (!availabilityData || !availabilityData[this.roomId]) return null;
+
+    const dateStr = formatDate(date);
+    const roomData = availabilityData[this.roomId];
+
+    // Check if data exists for this date and has a price property
+    if (
+      roomData &&
+      roomData[dateStr] &&
+      typeof roomData[dateStr].price === "number"
+    ) {
+      return roomData[dateStr].price;
+    }
+
+    return null; // Return null if no price found
+  }
+
   isSmoobuCheckoutDay(date) {
     if (!this.roomId) return false;
 
