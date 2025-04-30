@@ -27,7 +27,7 @@ const BookingForm = () => {
     currentStep,
     error,
     loading,
-  
+
     showPriceDetails,
     successMessage,
     priceDetails,
@@ -57,6 +57,7 @@ const BookingForm = () => {
     setShowPriceDetails,
     setFormData,
     handleApplyCoupon,
+    handleSpaScheduleChange,
   } = useBookingForm();
 
   const { t } = useTranslation();
@@ -458,6 +459,8 @@ const BookingForm = () => {
     handleChange,
     appliedCoupon,
     handleApplyCoupon,
+    selectedExtras,
+    handleSpaScheduleChange,
   };
 
   const contactSectionProps = {

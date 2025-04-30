@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { api } from "../utils/api";
 
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -520,6 +520,31 @@ const handlePaymentSuccess = () => {
 };
 
 
+  const handleSpaScheduleChange = useCallback(
+    (value) => {
+      console.log(
+        "[useBookingForm] handleSpaScheduleChange called with:",
+        value
+      );
+      setFormData((prev) => {
+        let newState = { ...prev };
+        if (value === "later") {
+          newState.spaDateTime = null;
+          newState.spaBookingPreference = "later";
+        } else if (value instanceof Date) {
+          newState.spaDateTime = value.toISOString();
+          newState.spaBookingPreference = "scheduled";
+        } else {
+          newState.spaDateTime = null;
+          newState.spaBookingPreference = null;
+        }
+        console.log("[useBookingForm] New formData state:", newState);
+        return newState;
+      });
+    },
+    [setFormData]
+  );
+
 const handleApplyCoupon = async (couponCode) => {
   try {
     const couponsRef = collection(db, "coupons");
@@ -723,5 +748,6 @@ const handleApplyCoupon = async (couponCode) => {
     setCurrentStep,
     setShowPriceDetails,
     setShowPayment,
+    handleSpaScheduleChange,
   };
 };

@@ -1,17 +1,26 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { InputField } from "./InputField";
 import LongBird from "../../assets/GlobalImg/long_bird.webp";
-
+import SpaScheduler from "../spa/SpaScheduler";
 export const InfoSupSection = ({
   formData,
   handleChange,
   appliedCoupon,
   handleApplyCoupon,
+  selectedExtras,
+  handleSpaScheduleChange,
 }) => {
   const { t } = useTranslation();
   const [coupon, setCoupon] = useState("");
   const [couponError, setCouponError] = useState(null);
+
+  const [infoSupActiveTab, setInfoSupActiveTab] = useState("spa"); // Default to SPA tab
+
+  // --- ADDED: Check if a SPA extra is selected ---
+  const spaItemIds = ["formuleSpa", "formuleSpaBottle"]; // Your SPA extra IDs
+  const isSpaSelected = spaItemIds.some(
+    (id) => selectedExtras && selectedExtras[id] > 0
+  );
 
   const onApplyCoupon = async () => {
     // Don't allow applying if there's already a coupon
@@ -81,9 +90,56 @@ export const InfoSupSection = ({
   };
 
   return (
-    <div className="relative w-full mt-6 space-y-8">
-      {/* Notes Section */}
-      <div className="col-span-full">
+    <div className="relative w-full">
+      {/* --- MODIFIED: Conditionally render the entire Tab Section --- */}
+      {isSpaSelected && (
+        <>
+          {" "}
+          {/* Use Fragment to group tab elements without adding extra divs */}
+          {/* Tab Buttons Container (Now only shows SPA tab if relevant) */}
+          <div className="flex justify-start mb-4 border-b border-gray-300">
+            {/* SPA Tab Button - Always the 'active' one visually if this section is shown */}
+            <button
+              type="button"
+              className={`py-2 px-4 text-sm font-medium text-[#668E73] border-b-2 border-[#668E73]`} // Style is always active now
+              // onClick is no longer needed as there's nothing to switch to
+            >
+              {t("extras.spa.scheduleTitle", "Planifier votre séance SPA")}
+            </button>
+            {/* Test Tab Button REMOVED */}
+          </div>
+          {/* Tab Content Area (Now only shows SPA content if relevant) */}
+          <div className="min-h-[200px]">
+            {/* SPA Tab Content */}
+            <SpaScheduler
+              onScheduleChange={handleSpaScheduleChange}
+              initialDateTime={formData.spaDateTime}
+              initialPreference={formData.spaBookingPreference}
+              // Optional: Date constraints (make sure arrival/departure are passed if needed)
+              minDate={
+                formData.arrivalDate
+                  ? new Date(formData.arrivalDate)
+                  : undefined
+              }
+              maxDate={
+                formData.departureDate
+                  ? new Date(formData.departureDate)
+                  : undefined
+              } // Adjust last day logic if needed
+            />
+            {/* Test Tab Content REMOVED */}
+          </div>
+        </>
+      )}
+      {/* --- END MODIFIED: Conditional Tab Section --- */}
+
+      {/* Notes Section - Ensure consistent spacing whether tabs are shown or not */}
+      {/* Added conditional top margin/padding/border */}
+      <div
+        className={`col-span-full ${
+          isSpaSelected ? "pt-6 border-t" : "pt-0 border-t-0"
+        } border-gray-200`}
+      >
         <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
           {t("extras.infoSup.ownerMessage.label")}
           <textarea
@@ -99,6 +155,8 @@ export const InfoSupSection = ({
 
       {/* Coupon Section */}
       <div className="pt-4 pb-4 mt-6 mb-6 border-t border-b border-gray-200">
+        {/* Coupon content remains the same */}
+        {/* ... */}
         <div className="flex items-center gap-4">
           <div className="flex-grow">
             <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
@@ -151,12 +209,10 @@ export const InfoSupSection = ({
           </div>
         )}
       </div>
+
+      {/* Bird Image */}
       <div className="absolute top-[70px] left-[220px] sm:top-[70px] sm:left-[250px] md:top-[50px] md:left-[550px] lg:top-[50px] lg:left-[300px] xl:top-[230px] xl:left-[550px]">
-        <img
-          src={LongBird}
-          alt="Long Bird"
-          className="w-24 h-auto md:w-32 lg:w-40"
-        />
+        {/* ... (existing bird image) ... */}
       </div>
     </div>
   );

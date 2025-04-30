@@ -9,7 +9,7 @@ export const ExtrasSection = ({
   setSelectedCategory,
   formData,
   selectedRoom,
-  handleSpaScheduleChange,
+
 }) => {
   const { t } = useTranslation();
   const totalGuests =
@@ -149,28 +149,6 @@ function renderExtraItem(item) {
           />
         </div>
       </div>
-
-      {/* --- ADDED: Conditional Rendering for SpaScheduler --- */}
-      {isSpaPackage && spaQuantity > 0 && (
-        <div className="w-full pt-4 mt-2 border-t border-gray-200">
-          {" "}
-          {/* Added w-full */}
-          <h4 className="font-semibold text-md mb-3 text-[#668E73]">
-            {t("extras.spa.scheduleTitle", "Planifier votre séance SPA")}
-          </h4>
-          <SpaScheduler
-            // Pass the handler function down
-            onScheduleChange={handleSpaScheduleChange}
-            // Pass initial values from formData
-            initialDateTime={formData.spaDateTime}
-            initialPreference={formData.spaBookingPreference}
-            // Optional: Constrain dates based on booking dates
-            // minDate={formData.arrivalDate ? new Date(formData.arrivalDate) : undefined}
-            // maxDate={formData.departureDate ? new Date(formData.departureDate) : undefined}
-          />
-        </div>
-      )}
-      {/* --- END ADDED --- */}
     </div> // End main div for the extra item
   );
 }

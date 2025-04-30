@@ -1,183 +1,299 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import DatePicker from "react-datepicker";
-import axios from "axios"; //
+import axios from "axios"; // Or use fetch
+// Import necessary date-fns functions
+import {
+  format,
+  parse,
+  startOfDay,
+  isEqual,
+  addDays,
+  isBefore,
+} from "date-fns";
 
-// Import the datepicker CSS
-import "react-datepicker/dist/react-datepicker.css";
+// Helper: Format Date for display in dropdown (e.g., "August 15, 2024")
+const formatDateForDisplay = (date, locale = "en-US") => {
+  if (!date) return "";
+  // Example locales: 'en-US', 'fr-BE', 'nl-BE'
+  return date.toLocaleDateString(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long", // Optional: Add weekday for clarity
+  });
+};
 
-// Optional: Add custom CSS or use Tailwind utility classes directly
-
-// Helper function to format date for API (YYYY-MM-DD)
-// Avoids potential issues with different timezones just for formatting the date part
+// Helper: Format Date for API value (YYYY-MM-DD)
 const formatDateForAPI = (date) => {
   if (!date) return "";
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return format(date, "yyyy-MM-dd");
 };
 
 const SpaScheduler = ({
   onScheduleChange, // Callback: receives Date object, 'later', or null
   initialDateTime, // Optional: ISO String or Timestamp from existing booking
   initialPreference, // Optional: 'later' if previously selected
-  minDate, // Optional: Minimum bookable date (e.g., booking start date)
-  maxDate, // Optional: Maximum bookable date (e.g., booking end date)
+  minDate, // Expecting Date object or undefined (Booking arrival date)
+  maxDate, // Expecting Date object or undefined (Booking departure date - adjusted if needed)
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation(); // Get i18n instance for locale
+  const currentLocale = i18n.language || "en-US"; // Get current language for date formatting
 
   // --- State Initialization ---
-  const getInitialDate = () => {
+  const getInitialDateString = () => {
     if (initialDateTime && initialPreference !== "later") {
       try {
-        return new Date(initialDateTime);
+        return formatDateForAPI(new Date(initialDateTime));
       } catch (e) {
-        console.error("Error parsing initialDateTime:", initialDateTime, e);
+        console.error(
+          "Error parsing initialDateTime for date string:",
+          initialDateTime,
+          e
+        );
+        return "";
+      }
+    }
+    return "";
+  };
+
+  const getInitialSlot = () => {
+    if (initialDateTime && initialPreference !== "later") {
+      try {
+        return new Date(initialDateTime).toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      } catch (e) {
+        console.error(
+          "Error parsing initialDateTime for time slot:",
+          initialDateTime,
+          e
+        );
         return null;
       }
     }
     return null;
   };
 
-  const getInitialSlot = (initialDate) => {
-    if (initialDate) {
-      // Format as HH:mm
-      return initialDate.toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    }
-    return null;
-  };
-
-  const initialDateValue = getInitialDate();
-  const [selectedSpaDate, setSelectedSpaDate] = useState(initialDateValue);
-  const [availableSlots, setAvailableSlots] = useState([]);
-  const [selectedSlot, setSelectedSlot] = useState(
-    getInitialSlot(initialDateValue)
+  // State holds the selected date STRING (YYYY-MM-DD)
+  const [selectedSpaDateString, setSelectedSpaDateString] = useState(
+    getInitialDateString()
   );
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [selectedSlot, setSelectedSlot] = useState(getInitialSlot());
   const [chooseLaterChecked, setChooseLaterChecked] = useState(
     initialPreference === "later"
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // --- Generate Date Options for Dropdown ---
+  const dateOptions = useMemo(() => {
+    const options = [];
+    // Ensure minDate and maxDate are valid Date objects before proceeding
+    if (
+      !minDate ||
+      !maxDate ||
+      !(minDate instanceof Date) ||
+      !(maxDate instanceof Date) ||
+      isBefore(maxDate, minDate)
+    ) {
+      console.warn(
+        "SpaScheduler: Invalid minDate or maxDate provided for options generation.",
+        { minDate, maxDate }
+      );
+      return options;
+    }
+
+    let currentDate = startOfDay(minDate);
+    const lastDate = startOfDay(maxDate);
+
+    while (isBefore(currentDate, lastDate) || isEqual(currentDate, lastDate)) {
+      options.push({
+        value: formatDateForAPI(currentDate), // YYYY-MM-DD
+        label: formatDateForDisplay(currentDate, currentLocale), // Localized display
+      });
+      currentDate = addDays(currentDate, 1);
+    }
+    return options;
+  }, [minDate, maxDate, currentLocale]);
+
   // --- Fetch Availability Effect ---
   useEffect(() => {
-    // Only fetch if a date is selected and user hasn't chosen 'book later'
-    if (selectedSpaDate && !chooseLaterChecked) {
+    if (selectedSpaDateString && !chooseLaterChecked) {
       setIsLoading(true);
       setError("");
-      const dateString = formatDateForAPI(selectedSpaDate);
+      const dateString = selectedSpaDateString;
 
-      // Use environment variable for API base URL if needed
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:3000"; // Adjust if needed
+      // Ensure your API URL is correct (use environment variables ideally)
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
       axios
         .get(`${apiUrl}/api/spa/availability?date=${dateString}`)
         .then((response) => {
           setAvailableSlots(response.data || []);
-          // If a slot was previously selected, check if it's still available
+          // Reset selected slot if it's no longer available after fetching
           if (selectedSlot && !(response.data || []).includes(selectedSlot)) {
             console.warn(
               `Previously selected slot ${selectedSlot} is no longer available for ${dateString}.`
             );
-            setSelectedSlot(null); // Reset selection
-            onScheduleChange(null); // Inform parent state is cleared
+            setSelectedSlot(null);
+            // Only clear parent state if user hasn't just checked 'later'
+            if (!chooseLaterChecked) {
+              onScheduleChange(null);
+            }
           }
         })
         .catch((err) => {
           console.error("Error fetching SPA slots:", err);
-          const errorMsg =
-            err.response?.data?.message ||
-            t(
-              "extras.spa.errorLoading",
-              "Failed to load available time slots."
+          // Check for CORS or network errors specifically
+          let errorMsg = t(
+            "extras.spa.errorLoading",
+            "Failed to load available time slots."
+          );
+          if (err.message === "Network Error") {
+            errorMsg = t(
+              "errors.network",
+              "Network error. Please check connection or CORS setup."
             );
+          } else if (err.response) {
+            // Use server error message if available
+            errorMsg = err.response.data?.message || errorMsg;
+          }
           setError(errorMsg);
           setAvailableSlots([]);
         })
         .finally(() => setIsLoading(false));
     } else {
-      setAvailableSlots([]); // Clear slots if no date or 'choose later' is checked
-      setError(""); // Clear any previous errors
+      setAvailableSlots([]); // Clear slots if no date or 'choose later'
+      setError(""); // Clear errors
     }
-    // Dependencies: Run when date changes or 'choose later' is toggled
-    // Also include t, selectedSlot, onScheduleChange for error messages/slot validation
-  }, [selectedSpaDate, chooseLaterChecked, t, selectedSlot, onScheduleChange]);
+  }, [
+    selectedSpaDateString,
+    chooseLaterChecked,
+    t,
+    selectedSlot,
+    onScheduleChange,
+  ]); // Added onScheduleChange dependency
 
   // --- Event Handlers ---
-  const handleDateChange = (date) => {
-    setSelectedSpaDate(date);
+  const handleDateChange = (event) => {
+    const newDateString = event.target.value;
+    setSelectedSpaDateString(newDateString);
     setSelectedSlot(null); // Reset time slot when date changes
-    onScheduleChange(null); // Clear schedule in parent until a slot is picked
-    setError(""); // Clear errors when changing date
+    // Inform parent that selection is cleared until a time slot is picked
+    if (typeof onScheduleChange === "function") {
+      onScheduleChange(null);
+    } else {
+      console.error("onScheduleChange is not a function in handleDateChange");
+    }
+    setError(""); // Clear errors
   };
 
   const handleSlotSelect = useCallback(
     (slot) => {
       setSelectedSlot(slot);
-      if (selectedSpaDate && slot) {
+      if (selectedSpaDateString && slot) {
         try {
+          const datePart = parse(
+            selectedSpaDateString,
+            "yyyy-MM-dd",
+            new Date()
+          );
           const [hours, minutes] = slot.split(":").map(Number);
-          // Create a new Date object to avoid mutating the state directly
-          const combinedDateTime = new Date(selectedSpaDate);
-          combinedDateTime.setHours(hours, minutes, 0, 0); // Set hours, minutes, seconds, ms
-          onScheduleChange(combinedDateTime); // Pass the full Date object
+          const combinedDateTime = new Date(datePart);
+          combinedDateTime.setHours(hours, minutes, 0, 0);
+          if (typeof onScheduleChange === "function") {
+            onScheduleChange(combinedDateTime); // Pass Date object
+          } else {
+            console.error(
+              "onScheduleChange is not a function in handleSlotSelect"
+            );
+          }
         } catch (e) {
-          console.error("Error creating combined date/time:", e);
-          onScheduleChange(null); // Clear if error
+          console.error(
+            "Error parsing selected date string or setting time:",
+            e
+          );
+          if (typeof onScheduleChange === "function") {
+            onScheduleChange(null); // Clear if error
+          }
         }
       }
-      // Include dependencies that this handler relies on
     },
-    [selectedSpaDate, onScheduleChange]
+    [selectedSpaDateString, onScheduleChange]
   );
 
   const handleChooseLaterChange = (e) => {
     const isChecked = e.target.checked;
     setChooseLaterChecked(isChecked);
-    if (isChecked) {
-      // Optionally clear date/slot visually when checking 'later'
-      // setSelectedSpaDate(null); // Uncomment if desired
-      // setSelectedSlot(null); // Uncomment if desired
-      onScheduleChange("later"); // Inform parent: 'later'
+    if (typeof onScheduleChange === "function") {
+      if (isChecked) {
+        onScheduleChange("later"); // Inform parent: 'later'
+      } else {
+        // If unchecking, try to re-select the current date/time if valid, otherwise clear
+        if (selectedSpaDateString && selectedSlot) {
+          handleSlotSelect(selectedSlot); // Re-submit current selection
+        } else {
+          onScheduleChange(null); // Clear parent state
+        }
+      }
     } else {
-      // If unchecking, clear the 'later' preference. User needs to select a date/time now.
-      onScheduleChange(null); // Inform parent: clear selection
+      console.error(
+        "onScheduleChange is not a function in handleChooseLaterChange"
+      );
     }
   };
 
   // --- JSX Rendering ---
   return (
     <div className="p-3 space-y-4 bg-white border border-gray-200 rounded-md">
-      {/* Date Picker */}
+      {/* Date Dropdown */}
       <div>
         <label
-          htmlFor="spaDatePicker"
+          htmlFor="spaDateSelect"
           className="block mb-1 text-sm font-medium text-gray-700"
         >
           {t("extras.spa.selectDate", "Select Date")}
         </label>
-        <DatePicker
-          id="spaDatePicker"
-          selected={selectedSpaDate}
+        <select
+          id="spaDateSelect"
+          value={selectedSpaDateString}
           onChange={handleDateChange}
-          minDate={minDate}
-          maxDate={maxDate}
-          disabled={chooseLaterChecked}
-          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          dateFormat="yyyy-MM-dd" // Match API format for clarity, locale formatting happens via DatePicker internals
-          placeholderText={t(
-            "extras.spa.datePlaceholder",
-            "Click to select a date"
-          )}
-        />
+          disabled={chooseLaterChecked || dateOptions.length === 0}
+          className="w-full p-2 pr-8 bg-white bg-right bg-no-repeat border border-gray-300 rounded-md shadow-sm appearance-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed" // Added appearance-none for custom arrow styling if desired
+          style={{
+            backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>')`,
+            backgroundPosition: "right 0.5rem center",
+            backgroundSize: "1.25em 1.25em",
+          }} // Basic SVG arrow
+        >
+          <option value="" disabled={selectedSpaDateString !== ""}>
+            {dateOptions.length > 0
+              ? t("extras.spa.datePlaceholderDropdown", "-- Select a Date --")
+              : t(
+                  "extras.spa.datePlaceholderNoDates",
+                  "-- No dates available --"
+                )}
+          </option>
+          {dateOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        {dateOptions.length === 0 && !chooseLaterChecked && (
+          <p className="mt-1 text-xs text-gray-500">
+            {t(
+              "extras.spa.checkBookingDates",
+              "Ensure booking dates are selected."
+            )}
+          </p>
+        )}
       </div>
 
-      {/* Time Slot Selector - Conditional Rendering */}
-      {selectedSpaDate && !chooseLaterChecked && (
+      {/* Time Slot Selector */}
+      {selectedSpaDateString && !chooseLaterChecked && (
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             {t("extras.spa.selectTime", "Select Time Slot")}
@@ -209,11 +325,11 @@ const SpaScheduler = ({
                   onClick={() => handleSlotSelect(slot)}
                   className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-1 ${
                     selectedSlot === slot
-                      ? "bg-[#668E73] text-white border-[#5a7d66] ring-[#668E73]" // Active state
-                      : "bg-white text-gray-700 border-gray-300 hover:border-[#668E73] hover:text-[#668E73]" // Default state
+                      ? "bg-[#668E73] text-white border-[#5a7d66] ring-[#668E73]"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-[#668E73] hover:text-[#668E73]"
                   }`}
                 >
-                  {slot} {/* e.g., "10:00" */}
+                  {slot}
                 </button>
               ))}
             </div>
@@ -238,7 +354,6 @@ const SpaScheduler = ({
             {t("extras.spa.bookLater", "I want to book my time slot later")}
           </span>
         </label>
-        {/* Optional: Add explanatory text if needed */}
         {chooseLaterChecked && (
           <p className="pl-6 mt-1 text-xs text-gray-500">
             {t(

@@ -34,6 +34,7 @@ app.options("/webhook", cors());
 app.post("/webhook", express.raw({ type: "application/json" }), handleWebhook);
 
 
+
 // AlexisVS: init.js et faire une separation si les trucs qui avait au dessus en on pas besoins
 // Use JSON parsing and CORS for all other routes
 app.use(express.json());
@@ -103,6 +104,7 @@ app.get("/api/pending-bookings", (req, res) => {
 });
 
 app.get("/api/spa/availability", handleGetSpaAvailability);
+
 
 // AlexisVS: remove
 const PORT = process.env.PORT || 3000;
