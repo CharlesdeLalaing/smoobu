@@ -19,6 +19,7 @@ import { fetchRates } from "./third-party/smoobu/actions/api/rates.js";
 import { createPaymentIntent } from "./third-party/stripe/create-payment-intent.js";
 import { getBookingByPaymentIntentId } from "./third-party/stripe/get-payment-intent.js";
 import { getBookingHistoryByEmail } from "./third-party/smoobu/actions/api/get-booking-history-email.js";
+import { handleGetSpaAvailability } from "./third-party/smoobu/actions/api/spa-availability.js";
 
 // AlexisVS: init.js
 dotenv.config();
@@ -85,6 +86,8 @@ app.get("/api/apartments/:id", fetchApartmentsId);
 app.get("/api/rates", fetchRates);
 
 
+
+
 // AlexisVS: third-party/smobou/actions/api/create-payment-intent.js
 //CREATE PAYMENT INTENT
 app.post("/api/create-payment-intent", createPaymentIntent);
@@ -98,6 +101,8 @@ app.get("/api/pending-bookings", (req, res) => {
   const bookings = Array.from(pendingBookings.entries());
   res.json(bookings);
 });
+
+app.get("/api/spa/availability", handleGetSpaAvailability);
 
 // AlexisVS: remove
 const PORT = process.env.PORT || 3000;

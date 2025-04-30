@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { extraCategories } from "../extraCategories";
-
+import SpaScheduler from "../spa/SpaScheduler";
 export const ExtrasSection = ({
   selectedExtras,
   handleExtraChange,
@@ -9,6 +9,7 @@ export const ExtrasSection = ({
   setSelectedCategory,
   formData,
   selectedRoom,
+  handleSpaScheduleChange,
 }) => {
   const { t } = useTranslation();
   const totalGuests =
@@ -100,28 +101,40 @@ export const ExtrasSection = ({
     );
   }
 
-  function renderExtraItem(item) {
-    const itemName = item.name ? t(item.name) : item.name;
-    const itemDescription = item.descriptionKey
-      ? t(item.descriptionKey)
-      : item.description;
+function renderExtraItem(item) {
+  const itemName = item.name ? t(item.name) : item.name;
+  const itemDescription = item.descriptionKey
+    ? t(item.descriptionKey)
+    : item.description;
 
-    return (
-      <div
-        key={item.id}
-        className="flex items-start gap-4 p-4 transition-shadow bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md"
-      >
+  const spaItemIds = ["formuleSpa", "formuleSpaBottle"]; // List of your SPA extra IDs
+  const isSpaPackage = spaItemIds.includes(item.id); // Check if the current item's ID is in the list
+  const spaQuantity = selectedExtras[item.id] || 0;
+  // --- END ADDED ---
+
+  return (
+    // Main div for the extra item
+    <div
+      key={item.id}
+      className="flex flex-col gap-4 p-4 transition-shadow bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md" // Changed flex-row to flex-col
+    >
+      {/* Top part: Image, details, price, quantity */}
+      <div className="flex items-start w-full gap-4">
+        {" "}
+        {/* Added w-full */}
         <img
           src={item.image}
           alt={itemName}
-          className="object-cover w-24 h-24 rounded-lg"
+          className="object-cover w-24 h-24 rounded-lg shrink-0" // Added shrink-0
         />
         <div className="flex-grow space-y-2">
           <div className="flex items-start justify-between">
             <h3 className="text-[15px] font-medium text-gray-900">
               {itemName}
             </h3>
-            <div className="bg-[#668E73] px-2 py-1 rounded text-white text-[13px] font-medium">
+            <div className="bg-[#668E73] px-2 py-1 rounded text-white text-[13px] font-medium whitespace-nowrap">
+              {" "}
+              {/* Added whitespace-nowrap */}
               {item.price}€
             </div>
           </div>
@@ -136,8 +149,31 @@ export const ExtrasSection = ({
           />
         </div>
       </div>
-    );
-  }
+
+      {/* --- ADDED: Conditional Rendering for SpaScheduler --- */}
+      {isSpaPackage && spaQuantity > 0 && (
+        <div className="w-full pt-4 mt-2 border-t border-gray-200">
+          {" "}
+          {/* Added w-full */}
+          <h4 className="font-semibold text-md mb-3 text-[#668E73]">
+            {t("extras.spa.scheduleTitle", "Planifier votre séance SPA")}
+          </h4>
+          <SpaScheduler
+            // Pass the handler function down
+            onScheduleChange={handleSpaScheduleChange}
+            // Pass initial values from formData
+            initialDateTime={formData.spaDateTime}
+            initialPreference={formData.spaBookingPreference}
+            // Optional: Constrain dates based on booking dates
+            // minDate={formData.arrivalDate ? new Date(formData.arrivalDate) : undefined}
+            // maxDate={formData.departureDate ? new Date(formData.departureDate) : undefined}
+          />
+        </div>
+      )}
+      {/* --- END ADDED --- */}
+    </div> // End main div for the extra item
+  );
+}
 };
 
 const QuantitySelector = ({
