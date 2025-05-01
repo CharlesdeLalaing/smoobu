@@ -2,142 +2,122 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import LongBird from "../../assets/GlobalImg/long_bird.webp";
 import SpaScheduler from "../spa/SpaScheduler";
+// Define the specific coupon code that triggers single-slot SPA mode
+const SINGLE_SLOT_COUPON_CODE = "LETSGOMYLOVE";
+
 export const InfoSupSection = ({
   formData,
-  handleChange,
-  appliedCoupon,
+  handleChange, // Needed for Notes textarea
+  appliedCoupon, // Needed to check for the special coupon
   handleApplyCoupon,
-  selectedExtras,
-  handleSpaScheduleChange,
+  selectedExtras, // Needed to check if a SPA package was added
+  handleSpaScheduleChange, // Needed to pass down to SpaScheduler
 }) => {
   const { t } = useTranslation();
-  const [coupon, setCoupon] = useState("");
-  const [couponError, setCouponError] = useState(null);
+  const [coupon, setCoupon] = useState(""); // Local state for coupon input
+  const [couponError, setCouponError] = useState(null); // Local state for coupon validation errors
 
-  const [infoSupActiveTab, setInfoSupActiveTab] = useState("spa"); // Default to SPA tab
-
-  // --- ADDED: Check if a SPA extra is selected ---
-  const spaItemIds = ["formuleSpa", "formuleSpaBottle"]; // Your SPA extra IDs
+  // --- Determine if the SPA section should be shown ---
+  // Condition 1: Check if a standard SPA extra is selected
+  const spaItemIds = ["formuleSpa", "formuleSpaBottle"]; // IDs of your SPA extras
   const isSpaSelected = spaItemIds.some(
     (id) => selectedExtras && selectedExtras[id] > 0
   );
 
-  const onApplyCoupon = async () => {
-    // Don't allow applying if there's already a coupon
-    if (appliedCoupon) {
-      return;
-    }
+  // Condition 2: Check if the specific coupon is applied
+  const isSingleSlotCouponApplied =
+    appliedCoupon?.code?.toUpperCase() === SINGLE_SLOT_COUPON_CODE.toUpperCase();
 
+  // Combined Condition: Show SPA scheduler if EITHER is true
+  const shouldShowSpaSection = isSpaSelected || isSingleSlotCouponApplied;
+  // --- End SPA section visibility check ---
+
+  // Handle coupon application attempt
+  const onApplyCoupon = async () => {
+    if (appliedCoupon) return; // Don't allow applying if one is already active
     if (!coupon) {
       setCouponError(t("booking.coupon.errors.enterCode"));
       return;
     }
-
     try {
-      if (handleApplyCoupon) {
-        const result = await handleApplyCoupon(coupon);
+      if (handleApplyCoupon) { // Ensure the handler function exists
+        const result = await handleApplyCoupon(coupon); // Call the function passed from useBookingForm
 
+        // Handle potential errors returned from the validation logic
         if (result?.error) {
           switch (result.error) {
-            case "inactive":
-              setCouponError(t("booking.coupon.errors.inactive"));
-              break;
-            case "expired":
-              setCouponError(t("booking.coupon.errors.expired"));
-              break;
-            case "used":
-              setCouponError(t("booking.coupon.errors.alreadyUsed"));
-              break;
-            case "not_found":
-              setCouponError(t("booking.coupon.errors.notFound"));
-              break;
+            case "inactive": setCouponError(t("booking.coupon.errors.inactive")); break;
+            case "expired": setCouponError(t("booking.coupon.errors.expired")); break;
+            case "used": setCouponError(t("booking.coupon.errors.alreadyUsed")); break;
+            case "not_found": setCouponError(t("booking.coupon.errors.notFound")); break;
             case "invalid_dates":
-              // Extract start and end dates from the server message if available
-              if (result.message) {
-                // Try to extract dates using regex (matches dates in French format)
-                const dateRegex = /entre le (.+) et le (.+)$/;
-                const match = result.message.match(dateRegex);
-
-                if (match && match.length === 3) {
-                  // Use the captured start and end dates with the translation
-                  setCouponError(
-                    t("booking.coupon.errors.invalid_dates", {
-                      start: match[1],
-                      end: match[2],
-                    })
-                  );
-                } else {
-                  // Fallback to using the server message directly
-                  setCouponError(result.message);
-                }
+              // Attempt to show formatted dates from error message if possible
+              const dateRegex = /entre le (.+) et le (.+)$/;
+              const match = result.message?.match(dateRegex);
+              if (match && match.length === 3) {
+                setCouponError(t("booking.coupon.errors.invalid_dates", { start: match[1], end: match[2] }));
               } else {
-                // Fallback to generic message if no specific message
-                setCouponError(t("booking.coupon.errors.invalid"));
+                setCouponError(result.message || t("booking.coupon.errors.invalid"));
               }
               break;
-            default:
-              setCouponError(t("booking.coupon.errors.invalid"));
+            default: setCouponError(t("booking.coupon.errors.invalid"));
           }
         } else {
+          // Success! Clear error and input field
           setCouponError(null);
-          // Clear the input field after successful application
           setCoupon("");
         }
       }
     } catch (error) {
-      setCouponError(t("booking.coupon.errors.invalid"));
+      console.error("Error during coupon application:", error);
+      setCouponError(t("booking.coupon.errors.invalid")); // Generic error
     }
   };
 
   return (
-    <div className="relative w-full">
-      {/* --- MODIFIED: Conditionally render the entire Tab Section --- */}
-      {isSpaSelected && (
+    <div className="relative w-full mt-6 space-y-8">
+      {/* --- Conditionally Rendered SPA Scheduling Section --- */}
+      {shouldShowSpaSection && (
         <>
-          {" "}
-          {/* Use Fragment to group tab elements without adding extra divs */}
-          {/* Tab Buttons Container (Now only shows SPA tab if relevant) */}
+          {/* Title/Tab Area */}
           <div className="flex justify-start mb-4 border-b border-gray-300">
-            {/* SPA Tab Button - Always the 'active' one visually if this section is shown */}
             <button
               type="button"
-              className={`py-2 px-4 text-sm font-medium text-[#668E73] border-b-2 border-[#668E73]`} // Style is always active now
-              // onClick is no longer needed as there's nothing to switch to
+              className={`py-2 px-4 text-sm font-medium text-[#668E73] border-b-2 border-[#668E73] cursor-default`} // Made button non-interactive visually
             >
               {t("extras.spa.scheduleTitle", "Planifier votre séance SPA")}
             </button>
-            {/* Test Tab Button REMOVED */}
           </div>
-          {/* Tab Content Area (Now only shows SPA content if relevant) */}
+          {/* SpaScheduler Component */}
           <div className="min-h-[200px]">
-            {/* SPA Tab Content */}
             <SpaScheduler
-              onScheduleChange={handleSpaScheduleChange}
-              initialDateTime={formData.spaDateTime}
-              initialPreference={formData.spaBookingPreference}
-              // Optional: Date constraints (make sure arrival/departure are passed if needed)
+              onScheduleChange={handleSpaScheduleChange} // Pass handler down
+              initialDateTime={formData.spaDateTime} // Pass current selected date/time
+              initialPreference={formData.spaBookingPreference} // Pass current preference
               minDate={
+                // Pass booking start date
                 formData.arrivalDate
                   ? new Date(formData.arrivalDate)
                   : undefined
               }
               maxDate={
+                // Pass booking end date (adjust if last day is non-bookable)
                 formData.departureDate
                   ? new Date(formData.departureDate)
                   : undefined
-              } // Adjust last day logic if needed
+              }
+              appliedCoupon={appliedCoupon} // Pass coupon to determine single/double slot mode
             />
-            {/* Test Tab Content REMOVED */}
           </div>
         </>
       )}
-      {/* --- END MODIFIED: Conditional Tab Section --- */}
+      {/* --- End SPA Scheduling Section --- */}
 
-      {/* Notes Section - Ensure consistent spacing whether tabs are shown or not */}
-      {/* Added conditional top margin/padding/border */}
+      {/* --- Notes Section --- */}
+      {/* Apply conditional spacing/border only if SPA section above is rendered */}
       <div
         className={`col-span-full ${
-          isSpaSelected ? "pt-6 border-t" : "pt-0 border-t-0"
+          shouldShowSpaSection ? "pt-6 border-t" : "pt-0 border-t-0"
         } border-gray-200`}
       >
         <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
@@ -145,15 +125,16 @@ export const InfoSupSection = ({
           <textarea
             name="notice"
             value={formData.notice}
-            onChange={handleChange}
+            onChange={handleChange} // Use general handleChange from parent
             rows="3"
             placeholder={t("extras.infoSup.ownerMessage.placeholder")}
             className="mt-1 block w-full rounded border-[#668E73] border text-[16px] placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white p-2"
           />
         </label>
       </div>
+      {/* --- End Notes Section --- */}
 
-      {/* Coupon Section */}
+      {/* --- Coupon Section --- */}
       <div className="pt-4 pb-4 mt-6 mb-6 border-t border-b border-gray-200">
         <div>
           {/* Label is now separate from the input */}
@@ -215,13 +196,19 @@ export const InfoSupSection = ({
           </div>
         )}
       </div>
+      {/* --- End Coupon Section --- */}
 
-      {/* Bird Image */}
+      {/* Bird Image (Adjust positioning as needed) */}
       <div className="absolute top-[70px] left-[220px] sm:top-[70px] sm:left-[250px] md:top-[50px] md:left-[550px] lg:top-[50px] lg:left-[300px] xl:top-[230px] xl:left-[550px]">
-        {/* ... (existing bird image) ... */}
+        <img
+          src={LongBird}
+          alt="Long Bird"
+          className="w-24 h-auto opacity-50 pointer-events-none md:w-32 lg:w-40" // Added opacity/pointer-events if needed
+        />
       </div>
     </div>
   );
 };
+
 
 export default InfoSupSection;

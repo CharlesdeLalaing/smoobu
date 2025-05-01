@@ -14,18 +14,18 @@ import {
 
 // --- Constants ---
 const ARRIVAL_DAY_START_TIME = "15:00"; // Special start time for the arrival day
+const SINGLE_SLOT_COUPON_CODE = "LETSGOMYLOVE"; // Coupon code for single slot mode
 
 // --- Helper Functions ---
 
 // Format Date for display in dropdown (e.g., "Lundi 15 août 2024")
 const formatDateForDisplay = (date, locale = "en-US") => {
   if (!date) return "";
-  // Example locales: 'en-US', 'fr-BE', 'nl-BE'
   return date.toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
-    weekday: "long", // Added weekday for context
+    weekday: "long",
   });
 };
 
@@ -57,9 +57,19 @@ const SpaScheduler = ({
   initialPreference, // Optional: 'later' if previously selected
   minDate, // Expecting Date object or undefined (Booking arrival date)
   maxDate, // Expecting Date object or undefined (Booking departure date - adjusted if needed)
+  appliedCoupon, // <-- Receive the applied coupon object
 }) => {
   const { t, i18n } = useTranslation();
   const currentLocale = i18n.language || "en-US";
+
+  // --- Determine Selection Mode based on Coupon ---
+  const selectionMode = useMemo(() => {
+    // Check if appliedCoupon exists and its code matches (case-insensitive)
+    return appliedCoupon?.code?.toUpperCase() ===
+      SINGLE_SLOT_COUPON_CODE.toUpperCase()
+      ? "single"
+      : "double";
+  }, [appliedCoupon]); // Recalculate when coupon changes
 
   // --- State Initialization ---
   const getInitialDateString = () => {
@@ -85,7 +95,7 @@ const SpaScheduler = ({
           "en-GB",
           { hour: "2-digit", minute: "2-digit" }
         );
-        // Second slot depends on fetched duration, so only store the first initially
+        // Don't calculate second slot here; wait for duration from API
         return [firstSlotTime];
       } catch (e) {
         console.error(
@@ -103,16 +113,16 @@ const SpaScheduler = ({
     getInitialDateString()
   );
   const [availableSlots, setAvailableSlots] = useState([]);
-  const [slotDuration, setSlotDuration] = useState(null); // Store duration from API
-  const [selectedSlots, setSelectedSlots] = useState(getInitialSlots()); // Array: [startTime, endTime] or just [startTime]
+  const [slotDuration, setSlotDuration] = useState(null);
+  const [selectedSlots, setSelectedSlots] = useState(getInitialSlots()); // Array: [startTime] or [startTime, nextTime]
   const [chooseLaterChecked, setChooseLaterChecked] = useState(
     initialPreference === "later"
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  // Note: effectiveEndTime state removed as the special logic for it was reverted
 
   // --- Memos ---
-  // Generate Date Options for Dropdown
   const dateOptions = useMemo(() => {
     const options = [];
     if (
@@ -136,10 +146,26 @@ const SpaScheduler = ({
     return options;
   }, [minDate, maxDate, currentLocale]);
 
-  // Memoize the arrival date string for comparison
   const arrivalDateString = useMemo(() => {
     return minDate instanceof Date ? formatDateForAPI(minDate) : null;
   }, [minDate]);
+
+  // --- Effect to clear selection if mode changes ---
+  useEffect(() => {
+    // Only clear if not choosing 'later'
+    if (!chooseLaterChecked) {
+      console.log(
+        "Selection mode changed to:",
+        selectionMode,
+        " - Clearing selected slots if any."
+      );
+      // Clear selection immediately when mode changes to avoid inconsistency
+      setSelectedSlots([]);
+      if (typeof onScheduleChange === "function") {
+        onScheduleChange(null); // Also clear parent state
+      }
+    }
+  }, [selectionMode, chooseLaterChecked, onScheduleChange]); // Watch for mode changes
 
   // --- Fetch Availability Effect ---
   useEffect(() => {
@@ -148,7 +174,7 @@ const SpaScheduler = ({
       setError("");
       setSlotDuration(null);
       const dateString = selectedSpaDateString;
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:3000"; 
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
       axios
         .get(`${apiUrl}/api/spa/availability?date=${dateString}`)
@@ -159,25 +185,52 @@ const SpaScheduler = ({
           setAvailableSlots(fetchedSlots);
           setSlotDuration(fetchedDuration);
 
-          // Re-validate or complete initial selection
+          // Re-validate selection based on *current* mode and fetched data
           if (selectedSlots.length > 0 && fetchedDuration) {
             const firstSelected = selectedSlots[0];
-            const expectedSecond = calculateNextSlotTime(
-              firstSelected,
-              fetchedDuration
-            );
+            let isValidInitialSelection = false;
 
-            if (
-              !fetchedSlots.includes(firstSelected) ||
-              !fetchedSlots.includes(expectedSecond)
-            ) {
+            if (selectionMode === "single") {
+              // Single mode: Only need the first slot to be available
+              isValidInitialSelection = fetchedSlots.includes(firstSelected);
+            } else {
+              // Double mode
+              // Double mode: Need first and calculated second to be available
+              const expectedSecond = calculateNextSlotTime(
+                firstSelected,
+                fetchedDuration
+              );
+              isValidInitialSelection =
+                fetchedSlots.includes(firstSelected) &&
+                expectedSecond &&
+                fetchedSlots.includes(expectedSecond);
+              // If initial state only had first slot, complete it now if valid
+              if (
+                isValidInitialSelection &&
+                selectedSlots.length === 1 &&
+                expectedSecond
+              ) {
+                setSelectedSlots([firstSelected, expectedSecond]);
+              }
+            }
+
+            // If the initial/existing selection is no longer valid, clear it
+            if (!isValidInitialSelection) {
+              console.warn(
+                `Initial/existing selection [${selectedSlots.join(
+                  ", "
+                )}] no longer valid for mode '${selectionMode}'. Clearing.`
+              );
               setSelectedSlots([]);
-              if (!chooseLaterChecked && typeof onScheduleChange === "function")
+              if (
+                !chooseLaterChecked &&
+                typeof onScheduleChange === "function"
+              ) {
                 onScheduleChange(null);
-            } else if (selectedSlots.length === 1 && expectedSecond) {
-              setSelectedSlots([firstSelected, expectedSecond]);
+              }
             }
           } else {
+            // No initial slots selected, or no duration fetched, ensure selection is clear
             setSelectedSlots([]);
           }
         })
@@ -200,7 +253,13 @@ const SpaScheduler = ({
       setSlotDuration(null);
       if (!chooseLaterChecked) setSelectedSlots([]);
     }
-  }, [selectedSpaDateString, chooseLaterChecked, t, onScheduleChange]); // onScheduleChange added
+  }, [
+    selectedSpaDateString,
+    chooseLaterChecked,
+    t,
+    onScheduleChange,
+    selectionMode,
+  ]); // selectionMode added
 
   // --- Event Handlers ---
   const handleDateChange = (event) => {
@@ -217,34 +276,49 @@ const SpaScheduler = ({
 
   const handleSlotSelect = useCallback(
     (clickedSlot) => {
-      if (!slotDuration || !selectedSpaDateString) return;
+      if (!slotDuration || !selectedSpaDateString) return; // Need date & duration
 
       const isArrivalDaySelected = selectedSpaDateString === arrivalDateString;
       if (isArrivalDaySelected && clickedSlot < ARRIVAL_DAY_START_TIME) {
-        console.warn(
-          `Attempted to select slot ${clickedSlot} before ${ARRIVAL_DAY_START_TIME} on arrival day.`
-        );
-        return; // Prevent selection
+        return; // Prevent selection if too early on arrival
       }
 
-      const nextSlotTime = calculateNextSlotTime(clickedSlot, slotDuration);
+      let newSelectedSlots = [];
+      let isValidSelection = false;
 
-      if (nextSlotTime && availableSlots.includes(nextSlotTime)) {
-        const newSelectedSlots = [clickedSlot, nextSlotTime];
+      if (selectionMode === "single") {
+        // Single Slot Mode: Just select the clicked one
+        newSelectedSlots = [clickedSlot];
+        isValidSelection = true;
+      } else {
+        // Double Slot Mode: Calculate and check next slot
+        const nextSlotTime = calculateNextSlotTime(clickedSlot, slotDuration);
+        if (nextSlotTime && availableSlots.includes(nextSlotTime)) {
+          newSelectedSlots = [clickedSlot, nextSlotTime];
+          isValidSelection = true;
+        } else {
+          console.warn(
+            `Cannot select double slot starting at ${clickedSlot}, next slot ${nextSlotTime} unavailable.`
+          );
+          isValidSelection = false;
+        }
+      }
+
+      // Update state and call parent callback if selection is valid
+      if (isValidSelection) {
         setSelectedSlots(newSelectedSlots);
-
         try {
           const datePart = parse(
             selectedSpaDateString,
             "yyyy-MM-dd",
             new Date()
           );
-          const [hours, minutes] = clickedSlot.split(":").map(Number);
+          const [hours, minutes] = clickedSlot.split(":").map(Number); // Use clickedSlot for time
           const combinedDateTime = new Date(datePart);
           combinedDateTime.setHours(hours, minutes, 0, 0);
           if (typeof onScheduleChange === "function") {
             onScheduleChange(combinedDateTime);
-          }
+          } // Pass start time
         } catch (e) {
           console.error("Error creating combined date/time:", e);
           if (typeof onScheduleChange === "function") {
@@ -252,9 +326,6 @@ const SpaScheduler = ({
           }
         }
       } else {
-        console.warn(
-          `Cannot select ${clickedSlot}, next slot ${nextSlotTime} unavailable.`
-        );
         setSelectedSlots([]); // Clear invalid selection
         if (typeof onScheduleChange === "function") {
           onScheduleChange(null);
@@ -267,8 +338,9 @@ const SpaScheduler = ({
       availableSlots,
       slotDuration,
       arrivalDateString,
+      selectionMode,
     ]
-  ); // Added arrivalDateString
+  ); // Added selectionMode
 
   const handleChooseLaterChange = (e) => {
     const isChecked = e.target.checked;
@@ -277,9 +349,8 @@ const SpaScheduler = ({
       if (isChecked) {
         onScheduleChange("later");
       } else {
-        // If unchecking, clear parent state. User must now select.
-        setSelectedSlots([]); // Also clear local selection
-        onScheduleChange(null);
+        setSelectedSlots([]); // Clear local selection when unchecking
+        onScheduleChange(null); // Clear parent state
       }
     }
   };
@@ -336,14 +407,22 @@ const SpaScheduler = ({
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             {t("extras.spa.selectTime", "Select Time Slot")}
-            <span className="ml-2 text-xs text-gray-500">
-              (
-              {t(
-                "extras.spa.selectTwoSlotsNote",
-                "Select start time for 2 slots"
-              )}
-              )
-            </span>
+            {/* Conditionally show slot selection note */}
+            {selectionMode === "double" && (
+              <span className="ml-2 text-xs text-gray-500">
+                (
+                {t(
+                  "extras.spa.selectTwoSlotsNote",
+                  "Select start time for 2 slots"
+                )}
+                )
+              </span>
+            )}
+            {selectionMode === "single" && (
+              <span className="ml-2 text-xs text-gray-500">
+                ({t("extras.spa.selectOneSlotNote", "Select 1 time slot")})
+              </span>
+            )}
           </label>
           {isLoading && (
             <p className="text-sm text-gray-500 animate-pulse">
@@ -360,41 +439,52 @@ const SpaScheduler = ({
               {t("extras.spa.noSlots", "No slots for this date.")}
             </p>
           )}
+          {/* Button Rendering Logic */}
           {!isLoading &&
             !error &&
             availableSlots.length > 0 &&
             slotDuration && (
               <div className="flex flex-wrap gap-2">
                 {availableSlots.map((slot) => {
-                  // Determine if slot is selectable/enabled
-                  const expectedNextSlot = calculateNextSlotTime(
-                    slot,
-                    slotDuration
-                  );
-                  const nextSlotIsAvailable =
-                    expectedNextSlot &&
-                    availableSlots.includes(expectedNextSlot);
+                  // Determine if slot is enabled based on mode and arrival day
                   const isArrivalDaySelected =
                     selectedSpaDateString === arrivalDateString;
                   const isTooEarlyOnArrival =
                     isArrivalDaySelected && slot < ARRIVAL_DAY_START_TIME;
-                  const isDisabled =
-                    !nextSlotIsAvailable || isTooEarlyOnArrival;
-                  const isSelected = selectedSlots.includes(slot);
 
-                  // Generate tooltip message for disabled slots
-                  let disabledTooltip = "";
-                  if (isTooEarlyOnArrival) {
-                    disabledTooltip = t(
-                      "extras.spa.slotDisabledArrivalTooltip",
-                      `Available from ${ARRIVAL_DAY_START_TIME} on arrival day`
+                  let isEnabled = !isTooEarlyOnArrival;
+                  let disabledTooltip = isTooEarlyOnArrival
+                    ? t(
+                        "extras.spa.slotDisabledArrivalTooltip",
+                        `From ${ARRIVAL_DAY_START_TIME}`
+                      )
+                    : "";
+
+                  // Apply double-slot check ONLY if in double mode
+                  if (selectionMode === "double") {
+                    const expectedNextSlot = calculateNextSlotTime(
+                      slot,
+                      slotDuration
                     );
-                  } else if (!nextSlotIsAvailable) {
-                    disabledTooltip = t(
-                      "extras.spa.slotDisabledNextUnavailableTooltip",
-                      "Next slot unavailable"
-                    );
+                    const nextSlotIsAvailable =
+                      expectedNextSlot &&
+                      availableSlots.includes(expectedNextSlot);
+                    if (!nextSlotIsAvailable && isEnabled) {
+                      // Disable only if not already disabled by arrival rule
+                      isEnabled = false;
+                      disabledTooltip = t(
+                        "extras.spa.slotDisabledNextUnavailableTooltip",
+                        "Next slot unavailable"
+                      );
+                    }
                   }
+
+                  const isDisabled = !isEnabled;
+                  // Check if selected based on mode
+                  const isSelected =
+                    selectionMode === "single"
+                      ? selectedSlots[0] === slot // Single mode: check only first element
+                      : selectedSlots.includes(slot); // Double mode: check if included in array
 
                   return (
                     <button
@@ -409,7 +499,7 @@ const SpaScheduler = ({
                           ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" // Disabled
                           : "bg-white text-gray-700 border-gray-300 hover:border-[#668E73] hover:text-[#668E73]" // Default
                       }`}
-                      title={disabledTooltip} // Add tooltip for disabled reason
+                      title={disabledTooltip}
                     >
                       {slot}
                     </button>
@@ -417,7 +507,7 @@ const SpaScheduler = ({
                 })}
               </div>
             )}
-          {/* Message if slots are loaded but duration is missing (API issue?) */}
+          {/* Message if duration missing */}
           {!isLoading &&
             !error &&
             availableSlots.length > 0 &&
