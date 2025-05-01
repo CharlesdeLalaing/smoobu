@@ -12,24 +12,30 @@ import {
   addMinutes,
 } from "date-fns";
 
-// Helper: Format Date for display in dropdown
+// --- Constants ---
+const ARRIVAL_DAY_START_TIME = "15:00"; // Special start time for the arrival day
+
+// --- Helper Functions ---
+
+// Format Date for display in dropdown (e.g., "Lundi 15 août 2024")
 const formatDateForDisplay = (date, locale = "en-US") => {
   if (!date) return "";
+  // Example locales: 'en-US', 'fr-BE', 'nl-BE'
   return date.toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
-    weekday: "long", // Added weekday for more context
+    weekday: "long", // Added weekday for context
   });
 };
 
-// Helper: Format Date for API value (YYYY-MM-DD)
+// Format Date for API value (YYYY-MM-DD)
 const formatDateForAPI = (date) => {
   if (!date) return "";
   return format(date, "yyyy-MM-dd");
 };
 
-// Helper: Calculate next slot time string based on duration
+// Calculate next slot time string based on duration
 const calculateNextSlotTime = (startTimeString, durationMinutes) => {
   if (!startTimeString || !durationMinutes || durationMinutes <= 0) return null;
   try {
@@ -42,6 +48,8 @@ const calculateNextSlotTime = (startTimeString, durationMinutes) => {
     return null;
   }
 };
+
+// --- Component ---
 
 const SpaScheduler = ({
   onScheduleChange, // Callback: receives START Date object, 'later', or null
@@ -77,7 +85,7 @@ const SpaScheduler = ({
           "en-GB",
           { hour: "2-digit", minute: "2-digit" }
         );
-        // Cannot determine the second slot until duration is fetched
+        // Second slot depends on fetched duration, so only store the first initially
         return [firstSlotTime];
       } catch (e) {
         console.error(
@@ -96,14 +104,15 @@ const SpaScheduler = ({
   );
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotDuration, setSlotDuration] = useState(null); // Store duration from API
-  const [selectedSlots, setSelectedSlots] = useState(getInitialSlots()); // Array: [startTime, endTime] or just [startTime] initially
+  const [selectedSlots, setSelectedSlots] = useState(getInitialSlots()); // Array: [startTime, endTime] or just [startTime]
   const [chooseLaterChecked, setChooseLaterChecked] = useState(
     initialPreference === "later"
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // --- Generate Date Options for Dropdown ---
+  // --- Memos ---
+  // Generate Date Options for Dropdown
   const dateOptions = useMemo(() => {
     const options = [];
     if (
@@ -127,14 +136,19 @@ const SpaScheduler = ({
     return options;
   }, [minDate, maxDate, currentLocale]);
 
+  // Memoize the arrival date string for comparison
+  const arrivalDateString = useMemo(() => {
+    return minDate instanceof Date ? formatDateForAPI(minDate) : null;
+  }, [minDate]);
+
   // --- Fetch Availability Effect ---
   useEffect(() => {
     if (selectedSpaDateString && !chooseLaterChecked) {
       setIsLoading(true);
       setError("");
-      setSlotDuration(null); // Reset duration
+      setSlotDuration(null);
       const dateString = selectedSpaDateString;
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:3000";
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:3000"; 
 
       axios
         .get(`${apiUrl}/api/spa/availability?date=${dateString}`)
@@ -145,7 +159,7 @@ const SpaScheduler = ({
           setAvailableSlots(fetchedSlots);
           setSlotDuration(fetchedDuration);
 
-          // Re-validate or complete initial selection if needed
+          // Re-validate or complete initial selection
           if (selectedSlots.length > 0 && fetchedDuration) {
             const firstSelected = selectedSlots[0];
             const expectedSecond = calculateNextSlotTime(
@@ -157,61 +171,44 @@ const SpaScheduler = ({
               !fetchedSlots.includes(firstSelected) ||
               !fetchedSlots.includes(expectedSecond)
             ) {
-              // Previous selection is invalid
               setSelectedSlots([]);
-              if (!chooseLaterChecked) {
-                if (typeof onScheduleChange === "function")
-                  onScheduleChange(null);
-              }
+              if (!chooseLaterChecked && typeof onScheduleChange === "function")
+                onScheduleChange(null);
             } else if (selectedSlots.length === 1 && expectedSecond) {
-              // Initial state only had the first slot, now add the second
               setSelectedSlots([firstSelected, expectedSecond]);
-              // No need to call onScheduleChange here, it was called with initialDateTime
             }
           } else {
-            // If no slots were selected initially, clear selection state
             setSelectedSlots([]);
-            // (Do not call onScheduleChange(null) here as it might clear user's "later" preference if they just unchecked it)
           }
         })
         .catch((err) => {
           console.error("Error fetching SPA slots:", err);
-          let errorMsg = t(
-            "extras.spa.errorLoading",
-            "Failed to load available time slots."
-          );
+          let errorMsg = t("extras.spa.errorLoading", "Failed to load slots.");
           if (err.message === "Network Error")
-            errorMsg = t(
-              "errors.network",
-              "Network error. Check connection/CORS."
-            );
+            errorMsg = t("errors.network", "Network error.");
           else if (err.response)
             errorMsg = err.response.data?.message || errorMsg;
           setError(errorMsg);
           setAvailableSlots([]);
-          setSelectedSlots([]); // Clear selection on error
-          if (typeof onScheduleChange === "function") onScheduleChange(null); // Clear parent state on error
+          setSelectedSlots([]);
+          if (typeof onScheduleChange === "function") onScheduleChange(null);
         })
         .finally(() => setIsLoading(false));
     } else {
       setAvailableSlots([]);
       setError("");
       setSlotDuration(null);
-      // Don't clear selectedSlots here if chooseLater is checked, keep initial state if present
-      if (!chooseLaterChecked) {
-        setSelectedSlots([]);
-      }
+      if (!chooseLaterChecked) setSelectedSlots([]);
     }
-    // Removed selectedSlots from dependency array to prevent potential loops
-  }, [selectedSpaDateString, chooseLaterChecked, t, onScheduleChange]);
+  }, [selectedSpaDateString, chooseLaterChecked, t, onScheduleChange]); // onScheduleChange added
 
   // --- Event Handlers ---
   const handleDateChange = (event) => {
     const newDateString = event.target.value;
     setSelectedSpaDateString(newDateString);
-    setSelectedSlots([]); // Reset selected slots array
-    setAvailableSlots([]); // Clear previous slots immediately
-    setSlotDuration(null); // Clear duration
+    setSelectedSlots([]);
+    setAvailableSlots([]);
+    setSlotDuration(null);
     if (typeof onScheduleChange === "function") {
       onScheduleChange(null);
     }
@@ -220,7 +217,15 @@ const SpaScheduler = ({
 
   const handleSlotSelect = useCallback(
     (clickedSlot) => {
-      if (!slotDuration || !selectedSpaDateString) return; // Need duration and date
+      if (!slotDuration || !selectedSpaDateString) return;
+
+      const isArrivalDaySelected = selectedSpaDateString === arrivalDateString;
+      if (isArrivalDaySelected && clickedSlot < ARRIVAL_DAY_START_TIME) {
+        console.warn(
+          `Attempted to select slot ${clickedSlot} before ${ARRIVAL_DAY_START_TIME} on arrival day.`
+        );
+        return; // Prevent selection
+      }
 
       const nextSlotTime = calculateNextSlotTime(clickedSlot, slotDuration);
 
@@ -256,8 +261,14 @@ const SpaScheduler = ({
         }
       }
     },
-    [selectedSpaDateString, onScheduleChange, availableSlots, slotDuration]
-  ); // Dependencies
+    [
+      selectedSpaDateString,
+      onScheduleChange,
+      availableSlots,
+      slotDuration,
+      arrivalDateString,
+    ]
+  ); // Added arrivalDateString
 
   const handleChooseLaterChange = (e) => {
     const isChecked = e.target.checked;
@@ -355,36 +366,50 @@ const SpaScheduler = ({
             slotDuration && (
               <div className="flex flex-wrap gap-2">
                 {availableSlots.map((slot) => {
+                  // Determine if slot is selectable/enabled
                   const expectedNextSlot = calculateNextSlotTime(
                     slot,
                     slotDuration
                   );
-                  const canStartBlock =
+                  const nextSlotIsAvailable =
                     expectedNextSlot &&
                     availableSlots.includes(expectedNextSlot);
+                  const isArrivalDaySelected =
+                    selectedSpaDateString === arrivalDateString;
+                  const isTooEarlyOnArrival =
+                    isArrivalDaySelected && slot < ARRIVAL_DAY_START_TIME;
+                  const isDisabled =
+                    !nextSlotIsAvailable || isTooEarlyOnArrival;
                   const isSelected = selectedSlots.includes(slot);
+
+                  // Generate tooltip message for disabled slots
+                  let disabledTooltip = "";
+                  if (isTooEarlyOnArrival) {
+                    disabledTooltip = t(
+                      "extras.spa.slotDisabledArrivalTooltip",
+                      `Available from ${ARRIVAL_DAY_START_TIME} on arrival day`
+                    );
+                  } else if (!nextSlotIsAvailable) {
+                    disabledTooltip = t(
+                      "extras.spa.slotDisabledNextUnavailableTooltip",
+                      "Next slot unavailable"
+                    );
+                  }
 
                   return (
                     <button
                       key={slot}
                       type="button"
                       onClick={() => handleSlotSelect(slot)}
-                      disabled={!canStartBlock}
+                      disabled={isDisabled}
                       className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-1 ${
                         isSelected
-                          ? "bg-[#668E73] text-white border-[#5a7d66] ring-[#668E73]" // Highlight selected
-                          : !canStartBlock
+                          ? "bg-[#668E73] text-white border-[#5a7d66] ring-[#668E73]" // Selected
+                          : isDisabled
                           ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" // Disabled
                           : "bg-white text-gray-700 border-gray-300 hover:border-[#668E73] hover:text-[#668E73]" // Default
                       }`}
-                      title={
-                        !canStartBlock
-                          ? t(
-                              "extras.spa.slotDisabledTooltip",
-                              "Next slot unavailable"
-                            )
-                          : ""
-                      } // Tooltip for disabled
+                      title={disabledTooltip} // Add tooltip for disabled reason
                     >
                       {slot}
                     </button>
@@ -392,16 +417,13 @@ const SpaScheduler = ({
                 })}
               </div>
             )}
-          {/* Added message if slots are loaded but duration is missing (API issue?) */}
+          {/* Message if slots are loaded but duration is missing (API issue?) */}
           {!isLoading &&
             !error &&
             availableSlots.length > 0 &&
             !slotDuration && (
               <p className="p-2 text-sm text-orange-600 rounded-md bg-orange-50">
-                {t(
-                  "extras.spa.errorDurationMissing",
-                  "Slot duration missing, cannot select."
-                )}
+                {t("extras.spa.errorDurationMissing", "Slot duration missing.")}
               </p>
             )}
         </div>

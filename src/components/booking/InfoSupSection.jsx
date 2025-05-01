@@ -155,13 +155,19 @@ export const InfoSupSection = ({
 
       {/* Coupon Section */}
       <div className="pt-4 pb-4 mt-6 mb-6 border-t border-b border-gray-200">
-        {/* Coupon content remains the same */}
-        {/* ... */}
-        <div className="flex items-center gap-4">
-          <div className="flex-grow">
-            <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
-              {t("extras.infoSup.promoCode.label")}
+        <div>
+          {/* Label is now separate from the input */}
+          <label
+            htmlFor="couponInput"
+            className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1"
+          >
+            {t("extras.infoSup.promoCode.label")}
+          </label>
+          {/* Flex container for the input and button */}
+          <div className="flex items-center gap-4">
+            <div className="flex-grow">
               <input
+                id="couponInput"
                 type="text"
                 value={coupon}
                 onChange={(e) => {
@@ -170,27 +176,27 @@ export const InfoSupSection = ({
                 }}
                 disabled={appliedCoupon !== null}
                 placeholder={t("extras.infoSup.promoCode.placeholder")}
-                className={`mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2 ${
+                className={`block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2 ${
                   couponError ? "border-red-500" : ""
                 } ${appliedCoupon ? "bg-gray-100" : ""}`}
               />
-            </label>
-            {couponError && (
-              <p className="mt-1 text-sm text-red-500">{couponError}</p>
-            )}
+              {couponError && (
+                <p className="mt-1 text-sm text-red-500">{couponError}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={onApplyCoupon}
+              disabled={appliedCoupon !== null}
+              className={`h-12 px-6 rounded shadow-sm text-[16px] font-medium text-white ${
+                appliedCoupon
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#668E73] hover:bg-opacity-90"
+              } focus:outline-none`}
+            >
+              {t("extras.infoSup.promoCode.button")}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onApplyCoupon}
-            disabled={appliedCoupon !== null}
-            className={`h-12 px-6 rounded shadow-sm text-[16px] font-medium text-white ${
-              appliedCoupon
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-[#668E73] hover:bg-opacity-90"
-            } focus:outline-none`}
-          >
-            {t("extras.infoSup.promoCode.button")}
-          </button>
         </div>
         {appliedCoupon && !couponError && (
           <div className="mt-2">
