@@ -1,7 +1,7 @@
-import { db } from "../../../../firebase-config.js"; // Ensure path and .js extension are correct for your setup if using ES Modules
-import { format, parse, startOfDay, endOfDay, isEqual } from "date-fns"; // Assuming date-fns is installed
+import { db } from "../../../../firebase-config.js"; // Adjust path and ensure .js if needed
+import { format, parse, startOfDay, endOfDay, isEqual } from "date-fns"; // Removed addMinutes as it's not used here
 
-// --- Helper Functions (keep these internal) ---
+// --- Helper Functions (internal to this file) ---
 const timeToMinutes = (timeStr) => {
   if (!timeStr || !timeStr.includes(":")) return null;
   const [hours, minutes] = timeStr.split(":").map(Number);
@@ -19,7 +19,7 @@ const minutesToTime = (totalMinutes) => {
 // --- End Helper Functions ---
 
 /**
- * Express route handler to get available SPA time slots for a given date.
+ * Express route handler to get available SPA time slots and duration for a given date.
  * Responds directly to the request.
  * @param {object} req - Express request object, expects req.query.date (YYYY-MM-DD).
  * @param {object} res - Express response object.
@@ -44,10 +44,9 @@ export async function handleGetSpaAvailability(req, res) {
   }
 
   try {
-    // --- Core Logic (mostly same as before) ---
+    // --- Core Logic ---
     const targetDate = parse(dateString, "yyyy-MM-dd", new Date());
     if (isNaN(targetDate.getTime())) {
-      // Although regex checked, parse could fail for dates like 2024-02-30
       return res.status(400).json({ message: "Invalid date value." });
     }
     const targetDateStart = startOfDay(targetDate);
@@ -59,7 +58,6 @@ export async function handleGetSpaAvailability(req, res) {
       console.error(
         "[SPA Availability Route] Default SPA settings missing ('spaSettings/default')."
       );
-      // Send error response directly
       return res
         .status(500)
         .json({ message: "SPA settings are not configured." });
@@ -67,6 +65,7 @@ export async function handleGetSpaAvailability(req, res) {
     const settings = settingsSnap.data();
     const defaultStartTime = settings.startTime || "09:00";
     const defaultEndTime = settings.endTime || "18:00";
+    // Store the duration to be returned
     const slotDurationMinutes = settings.slotDurationMinutes || 60;
 
     // Check for Overrides
@@ -91,14 +90,17 @@ export async function handleGetSpaAvailability(req, res) {
       }
     }
 
+    // If closed, return empty slots array but include duration
     if (isClosed) {
       console.log(
         `[SPA Availability Route] SPA is closed on ${dateString} based on override.`
       );
-      // Send empty array directly
-      return res.status(200).json([]);
+      return res
+        .status(200)
+        .json({ slots: [], slotDurationMinutes: slotDurationMinutes });
     }
 
+    // Convert effective times to minutes
     const startMinutes = timeToMinutes(effectiveStartTime);
     const endMinutes = timeToMinutes(effectiveEndTime);
     if (
@@ -118,12 +120,13 @@ export async function handleGetSpaAvailability(req, res) {
     const rangeStart = targetDateStart;
     const rangeEnd = endOfDay(targetDateStart);
     const bookingsRef = db.collection("bookings");
+    // Requires single-field index on spaDateTime in Firestore
     const bookingsSnap = await bookingsRef
       .where("spaDateTime", ">=", rangeStart)
       .where("spaDateTime", "<=", rangeEnd)
       .get();
 
-    const bookedSlots = new Set();
+    const bookedSlots = new Set(); // Store booked slots as "HH:MM" strings
     bookingsSnap.forEach((doc) => {
       const booking = doc.data();
       if (
@@ -131,6 +134,7 @@ export async function handleGetSpaAvailability(req, res) {
         typeof booking.spaDateTime.toDate === "function"
       ) {
         const slotDateTime = booking.spaDateTime.toDate();
+        // Ensure the booking is actually on the target day (sanity check)
         if (isEqual(startOfDay(slotDateTime), targetDateStart)) {
           const timeString = format(slotDateTime, "HH:mm");
           bookedSlots.add(timeString);
@@ -138,17 +142,16 @@ export async function handleGetSpaAvailability(req, res) {
       }
     });
 
-    // Generate and Filter Slots
+    // Generate potential slots based on start time and duration
     const availableSlots = [];
     let currentMinutes = startMinutes;
     while (currentMinutes < endMinutes) {
+      // Generate slots that *start* before the end time
       const potentialSlotTime = minutesToTime(currentMinutes);
-      if (currentMinutes + slotDurationMinutes <= endMinutes) {
-        if (!bookedSlots.has(potentialSlotTime)) {
-          availableSlots.push(potentialSlotTime);
-        }
+      if (!bookedSlots.has(potentialSlotTime)) {
+        availableSlots.push(potentialSlotTime);
       }
-      currentMinutes += slotDurationMinutes;
+      currentMinutes += slotDurationMinutes; // Increment by the actual duration
     }
     // --- End Core Logic ---
 
@@ -156,20 +159,21 @@ export async function handleGetSpaAvailability(req, res) {
       `[SPA Availability Route] Sending available slots for ${dateString}:`,
       availableSlots
     );
-    // Send successful response with the slots array
-    res.status(200).json(availableSlots);
+    // Respond with an object containing both the slots array and the duration
+    res
+      .status(200)
+      .json({
+        slots: availableSlots,
+        slotDurationMinutes: slotDurationMinutes,
+      });
   } catch (error) {
-    // Catch any unexpected errors during execution
     console.error(
       `[SPA Availability Route] Unexpected error for date ${dateString}:`,
       error
     );
-    // Send generic server error response
     res.status(500).json({
       message:
         "An internal server error occurred while retrieving SPA availability.",
-      // Optionally include error.message in dev environment but not production
-      // details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 }
