@@ -140,29 +140,69 @@ export async function handleGetSpaAvailability(req, res) {
     }
 
     // --- Get Existing Bookings from Firestore ---
-    const rangeStart = targetDateStart;
-    const rangeEnd = endOfDay(targetDateStart);
-    const bookingsRef = db.collection("bookings");
-    const bookingsSnap = await bookingsRef
-      .where("spaDateTime", ">=", rangeStart)
-      .where("spaDateTime", "<=", rangeEnd)
-      .get();
+const rangeStart = targetDateStart;
+const rangeEnd = endOfDay(targetDateStart);
+const bookingsRef = db.collection("bookings");
 
-    const bookedSlots = new Set(); // Store booked slots as "HH:MM" strings
-    bookingsSnap.forEach((doc) => {
-      const booking = doc.data();
-      if (
-        booking.spaDateTime &&
-        typeof booking.spaDateTime.toDate === "function"
+// First, get bookings with spaDateTime on the target date
+const bookingsSnap = await bookingsRef
+  .where("spaDateTime", ">=", rangeStart)
+  .where("spaDateTime", "<=", rangeEnd)
+  .get();
+
+const bookedSlots = new Set(); // Store booked slots as "HH:MM" strings
+
+// Process each booking to mark all affected slots as booked
+bookingsSnap.forEach((doc) => {
+  const booking = doc.data();
+
+  if (booking.spaDateTime && typeof booking.spaDateTime.toDate === "function") {
+    const startSlotDateTime = booking.spaDateTime.toDate();
+
+    if (isEqual(startOfDay(startSlotDateTime), targetDateStart)) {
+      // Add the start slot
+      const startTimeString = format(startSlotDateTime, "HH:mm");
+      bookedSlots.add(startTimeString);
+
+      // If we have spaSlots array, add all slots in it
+      if (booking.spaSlots && Array.isArray(booking.spaSlots)) {
+        booking.spaSlots.forEach((slot) => {
+          bookedSlots.add(slot);
+        });
+      }
+      // If we have spaEndDateTime, calculate and add any intermediate slots
+      else if (
+        booking.spaEndDateTime &&
+        typeof booking.spaEndDateTime.toDate === "function"
       ) {
-        const slotDateTime = booking.spaDateTime.toDate();
-        if (isEqual(startOfDay(slotDateTime), targetDateStart)) {
-          // Ensure it's for the correct day
-          const timeString = format(slotDateTime, "HH:mm");
-          bookedSlots.add(timeString);
+        const endSlotDateTime = booking.spaEndDateTime.toDate();
+        const endTimeString = format(endSlotDateTime, "HH:mm");
+
+        // Calculate number of slots between start and end
+        const startMinutes = timeToMinutes(startTimeString);
+        const endMinutes = timeToMinutes(endTimeString);
+        const numSlots = Math.ceil(
+          (endMinutes - startMinutes) / slotDurationMinutes
+        );
+
+        // Mark all intermediate slots as booked
+        let currentMinutes = startMinutes;
+        for (let i = 0; i < numSlots; i++) {
+          const slotTime = minutesToTime(currentMinutes);
+          bookedSlots.add(slotTime);
+          currentMinutes += slotDurationMinutes;
         }
       }
-    });
+      // If we only have the start time, assume it books the default duration
+      else {
+        // Mark the next slot as booked too (for double slot bookings)
+        const startMinutes = timeToMinutes(startTimeString);
+        const nextSlotTime = minutesToTime(startMinutes + slotDurationMinutes);
+        bookedSlots.add(nextSlotTime);
+      }
+    }
+  }
+});
     // --- End Get Bookings ---
 
     // --- Generate potential slots using FINAL effective times ---

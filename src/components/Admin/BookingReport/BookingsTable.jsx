@@ -94,6 +94,14 @@ const BookingsTable = ({
               </th>
               <th
                 className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
+                onClick={() => handleSort("spaDateTime")}
+              >
+                SPA{" "}
+                {sortField === "spaDateTime" &&
+                  (sortDirection === "asc" ? "↑" : "↓")}
+              </th>
+              <th
+                className="px-4 py-3 text-xs font-semibold text-left text-gray-600 cursor-pointer"
                 onClick={() => handleSort("price")}
               >
                 Prix total{" "}
@@ -147,12 +155,15 @@ const BookingsTable = ({
                       {getPortalName(booking.portal)}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">
+                      {formatSpaInfo(booking)}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500">
                       {calculateTotalPrice(booking)}
                     </td>
                   </tr>
                   {expandedBooking === booking.id && (
                     <tr key={`expanded-${booking.id}`}>
-                      <td colSpan="10" className="p-0">
+                      <td colSpan="11" className="p-0">
                         {/* Make sure booking is defined before passing it to BookingDetails */}
                         {booking && <BookingDetails booking={booking} />}
                       </td>
@@ -163,7 +174,7 @@ const BookingsTable = ({
             ) : (
               <tr>
                 <td
-                  colSpan="10"
+                  colSpan="11"
                   className="px-4 py-3 text-sm text-center text-gray-500"
                 >
                   Aucune réservation trouvée pour cette période
@@ -177,6 +188,46 @@ const BookingsTable = ({
   );
 };
 
+const formatSpaInfo = (booking) => {
+  if (
+    booking.spaInfo?.status === "scheduled" &&
+    booking.spaInfo?.formattedDateTime
+  ) {
+    return (
+      <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+        {booking.spaInfo.formattedDateTime}
+      </span>
+    );
+  } else if (booking.spaInfo?.status === "to_be_scheduled") {
+    return (
+      <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
+        À programmer
+      </span>
+    );
+  } else if (booking.spaDateTime) {
+    // Fallback if spaInfo is not available but spaDateTime is
+    // Handle Firestore Timestamp conversion
+    const date = booking.spaDateTime.toDate
+      ? booking.spaDateTime.toDate()
+      : new Date(booking.spaDateTime.seconds * 1000);
+
+    return (
+      <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+        {date.toLocaleString("fr-BE", {
+          dateStyle: "short",
+          timeStyle: "short",
+        })}
+      </span>
+    );
+  } else if (booking.spaBookingPreference === "later") {
+    return (
+      <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
+        À programmer
+      </span>
+    );
+  }
+  return "-";
+};
 
 const calculateTotalPrice = (booking) => {
   // Use the exact same calculation function as in BookingDetails

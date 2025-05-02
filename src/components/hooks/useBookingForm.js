@@ -372,12 +372,16 @@ export const useBookingForm = () => {
         settings: selectedApartmentPriceDetails?.settings,
       },
       price: finalTotal,
+      spaDateTime: formData.spaDateTime,
+      spaBookingPreference: formData.spaBookingPreference,
       couponApplied: appliedCoupon
         ? {
             /* ... */
           }
         : null,
     };
+
+    
     localStorage.setItem("bookingData", JSON.stringify(bookingData));
 
     // Include payment_intent only if it exists (not a free booking)
@@ -387,28 +391,37 @@ export const useBookingForm = () => {
     navigate(`/booking-confirmation${paymentIntentQuery}`);
   };
 
-  const handleSpaScheduleChange = useCallback(
-    (value) => {
-      setFormData((prev) => {
-        let newState = { ...prev };
-        if (value === "later") {
-          newState.spaDateTime = null;
-          newState.spaBookingPreference = "later";
-        } else if (value instanceof Date) {
-          newState.spaDateTime = value.toISOString();
-          newState.spaBookingPreference = "scheduled";
-        } else {
-          newState.spaDateTime = null;
-          newState.spaBookingPreference = null;
-        }
-        return newState;
-      });
-      if (value !== null) {
-        setSpaValidationError("");
-      }
-    },
-    [setFormData, setSpaValidationError]
-  );
+ const handleSpaScheduleChange = useCallback(
+   (value) => {
+     setFormData((prev) => {
+       let newState = { ...prev };
+       if (value === "later") {
+         newState.spaDateTime = null;
+         newState.spaEndDateTime = null; // Add this field
+         newState.spaSlots = null; // Add this field
+         newState.spaBookingPreference = "later";
+       } else if (value && value.startDateTime instanceof Date) {
+         // Handle the new object format
+         newState.spaDateTime = value.startDateTime.toISOString();
+         newState.spaEndDateTime = value.endDateTime
+           ? value.endDateTime.toISOString()
+           : null;
+         newState.spaSlots = value.slots || [];
+         newState.spaBookingPreference = "scheduled";
+       } else {
+         newState.spaDateTime = null;
+         newState.spaEndDateTime = null;
+         newState.spaSlots = null;
+         newState.spaBookingPreference = null;
+       }
+       return newState;
+     });
+     if (value !== null) {
+       setSpaValidationError("");
+     }
+   },
+   [setFormData, setSpaValidationError]
+ );
 
   const handleApplyCoupon = async (couponCode) => {
     // ... (Coupon application logic - seems okay) ...
@@ -626,7 +639,6 @@ export const useBookingForm = () => {
     // Handlers/Functions
     handleChange,
     handleExtraChange,
-    // handleCheckAvailability, // This likely comes from useAvailabilityCheck hook, don't return from here
     handleSubmit,
     handlePaymentSuccess,
     handleApplyCoupon,
@@ -646,4 +658,4 @@ export const useBookingForm = () => {
     setShowPayment,
     handleSpaScheduleChange, // Expose this
   };
-}; // --- End of the useBookingForm hook definition ---
+}; 

@@ -1,4 +1,7 @@
 import { extrasFrenchNames } from "../../../config/config.js";
+import admin from "firebase-admin";
+import { format, parseISO } from "date-fns"; // Add date-fns imports
+import { fr } from "date-fns/locale";
 
 export const prepareBookingDocument = (
   bookingData,
@@ -237,12 +240,53 @@ export const prepareBookingDocument = (
     // Required flags
     conditions: bookingData.conditions || true,
     language: bookingData.language || "en",
+
+    spaDateTime: bookingData.spaDateTime
+      ? admin.firestore.Timestamp.fromDate(parseISO(bookingData.spaDateTime))
+      : null,
+    spaEndDateTime: bookingData.spaEndDateTime
+      ? admin.firestore.Timestamp.fromDate(parseISO(bookingData.spaEndDateTime))
+      : null,
+    spaSlots: bookingData.spaSlots || [],
+    spaBookingPreference: bookingData.spaBookingPreference || null,
+
+    // Optional: Add a formatted SPA info object for easier display/reporting
+    spaInfo:
+      bookingData.spaDateTime || bookingData.spaBookingPreference
+        ? {
+            hasSpaTreatment: true,
+            scheduledDateTime: bookingData.spaDateTime
+              ? admin.firestore.Timestamp.fromDate(
+                  parseISO(bookingData.spaDateTime)
+                )
+              : null,
+            endDateTime: bookingData.spaEndDateTime
+              ? admin.firestore.Timestamp.fromDate(
+                  parseISO(bookingData.spaEndDateTime)
+                )
+              : null,
+            preference: bookingData.spaBookingPreference || null,
+            formattedDateTime: bookingData.spaDateTime
+              ? format(parseISO(bookingData.spaDateTime), "PPPp", {
+                  locale: fr,
+                })
+              : null,
+            slots: bookingData.spaSlots || [],
+            status:
+              bookingData.spaBookingPreference === "later"
+                ? "to_be_scheduled"
+                : bookingData.spaDateTime
+                ? "scheduled"
+                : null,
+          }
+        : null,
   };
 };
 
 // Helper function to get property name
 function getPropertyName(apartmentId) {
   const propertyNames = {
+    2565753: "La Cabane du Chêne",
     1946282: "Le Dôme des Libellules",
     1644643: "La Bulle du Ruisseau",
     1946279: "Le Moulin",

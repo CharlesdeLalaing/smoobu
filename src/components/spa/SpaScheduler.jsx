@@ -280,75 +280,87 @@ const SpaScheduler = ({
     };
 
   // Handles clicks on the time slot buttons
-  const handleSlotSelect = useCallback(
-    (clickedSlot) => {
-      if (!slotDuration || !selectedSpaDateString) {
-        console.warn("Cannot select slot: duration or date string missing.");
-        return;
-      }
-      const isArrivalDaySelected = selectedSpaDateString === arrivalDateString;
-      if (isArrivalDaySelected && clickedSlot < ARRIVAL_DAY_START_TIME) {
-        console.warn(`Selection prevented: ${clickedSlot} is before ${ARRIVAL_DAY_START_TIME} on arrival day.`);
-        return;
-      }
+const handleSlotSelect = useCallback(
+  (clickedSlot) => {
+    if (!slotDuration || !selectedSpaDateString) {
+      console.warn("Cannot select slot: duration or date string missing.");
+      return;
+    }
+    const isArrivalDaySelected = selectedSpaDateString === arrivalDateString;
+    if (isArrivalDaySelected && clickedSlot < ARRIVAL_DAY_START_TIME) {
+      console.warn(
+        `Selection prevented: ${clickedSlot} is before ${ARRIVAL_DAY_START_TIME} on arrival day.`
+      );
+      return;
+    }
 
-      let newSelectedSlots = [];
-      let isValidSelection = false;
+    let newSelectedSlots = [];
+    let isValidSelection = false;
 
-      // *** LETSGOMYLOVE related: Slot selection logic branching (Single mode branch commented out) ***
-      /*
-      if (selectionMode === "single") {
-        // *** LETSGOMYLOVE related: Single Slot Mode logic (Commented Out) ***
-        newSelectedSlots = [clickedSlot];
-        isValidSelection = true;
-      } else {
-      */
-        // Always use Double Slot Mode logic now
-        const nextSlotTime = calculateNextSlotTime(clickedSlot, slotDuration);
-        if (nextSlotTime && availableSlots.includes(nextSlotTime)) {
-          newSelectedSlots = [clickedSlot, nextSlotTime];
-          isValidSelection = true;
-        } else {
-          console.warn(`Cannot select double slot starting at ${clickedSlot}. Next slot ${nextSlotTime || "N/A"} is unavailable.`);
-          isValidSelection = false;
+    // Always use Double Slot Mode logic now
+    const nextSlotTime = calculateNextSlotTime(clickedSlot, slotDuration);
+    if (nextSlotTime && availableSlots.includes(nextSlotTime)) {
+      newSelectedSlots = [clickedSlot, nextSlotTime];
+      isValidSelection = true;
+    } else {
+      console.warn(
+        `Cannot select double slot starting at ${clickedSlot}. Next slot ${
+          nextSlotTime || "N/A"
+        } is unavailable.`
+      );
+      isValidSelection = false;
+    }
+
+    if (isValidSelection) {
+      setSelectedSlots(newSelectedSlots);
+      try {
+        const datePart = parse(selectedSpaDateString, "yyyy-MM-dd", new Date());
+        const [hours, minutes] = clickedSlot.split(":").map(Number);
+        const combinedDateTime = new Date(datePart);
+        combinedDateTime.setHours(hours, minutes, 0, 0);
+
+        // MODIFIED: Create an object with both slot times
+        const bookingData = {
+          startDateTime: combinedDateTime,
+          endDateTime: nextSlotTime
+            ? (() => {
+                const [nextHours, nextMinutes] = nextSlotTime
+                  .split(":")
+                  .map(Number);
+                const nextDateTime = new Date(datePart);
+                nextDateTime.setHours(nextHours, nextMinutes, 0, 0);
+                return nextDateTime;
+              })()
+            : null,
+          slots: newSelectedSlots, // Include the array of selected time slots
+        };
+
+        if (typeof onScheduleChange === "function") {
+          // Pass the booking data object instead of just the start datetime
+          onScheduleChange(bookingData);
         }
-      /*
-      }
-      */
-
-      if (isValidSelection) {
-        setSelectedSlots(newSelectedSlots);
-        try {
-          const datePart = parse(selectedSpaDateString, "yyyy-MM-dd", new Date());
-          const [hours, minutes] = clickedSlot.split(":").map(Number);
-          const combinedDateTime = new Date(datePart);
-          combinedDateTime.setHours(hours, minutes, 0, 0);
-          if (typeof onScheduleChange === "function") {
-            onScheduleChange(combinedDateTime);
-          }
-        } catch (e) {
-          console.error("Error creating combined date/time object:", e);
-          if (typeof onScheduleChange === "function") {
-            onScheduleChange(null);
-          }
-        }
-      } else {
-        setSelectedSlots([]);
+      } catch (e) {
+        console.error("Error creating combined date/time object:", e);
         if (typeof onScheduleChange === "function") {
           onScheduleChange(null);
         }
       }
-    },
-    [
-      selectedSpaDateString,
-      onScheduleChange,
-      availableSlots,
-      slotDuration,
-      arrivalDateString,
-      // selectionMode dependency is effectively inert now
-      selectionMode,
-    ]
-  );
+    } else {
+      setSelectedSlots([]);
+      if (typeof onScheduleChange === "function") {
+        onScheduleChange(null);
+      }
+    }
+  },
+  [
+    selectedSpaDateString,
+    onScheduleChange,
+    availableSlots,
+    slotDuration,
+    arrivalDateString,
+    selectionMode,
+  ]
+);
 
     const handleChooseLaterChange = (e) => {
         const isChecked = e.target.checked;

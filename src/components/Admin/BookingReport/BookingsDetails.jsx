@@ -5,6 +5,7 @@ import ClientInfoSection from "./sections/ClientInfoSection.jsx";
 import BookingInfoSection from "./sections/BookingInfoSection.jsx";
 import PriceDetailsSection from "./sections/PriceDetailsSection.jsx";
 import ExtrasDetailsSection from "./sections/ExtrasDetailsSection.jsx";
+import SpaDetailsSection from "./sections/SpaDetailsSection.jsx";
 import { mergeAndSortExtras, getCleanExtrasFromPriceElements } from "./utils/extrasUtils.js";
 
 /**
@@ -139,6 +140,30 @@ const BookingDetails = ({ booking }) => {
 
         {/* Column 4: Extras Details */}
         <ExtrasDetailsSection booking={booking} />
+
+        {booking.spaDateTime ||
+        booking.spaBookingPreference ||
+        booking.spaInfo ? (
+          <div className="md:col-span-2 lg:col-span-4">
+            <SpaDetailsSection booking={booking} />
+          </div>
+        ) : (
+          <div className="md:col-span-2 lg:col-span-4">
+            <div className="p-4 bg-white border rounded-md shadow-sm">
+              <h2 className="mb-3 text-sm font-bold text-gray-700">
+                Informations SPA
+              </h2>
+              <p className="text-sm text-gray-500">
+                Aucune réservation SPA pour ce séjour
+              </p>
+              <p className="text-xs text-gray-400">
+                Debug: spaDateTime: {booking.spaDateTime ? "✓" : "✗"},
+                spaBookingPreference: {booking.spaBookingPreference ? "✓" : "✗"}
+                , spaInfo: {booking.spaInfo ? "✓" : "✗"}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add total price display at the bottom */}
