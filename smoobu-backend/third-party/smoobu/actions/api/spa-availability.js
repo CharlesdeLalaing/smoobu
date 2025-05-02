@@ -16,42 +16,44 @@ const minutesToTime = (totalMinutes) => {
     "0"
   )}`;
 };
-// --- End Helper Functions ---
 
-/**
- * Express route handler to get available SPA time slots and duration for a given date.
- * Responds directly to the request.
- * @param {object} req - Express request object, expects req.query.date (YYYY-MM-DD).
- * @param {object} res - Express response object.
- */
+// --- Constants for Departure Day ---
+const DEPARTURE_DAY_START_TIME = "06:00";
+const DEPARTURE_DAY_END_TIME = "10:00"; // Slots starting before this time allowed
+
+// --- Route Handler ---
 export async function handleGetSpaAvailability(req, res) {
-  // Extract date from query parameters inside the handler
-  const { date: dateString } = req.query;
+  // Extract all query parameters
+  const {
+    date: dateString,
+    arrival: arrivalDateString,
+    departure: departureDateString,
+  } = req.query;
+
   console.log(
-    `[SPA Availability Route] Received request for date: ${dateString}`
+    `[SPA Availability Route] Request for date: ${dateString}, arrival: ${arrivalDateString}, departure: ${departureDateString}`
   );
 
-  // Validate input date right away
+  // Validate target date format
   if (!dateString) {
-    return res.status(400).json({
-      message: "Missing required query parameter: date (YYYY-MM-DD)",
-    });
+    return res
+      .status(400)
+      .json({ message: "Missing required query parameter: date (YYYY-MM-DD)" });
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-    return res.status(400).json({
-      message: "Invalid date format. Please use YYYY-MM-DD.",
-    });
+    return res
+      .status(400)
+      .json({ message: "Invalid date format. Please use YYYY-MM-DD." });
   }
 
   try {
-    // --- Core Logic ---
     const targetDate = parse(dateString, "yyyy-MM-dd", new Date());
     if (isNaN(targetDate.getTime())) {
       return res.status(400).json({ message: "Invalid date value." });
     }
     const targetDateStart = startOfDay(targetDate);
 
-    // Get Default SPA Settings
+    // Get Default SPA Settings from Firestore
     const settingsRef = db.collection("spaSettings").doc("default");
     const settingsSnap = await settingsRef.get();
     if (!settingsSnap.exists) {
@@ -63,14 +65,13 @@ export async function handleGetSpaAvailability(req, res) {
         .json({ message: "SPA settings are not configured." });
     }
     const settings = settingsSnap.data();
-    const defaultStartTime = settings.startTime || "09:00";
-    const defaultEndTime = settings.endTime || "18:00";
-    // Store the duration to be returned
-    const slotDurationMinutes = settings.slotDurationMinutes || 60;
+    const defaultStartTime = settings.startTime || "14:00"; // Using your previously mentioned defaults
+    const defaultEndTime = settings.endTime || "23:59"; // Using your previously mentioned defaults (23:59 for midnight)
+    const slotDurationMinutes = settings.slotDurationMinutes || 120; // Using your previously mentioned default
 
-    // Check for Overrides
-    let effectiveStartTime = defaultStartTime;
-    let effectiveEndTime = defaultEndTime;
+    // --- Determine Base Effective Times (Including Firestore Override) ---
+    let baseEffectiveStartTime = defaultStartTime;
+    let baseEffectiveEndTime = defaultEndTime;
     let isClosed = false;
     const overrideRef = db
       .collection("spaAvailabilityOverrides")
@@ -79,48 +80,69 @@ export async function handleGetSpaAvailability(req, res) {
     if (overrideSnap.exists) {
       const overrideData = overrideSnap.data();
       console.log(
-        `[SPA Availability Route] Found override for ${dateString}:`,
+        `[SPA Availability Route] Found Firestore override for ${dateString}:`,
         overrideData
       );
       if (overrideData.isClosed === true) {
         isClosed = true;
       } else {
-        effectiveStartTime = overrideData.startTime || effectiveStartTime;
-        effectiveEndTime = overrideData.endTime || effectiveEndTime;
+        // Override defaults only if specified in the document
+        baseEffectiveStartTime =
+          overrideData.startTime || baseEffectiveStartTime;
+        baseEffectiveEndTime = overrideData.endTime || baseEffectiveEndTime;
       }
     }
+    // --- End Base Effective Times ---
 
-    // If closed, return empty slots array but include duration
+    // --- Apply Departure Day Logic (if not closed and departure date matches) ---
+    let finalEffectiveStartTime = baseEffectiveStartTime;
+    let finalEffectiveEndTime = baseEffectiveEndTime;
+    const isDepartureDay =
+      departureDateString && dateString === departureDateString;
+
+    if (!isClosed && isDepartureDay) {
+      console.log(
+        `[SPA Availability Route] Applying departure day hours (${DEPARTURE_DAY_START_TIME} - ${DEPARTURE_DAY_END_TIME}) for ${dateString}`
+      );
+      finalEffectiveStartTime = DEPARTURE_DAY_START_TIME;
+      finalEffectiveEndTime = DEPARTURE_DAY_END_TIME;
+    }
+    // --- End Departure Day Logic ---
+
+    // If closed by override, return empty slots but include duration/endtime
     if (isClosed) {
       console.log(
         `[SPA Availability Route] SPA is closed on ${dateString} based on override.`
       );
-      return res
-        .status(200)
-        .json({ slots: [], slotDurationMinutes: slotDurationMinutes });
+      return res.status(200).json({
+        slots: [],
+        slotDurationMinutes: slotDurationMinutes,
+        effectiveEndTime: finalEffectiveEndTime, // Still useful to know the intended end time
+      });
     }
 
-    // Convert effective times to minutes
-    const startMinutes = timeToMinutes(effectiveStartTime);
-    const endMinutes = timeToMinutes(effectiveEndTime);
+    // Convert FINAL effective times to minutes
+    const startMinutes = timeToMinutes(finalEffectiveStartTime);
+    const endMinutes = timeToMinutes(finalEffectiveEndTime);
+
+    // Validate final times (using 23:59 avoids midnight issues)
     if (
       startMinutes === null ||
       endMinutes === null ||
       startMinutes >= endMinutes
     ) {
       console.error(
-        `[SPA Availability Route] Invalid effective start/end times for ${dateString}: ${effectiveStartTime} - ${effectiveEndTime}`
+        `[SPA Availability Route] Invalid final effective start/end times for ${dateString}: ${finalEffectiveStartTime} - ${finalEffectiveEndTime}`
       );
       return res
         .status(500)
         .json({ message: "Invalid SPA operating hours configuration." });
     }
 
-    // Get Existing Booked SPA Slots
+    // --- Get Existing Bookings from Firestore ---
     const rangeStart = targetDateStart;
     const rangeEnd = endOfDay(targetDateStart);
     const bookingsRef = db.collection("bookings");
-    // Requires single-field index on spaDateTime in Firestore
     const bookingsSnap = await bookingsRef
       .where("spaDateTime", ">=", rangeStart)
       .where("spaDateTime", "<=", rangeEnd)
@@ -134,43 +156,44 @@ export async function handleGetSpaAvailability(req, res) {
         typeof booking.spaDateTime.toDate === "function"
       ) {
         const slotDateTime = booking.spaDateTime.toDate();
-        // Ensure the booking is actually on the target day (sanity check)
         if (isEqual(startOfDay(slotDateTime), targetDateStart)) {
+          // Ensure it's for the correct day
           const timeString = format(slotDateTime, "HH:mm");
           bookedSlots.add(timeString);
         }
       }
     });
+    // --- End Get Bookings ---
 
-    // Generate potential slots based on start time and duration
+    // --- Generate potential slots using FINAL effective times ---
     const availableSlots = [];
     let currentMinutes = startMinutes;
+    // Loop generates slots starting strictly BEFORE the final end time
     while (currentMinutes < endMinutes) {
-      // Generate slots that *start* before the end time
       const potentialSlotTime = minutesToTime(currentMinutes);
       if (!bookedSlots.has(potentialSlotTime)) {
         availableSlots.push(potentialSlotTime);
       }
-      currentMinutes += slotDurationMinutes; // Increment by the actual duration
+      currentMinutes += slotDurationMinutes;
     }
-    // --- End Core Logic ---
+    // --- End Slot Generation ---
 
     console.log(
-      `[SPA Availability Route] Sending available slots for ${dateString}:`,
+      `[SPA Availability Route] Sending available slots for ${dateString} (DepDay: ${isDepartureDay}):`,
       availableSlots
     );
-    // Respond with an object containing both the slots array and the duration
-    res
-      .status(200)
-      .json({
-        slots: availableSlots,
-        slotDurationMinutes: slotDurationMinutes,
-      });
+    // Respond with the filtered slots, duration, and the end time used for filtering
+    res.status(200).json({
+      slots: availableSlots,
+      slotDurationMinutes: slotDurationMinutes,
+      effectiveEndTime: finalEffectiveEndTime,
+    });
   } catch (error) {
     console.error(
       `[SPA Availability Route] Unexpected error for date ${dateString}:`,
       error
     );
+    // Avoid sending detailed error messages to the client in production
     res.status(500).json({
       message:
         "An internal server error occurred while retrieving SPA availability.",

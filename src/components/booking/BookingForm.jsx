@@ -39,6 +39,7 @@ const BookingForm = () => {
     endDate,
     appliedCoupon,
     selectedCategory,
+    spaValidationError,
     setSelectedCategory,
     handleChange,
     handleExtraChange,
@@ -461,6 +462,7 @@ const BookingForm = () => {
     handleApplyCoupon,
     selectedExtras,
     handleSpaScheduleChange,
+    spaValidationError,
   };
 
   const contactSectionProps = {
