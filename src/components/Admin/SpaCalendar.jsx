@@ -91,6 +91,16 @@ const SpaCalendar = () => {
     }
   };
 
+  const isDepartureDay = (date, booking) => {
+    if (!date || !booking || !booking.departureDate) return false;
+
+    const formattedDate = format(date, "yyyy-MM-dd");
+    const departureDate = booking.departureDate;
+
+    return formattedDate === departureDate;
+  };
+
+
   // Fetch SPA settings (slot duration, default hours)
   const fetchSpaSettings = async () => {
     try {
@@ -106,34 +116,41 @@ const SpaCalendar = () => {
   };
 
   // Calculate available slots for a selected date
-  const fetchAvailableSlotsForDate = async (date) => {
-    setLoading(true);
-    try {
-      const dateStr = format(date, "yyyy-MM-dd");
-      const apiUrl = "http://localhost:3000";
+const fetchAvailableSlotsForDate = async (date) => {
+  setLoading(true);
+  try {
+    const dateStr = format(date, "yyyy-MM-dd");
+    const apiUrl = "http://localhost:3000";
 
-      console.log(
-        `Fetching slots from: ${apiUrl}/api/spa/availability?date=${dateStr}`
-      );
-      const response = await fetch(
-        `${apiUrl}/api/spa/availability?date=${dateStr}`
-      );
+    // Include the departure date in the API call if the selected booking has one
+    let apiEndpoint = `${apiUrl}/api/spa/availability?date=${dateStr}`;
 
-      if (!response.ok) {
-        throw new Error(`API responded with status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Received slots data:", data);
-
-      setAvailableSlots(data.slots || []);
-    } catch (error) {
-      console.error("Error fetching available slots:", error);
-      setAvailableSlots([]);
-    } finally {
-      setLoading(false);
+    if (selectedBooking?.departureDate) {
+      apiEndpoint += `&departure=${selectedBooking.departureDate}`;
     }
-  };
+
+    if (selectedBooking?.arrivalDate) {
+      apiEndpoint += `&arrival=${selectedBooking.arrivalDate}`;
+    }
+
+    console.log(`Fetching slots from: ${apiEndpoint}`);
+    const response = await fetch(apiEndpoint);
+
+    if (!response.ok) {
+      throw new Error(`API responded with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Received slots data:", data);
+
+    setAvailableSlots(data.slots || []);
+  } catch (error) {
+    console.error("Error fetching available slots:", error);
+    setAvailableSlots([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Update a booking's SPA datetime
   const updateBookingSpaDate = async (bookingId, dateTime, spaSlots) => {
@@ -187,44 +204,47 @@ const SpaCalendar = () => {
   };
 
   // Handle date selection
-  const handleDateSelect = (date) => {
-    setSelectedDate(date);
+const handleDateSelect = (date) => {
+  setSelectedDate(date);
+  // Only fetch slots if we have a booking selected
+  if (selectedBooking) {
     fetchAvailableSlotsForDate(date);
+  }
 
-    // Get existing bookings for this date
-    const dateStr = format(date, "yyyy-MM-dd");
-    const dateBookings = bookings.filter((booking) => {
-      if (!booking.spaDateTime) return false;
+  // Get existing bookings for this date
+  const dateStr = format(date, "yyyy-MM-dd");
+  const dateBookings = bookings.filter((booking) => {
+    if (!booking.spaDateTime) return false;
 
-      // Handle different datetime formats
-      const bookingDate = booking.spaDateTime.toDate
-        ? booking.spaDateTime.toDate()
-        : booking.spaDateTime.seconds
-        ? new Date(booking.spaDateTime.seconds * 1000)
-        : new Date(booking.spaDateTime);
+    // Handle different datetime formats
+    const bookingDate = booking.spaDateTime.toDate
+      ? booking.spaDateTime.toDate()
+      : booking.spaDateTime.seconds
+      ? new Date(booking.spaDateTime.seconds * 1000)
+      : new Date(booking.spaDateTime);
 
-      return format(bookingDate, "yyyy-MM-dd") === dateStr;
-    });
+    return format(bookingDate, "yyyy-MM-dd") === dateStr;
+  });
 
-    // Sort bookings by time
-    dateBookings.sort((a, b) => {
-      const timeA = a.spaDateTime.toDate
-        ? a.spaDateTime.toDate()
-        : a.spaDateTime.seconds
-        ? new Date(a.spaDateTime.seconds * 1000)
-        : new Date(a.spaDateTime);
+  // Sort bookings by time
+  dateBookings.sort((a, b) => {
+    const timeA = a.spaDateTime.toDate
+      ? a.spaDateTime.toDate()
+      : a.spaDateTime.seconds
+      ? new Date(a.spaDateTime.seconds * 1000)
+      : new Date(a.spaDateTime);
 
-      const timeB = b.spaDateTime.toDate
-        ? b.spaDateTime.toDate()
-        : b.spaDateTime.seconds
-        ? new Date(b.spaDateTime.seconds * 1000)
-        : new Date(b.spaDateTime);
+    const timeB = b.spaDateTime.toDate
+      ? b.spaDateTime.toDate()
+      : b.spaDateTime.seconds
+      ? new Date(b.spaDateTime.seconds * 1000)
+      : new Date(b.spaDateTime);
 
-      return timeA - timeB;
-    });
+    return timeA - timeB;
+  });
 
-    setSelectedDateBookings(dateBookings);
-  };
+  setSelectedDateBookings(dateBookings);
+};
 
   // Handle booking a slot
   const handleBookSlot = (date, timeSlot) => {
@@ -464,7 +484,6 @@ const SpaCalendar = () => {
       </div>
 
       {/* Timeline Section */}
-      {/* Timeline Section */}
       {selectedDate && (
         <div className="p-4 mt-4 bg-white border rounded">
           <h3 className="mb-4 text-lg font-semibold">
@@ -481,115 +500,148 @@ const SpaCalendar = () => {
 
           {/* Timeline rows - each hour */}
           <div className="divide-y">
-            {Array.from({ length: 10 }, (_, i) => i + 14).map((hour) => {
-              // Hours from 14:00 to 23:00
-              // Format hour
-              const formattedHour = `${hour < 10 ? "0" + hour : hour}:00`;
+            {(() => {
+              // Determine the starting hour based on available slots and existing bookings
+              let startHour = 14; // Default start hour
 
-              // Find bookings that specifically start at this hour
-              const startingBookings = selectedDateBookings.filter(
-                (booking) => {
-                  const startTime = booking.spaDateTime.toDate
-                    ? booking.spaDateTime.toDate()
-                    : booking.spaDateTime.seconds
-                    ? new Date(booking.spaDateTime.seconds * 1000)
-                    : new Date(booking.spaDateTime);
+              // Check if we have early morning slots (departure day) or early bookings
+              const hasEarlySlots = availableSlots.some((slot) => {
+                const hour = parseInt(slot.split(":")[0]);
+                return hour < 14;
+              });
 
-                  return format(startTime, "HH:mm") === formattedHour;
-                }
-              );
+              const hasEarlyBookings = selectedDateBookings.some((booking) => {
+                if (!booking.spaDateTime) return false;
 
-              // Get the color for each booking based on apartmentId
-              const getPropertyColor = (booking) => {
-                // Define a map of apartmentId to color index
-                const propertyColors = {
-                  2565753: 0, // La Cabane du Chêne - Blue
-                  1946282: 1, // Le Dôme des Libellules - Green
-                  1644643: 2, // La Bulle du Ruisseau - Purple
-                  1946279: 3, // Le Moulin - Yellow
-                  1946276: 4, // La Chambre de Blé - Pink
-                  1946270: 5, // Le Logis - Orange
+                const startTime = booking.spaDateTime.toDate
+                  ? booking.spaDateTime.toDate()
+                  : booking.spaDateTime.seconds
+                  ? new Date(booking.spaDateTime.seconds * 1000)
+                  : new Date(booking.spaDateTime);
+
+                const hour = parseInt(format(startTime, "HH"));
+                return hour < 14;
+              });
+
+              // If we have early slots or bookings, start at 6am
+              const timelineStartHour =
+                hasEarlySlots || hasEarlyBookings ? 6 : 14;
+              // End at midnight or 1 hour after the last slot/booking
+              const timelineEndHour = 24;
+
+              // Generate hours for the timeline
+              return Array.from(
+                { length: timelineEndHour - timelineStartHour },
+                (_, i) => i + timelineStartHour
+              ).map((hour) => {
+                // Format hour
+                const formattedHour = `${hour < 10 ? "0" + hour : hour}:00`;
+
+                // Find bookings that specifically start at this hour
+                const startingBookings = selectedDateBookings.filter(
+                  (booking) => {
+                    const startTime = booking.spaDateTime.toDate
+                      ? booking.spaDateTime.toDate()
+                      : booking.spaDateTime.seconds
+                      ? new Date(booking.spaDateTime.seconds * 1000)
+                      : new Date(booking.spaDateTime);
+
+                    return format(startTime, "HH:mm") === formattedHour;
+                  }
+                );
+
+                // Get the color for each booking based on apartmentId
+                const getPropertyColor = (booking) => {
+                  // Define a map of apartmentId to color index
+                  const propertyColors = {
+                    2565753: 0, // La Cabane du Chêne - Blue
+                    1946282: 1, // Le Dôme des Libellules - Green
+                    1644643: 2, // La Bulle du Ruisseau - Purple
+                    1946279: 3, // Le Moulin - Yellow
+                    1946276: 4, // La Chambre de Blé - Pink
+                    1946270: 5, // Le Logis - Orange
+                  };
+
+                  const bgColors = [
+                    "bg-blue-100",
+                    "bg-green-100",
+                    "bg-purple-100",
+                    "bg-yellow-100",
+                    "bg-pink-100",
+                    "bg-orange-100",
+                  ];
+                  const textColors = [
+                    "text-blue-800",
+                    "text-green-800",
+                    "text-purple-800",
+                    "text-yellow-800",
+                    "text-pink-800",
+                    "text-orange-800",
+                  ];
+                  const borderColors = [
+                    "border-blue-300",
+                    "border-green-300",
+                    "border-purple-300",
+                    "border-yellow-300",
+                    "border-pink-300",
+                    "border-orange-300",
+                  ];
+
+                  // Get color index for this apartmentId (default to 0 if not found)
+                  const colorIndex = propertyColors[booking.apartmentId] || 0;
+
+                  return {
+                    bg: bgColors[colorIndex],
+                    text: textColors[colorIndex],
+                    border: borderColors[colorIndex],
+                  };
                 };
 
-                const bgColors = [
-                  "bg-blue-100",
-                  "bg-green-100",
-                  "bg-purple-100",
-                  "bg-yellow-100",
-                  "bg-pink-100",
-                  "bg-orange-100",
-                ];
-                const textColors = [
-                  "text-blue-800",
-                  "text-green-800",
-                  "text-purple-800",
-                  "text-yellow-800",
-                  "text-pink-800",
-                  "text-orange-800",
-                ];
-                const borderColors = [
-                  "border-blue-300",
-                  "border-green-300",
-                  "border-purple-300",
-                  "border-yellow-300",
-                  "border-pink-300",
-                  "border-orange-300",
-                ];
+                return (
+                  <div key={hour} className="flex min-h-[60px]">
+                    <div className="w-24 px-2 py-2 text-sm font-medium text-gray-700">
+                      {formattedHour}
+                    </div>
+                    <div className="relative flex-1 py-1">
+                      {/* Show bookings that start at this hour */}
+                      {startingBookings.map((booking, index) => {
+                        const colors = getPropertyColor(booking);
+                        // Figure out duration in hours
+                        const slotCount = booking.spaSlots
+                          ? booking.spaSlots.length
+                          : 1;
+                        // Double the height for two hours
+                        const heightClass =
+                          slotCount > 1 ? "h-[120px]" : "h-full";
 
-                // Get color index for this apartmentId (default to 0 if not found)
-                const colorIndex = propertyColors[booking.apartmentId] || 0;
-
-                return {
-                  bg: bgColors[colorIndex],
-                  text: textColors[colorIndex],
-                  border: borderColors[colorIndex],
-                };
-              };
-
-              return (
-                <div key={hour} className="flex min-h-[60px]">
-                  <div className="w-24 px-2 py-2 text-sm font-medium text-gray-700">
-                    {formattedHour}
-                  </div>
-                  <div className="relative flex-1 py-1">
-                    {/* Show bookings that start at this hour */}
-                    {startingBookings.map((booking, index) => {
-                      const colors = getPropertyColor(booking);
-                      // Figure out duration in hours
-                      const slotCount = booking.spaSlots
-                        ? booking.spaSlots.length
-                        : 1;
-                      // Double the height for two hours
-                      const heightClass =
-                        slotCount > 1 ? "h-[120px]" : "h-full";
-
-                      return (
-                        <div
-                          key={index}
-                          className={`w-full ${heightClass} ${colors.bg} ${colors.text} border ${colors.border} rounded p-2 absolute top-0 left-0`}
-                          style={{ zIndex: 10 }} // Make sure content is on top
-                        >
-                          <div className="font-medium">
-                            {booking.spaSlots[0]} -{" "}
-                            {booking.spaSlots[booking.spaSlots.length - 1]}
+                        return (
+                          <div
+                            key={index}
+                            className={`w-full ${heightClass} ${colors.bg} ${colors.text} border ${colors.border} rounded p-2 absolute top-0 left-0`}
+                            style={{ zIndex: 10 }} // Make sure content is on top
+                          >
+                            <div className="font-medium">
+                              {booking.spaSlots[0]} -{" "}
+                              {booking.spaSlots[booking.spaSlots.length - 1]}
+                            </div>
+                            <div>
+                              {booking.guestName ||
+                                `${booking.firstName} ${booking.lastName}`}
+                            </div>
+                            <div className="text-xs">{booking.property}</div>
                           </div>
-                          <div>
-                            {booking.guestName ||
-                              `${booking.firstName} ${booking.lastName}`}
-                          </div>
-                          <div className="text-xs">{booking.property}</div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
 
-                    {/* If hour is not the start of a booking, leave it empty */}
-                    {startingBookings.length === 0 && (
-                      <div className="h-full border-l border-gray-200 border-dashed"></div>
-                    )}
+                      {/* If hour is not the start of a booking, leave it empty */}
+                      {startingBookings.length === 0 && (
+                        <div className="h-full border-l border-gray-200 border-dashed"></div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
 
           {selectedDateBookings.length === 0 && (
