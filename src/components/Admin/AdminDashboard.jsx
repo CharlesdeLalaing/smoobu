@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
-import { Menu, ChevronLeft, Tag, FileText, Receipt, List } from 'lucide-react';
+import { Menu, ChevronLeft, Tag, FileText, Receipt, List, Trash2 } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [isOpen, setIsOpen] = useState(true);
   const location = useLocation();
 
   const navigation = [
-    { name: 'Rapport réservation', href: '/booking-report', icon: Receipt },
-    { name: 'Liste extras', href: '/extras-list', icon: List },
-    { name: 'Rapport extras', href: '/extras-report', icon: FileText },
-    { name: 'Coupons', href: '/coupons', icon: Tag },
+    { name: "Rapport réservation", href: "/booking-report", icon: Receipt },
+    { name: "Liste extras", href: "/extras-list", icon: List },
+    { name: "Rapport extras", href: "/extras-report", icon: FileText },
+    { name: "Coupons", href: "/coupons", icon: Tag },
+    { name: "Annuler Réservation", href: "/cancel-booking", icon: Trash2 },
   ];
 
   // Redirect to booking report if at root admin path

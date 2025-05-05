@@ -189,43 +189,40 @@ const BookingsTable = ({
 };
 
 const formatSpaInfo = (booking) => {
-  if (
-    booking.spaInfo?.status === "scheduled" &&
-    booking.spaInfo?.formattedDateTime
-  ) {
-    return (
-      <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
-        {booking.spaInfo.formattedDateTime}
-      </span>
-    );
-  } else if (booking.spaInfo?.status === "to_be_scheduled") {
+  if (booking.spaBookingPreference === "later") {
     return (
       <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
         À programmer
       </span>
     );
   } else if (booking.spaDateTime) {
-    // Fallback if spaInfo is not available but spaDateTime is
-    // Handle Firestore Timestamp conversion
-    const date = booking.spaDateTime.toDate
-      ? booking.spaDateTime.toDate()
-      : new Date(booking.spaDateTime.seconds * 1000);
+    try {
+      // Handle different timestamp formats
+      const date =
+        typeof booking.spaDateTime.toDate === "function"
+          ? booking.spaDateTime.toDate()
+          : booking.spaDateTime.seconds !== undefined
+          ? new Date(booking.spaDateTime.seconds * 1000)
+          : new Date(booking.spaDateTime);
 
-    return (
-      <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
-        {date.toLocaleString("fr-BE", {
-          dateStyle: "short",
-          timeStyle: "short",
-        })}
-      </span>
-    );
-  } else if (booking.spaBookingPreference === "later") {
-    return (
-      <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
-        À programmer
-      </span>
-    );
+      return (
+        <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+          {date.toLocaleString("fr-BE", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })}
+        </span>
+      );
+    } catch (e) {
+      console.error("Error formatting date in table:", e);
+      return (
+        <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+          Programmé
+        </span>
+      );
+    }
   }
+
   return "-";
 };
 

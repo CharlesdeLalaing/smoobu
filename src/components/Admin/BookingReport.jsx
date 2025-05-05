@@ -53,6 +53,8 @@ const BookingsReport = () => {
     setSortField,
     sortDirection,
     setSortDirection,
+    spaFilter,
+    setSpaFilter,
     filteredAndSortedData,
   } = useBookingsFilters(reportData);
 
@@ -72,7 +74,6 @@ const BookingsReport = () => {
             Rapport des Réservations Smoobu
           </h1>
         </div>
-
 
         <ActionButtons
           onExport={handleExport}
@@ -94,6 +95,8 @@ const BookingsReport = () => {
         setEndYear={setEndYear}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
+        spaFilter={spaFilter} // Add this
+        setSpaFilter={setSpaFilter}
       />
 
       {error && (

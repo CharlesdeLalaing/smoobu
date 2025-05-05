@@ -11,6 +11,8 @@ import CouponManagement from "./components/Admin/CouponManagement";
 import ExtrasReport from "./components/Admin/ExtrasReport"; // New import
 import BookingReport from "./components/Admin/BookingReport";
 import Login from "./components/Admin/Login";
+import AdminBookingCancellation from "./components/Admin/AdminBookingCancellation";
+import SpaCalendar from "./components/Admin/SpaCalendar";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
 import "./index.css";
@@ -23,15 +25,33 @@ function App() {
       <I18nextProvider i18n={i18n}>
         <Router>
           <Routes>
-            <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+            <Route
+              path="/booking-confirmation"
+              element={<BookingConfirmation />}
+            />
             <Route path="/" element={<Booking2 />} />
             <Route path="/admin/login" element={<Login />} />
-            <Route element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>}>
+            <Route
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            >
               <Route path="/extras-list" element={<ExtrasList />} />
-              <Route index path="/admin" element={<Navigate to="/booking-report" replace />} />
+              <Route
+                index
+                path="/admin"
+                element={<Navigate to="/booking-report" replace />}
+              />
               <Route path="/coupons" element={<CouponManagement />} />
               <Route path="/extras-report" element={<ExtrasReport />} />
               <Route path="/booking-report" element={<BookingReport />} />
+              <Route
+                path="/cancel-booking"
+                element={<AdminBookingCancellation />}
+              />
+              <Route path="/spa-calendar" element={<SpaCalendar />} />
             </Route>
           </Routes>
         </Router>

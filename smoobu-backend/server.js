@@ -20,6 +20,7 @@ import { createPaymentIntent } from "./third-party/stripe/create-payment-intent.
 import { getBookingByPaymentIntentId } from "./third-party/stripe/get-payment-intent.js";
 import { getBookingHistoryByEmail } from "./third-party/smoobu/actions/api/get-booking-history-email.js";
 import { handleGetSpaAvailability } from "./third-party/smoobu/actions/api/spa-availability.js";
+import { handleCancelSmoobuReservation } from "./third-party/smoobu/actions/api/cancel-reservation.js";
 
 // AlexisVS: init.js
 dotenv.config();
@@ -104,6 +105,11 @@ app.get("/api/pending-bookings", (req, res) => {
 });
 
 app.get("/api/spa/availability", handleGetSpaAvailability);
+
+app.delete(
+  "/api/cancel-smoobu-reservation/:reservationId",
+  handleCancelSmoobuReservation
+);
 
 
 // AlexisVS: remove
