@@ -67,8 +67,9 @@
         },
         "features": {
           "maxGuests": "Max {{value}} personnes",
-        "maxGuestsWithChildren": "Max {{value}} adultes et {{value2}} enfants",
+          "maxGuestsWithChildren": "Max {{value}} adultes et {{value2}} enfants",
           "bedKing": "Lit king size et matelas chauffant",
+          "bedQueenNoCouch": "1 queen size bed",
           "bedQueen": "1 lit queen size et 1 canapé lit",
           "bedKingAndSingle": "1 lit king size et 2 lits simples",
           "bedDoubleKing": "2 lits king size et 4 lits simples",
@@ -77,6 +78,7 @@
           "bathroom": "Une salle de bain",
           "twoBathrooms": "2 salles de bains et 2 toilettes",
           "brazier": "Braséro",
+          "bbq": "Braséro & Barbecue",
           "heater": "Chauffage électrique",
           "gasheater": "Chauffage au gas",
           "kitchen": "Cuisine équipée",

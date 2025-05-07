@@ -64,7 +64,7 @@ export const roomsData = {
       tertiary: dome_img_3,
       quaternary: dome_img_4,
       quinary: dome_img_5,
-      senary: dome_img_6
+      senary: dome_img_6,
     },
     maxGuests: 4,
     features: [
@@ -124,40 +124,6 @@ export const roomsData = {
         nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/1644643",
       },
     },
-  },
-
-  2565753: {
-    id: 2565753,
-    type: "rooms.types.unusual",
-    nameKey: "rooms.names.cabane",
-    description: "rooms.descriptions.cabane",
-    images: {
-      main: Cabane_img_1,
-      secondary: Cabane_img_2,
-      tertiary: Cabane_img_3,
-      quaternary: Cabane_img_4,
-      quinary: Cabane_img_5,
-      senary: Cabane_img_6
-    },
-    maxGuests: 2,
-    features: [
-      { icon: people, title: "rooms.features.maxGuests", value: 2 },
-      { icon: bed, title: "rooms.features.bedQueen" },
-      { icon: dog, title: "rooms.features.pets" },
-      { icon: toilet, title: "rooms.features.dryToilet" },
-      { icon: heater, title: "rooms.features.gasheater" },
-      { icon: fire, title: "rooms.features.brazier" },
-    ],
-    size: "30m²",
-    calendarData: {
-      id: "2565753",
-      verification: "7dacb43460304922d9b25a6d2da973d40c738de66652a429ccaf65412e95be86",
-      urls: {
-        en: "https://login.smoobu.com/en/cockpit/widget/single-calendar/2565753",
-        fr: "https://login.smoobu.com/fr/cockpit/widget/single-calendar/2565753",
-        nl: "https://login.smoobu.com/nl/cockpit/widget/single-calendar/2565753"
-      }
-    }
   },
 
 
@@ -285,11 +251,11 @@ export const roomsData = {
     maxGuests: 2,
     features: [
       { icon: people, title: "rooms.features.maxGuests", value: 2 },
-      { icon: bed, title: "rooms.features.bedQueen" },
+      { icon: bed, title: "rooms.features.bedQueenNoCouch" },
       { icon: dog, title: "rooms.features.pets" },
       { icon: toilet, title: "rooms.features.dryToilet" },
       { icon: heater, title: "rooms.features.gasheater" },
-      { icon: fire, title: "rooms.features.brazier" },
+      { icon: fire, title: "rooms.features.bbq" },
     ],
     size: "30m²",
     calendarData: {

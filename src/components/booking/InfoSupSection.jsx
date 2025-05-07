@@ -150,29 +150,13 @@ export const InfoSupSection = ({
           </div>
         </>
       )}
-      {/* --- End SPA Scheduling Section --- */}
-
-      {/* --- Notes Section --- */}
-      {/* Apply conditional spacing/border only if SPA section above is rendered */}
-      <div
-        className={`col-span-full ${
-          shouldShowSpaSection ? "pt-6 border-t" : "pt-0 border-t-0"
-        } border-gray-200`}
-      >
-        <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
-          {t("extras.infoSup.ownerMessage.label")}
-          <textarea
-            name="notice"
-            value={formData.notice}
-            onChange={handleChange} // Use general handleChange from parent
-            rows="3"
-            placeholder={t("extras.infoSup.ownerMessage.placeholder")}
-            className="mt-1 block w-full rounded border-[#668E73] border text-[16px] placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white p-2"
-          />
-        </label>
+      <div className="absolute top-[70px] left-[220px] sm:top-[70px] sm:left-[250px] md:top-[50px] md:left-[550px] lg:top-[50px] lg:left-[300px] xl:top-[230px] xl:left-[550px]">
+        <img
+          src={LongBird}
+          alt="Long Bird"
+          className="w-24 h-auto opacity-50 pointer-events-none md:w-32 lg:w-40" // Added opacity/pointer-events if needed
+        />
       </div>
-      {/* --- End Notes Section --- */}
-
       {/* --- Coupon Section --- */}
       <div className="pt-4 pb-4 mt-6 mb-6 border-t border-b border-gray-200">
         <div>
@@ -239,17 +223,25 @@ export const InfoSupSection = ({
           </div>
         )}
       </div>
-      {/* --- End Coupon Section --- */}
 
-      {/* --- Bird Image --- */}
-      <div className="absolute top-[70px] left-[220px] sm:top-[70px] sm:left-[250px] md:top-[50px] md:left-[550px] lg:top-[50px] lg:left-[300px] xl:top-[230px] xl:left-[550px]">
-        <img
-          src={LongBird}
-          alt="Long Bird"
-          className="w-24 h-auto opacity-50 pointer-events-none md:w-32 lg:w-40" // Added opacity/pointer-events if needed
-        />
+      <div
+        className={`col-span-full ${
+          shouldShowSpaSection ? "pt-6 border-t" : "pt-0 border-t-0"
+        } border-gray-200`}
+      >
+        <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
+          {t("extras.infoSup.ownerMessage.label")}
+          <textarea
+            name="notice"
+            value={formData.notice}
+            onChange={handleChange} // Use general handleChange from parent
+            rows="3"
+            placeholder={t("extras.infoSup.ownerMessage.placeholder")}
+            className="mt-1 block w-full rounded border-[#668E73] border text-[16px] placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white p-2"
+          />
+        </label>
       </div>
-      {/* --- End Bird Image --- */}
+      {/* --- End Coupon Section --- */}
     </div>
   );
 };

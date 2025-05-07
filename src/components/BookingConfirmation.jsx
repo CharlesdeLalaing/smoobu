@@ -403,70 +403,98 @@ const BookingConfirmation = () => {
     bookingDetails.spaDateTime &&
     bookingDetails.spaBookingPreference === "scheduled";
 
-       let spaTimeDisplay = t("errors.invalidTime", "Heure invalide"); // Default error message
-       if (scheduledSpaTime) {
-         // Only calculate if a time was scheduled
-         const startTimeObj = getJsDate(bookingDetails.spaDateTime); // Use helper to get Date object
+  let spaTimeDisplay = t("errors.invalidTime", "Heure invalide"); // Default error message
 
-         if (startTimeObj) {
-           // Proceed only if we got a valid Date object
-           const startTimeString = startTimeObj.toLocaleTimeString("fr-BE", {
-             hour: "2-digit",
-             minute: "2-digit",
-           });
-           let endTimeString = null; // Initialize end time string
+  if (scheduledSpaTime) {
+    // Only calculate if a time was scheduled
+    const startTimeObj = getJsDate(bookingDetails.spaDateTime); // Use helper to get Date object
 
-           // Option 1: Try using the saved slots array if present
-           const savedSlots = bookingDetails.spaInfo?.slots;
-           if (Array.isArray(savedSlots) && savedSlots.length > 0) {
-             if (savedSlots.length > 1 && typeof savedSlots[1] === "string") {
-               // If 2+ slots saved, use the start time of the second slot as the end time of the first
-               endTimeString = savedSlots[1];
-             } else if (savedSlots.length === 1) {
-               // Only one slot saved (likely single-slot mode or incomplete data)
-               // -> Need duration to calculate end time
-               // *** !!! IMPORTANT: You NEED to save spaSlotDuration in bookingDetails for this to be accurate !!! ***
-               const duration = bookingDetails.spaSlotDuration || 120; // <<< Using 120 as FALLBACK
-               if (duration > 0) {
-                 try {
-                   const endTimeObj = addMinutes(startTimeObj, duration);
-                   endTimeString = formatFn(endTimeObj, "HH:mm"); // Use aliased formatFn
-                 } catch (e) {
-                   console.error("Error calculating end time from duration", e);
-                 }
-               }
-             }
-           }
+    if (startTimeObj) {
+      // Proceed only if we got a valid Date object
+      const startTimeString = startTimeObj.toLocaleTimeString("fr-BE", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 
-           // Fallback if slots array wasn't useful or available
-           if (!endTimeString && slotDuration > 0) {
-             // Check duration again if using fallback
-             console.warn(
-               "Could not determine end time from spaInfo.slots, falling back to assumed duration."
-             );
-             // *** !!! IMPORTANT: You NEED to save spaSlotDuration in bookingDetails for this to be accurate !!! ***
-             const duration = bookingDetails.spaSlotDuration || 120; // <<< Using 120 as FALLBACK
-             try {
-               const endTimeObj = addMinutes(startTimeObj, duration);
-               endTimeString = formatFn(endTimeObj, "HH:mm"); // Use aliased formatFn
-             } catch (e) {
-               console.error(
-                 "Error calculating end time from fallback duration",
-                 e
-               );
-             }
-           }
+      // ================================================================
+      // START OF THE SECTION TO FOCUS ON
+      // ================================================================
 
-           // Construct the final display string
-           if (startTimeString && endTimeString) {
-             spaTimeDisplay = `${startTimeString} - ${endTimeString}`; // "HH:mm - HH:mm"
-           } else if (startTimeString) {
-             spaTimeDisplay = startTimeString; // Fallback to only start time
-           }
-           // If both are null, it keeps the default error message
-         }
-       }
+      let endTimeString = null; // <<< DECLARE endTimeString HERE
 
+      // --- START: Determine Slot Duration (Corrected) ---
+      let actualSlotDurationMinutes;
+      if (
+        bookingDetails &&
+        typeof bookingDetails.spaSlotDuration === "number" &&
+        bookingDetails.spaSlotDuration > 0
+      ) {
+        actualSlotDurationMinutes = bookingDetails.spaSlotDuration;
+      } else {
+        console.warn(
+          `BookingConfirmation: spaSlotDuration is missing, invalid, or zero in bookingDetails. Falling back to 120 minutes. Booking ID: ${
+            bookingDetails?.id || bookingDetails?.smoobuId || "N/A"
+          }. Please ensure 'spaSlotDuration' (in minutes) is saved in bookingDetails when SPA is scheduled.`
+        );
+        actualSlotDurationMinutes = 120; // Default fallback duration in minutes
+      }
+      // --- END: Determine Slot Duration (Corrected) ---
+
+      // Option 1: Try using the saved slots array (e.g., if it contains start and end times)
+      const savedSlots = bookingDetails.spaInfo?.slots;
+      if (
+        Array.isArray(savedSlots) &&
+        savedSlots.length > 1 &&
+        typeof savedSlots[1] === "string"
+      ) {
+        // If 'slots' array has at least two items, and the second is a string (potential end time)
+        // This assumes spaInfo.slots might store ["HH:mm_start", "HH:mm_end"]
+        endTimeString = savedSlots[1]; // Assign to declared variable
+        console.log(
+          "Using endTimeString from bookingDetails.spaInfo.slots[1]:",
+          endTimeString
+        );
+      } else {
+        // Fallback: Calculate end time using startTimeObj and actualSlotDurationMinutes
+        console.log(
+          "Calculating endTimeString using startTimeObj and actualSlotDurationMinutes:",
+          actualSlotDurationMinutes
+        );
+        try {
+          const endTimeObj = addMinutes(
+            startTimeObj,
+            actualSlotDurationMinutes
+          );
+          endTimeString = formatFn(endTimeObj, "HH:mm"); // Assign to declared variable
+        } catch (e) {
+          console.error("Error calculating end time using addMinutes:", e);
+          // endTimeString remains null, will fallback to showing only start time or error
+        }
+      }
+
+      // --- THIS OLD BLOCK BELOW SHOULD BE COMPLETELY REMOVED ---
+      // // Fallback if slots array wasn't useful or available
+      // if (!endTimeString && slotDuration > 0) { // <<< THIS WAS THE ORIGINAL PROBLEM
+      //   // ... (old faulty logic) ...
+      // }
+      // --- END OF BLOCK TO REMOVE ---
+
+      // ================================================================
+      // END OF THE SECTION TO FOCUS ON
+      // ================================================================
+
+      // Construct the final display string
+      if (startTimeString && endTimeString) {
+        spaTimeDisplay = `${startTimeString} - ${endTimeString}`; // "HH:mm - HH:mm"
+      } else if (startTimeString) {
+        spaTimeDisplay = startTimeString; // Fallback to only start time
+        console.warn(
+          "SPA time display only has start time, end time could not be determined. Check spaSlotDuration and spaInfo.slots."
+        );
+      }
+      // If both are null, it keeps the default error message
+    }
+  }
   return (
     <div
       style={{

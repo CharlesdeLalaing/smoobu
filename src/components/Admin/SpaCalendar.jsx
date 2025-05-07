@@ -7,6 +7,9 @@ import {
   eachDayOfInterval,
   isSameDay,
   parseISO,
+  isBefore, // Added for date comparison
+  isAfter, // Added for date comparison
+  startOfDay,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -329,15 +332,72 @@ const handleDateSelect = (date) => {
               const isToday = isSameDay(date, new Date());
               const isSelected = selectedDate && isSameDay(date, selectedDate);
 
-              // Find bookings for this date
+              let isDisabled = false;
+              if (
+                selectedBooking &&
+                selectedBooking.arrivalDate &&
+                selectedBooking.departureDate
+              ) {
+                try {
+                  // Parse arrival and departure dates from the selected booking.
+                  // Ensure they are valid date strings. `new Date()` can be tricky.
+                  // `startOfDay` normalizes the time part to 00:00:00 for comparison.
+                  const arrivalDateObj = startOfDay(
+                    new Date(selectedBooking.arrivalDate)
+                  );
+                  const departureDateObj = startOfDay(
+                    new Date(selectedBooking.departureDate)
+                  );
+
+                  // Current calendar date, normalized to start of day
+                  const currentDate = startOfDay(date);
+
+                  // Check if parsing resulted in valid dates
+                  if (
+                    isNaN(arrivalDateObj.getTime()) ||
+                    isNaN(departureDateObj.getTime())
+                  ) {
+                    console.warn(
+                      "Invalid arrival or departure date in selectedBooking. Cannot restrict calendar dates.",
+                      selectedBooking
+                    );
+                    // Decide on behavior: either disable nothing, or disable all if dates are crucial
+                    // For now, we'll not disable if dates are invalid to allow manual override if needed.
+                    // If stricter, you could set isDisabled = true here.
+                  } else {
+                    // Disable date if it's strictly before arrival or strictly after departure
+                    if (
+                      isBefore(currentDate, arrivalDateObj) ||
+                      isAfter(currentDate, departureDateObj)
+                    ) {
+                      isDisabled = true;
+                    }
+                  }
+                } catch (error) {
+                  console.error(
+                    "Error parsing booking arrival/departure dates for calendar restriction:",
+                    error
+                  );
+                  // Handle error, perhaps by not disabling or logging further
+                }
+              }
+
+              // Find bookings for this date (for dots indicator)
               const dateSpaBookings = bookings.filter((booking) => {
                 if (!booking.spaDateTime) return false;
 
+                // Handle different datetime formats from Firestore or state
                 const bookingDate = booking.spaDateTime.toDate
-                  ? booking.spaDateTime.toDate()
+                  ? booking.spaDateTime.toDate() // Firestore Timestamp
                   : booking.spaDateTime.seconds
-                  ? new Date(booking.spaDateTime.seconds * 1000)
-                  : new Date(booking.spaDateTime);
+                  ? new Date(booking.spaDateTime.seconds * 1000) // Firestore Timestamp (older SDK?) or stored seconds
+                  : new Date(booking.spaDateTime); // Assumed to be Date object or parsable string
+
+                // Check if bookingDate is valid before formatting
+                if (isNaN(bookingDate.getTime())) {
+                  // console.warn("Invalid spaDateTime encountered for booking:", booking.id, booking.spaDateTime);
+                  return false; // Skip if date is invalid
+                }
 
                 return format(bookingDate, "yyyy-MM-dd") === dateStr;
               });
@@ -347,19 +407,24 @@ const handleDateSelect = (date) => {
               return (
                 <button
                   key={dateStr}
-                  onClick={() => handleDateSelect(date)}
-                  className={`p-2 text-sm rounded relative ${
-                    isToday ? "bg-blue-100" : ""
-                  } ${isSelected ? "bg-blue-500 text-white" : ""}
-                  hover:bg-gray-100`}
+                  onClick={() => !isDisabled && handleDateSelect(date)} // Modified: only call if not disabled
+                  disabled={isDisabled} // Added: HTML disabled attribute
+                  className={`p-2 text-sm rounded relative
+                    ${
+                      isDisabled
+                        ? "text-gray-400 bg-gray-50 cursor-not-allowed" // Style for disabled dates
+                        : isSelected
+                        ? "bg-blue-500 text-white" // Style for selected, enabled dates
+                        : `${isToday ? "bg-blue-100" : ""} hover:bg-gray-100` // Style for other enabled dates (today, hover)
+                    }
+                  `}
                 >
                   <div className="text-center">{format(date, "d")}</div>
 
-                  {/* Show colored dots for each booking */}
+                  {/* Show colored dots for each booking (existing logic) */}
                   {hasSpaBookings && (
                     <div className="flex justify-center mt-1 space-x-1">
                       {dateSpaBookings.length <= 3 ? (
-                        // Show up to 3 dots
                         dateSpaBookings.map((_, i) => (
                           <div
                             key={i}
@@ -368,7 +433,6 @@ const handleDateSelect = (date) => {
                           ></div>
                         ))
                       ) : (
-                        // Show count for more than 3
                         <div className="px-1 text-xs text-green-800 bg-green-100 rounded-full">
                           {dateSpaBookings.length}
                         </div>
