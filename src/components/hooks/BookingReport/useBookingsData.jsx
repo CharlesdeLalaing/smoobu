@@ -339,17 +339,17 @@ export const useBookingsData = () => {
       setLoading(true);
 
       // UPDATED: Call your production server endpoint instead of localhost
-      const response = await axios.get(
-        "https://booking-9u8u.onrender.com/api/fetch-and-sync",
-        {
-          params: {
-            startDate: new Date(startYear - 1, startMonth - 1, 1)
-              .toISOString()
-              .split("T")[0],
-            endDate: new Date(endYear, endMonth, 0).toISOString().split("T")[0],
-          },
-        }
-      );
+      const backendUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+      const response = await axios.get(`${backendUrl}/api/fetch-and-sync`, {
+        params: {
+          startDate: new Date(startYear - 1, startMonth - 1, 1)
+            .toISOString()
+            .split("T")[0],
+          endDate: new Date(endYear, endMonth, 0).toISOString().split("T")[0],
+        },
+      });
 
       if (response.data.success) {
         alert(

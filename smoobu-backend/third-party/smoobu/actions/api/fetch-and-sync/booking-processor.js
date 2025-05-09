@@ -331,6 +331,7 @@ export class BookingProcessor {
       smoobuReservationId: Number(smoobuId),
       createdAt: booking["created-at"] || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      type: booking.type || "reservation",
       firstName: booking.firstName || guestName.split(" ")[0] || "",
       lastName:
         booking.lastName ||
@@ -419,6 +420,8 @@ export class BookingProcessor {
     const updatedBookingDoc = {
       ...existingData, // Start with existing data
       ...newBookingData, // Add/overwrite with new data
+
+      type: newBookingData.type || existingData.type || "reservation",
       extras: mergedExtras,
 
       // Preserve critical fields

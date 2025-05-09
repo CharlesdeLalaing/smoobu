@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom"; // Import useNa
 import { useTranslation } from "react-i18next";
 import logoBaseilles from "../assets/logoBaseilles.webp"; // Verify path to logo
 import { addMinutes, format as formatFn } from "date-fns";
+import { fr } from "date-fns/locale"; // Import French locale
 import "../assets/bookingConfirmation.css"; // Verify path to CSS
 // Import an icon if desired, e.g., from lucide-react
 import { CalendarClock } from "lucide-react"; // Make sure to install lucide-react if using: npm install lucide-react
@@ -208,7 +209,6 @@ const BookingConfirmation = () => {
     attemptFetch(); // Initiate the first fetch attempt
   };
 
-
   const getJsDate = (dateValue) => {
     if (!dateValue) return null; // Return null if input is falsy
     try {
@@ -249,7 +249,7 @@ const BookingConfirmation = () => {
       return null; // Return null on error
     }
   };
-  
+
   // --- Formatting Helper Functions ---
   // Formats a date string (e.g., "2024-08-15" or ISO string) to locale-specific string ("15 août 2024")
   const formatDate = (dateValue) => {
@@ -297,7 +297,6 @@ const BookingConfirmation = () => {
       return t("errors.invalidDate", "Date invalide");
     }
   };
-  
 
   // Formats a time string (e.g., "14:00") - basic implementation, returns '-' if null/empty
   const formatTime = (timeString) => {
@@ -397,7 +396,6 @@ const BookingConfirmation = () => {
   // --- Render Success State ---
   // Determine SPA scheduling status *after* confirming bookingDetails exist
 
-  
   const needsSpaScheduling = bookingDetails.spaBookingPreference === "later";
   const scheduledSpaTime =
     bookingDetails.spaDateTime &&
@@ -405,8 +403,8 @@ const BookingConfirmation = () => {
 
   let spaTimeDisplay = t("errors.invalidTime", "Heure invalide"); // Default error message
 
-  if (scheduledSpaTime) {
-    // Only calculate if a time was scheduled
+  if (scheduledSpaTime && bookingDetails) {
+    // Ensure bookingDetails exist here too
     const startTimeObj = getJsDate(bookingDetails.spaDateTime); // Use helper to get Date object
 
     if (startTimeObj) {
@@ -416,14 +414,9 @@ const BookingConfirmation = () => {
         minute: "2-digit",
       });
 
-      // ================================================================
-      // START OF THE SECTION TO FOCUS ON
-      // ================================================================
-
-      let endTimeString = null; // <<< DECLARE endTimeString HERE
-
-      // --- START: Determine Slot Duration (Corrected) ---
+      // --- Determine Slot Duration ---
       let actualSlotDurationMinutes;
+      // Check if bookingDetails exists before accessing spaSlotDuration
       if (
         bookingDetails &&
         typeof bookingDetails.spaSlotDuration === "number" &&
@@ -431,70 +424,45 @@ const BookingConfirmation = () => {
       ) {
         actualSlotDurationMinutes = bookingDetails.spaSlotDuration;
       } else {
+        // Fallback and warning if spaSlotDuration is missing or invalid
         console.warn(
           `BookingConfirmation: spaSlotDuration is missing, invalid, or zero in bookingDetails. Falling back to 120 minutes. Booking ID: ${
             bookingDetails?.id || bookingDetails?.smoobuId || "N/A"
-          }. Please ensure 'spaSlotDuration' (in minutes) is saved in bookingDetails when SPA is scheduled.`
+          }. Please ensure 'spaSlotDuration' (in minutes) is saved in booking details when SPA is scheduled.`
         );
-        actualSlotDurationMinutes = 120; // Default fallback duration in minutes
+        actualSlotDurationMinutes = 120; // Default fallback duration in minutes (Assuming 2-hour treatment)
       }
-      // --- END: Determine Slot Duration (Corrected) ---
+      // --- End Determine Slot Duration ---
 
-      // Option 1: Try using the saved slots array (e.g., if it contains start and end times)
-      const savedSlots = bookingDetails.spaInfo?.slots;
-      if (
-        Array.isArray(savedSlots) &&
-        savedSlots.length > 1 &&
-        typeof savedSlots[1] === "string"
-      ) {
-        // If 'slots' array has at least two items, and the second is a string (potential end time)
-        // This assumes spaInfo.slots might store ["HH:mm_start", "HH:mm_end"]
-        endTimeString = savedSlots[1]; // Assign to declared variable
-        console.log(
-          "Using endTimeString from bookingDetails.spaInfo.slots[1]:",
-          endTimeString
-        );
-      } else {
-        // Fallback: Calculate end time using startTimeObj and actualSlotDurationMinutes
-        console.log(
-          "Calculating endTimeString using startTimeObj and actualSlotDurationMinutes:",
-          actualSlotDurationMinutes
-        );
-        try {
-          const endTimeObj = addMinutes(
-            startTimeObj,
-            actualSlotDurationMinutes
-          );
-          endTimeString = formatFn(endTimeObj, "HH:mm"); // Assign to declared variable
-        } catch (e) {
-          console.error("Error calculating end time using addMinutes:", e);
-          // endTimeString remains null, will fallback to showing only start time or error
-        }
+      let endTimeString = null; // Initialize end time string
+
+      // --- Calculate End Time based on Start Time and Duration ---
+      // We always calculate the end time based on the start time and the actual duration (actualSlotDurationMinutes).
+      // We are removing the logic that prioritized using savedSlots[1] for the end time display.
+      try {
+        const endTimeObj = addMinutes(startTimeObj, actualSlotDurationMinutes);
+        // Format the calculated end time
+        endTimeString = formatFn(endTimeObj, "HH:mm", { locale: fr }); // Use aliased formatFn, explicitly use fr locale
+      } catch (e) {
+        console.error("Error calculating end time using addMinutes:", e);
+        // endTimeString remains null if calculation fails
       }
-
-      // --- THIS OLD BLOCK BELOW SHOULD BE COMPLETELY REMOVED ---
-      // // Fallback if slots array wasn't useful or available
-      // if (!endTimeString && slotDuration > 0) { // <<< THIS WAS THE ORIGINAL PROBLEM
-      //   // ... (old faulty logic) ...
-      // }
-      // --- END OF BLOCK TO REMOVE ---
-
-      // ================================================================
-      // END OF THE SECTION TO FOCUS ON
-      // ================================================================
+      // --- End Calculate End Time ---
 
       // Construct the final display string
       if (startTimeString && endTimeString) {
         spaTimeDisplay = `${startTimeString} - ${endTimeString}`; // "HH:mm - HH:mm"
       } else if (startTimeString) {
+        // This fallback only happens if addMinutes failed to produce an endTimeString
         spaTimeDisplay = startTimeString; // Fallback to only start time
         console.warn(
-          "SPA time display only has start time, end time could not be determined. Check spaSlotDuration and spaInfo.slots."
+          "SPA time display only has start time, end time could not be determined from start time + duration."
         );
       }
-      // If both are null, it keeps the default error message
+      // If both are null, it keeps the default error message "Heure invalide"
     }
   }
+
   return (
     <div
       style={{
@@ -577,9 +545,8 @@ const BookingConfirmation = () => {
                 </span>{" "}
                 {/* Use the robust formatDate for the date part */}
                 {formatDate(bookingDetails.spaDateTime)}{" "}
-                {/* Use the IIFE for safe time formatting */}
+                {/* Use the correctly calculated time range */}
                 <span className="">{spaTimeDisplay}</span>
-        
               </p>
             )}
           </div>

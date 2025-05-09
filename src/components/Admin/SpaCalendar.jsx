@@ -209,10 +209,9 @@ const fetchAvailableSlotsForDate = async (date) => {
   // Handle date selection
 const handleDateSelect = (date) => {
   setSelectedDate(date);
-  // Only fetch slots if we have a booking selected
-  if (selectedBooking) {
-    fetchAvailableSlotsForDate(date);
-  }
+  // MODIFIED: Always fetch slots when a date is selected,
+  // regardless of whether a booking is currently selected.
+  fetchAvailableSlotsForDate(date); // Moved outside the if block
 
   // Get existing bookings for this date
   const dateStr = format(date, "yyyy-MM-dd");
@@ -225,6 +224,13 @@ const handleDateSelect = (date) => {
       : booking.spaDateTime.seconds
       ? new Date(booking.spaDateTime.seconds * 1000)
       : new Date(booking.spaDateTime);
+
+    // Ensure bookingDate is valid before formatting
+    if (isNaN(bookingDate.getTime())) {
+      // Optionally log a warning if a booking has an invalid date
+      // console.warn("Invalid spaDateTime for booking:", booking.id, booking.spaDateTime);
+      return false;
+    }
 
     return format(bookingDate, "yyyy-MM-dd") === dateStr;
   });
