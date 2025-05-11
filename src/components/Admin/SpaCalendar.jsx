@@ -1,296 +1,704 @@
 // File: src/components/Admin/SpaCalendar.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   format,
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
   isSameDay,
-  parseISO,
-  isBefore, // Added for date comparison
-  isAfter, // Added for date comparison
   startOfDay,
+  addDays,
+  isAfter,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  collection,
-  getDoc,
-  getDocs,
-  query,
-  where,
+  // Firebase imports needed for actions (update/delete)
   doc,
   updateDoc,
+  deleteField,
 } from "firebase/firestore";
-import { db } from "../../firebase";
+import { db } from "../../firebase"; // Adjust path as needed
 
+// Import utility functions from src/utils
+import {
+  parseBookingDateTime,
+  isDateWithinBookingStay,
+  getPropertyColor,
+  calculateBookingSlots,
+} from "../spa/spaCalendarUtils";
+
+// Import custom hooks from src/hooks
+import {
+  useSpaSettings,
+  useBookingsForMonth,
+  useAvailableSlots,
+} from "../spa/useSpaCalendarData";
+
+// Import extracted UI components from the same directory (src/components/Admin)
+import BookingsToSchedulePanel from "../spa/BookingsToSchedulePanel";
+import SelectedDateDetailsPanel from "../spa/SelectedDateDetailsPanel";
+import SpaTimeline from "../spa/SpaTimeline";
+import EditDeleteSpaModal from "../spa/EditDeleteSpaModal"; // Ensure this path and filename are correct
+
+// --- Main Component ---
 const SpaCalendar = () => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [bookings, setBookings] = useState([]);
-  const [spaSettings, setSpaSettings] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [availableSlots, setAvailableSlots] = useState([]);
-  const [selectedDateBookings, setSelectedDateBookings] = useState([]);
-  const [selectedBooking, setSelectedBooking] = useState(null);
-  const [loading, setLoading] = useState(true);
+  console.log("SpaCalendar rendering...");
+  // --- State Variables (Managed by this component) ---
+  const [currentMonth, setCurrentMonth] = useState(new Date()); // Month for calendar navigation
+  const [selectedDate, setSelectedDate] = useState(null); // The date selected in the calendar
+  const [selectedBooking, setSelectedBooking] = useState(null); // The booking selected from 'À programmer' list for scheduling
+  const [bookingToEdit, setBookingToEdit] = useState(null); // The scheduled booking selected for editing/deleting
+  const [showEditDeleteModal, setShowEditDeleteModal] = useState(false); // State for modal visibility
+  const [modalStep, setModalStep] = useState("options"); // 'options' | 'confirm-reschedule' | 'confirm-delete'
 
-  // Fetch bookings and settings on month change
-  useEffect(() => {
-    fetchBookingsForMonth(currentMonth);
-    fetchSpaSettings();
-  }, [currentMonth]);
+  // State for actions initiated from the UI (Saving, deleting)
+  const [actionLoading, setActionLoading] = useState(false);
 
-  // Fetch all bookings for the current month
-  const fetchBookingsForMonth = async (month) => {
-    setLoading(true);
-    try {
-      const startDate = format(startOfMonth(month), "yyyy-MM-dd");
-      const endDate = format(endOfMonth(month), "yyyy-MM-dd");
+  console.log("SpaCalendar state:", {
+    currentMonth: format(currentMonth, "yyyy-MM"),
+    selectedDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : null,
+    selectedBooking: selectedBooking?.id || null,
+    bookingToEdit: bookingToEdit?.id || null,
+    showEditDeleteModal,
+    modalStep,
+    actionLoading,
+  });
 
-      const bookingsRef = collection(db, "bookings");
-      const q = query(
-        bookingsRef,
-        where("arrivalDate", ">=", startDate),
-        where("arrivalDate", "<=", endDate)
-      );
+  // --- Use Custom Hooks to Fetch Data ---
+  const {
+    spaSettings,
+    loading: settingsLoading,
+    error: settingsError,
+    refetch: refetchSpaSettings, // Keep if settings could change dynamically
+  } = useSpaSettings(); // This hook fetches settings
+  console.log("useSpaSettings:", {
+    spaSettings,
+    settingsLoading,
+    settingsError,
+  });
 
-      const querySnapshot = await getDocs(q);
-      const fetchedBookings = [];
+  const {
+    bookings, // This is the raw list of bookings for the month
+    loading: bookingsLoading,
+    error: bookingsError,
+    refetch: refetchBookings, // Use this to manually trigger a refetch after write actions
+  } = useBookingsForMonth(currentMonth); // This hook fetches bookings based on month
+  console.log("useBookingsForMonth:", {
+    bookings: bookings.length,
+    bookingsLoading,
+    bookingsError,
+  });
 
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        fetchedBookings.push({
-          id: doc.id,
-          ...data,
-          // Add a flag for "to be scheduled" bookings
-          needsScheduling:
-            data.spaBookingPreference === "later" && !data.spaDateTime,
-        });
-      });
+  const {
+    availableSlots,
+    loading: slotsLoading, // Loading specific to the slots API call
+    error: slotsError,
+    refetch: refetchSlots, // Use this if you need to force a slot refresh
+  } = useAvailableSlots(selectedDate, selectedBooking, spaSettings); // This hook fetches slots based on date/booking/settings
+  console.log("useAvailableSlots:", {
+    availableSlots: availableSlots.length,
+    slotsLoading,
+    slotsError,
+  });
 
-      setBookings(fetchedBookings);
+  // --- Derived State (Calculated using useMemo) ---
+  // Filter and sort scheduled bookings for the *selected date*
+  const selectedDateBookings = useMemo(() => {
+    console.log(
+      "useMemo: Calculating selectedDateBookings...",
+      selectedDate,
+      bookings.length
+    );
+    if (!selectedDate || !bookings || bookings.length === 0) {
+      console.log("useMemo selectedDateBookings: Returning empty array.");
+      return []; // Return empty if no date selected or no bookings fetched
+    }
 
-      // Organize booked slots by date
-      const slots = {};
-      fetchedBookings.forEach((booking) => {
-        if (booking.spaDateTime) {
-          const date = booking.spaDateTime.toDate
-            ? booking.spaDateTime.toDate()
-            : new Date(booking.spaDateTime.seconds * 1000);
-
-          const dateStr = format(date, "yyyy-MM-dd");
-          const timeStr = format(date, "HH:mm");
-
-          if (!slots[dateStr]) slots[dateStr] = [];
-          slots[dateStr].push({
-            time: timeStr,
-            booking: booking,
-          });
+    const filtered = bookings
+      .filter((booking) => {
+        // A booking appears in the timeline/scheduled list ONLY if it has spaDateTime
+        // Use the parsed object stored by the hook for filtering
+        if (
+          !booking.spaDateTimeObj ||
+          isNaN(booking.spaDateTimeObj.getTime())
+        ) {
+          // console.warn("Skipping booking with invalid spaDateTimeObj:", booking.id);
+          return false; // Skip invalid dates or bookings without scheduled time
         }
+
+        // Ensure the scheduled date is the selected date (start of day comparison)
+        return isSameDay(
+          startOfDay(booking.spaDateTimeObj),
+          startOfDay(selectedDate)
+        );
+      })
+      .sort((a, b) => {
+        // Sort by time using the parsed dates
+        const timeA = a.spaDateTimeObj;
+        const timeB = b.spaDateTimeObj;
+
+        // Handle potential invalid dates during sorting (should be caught by filter, but defensive)
+        if (!timeA || isNaN(timeA.getTime())) return 1; // Invalid date comes last
+        if (!timeB || isNaN(timeB.getTime())) return -1; // Invalid date comes last
+
+        return timeA.getTime() - timeB.getTime(); // Sort ascending by time (milliseconds)
       });
-    } catch (error) {
-      console.error("Error fetching bookings:", error);
-    } finally {
-      setLoading(false);
+    console.log(
+      `useMemo selectedDateBookings: Found ${filtered.length} bookings for ${
+        selectedDate ? format(selectedDate, "yyyy-MM-dd") : "N/A"
+      }`
+    );
+    return filtered;
+  }, [bookings, selectedDate]); // Recalculate when bookings or selectedDate change
+
+  // Filter bookings that need scheduling ('À programmer' list)
+  const bookingsToSchedule = useMemo(() => {
+    console.log("useMemo: Calculating bookingsToSchedule...", bookings.length);
+    if (!bookings || bookings.length === 0) {
+      console.log("useMemo bookingsToSchedule: Returning empty array.");
+      return []; // Return empty if no bookings fetched
     }
-  };
+    const filtered = bookings
+      .filter((b) => b.needsScheduling) // Hook adds the needsScheduling flag
+      .sort((a, b) => {
+        // Sort by arrival date, then potentially by property or name
+        // Use the parsed date objects stored during fetch
+        let arrivalA = a.arrivalDateObj;
+        let arrivalB = b.arrivalDateObj;
 
-  const isDepartureDay = (date, booking) => {
-    if (!date || !booking || !booking.departureDate) return false;
+        if (!arrivalA || isNaN(arrivalA.getTime())) arrivalA = new Date(0); // Treat invalid dates as epoch for sorting
+        if (!arrivalB || isNaN(arrivalB.getTime())) arrivalB = new Date(0);
 
-    const formattedDate = format(date, "yyyy-MM-dd");
-    const departureDate = booking.departureDate;
+        if (arrivalA.getTime() - arrivalB.getTime() !== 0)
+          return arrivalA.getTime() - arrivalB.getTime();
+        // Optional secondary sort by property
+        return a.property?.localeCompare(b.property || "") || 0; // Safely compare property
+      });
+    console.log(
+      `useMemo bookingsToSchedule: Found ${filtered.length} bookings needing scheduling.`
+    );
+    return filtered;
+  }, [bookings]); // Recalculate when bookings change
 
-    return formattedDate === departureDate;
-  };
+  // --- Combined Loading State for Main UI ---
+  // This controls the main loading spinner over the whole content
+  // It does NOT include slotsLoading, as that's specific to the right panel
+  const overallLoading = bookingsLoading || settingsLoading;
 
+  // --- Data Mutation Functions (Remain here, called by handlers) ---
 
-  // Fetch SPA settings (slot duration, default hours)
-  const fetchSpaSettings = async () => {
+  // This handles the actual async Firebase update for scheduling
+  const handleUpdateBookingSpaDate = async (
+    bookingId,
+    dateTime,
+    slotsToBook
+  ) => {
+    console.log("handleUpdateBookingSpaDate started");
     try {
-      const settingsRef = doc(db, "spaSettings", "default");
-      const settingsDoc = await getDoc(settingsRef);
-
-      if (settingsDoc.exists()) {
-        setSpaSettings(settingsDoc.data());
-      }
-    } catch (error) {
-      console.error("Error fetching SPA settings:", error);
-    }
-  };
-
-  // Calculate available slots for a selected date
-const fetchAvailableSlotsForDate = async (date) => {
-  setLoading(true);
-  try {
-    const dateStr = format(date, "yyyy-MM-dd");
-    const apiUrl = "http://localhost:3000";
-
-    // Include the departure date in the API call if the selected booking has one
-    let apiEndpoint = `${apiUrl}/api/spa/availability?date=${dateStr}`;
-
-    if (selectedBooking?.departureDate) {
-      apiEndpoint += `&departure=${selectedBooking.departureDate}`;
-    }
-
-    if (selectedBooking?.arrivalDate) {
-      apiEndpoint += `&arrival=${selectedBooking.arrivalDate}`;
-    }
-
-    console.log(`Fetching slots from: ${apiEndpoint}`);
-    const response = await fetch(apiEndpoint);
-
-    if (!response.ok) {
-      throw new Error(`API responded with status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log("Received slots data:", data);
-
-    setAvailableSlots(data.slots || []);
-  } catch (error) {
-    console.error("Error fetching available slots:", error);
-    setAvailableSlots([]);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // Update a booking's SPA datetime
-  const updateBookingSpaDate = async (bookingId, dateTime, spaSlots) => {
-    try {
-      setLoading(true);
-      const bookingRef = doc(db, "bookings", bookingId);
-
-      // Calculate end time (1 hour after start by default, or configured duration)
-      const slotDurationMinutes = spaSettings?.slotDurationMinutes || 60;
-      const endDateTime = new Date(
-        dateTime.getTime() + slotDurationMinutes * 60000
+      setActionLoading(true); // Start action loading
+      console.log(
+        "handleUpdateBookingSpaDate called for booking:",
+        bookingId,
+        "dateTime:",
+        format(dateTime, "yyyy-MM-dd HH:mm"),
+        "spaSlots:",
+        slotsToBook
       );
 
-      await updateDoc(bookingRef, {
-        spaDateTime: dateTime,
+      // Calculate end time based on the START time plus the total duration covered by the slots.
+      const slotDurationMinutes = spaSettings?.slotDurationMinutes || 30; // Use settings from hook state
+      const totalDurationMinutes =
+        (slotsToBook?.length || 0) * slotDurationMinutes;
+      const endDateTime = new Date(
+        dateTime.getTime() + totalDurationMinutes * 60000
+      );
+
+      console.log(
+        `Saving SPA booking for ${bookingId}. Start: ${format(
+          dateTime,
+          "yyyy-MM-dd HH:mm:ss"
+        )}, Calculated End: ${format(
+          endDateTime,
+          "yyyy-MM-dd HH:mm:ss"
+        )}, Slots: ${slotsToBook}`
+      );
+
+      await updateDoc(doc(db, "bookings", bookingId), {
+        spaDateTime: dateTime, // Firestore will convert Date to Timestamp
+        spaEndDateTime: endDateTime, // Firestore will convert Date to Timestamp
+        spaSlots: slotsToBook, // Array of strings (e.g., ["14:00", "14:30"])
         spaBookingPreference: "scheduled",
-        spaSlots: spaSlots, // Save the array of booked slots
-        spaEndDateTime: endDateTime, // Add end time
-        // Update spaInfo for better display
+        // Update spaInfo for better display (optional, but good practice)
         spaInfo: {
           hasSpaTreatment: true,
-          scheduledDateTime: dateTime,
-          endDateTime: endDateTime,
+          scheduledDateTime: dateTime, // Store Date or Timestamp
+          endDateTime: endDateTime, // Store Date or Timestamp
           preference: "scheduled",
-          formattedDateTime: format(dateTime, "PPPp", { locale: fr }),
-          slots: spaSlots,
+          formattedDateTime: format(dateTime, "PPPp", { locale: fr }), // Format for display
+          slots: slotsToBook,
           status: "scheduled",
         },
       });
 
-      // Refresh bookings and reset selection
-      fetchBookingsForMonth(currentMonth);
-      setSelectedBooking(null);
+      console.log(`Booking ${bookingId} updated successfully in Firebase.`);
+
+      // --- Refetch Data After Write ---
+      // Refetch bookings for the month to see the changes reflected in all lists/timeline
+      console.log("Refetching bookings after update...");
+      refetchBookings(currentMonth);
+      // Refetch slots for the selected date as availability might have changed
+      if (selectedDate) {
+        console.log("Refetching slots after update...");
+        refetchSlots(selectedDate, selectedBooking, spaSettings);
+      }
+      // --- End Refetch ---
+
+      setSelectedBooking(null); // Clear selected booking after successful scheduling
 
       // Show confirmation
       alert(
-        `SPA appointment scheduled for ${format(dateTime, "EEEE d MMMM", {
+        `Rendez-vous SPA planifié pour le ${format(dateTime, "EEEE d MMMM", {
           locale: fr,
-        })} at ${format(dateTime, "HH:mm", { locale: fr })}-${format(
+        })} de ${format(dateTime, "HH:mm", { locale: fr })} à ${format(
           endDateTime,
           "HH:mm",
           { locale: fr }
         )}`
       );
+      console.log("handleUpdateBookingSpaDate finished successfully");
     } catch (error) {
       console.error("Error updating booking:", error);
-      alert("Failed to update booking.");
+      alert("Échec de la planification du rendez-vous.");
+      console.log("handleUpdateBookingSpaDate finished with error");
     } finally {
-      setLoading(false);
+      setActionLoading(false); // End action loading
+      console.log("handleUpdateBookingSpaDate actionLoading set to false");
     }
   };
 
-  // Handle date selection
-const handleDateSelect = (date) => {
-  setSelectedDate(date);
-  // MODIFIED: Always fetch slots when a date is selected,
-  // regardless of whether a booking is currently selected.
-  fetchAvailableSlotsForDate(date); // Moved outside the if block
-
-  // Get existing bookings for this date
-  const dateStr = format(date, "yyyy-MM-dd");
-  const dateBookings = bookings.filter((booking) => {
-    if (!booking.spaDateTime) return false;
-
-    // Handle different datetime formats
-    const bookingDate = booking.spaDateTime.toDate
-      ? booking.spaDateTime.toDate()
-      : booking.spaDateTime.seconds
-      ? new Date(booking.spaDateTime.seconds * 1000)
-      : new Date(booking.spaDateTime);
-
-    // Ensure bookingDate is valid before formatting
-    if (isNaN(bookingDate.getTime())) {
-      // Optionally log a warning if a booking has an invalid date
-      // console.warn("Invalid spaDateTime for booking:", booking.id, booking.spaDateTime);
-      return false;
+  // This handles the actual async Firebase delete action
+  const handleDeleteSpaAppointment = async () => {
+    console.log("handleDeleteSpaAppointment called");
+    // No window.confirm here, confirmation is handled in the modal UI
+    if (!bookingToEdit) {
+      console.log("Delete action called but bookingToEdit is null. Aborting.");
+      closeEditDeleteModal(); // Close modal if state is inconsistent
+      return;
     }
 
-    return format(bookingDate, "yyyy-MM-dd") === dateStr;
-  });
+    try {
+      setActionLoading(true); // Start action loading
+      console.log("Starting delete action for booking:", bookingToEdit.id);
+      await updateDoc(doc(db, "bookings", bookingToEdit.id), {
+        spaDateTime: deleteField(), // Remove the field
+        spaEndDateTime: deleteField(), // Remove the field
+        spaSlots: deleteField(), // Remove the field
+        spaBookingPreference: "none", // Set preference to none
+        spaInfo: {
+          // Reset spaInfo
+          hasSpaTreatment: false,
+          scheduledDateTime: null,
+          endDateTime: null,
+          preference: "none",
+          formattedDateTime: null,
+          slots: [],
+          status: "cancelled", // Or "deleted"
+        },
+      });
 
-  // Sort bookings by time
-  dateBookings.sort((a, b) => {
-    const timeA = a.spaDateTime.toDate
-      ? a.spaDateTime.toDate()
-      : a.spaDateTime.seconds
-      ? new Date(a.spaDateTime.seconds * 1000)
-      : new Date(a.spaDateTime);
+      console.log(
+        `Booking ${bookingToEdit.id} deleted successfully in Firebase.`
+      );
+      alert("Rendez-vous SPA supprimé.");
+      // closeModal happens in finally
+      console.log("handleDeleteSpaAppointment finished successfully");
 
-    const timeB = b.spaDateTime.toDate
-      ? b.spaDateTime.toDate()
-      : b.spaDateTime.seconds
-      ? new Date(b.spaDateTime.seconds * 1000)
-      : new Date(b.spaDateTime);
+      // --- Refetch Data After Write ---
+      // Refetch bookings for the month to see the changes
+      console.log("Refetching bookings after delete...");
+      refetchBookings(currentMonth);
+      // Refetch slots for the selected date as availability might have changed
+      // Pass null for selectedBooking as the one being edited is now deleted or pending reschedule
+      if (selectedDate) {
+        console.log("Refetching slots after delete...");
+        refetchSlots(selectedDate, null, spaSettings);
+      }
+      // Also clear selectedBooking if it was the one deleted (less likely but safe)
+      if (selectedBooking?.id === bookingToEdit.id) {
+        setSelectedBooking(null);
+      }
+      // --- End Refetch ---
+    } catch (error) {
+      console.error("Error deleting SPA appointment:", error);
+      alert("Échec de la suppression du rendez-vous SPA.");
+      console.log("handleDeleteSpaAppointment finished with error");
+    } finally {
+      closeEditDeleteModal(); // Close modal regardless of success/failure
+      setActionLoading(false); // End action loading
+      console.log("handleDeleteSpaAppointment actionLoading set to false");
+    }
+  };
 
-    return timeA - timeB;
-  });
-
-  setSelectedDateBookings(dateBookings);
-};
-
-  // Handle booking a slot
-  const handleBookSlot = (date, timeSlot) => {
-    if (!selectedBooking) {
-      alert("Please select a booking first.");
+  // This handles the actual async Firebase action to mark for rescheduling
+  const handleMarkBookingForRescheduling = async () => {
+    console.log("handleMarkBookingForRescheduling called");
+    // No window.confirm here, confirmation is handled in the modal UI
+    if (!bookingToEdit) {
+      console.log(
+        "Reschedule action called but bookingToEdit is null. Aborting."
+      );
+      closeEditDeleteModal(); // Close modal if state is inconsistent
       return;
+    }
+
+    try {
+      setActionLoading(true); // Start action loading
+      console.log("Starting reschedule action for booking:", bookingToEdit.id);
+      await updateDoc(doc(db, "bookings", bookingToEdit.id), {
+        spaDateTime: deleteField(), // Remove the field
+        spaEndDateTime: deleteField(), // Remove the field
+        spaSlots: deleteField(), // Remove the field
+        // Set preference back to 'later' so it appears in the middle list
+        spaBookingPreference: "later",
+        spaInfo: {
+          // Update spaInfo status
+          hasSpaTreatment: true, // Still wants treatment, just needs scheduling
+          scheduledDateTime: null,
+          endDateTime: null,
+          preference: "later",
+          formattedDateTime: null,
+          slots: [],
+          status: "pending", // Or similar status
+        },
+      });
+
+      console.log(
+        `Booking ${bookingToEdit.id} marked for rescheduling successfully.`
+      );
+      alert("Rendez-vous SPA marqué pour être reprogrammé.");
+      // closeModal happens in finally
+      console.log("handleMarkBookingForRescheduling finished successfully");
+
+      // --- Refetch Data After Write ---
+      // Refetch bookings for the month
+      console.log("Refetching bookings after reschedule...");
+      refetchBookings(currentMonth);
+      // Refetch slots for the selected date as availability might have changed
+      // Pass null for selectedBooking as the one being edited is now deleted or pending reschedule
+      if (selectedDate) {
+        console.log("Refetching slots after reschedule...");
+        refetchSlots(selectedDate, null, spaSettings);
+      }
+      // If the booking being edited was also the selectedBooking, clear selectedBooking
+      if (selectedBooking?.id === bookingToEdit.id) {
+        setSelectedBooking(null);
+      }
+      // --- End Refetch ---
+    } catch (error) {
+      console.error("Error marking SPA appointment for rescheduling:", error);
+      alert("Échec de la mise à jour pour la reprogrammation.");
+      console.log("handleMarkBookingForRescheduling finished with error");
+    } finally {
+      closeEditDeleteModal(); // Close modal regardless of success/failure
+      setActionLoading(false); // End action loading
+      console.log(
+        "handleMarkBookingForRescheduling actionLoading set to false"
+      );
+    }
+  };
+
+  // --- Event Handlers ---
+
+  // Handle date selection (Sole source for populating selectedDateBookings and availableSlots)
+  // Updated to use hook loading states and pass selectedBooking context to isDateWithinBookingStay
+  const handleDateSelect = (date) => {
+    console.log(
+      "handleDateSelect called for date:",
+      format(date, "yyyy-MM-dd")
+    );
+    // Avoid actions if overall data is loading or an action is in progress
+    if (overallLoading || actionLoading) {
+      console.log("handleDateSelect blocked due to loading or actionLoading");
+      return;
+    }
+
+    // Before setting, check if this date *should* be selectable based on selectedBooking
+    // If a booking is selected, the date must be within its stay period.
+    // isDateWithinBookingStay is now imported from utils
+    if (selectedBooking) {
+      if (!isDateWithinBookingStay(date, selectedBooking)) {
+        console.log(
+          "handleDateSelect blocked: Date is outside selected booking stay:",
+          format(date, "yyyy-MM-dd"),
+          selectedBooking.id
+        );
+        // The calendar day button is disabled based on this check (in JSX), but this is a final safeguard.
+        return; // Do not select the date
+      }
+      // Console log below is kept from original for debugging clarity
+      console.log(
+        "handleDateSelect allowed: Date is within selected booking stay:",
+        format(date, "yyyy-MM-dd"),
+        selectedBooking.id
+      );
+    } else {
+      // Console log below is kept from original for debugging clarity
+      console.log(
+        "handleDateSelect allowed: No booking selected, any date selectable:",
+        format(date, "yyyy-MM-dd")
+      );
+    }
+
+    // If the date is allowed, proceed to select it
+    setSelectedDate(date);
+    console.log("Date selected:", format(date, "yyyy-MM-dd"));
+
+    // The fetching of available slots for the newly selected date
+    // is now handled automatically by the useAvailableSlots hook's useEffect
+    // because `selectedDate` is a dependency.
+    // No need to call fetchAvailableSlotsForDate(date) directly here anymore.
+
+    // The selectedDateBookings derived state is updated automatically by the useMemo hook
+    // when the 'bookings' state (from useBookingsForMonth) changes based on the new 'selectedDate'.
+    // No need to filter and set selectedDateBookings directly here anymore.
+    console.log("handleDateSelect finished.");
+  };
+
+  // Handle booking a slot (from Available Slots panel)
+  // Updated to use hook states, derived state, utility function, and call the new async wrapper function
+  const handleBookSlot = (date, timeSlot) => {
+    console.log(
+      "handleBookSlot called with date:",
+      format(date, "yyyy-MM-dd"),
+      "timeSlot:",
+      timeSlot
+    );
+    // Validate inputs and states
+    if (!selectedBooking) {
+      alert("Please select a booking from the 'À programmer' list first.");
+      console.warn("handleBookSlot: No booking selected.");
+      return;
+    }
+
+    // Prevent booking if an action is already in progress (e.g., modal open)
+    if (actionLoading || showEditDeleteModal) {
+      console.log(
+        "handleBookSlot blocked due to actionLoading or showEditDeleteModal"
+      );
+      return;
+    }
+
+    // Redundant check here because the button should be disabled based on calendar logic, but good as a safeguard
+    // isDateWithinBookingStay is imported utility
+    if (!isDateWithinBookingStay(date, selectedBooking)) {
+      alert("Cannot book SPA outside of the client's stay dates.");
+      console.warn("handleBookSlot: Selected date is outside booking stay.");
+      return;
+    }
+
+    // Validate slot availability - Use availableSlots state from the hook
+    // Check if the selected timeSlot is even in the list of *currently* available slots
+    if (!availableSlots.includes(timeSlot)) {
+      console.error(
+        "handleBookSlot: Selected time slot is not in the current availableSlots list:",
+        timeSlot,
+        availableSlots
+      );
+      alert("Le créneau horaire sélectionné n'est pas disponible.");
+      refetchSlots(selectedDate, selectedBooking, spaSettings); // Refresh slots view using hook refetch
+      console.log("handleBookSlot aborted due to slot unavailability.");
+      return; // Abort
     }
 
     // Create a Date object for the selected date and time
     const [hours, minutes] = timeSlot.split(":").map(Number);
     const dateTime = new Date(date);
     dateTime.setHours(hours, minutes, 0, 0);
-
-    // Calculate the next slot time (1 hour later by default)
-    const slotDurationMinutes = spaSettings?.slotDurationMinutes || 60;
-    const nextSlotDateTime = new Date(dateTime);
-    nextSlotDateTime.setMinutes(
-      nextSlotDateTime.getMinutes() + slotDurationMinutes
+    dateTime.setSeconds(0, 0); // Ensure seconds/ms are 0
+    console.log(
+      "handleBookSlot: Calculated start DateTime:",
+      format(dateTime, "yyyy-MM-dd HH:mm:ss")
     );
 
-    // Get the time strings for both slots
-    const firstSlotTime = format(dateTime, "HH:mm");
-    const secondSlotTime = format(nextSlotDateTime, "HH:mm");
+    // Determine the required number of slots based on selected booking duration and settings
+    // Use selectedBooking state for duration
+    const treatmentDurationMinutes =
+      selectedBooking.spaTreatmentDuration &&
+      typeof selectedBooking.spaTreatmentDuration === "number"
+        ? selectedBooking.spaTreatmentDuration
+        : 120; // Default 120 minutes (2 hours)
 
-    // Include both slots in the update
-    const spaSlots = [firstSlotTime, secondSlotTime];
+    // Get slot size from settings (use spaSettings state from hook)
+    const slotDurationMinutes = spaSettings?.slotDurationMinutes || 30; // Use spaSettings from hook state
 
-    // Update Firebase document with both slots
-    updateBookingSpaDate(selectedBooking.id, dateTime, spaSlots);
+    // Validate duration settings before calculating slots
+    if (slotDurationMinutes <= 0 || treatmentDurationMinutes <= 0) {
+      console.error("Invalid duration settings:", {
+        treatmentDurationMinutes,
+        slotDurationMinutes,
+      });
+      alert(
+        "Erreur de configuration des durées SPA. Impossible de calculer les créneaux nécessaires."
+      );
+      console.log("handleBookSlot aborted due to invalid duration settings.");
+      return;
+    }
+
+    try {
+      // Calculate the specific slot strings that the booking will occupy
+      // Use calculateBookingSlots utility (imported)
+      const slotsToBook = calculateBookingSlots(
+        dateTime,
+        treatmentDurationMinutes,
+        slotDurationMinutes
+      );
+      console.log("handleBookSlot: Calculated bookedSlots array:", slotsToBook);
+
+      // Final validation: Check if the number of calculated slots matches required count
+      const requiredSlotsCount = Math.ceil(
+        treatmentDurationMinutes / slotDurationMinutes
+      );
+      if (
+        slotsToBook.length !== requiredSlotsCount ||
+        slotsToBook[0] !== timeSlot
+      ) {
+        console.error(
+          "handleBookSlot: Slot calculation mismatch or start time inconsistency:",
+          {
+            calculated: slotsToBook,
+            requiredCount: requiredSlotsCount,
+            selectedSlot: timeSlot,
+          }
+        );
+        // Use hook refetch
+        refetchSlots(selectedDate, selectedBooking, spaSettings); // Refresh slots view
+        alert(
+          "Erreur interne: Le créneau sélectionné ne correspond pas à la durée du traitement calculée."
+        );
+        console.log("handleBookSlot aborted due to slot calculation mismatch.");
+        return; // Abort if calculation result is unexpected
+      }
+
+      // --- Robust Validation against availableSlots ---
+      // Ensure that *all* slots calculated as needed (`slotsToBook`) are actually present
+      // in the *current* list of `availableSlots` fetched from the API.
+      // Use availableSlots state from hook
+      const requiredSlotsAvailable = slotsToBook.every((requiredSlot) =>
+        availableSlots.includes(requiredSlot)
+      );
+
+      if (!requiredSlotsAvailable) {
+        console.error(
+          "handleBookSlot: Not all calculated slots are in the available list.",
+          {
+            selectedSlot: timeSlot,
+            slotsToBook: slotsToBook,
+            availableSlots: availableSlots,
+          }
+        );
+        // Use hook refetch
+        refetchSlots(selectedDate, selectedBooking, spaSettings); // Refresh slots view
+        alert(
+          "Le créneau horaire sélectionné nécessite des créneaux consécutifs qui ne sont pas tous disponibles."
+        );
+        console.log(
+          "handleBookSlot aborted due to consecutive slot unavailability."
+        );
+        return; // Abort
+      }
+      // --- End Robust Validation ---
+
+      // Call the async wrapper function that updates Firebase and triggers refetch
+      // This function sets actionLoading and handles refetching internally
+      console.log(
+        "handleBookSlot proceeding to call handleUpdateBookingSpaDate"
+      );
+      handleUpdateBookingSpaDate(selectedBooking.id, dateTime, slotsToBook);
+    } catch (error) {
+      // Catch errors thrown by calculateBookingSlots or other sync logic
+      console.error("Slot calculation or validation failed:", error);
+      alert(
+        `Erreur lors du calcul des créneaux : ${
+          error.message || "une erreur inconnue est survenue"
+        }`
+      );
+      // Optionally refetch slots here if calculation/validation indicates a potential data issue
+      // refetchSlots(selectedDate, selectedBooking, spaSettings);
+      console.log("handleBookSlot finished with sync error.");
+    }
+    console.log("handleBookSlot finished.");
   };
 
-  // Render calendar UI
+  // Handle click on a scheduled slot in the timeline or list
+  // Updated to use actionLoading state
+  const handleTimelineSlotClick = (booking) => {
+    console.log("handleTimelineSlotClick called for booking:", booking.id);
+    // Prevent opening modal if an action is already in progress
+    if (actionLoading) {
+      console.log("handleTimelineSlotClick blocked due to actionLoading");
+      return;
+    }
+    setBookingToEdit(booking); // Set the booking to edit state
+    setModalStep("options"); // Reset modal step to show options first
+    setShowEditDeleteModal(true); // Show the modal
+    console.log("Modal state set to true, bookingToEdit:", booking.id);
+    console.log("handleTimelineSlotClick finished.");
+  };
+
+  // Close the edit/delete modal
+  // Kept as is, used by the modal component's close button
+  const closeEditDeleteModal = () => {
+    console.log("closeEditDeleteModal called");
+    setBookingToEdit(null); // Clear the booking being edited
+    setModalStep("options"); // Reset step on close
+    setShowEditDeleteModal(false); // Hide the modal
+    console.log("Modal state set to false");
+  };
+
+  // --- Handlers Passed to Modal Component to Request Step Changes ---
+  // These functions are defined here because they need access to the setModalStep state setter
+  const requestRescheduleStep = () => {
+    console.log(
+      "requestRescheduleStep called, setting modalStep to 'confirm-reschedule'"
+    );
+    setModalStep("confirm-reschedule");
+  };
+  const requestDeleteStep = () => {
+    console.log(
+      "requestDeleteStep called, setting modalStep to 'confirm-delete'"
+    );
+    setModalStep("confirm-delete");
+  };
+  const requestOptionsStep = () => {
+    console.log("requestOptionsStep called, setting modalStep to 'options'");
+    setModalStep("options");
+  };
+
+  // --- Render UI ---
+
   return (
     <div className="p-4 bg-white rounded-lg shadow">
+      {console.log("Rendering SpaCalendar JSX")}
       <h2 className="mb-4 text-xl font-bold">Calendrier SPA Admin</h2>
-
+      {/* Overall Loading Indicator - Uses combined loading from hooks */}
+      {overallLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
+          <div className="text-lg font-semibold text-blue-600">
+            Chargement des données...
+          </div>
+        </div>
+      )}
+      {/* Overall Error Message - Uses errors from hooks */}
+      {(bookingsError || settingsError) && !overallLoading && (
+        <div className="p-4 mb-4 text-center text-red-700 bg-red-100 border border-red-300 rounded">
+          Erreur lors du chargement des données :{" "}
+          {bookingsError?.message ||
+            settingsError?.message ||
+            "Une erreur inconnue est survenue."}
+        </div>
+      )}
       {/* Month navigation */}
+      {/* Disabled using overallLoading and actionLoading */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() =>
@@ -298,7 +706,8 @@ const handleDateSelect = (date) => {
               new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1)
             )
           }
-          className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
+          className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={overallLoading || actionLoading}
         >
           Mois précédent
         </button>
@@ -311,16 +720,37 @@ const handleDateSelect = (date) => {
               new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1)
             )
           }
-          className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
+          className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={overallLoading || actionLoading}
         >
           Mois suivant
         </button>
       </div>
-
       {/* Main content area - 3 panels */}
       <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-3">
-        {/* Left: Calendar */}
+        {/* Left: Calendar Panel (Remains inline for now) */}
         <div className="p-3 border rounded">
+          <h3 className="mb-2 text-lg font-semibold">Calendrier</h3>
+          {/* Info message if a booking is selected */}
+          {selectedBooking && (
+            <div className="p-2 mb-3 text-sm text-center text-blue-700 border border-blue-300 rounded bg-blue-50">
+              Sélectionnez une date entre le{" "}
+              {selectedBooking.arrivalDateObj
+                ? format(selectedBooking.arrivalDateObj, "dd/MM")
+                : "?"}{" "}
+              et le{" "}
+              {selectedBooking.departureDateObj
+                ? format(selectedBooking.departureDateObj, "dd/MM")
+                : "?"}{" "}
+              pour{" "}
+              <span className="font-medium">
+                {selectedBooking.guestName ||
+                  `${selectedBooking.firstName} ${selectedBooking.lastName}`}{" "}
+                ({selectedBooking.property})
+              </span>
+              .
+            </div>
+          )}
           <div className="grid grid-cols-7 gap-1">
             {/* Day headers */}
             {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((day) => (
@@ -338,109 +768,79 @@ const handleDateSelect = (date) => {
               const isToday = isSameDay(date, new Date());
               const isSelected = selectedDate && isSameDay(date, selectedDate);
 
-              let isDisabled = false;
-              if (
-                selectedBooking &&
-                selectedBooking.arrivalDate &&
-                selectedBooking.departureDate
-              ) {
-                try {
-                  // Parse arrival and departure dates from the selected booking.
-                  // Ensure they are valid date strings. `new Date()` can be tricky.
-                  // `startOfDay` normalizes the time part to 00:00:00 for comparison.
-                  const arrivalDateObj = startOfDay(
-                    new Date(selectedBooking.arrivalDate)
-                  );
-                  const departureDateObj = startOfDay(
-                    new Date(selectedBooking.departureDate)
-                  );
+              // Determine if date should be disabled
+              let isDisabled = overallLoading || actionLoading;
 
-                  // Current calendar date, normalized to start of day
-                  const currentDate = startOfDay(date);
-
-                  // Check if parsing resulted in valid dates
-                  if (
-                    isNaN(arrivalDateObj.getTime()) ||
-                    isNaN(departureDateObj.getTime())
-                  ) {
-                    console.warn(
-                      "Invalid arrival or departure date in selectedBooking. Cannot restrict calendar dates.",
-                      selectedBooking
-                    );
-                    // Decide on behavior: either disable nothing, or disable all if dates are crucial
-                    // For now, we'll not disable if dates are invalid to allow manual override if needed.
-                    // If stricter, you could set isDisabled = true here.
-                  } else {
-                    // Disable date if it's strictly before arrival or strictly after departure
-                    if (
-                      isBefore(currentDate, arrivalDateObj) ||
-                      isAfter(currentDate, departureDateObj)
-                    ) {
-                      isDisabled = true;
-                    }
-                  }
-                } catch (error) {
-                  console.error(
-                    "Error parsing booking arrival/departure dates for calendar restriction:",
-                    error
-                  );
-                  // Handle error, perhaps by not disabling or logging further
-                }
+              // Disable date if a booking is selected AND the date is outside its stay
+              if (!isDisabled && selectedBooking) {
+                isDisabled = !isDateWithinBookingStay(date, selectedBooking);
               }
 
-              // Find bookings for this date (for dots indicator)
-              const dateSpaBookings = bookings.filter((booking) => {
-                if (!booking.spaDateTime) return false;
-
-                // Handle different datetime formats from Firestore or state
-                const bookingDate = booking.spaDateTime.toDate
-                  ? booking.spaDateTime.toDate() // Firestore Timestamp
-                  : booking.spaDateTime.seconds
-                  ? new Date(booking.spaDateTime.seconds * 1000) // Firestore Timestamp (older SDK?) or stored seconds
-                  : new Date(booking.spaDateTime); // Assumed to be Date object or parsable string
-
-                // Check if bookingDate is valid before formatting
-                if (isNaN(bookingDate.getTime())) {
-                  // console.warn("Invalid spaDateTime encountered for booking:", booking.id, booking.spaDateTime);
-                  return false; // Skip if date is invalid
-                }
-
-                return format(bookingDate, "yyyy-MM-dd") === dateStr;
+              // Find bookings for this date (for dots indicator) - Use 'bookings' from hook
+              const dateSpaBookingsForDots = bookings.filter((booking) => {
+                if (!booking.spaDateTimeObj) return false;
+                return isSameDay(booking.spaDateTimeObj, date);
               });
 
-              const hasSpaBookings = dateSpaBookings.length > 0;
+              const hasSpaBookings = dateSpaBookingsForDots.length > 0;
 
               return (
                 <button
                   key={dateStr}
-                  onClick={() => !isDisabled && handleDateSelect(date)} // Modified: only call if not disabled
-                  disabled={isDisabled} // Added: HTML disabled attribute
+                  onClick={() => !isDisabled && handleDateSelect(date)}
+                  disabled={isDisabled}
                   className={`p-2 text-sm rounded relative
                     ${
                       isDisabled
-                        ? "text-gray-400 bg-gray-50 cursor-not-allowed" // Style for disabled dates
+                        ? "text-gray-400 bg-gray-50 cursor-not-allowed"
                         : isSelected
-                        ? "bg-blue-500 text-white" // Style for selected, enabled dates
-                        : `${isToday ? "bg-blue-100" : ""} hover:bg-gray-100` // Style for other enabled dates (today, hover)
+                        ? "bg-blue-500 text-white"
+                        : `${isToday ? "bg-blue-100" : ""} hover:bg-gray-100`
                     }
                   `}
+                  title={
+                    isDisabled &&
+                    selectedBooking &&
+                    !overallLoading &&
+                    !actionLoading
+                      ? `Cette date (${format(
+                          date,
+                          "dd/MM"
+                        )}) est hors du séjour du client (${
+                          selectedBooking.arrivalDateObj
+                            ? format(selectedBooking.arrivalDateObj, "dd/MM")
+                            : "?"
+                        } - ${
+                          selectedBooking.departureDateObj
+                            ? format(selectedBooking.departureDateObj, "dd/MM")
+                            : "?"
+                        })`
+                      : null
+                  }
                 >
                   <div className="text-center">{format(date, "d")}</div>
 
-                  {/* Show colored dots for each booking (existing logic) */}
+                  {/* Show colored dots for each booking */}
                   {hasSpaBookings && (
                     <div className="flex justify-center mt-1 space-x-1">
-                      {dateSpaBookings.length <= 3 ? (
-                        dateSpaBookings.map((_, i) => (
+                      {/* Use the first few bookings for color dots */}
+                      {dateSpaBookingsForDots.slice(0, 3).map((booking, i) => {
+                        const colors = getPropertyColor(booking);
+                        return (
                           <div
                             key={i}
-                            className="w-2 h-2 bg-green-500 rounded-full"
-                            title="SPA booking"
+                            className={`w-2 h-2 rounded-full ${colors.bg.replace(
+                              "-100",
+                              "-500"
+                            )}`}
+                            title={`SPA booking: ${booking.property}`}
                           ></div>
-                        ))
-                      ) : (
-                        <div className="px-1 text-xs text-green-800 bg-green-100 rounded-full">
-                          {dateSpaBookings.length}
+                        );
+                      })}
+                      {/* Show count if more than 3 */}
+                      {dateSpaBookingsForDots.length > 3 && (
+                        <div className="px-1 leading-none text-gray-800 bg-gray-100 rounded-full text-xxs">
+                          {dateSpaBookingsForDots.length}
                         </div>
                       )}
                     </div>
@@ -451,275 +851,62 @@ const handleDateSelect = (date) => {
           </div>
         </div>
 
-        {/* Middle: Bookings to schedule */}
-        <div className="p-3 border rounded">
-          <h3 className="mb-2 text-lg font-semibold">À programmer</h3>
-          {loading ? (
-            <div className="p-2 text-center">Chargement...</div>
-          ) : (
-            <div className="space-y-2">
-              {bookings.filter((b) => b.needsScheduling).length === 0 ? (
-                <div className="p-2 text-sm text-center text-gray-500">
-                  Aucune réservation SPA à programmer
-                </div>
-              ) : (
-                bookings
-                  .filter((b) => b.needsScheduling)
-                  .map((booking) => (
-                    <div
-                      key={booking.id}
-                      className={`p-2 border rounded cursor-pointer hover:bg-gray-50 ${
-                        selectedBooking?.id === booking.id
-                          ? "bg-blue-50 border-blue-300"
-                          : ""
-                      }`}
-                      onClick={() => setSelectedBooking(booking)}
-                    >
-                      <div className="font-semibold">
-                        {booking.guestName ||
-                          `${booking.firstName} ${booking.lastName}`}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Séjour:{" "}
-                        {format(new Date(booking.arrivalDate), "dd/MM/yyyy")} -{" "}
-                        {format(new Date(booking.departureDate), "dd/MM/yyyy")}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Chambre: {booking.property}
-                      </div>
-                    </div>
-                  ))
-              )}
-            </div>
-          )}
-        </div>
+        {/* Middle: Bookings to schedule panel (Extracted Component) */}
+        {/* Pass derived state and handlers */}
+        <BookingsToSchedulePanel
+          bookingsToSchedule={bookingsToSchedule} // Pass derived state
+          selectedBooking={selectedBooking} // Pass state
+          onBookingSelect={setSelectedBooking} // Pass setter
+          isLoading={overallLoading} // Pass main loading state from hooks
+          isActionLoading={actionLoading} // Pass action loading state
+        />
 
-        {/* Right: Available slots */}
-        <div className="p-3 border rounded">
-          <h3 className="mb-2 text-lg font-semibold">
-            {selectedDate
-              ? `Créneaux - ${format(selectedDate, "EEEE d MMMM", {
-                  locale: fr,
-                })}`
-              : "Sélectionnez une date"}
-          </h3>
-
-          {selectedDate ? (
-            loading ? (
-              <div className="p-2 text-center">Chargement des créneaux...</div>
-            ) : (
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Créneaux disponibles</h4>
-                {availableSlots.length === 0 ? (
-                  <div className="p-2 text-sm text-center text-gray-500">
-                    Aucun créneau disponible
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {availableSlots.map((slot) => (
-                      <button
-                        key={slot}
-                        onClick={() => handleBookSlot(selectedDate, slot)}
-                        disabled={!selectedBooking}
-                        className={`p-2 text-sm rounded border ${
-                          !selectedBooking
-                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                            : "bg-white hover:bg-green-50 hover:border-green-500"
-                        }`}
-                        title={
-                          !selectedBooking
-                            ? "Sélectionnez d'abord une réservation"
-                            : null
-                        }
-                      >
-                        {slot}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {!selectedBooking && (
-                  <div className="p-2 mt-4 text-sm text-center text-yellow-600 rounded bg-yellow-50">
-                    Sélectionnez d'abord une réservation à programmer
-                  </div>
-                )}
-              </div>
-            )
-          ) : (
-            <div className="p-2 text-sm text-center text-gray-500">
-              Sélectionnez une date pour voir les créneaux disponibles
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Timeline Section */}
-      {selectedDate && (
-        <div className="p-4 mt-4 bg-white border rounded">
-          <h3 className="mb-4 text-lg font-semibold">
-            Agenda du {format(selectedDate, "EEEE d MMMM", { locale: fr })}
-          </h3>
-
-          {/* Timeline header - hours */}
-          <div className="flex border-b">
-            <div className="w-24 px-2 py-1 text-sm font-medium">Heure</div>
-            <div className="flex-1 px-2 py-1 text-sm font-medium">
-              Réservations
-            </div>
-          </div>
-
-          {/* Timeline rows - each hour */}
-          <div className="divide-y">
-            {(() => {
-              // Determine the starting hour based on available slots and existing bookings
-              let startHour = 14; // Default start hour
-
-              // Check if we have early morning slots (departure day) or early bookings
-              const hasEarlySlots = availableSlots.some((slot) => {
-                const hour = parseInt(slot.split(":")[0]);
-                return hour < 14;
-              });
-
-              const hasEarlyBookings = selectedDateBookings.some((booking) => {
-                if (!booking.spaDateTime) return false;
-
-                const startTime = booking.spaDateTime.toDate
-                  ? booking.spaDateTime.toDate()
-                  : booking.spaDateTime.seconds
-                  ? new Date(booking.spaDateTime.seconds * 1000)
-                  : new Date(booking.spaDateTime);
-
-                const hour = parseInt(format(startTime, "HH"));
-                return hour < 14;
-              });
-
-              // If we have early slots or bookings, start at 6am
-              const timelineStartHour =
-                hasEarlySlots || hasEarlyBookings ? 6 : 14;
-              // End at midnight or 1 hour after the last slot/booking
-              const timelineEndHour = 24;
-
-              // Generate hours for the timeline
-              return Array.from(
-                { length: timelineEndHour - timelineStartHour },
-                (_, i) => i + timelineStartHour
-              ).map((hour) => {
-                // Format hour
-                const formattedHour = `${hour < 10 ? "0" + hour : hour}:00`;
-
-                // Find bookings that specifically start at this hour
-                const startingBookings = selectedDateBookings.filter(
-                  (booking) => {
-                    const startTime = booking.spaDateTime.toDate
-                      ? booking.spaDateTime.toDate()
-                      : booking.spaDateTime.seconds
-                      ? new Date(booking.spaDateTime.seconds * 1000)
-                      : new Date(booking.spaDateTime);
-
-                    return format(startTime, "HH:mm") === formattedHour;
-                  }
-                );
-
-                // Get the color for each booking based on apartmentId
-                const getPropertyColor = (booking) => {
-                  // Define a map of apartmentId to color index
-                  const propertyColors = {
-                    2565753: 0, // La Cabane du Chêne - Blue
-                    1946282: 1, // Le Dôme des Libellules - Green
-                    1644643: 2, // La Bulle du Ruisseau - Purple
-                    1946279: 3, // Le Moulin - Yellow
-                    1946276: 4, // La Chambre de Blé - Pink
-                    1946270: 5, // Le Logis - Orange
-                  };
-
-                  const bgColors = [
-                    "bg-blue-100",
-                    "bg-green-100",
-                    "bg-purple-100",
-                    "bg-yellow-100",
-                    "bg-pink-100",
-                    "bg-orange-100",
-                  ];
-                  const textColors = [
-                    "text-blue-800",
-                    "text-green-800",
-                    "text-purple-800",
-                    "text-yellow-800",
-                    "text-pink-800",
-                    "text-orange-800",
-                  ];
-                  const borderColors = [
-                    "border-blue-300",
-                    "border-green-300",
-                    "border-purple-300",
-                    "border-yellow-300",
-                    "border-pink-300",
-                    "border-orange-300",
-                  ];
-
-                  // Get color index for this apartmentId (default to 0 if not found)
-                  const colorIndex = propertyColors[booking.apartmentId] || 0;
-
-                  return {
-                    bg: bgColors[colorIndex],
-                    text: textColors[colorIndex],
-                    border: borderColors[colorIndex],
-                  };
-                };
-
-                return (
-                  <div key={hour} className="flex min-h-[60px]">
-                    <div className="w-24 px-2 py-2 text-sm font-medium text-gray-700">
-                      {formattedHour}
-                    </div>
-                    <div className="relative flex-1 py-1">
-                      {/* Show bookings that start at this hour */}
-                      {startingBookings.map((booking, index) => {
-                        const colors = getPropertyColor(booking);
-                        // Figure out duration in hours
-                        const slotCount = booking.spaSlots
-                          ? booking.spaSlots.length
-                          : 1;
-                        // Double the height for two hours
-                        const heightClass =
-                          slotCount > 1 ? "h-[120px]" : "h-full";
-
-                        return (
-                          <div
-                            key={index}
-                            className={`w-full ${heightClass} ${colors.bg} ${colors.text} border ${colors.border} rounded p-2 absolute top-0 left-0`}
-                            style={{ zIndex: 10 }} // Make sure content is on top
-                          >
-                            <div className="font-medium">
-                              {booking.spaSlots[0]} -{" "}
-                              {booking.spaSlots[booking.spaSlots.length - 1]}
-                            </div>
-                            <div>
-                              {booking.guestName ||
-                                `${booking.firstName} ${booking.lastName}`}
-                            </div>
-                            <div className="text-xs">{booking.property}</div>
-                          </div>
-                        );
-                      })}
-
-                      {/* If hour is not the start of a booking, leave it empty */}
-                      {startingBookings.length === 0 && (
-                        <div className="h-full border-l border-gray-200 border-dashed"></div>
-                      )}
-                    </div>
-                  </div>
-                );
-              });
-            })()}
-          </div>
-
-          {selectedDateBookings.length === 0 && (
-            <div className="p-4 text-center text-gray-500">
-              Aucune réservation SPA pour cette date
-            </div>
-          )}
-        </div>
+        {/* Right: Selected date details panel (Extracted Component) */}
+        {/* Pass state, derived state, hook data, handlers */}
+        <SelectedDateDetailsPanel
+          selectedDate={selectedDate} // Pass state
+          selectedBooking={selectedBooking} // Pass state
+          availableSlots={availableSlots} // Pass data from hook
+          selectedDateBookings={selectedDateBookings} // Pass derived state
+          spaSettings={spaSettings} // Pass data from hook
+          onBookSlot={handleBookSlot} // Pass handler
+          onScheduledBookingClick={handleTimelineSlotClick} // Pass handler
+          isLoading={overallLoading} // Pass main loading state from hooks (for bookings list)
+          isSlotsLoading={slotsLoading} // Pass specific slots loading state from hook (for slots list)
+          slotsError={slotsError} // Pass slotsError prop
+          bookingsError={bookingsError} // Pass bookingsError prop (needed for scheduled list error display)
+        />
+      </div>{" "}
+      {/* End of 3-panel grid */}
+      {/* Timeline Section (Extracted Component) */}
+      {/* Only render if selected date, not overall loading, scheduled bookings exist, and settings are loaded */}
+      {selectedDate &&
+        !overallLoading && // Use overallLoading to prevent rendering timeline before bookings are loaded
+        selectedDateBookings.length > 0 && // Use derived state to check if there's anything to display
+        spaSettings && ( // Ensure settings are loaded as timeline calculation depends on them
+          <SpaTimeline
+            selectedDate={selectedDate} // Pass state
+            selectedDateBookings={selectedDateBookings} // Pass derived state
+            spaSettings={spaSettings} // Pass data from hook
+            onScheduledBookingClick={handleTimelineSlotClick} // Pass handler
+            actionLoading={actionLoading} // Pass action loading state
+          />
+        )}
+      {/* Edit/Delete Modal (Extracted Component) */}
+      {/* Only render if showEditDeleteModal is true and a booking is selected for editing */}
+      {showEditDeleteModal && bookingToEdit && (
+        <EditDeleteSpaModal
+          bookingToEdit={bookingToEdit} // Pass state
+          modalStep={modalStep} // Pass state
+          onClose={closeEditDeleteModal} // Pass handler
+          onRescheduleConfirm={handleMarkBookingForRescheduling} // Pass async wrapper handler
+          onDeleteConfirm={handleDeleteSpaAppointment} // Pass async wrapper handler
+          actionLoading={actionLoading} // Pass action loading state
+          // Pass handlers to request step changes
+          onRequestRescheduleStep={requestRescheduleStep} // <-- PASS HANDLER
+          onRequestDeleteStep={requestDeleteStep} // <-- PASS HANDLER
+          onRequestOptionsStep={requestOptionsStep} // <-- PASS HANDLER
+        />
       )}
     </div>
   );

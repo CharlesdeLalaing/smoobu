@@ -156,11 +156,6 @@ const BookingDetails = ({ booking }) => {
               <p className="text-sm text-gray-500">
                 Aucune réservation SPA pour ce séjour
               </p>
-              <p className="text-xs text-gray-400">
-                Debug: spaDateTime: {booking.spaDateTime ? "✓" : "✗"},
-                spaBookingPreference: {booking.spaBookingPreference ? "✓" : "✗"}
-                , spaInfo: {booking.spaInfo ? "✓" : "✗"}
-              </p>
             </div>
           </div>
         )}
