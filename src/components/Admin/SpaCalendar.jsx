@@ -7,8 +7,10 @@ import {
   eachDayOfInterval,
   isSameDay,
   startOfDay,
+  parseISO,
   addDays,
   isAfter,
+  isValid as isDateValid,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -53,58 +55,58 @@ const SpaCalendar = () => {
   const [showEditDeleteModal, setShowEditDeleteModal] = useState(false); // State for modal visibility
   const [modalStep, setModalStep] = useState("options"); // 'options' | 'confirm-reschedule' | 'confirm-delete'
 
-  // State for actions initiated from the UI (Saving, deleting)
+  // State for actions initiated from the UI (Saving booking, deleting booking)
   const [actionLoading, setActionLoading] = useState(false);
 
-  console.log("SpaCalendar state:", {
-    currentMonth: format(currentMonth, "yyyy-MM"),
-    selectedDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : null,
-    selectedBooking: selectedBooking?.id || null,
-    bookingToEdit: bookingToEdit?.id || null,
-    showEditDeleteModal,
-    modalStep,
-    actionLoading,
-  });
+   // --- State for Settings Editing ---
+   const [editableSpaSettings, setEditableSpaSettings] = useState(null); // Holds settings data while editing
+   const [settingsSavingLoading, setSettingsSavingLoading] = useState(false); // Loading state for saving settings
+   const [settingsSavingError, setSettingsSavingError] = useState(null); // Error state for saving settings
+   // --- End State for Settings Editing ---
+
+
+   console.log("SpaCalendar state:", {
+       currentMonth: format(currentMonth, 'yyyy-MM'),
+       selectedDate: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null,
+       selectedBooking: selectedBooking?.id || null,
+       bookingToEdit: bookingToEdit?.id || null,
+       showEditDeleteModal,
+       modalStep,
+       actionLoading,
+       editableSpaSettings, // Add to log
+       settingsSavingLoading, // Add to log
+       settingsSavingError // Add to log
+   });
+
 
   // --- Use Custom Hooks to Fetch Data ---
   const {
-    spaSettings,
-    loading: settingsLoading,
-    error: settingsError,
-    refetch: refetchSpaSettings, // Keep if settings could change dynamically
+    spaSettings, // The current settings from Firebase
+    loading: settingsLoading, // Loading for fetching settings
+    error: settingsError, // Error for fetching settings
+    refetch: refetchSpaSettings, // Function to refetch settings
   } = useSpaSettings(); // This hook fetches settings
-  console.log("useSpaSettings:", {
-    spaSettings,
-    settingsLoading,
-    settingsError,
-  });
+   console.log("useSpaSettings hook data:", { spaSettings, settingsLoading, settingsError });
 
   const {
-    bookings, // This is the raw list of bookings for the month
+    bookings,
     loading: bookingsLoading,
     error: bookingsError,
-    refetch: refetchBookings, // Use this to manually trigger a refetch after write actions
-  } = useBookingsForMonth(currentMonth); // This hook fetches bookings based on month
-  console.log("useBookingsForMonth:", {
-    bookings: bookings.length,
-    bookingsLoading,
-    bookingsError,
-  });
+    refetch: refetchBookings,
+  } = useBookingsForMonth(currentMonth);
+   console.log("useBookingsForMonth hook data:", { bookings: bookings.length, bookingsLoading, bookingsError });
+
 
   const {
     availableSlots,
-    loading: slotsLoading, // Loading specific to the slots API call
+    loading: slotsLoading,
     error: slotsError,
-    refetch: refetchSlots, // Use this if you need to force a slot refresh
-  } = useAvailableSlots(selectedDate, selectedBooking, spaSettings); // This hook fetches slots based on date/booking/settings
-  console.log("useAvailableSlots:", {
-    availableSlots: availableSlots.length,
-    slotsLoading,
-    slotsError,
-  });
+    refetch: refetchSlots,
+  } = useAvailableSlots(selectedDate, selectedBooking, spaSettings); // Pass spaSettings from hook
+   console.log("useAvailableSlots hook data:", { availableSlots: availableSlots.length, slotsLoading, slotsError });
+
 
   // --- Derived State (Calculated using useMemo) ---
-  // Filter and sort scheduled bookings for the *selected date*
   const selectedDateBookings = useMemo(() => {
     console.log(
       "useMemo: Calculating selectedDateBookings...",
@@ -113,83 +115,82 @@ const SpaCalendar = () => {
     );
     if (!selectedDate || !bookings || bookings.length === 0) {
       console.log("useMemo selectedDateBookings: Returning empty array.");
-      return []; // Return empty if no date selected or no bookings fetched
+      return [];
     }
 
     const filtered = bookings
       .filter((booking) => {
-        // A booking appears in the timeline/scheduled list ONLY if it has spaDateTime
-        // Use the parsed object stored by the hook for filtering
         if (
           !booking.spaDateTimeObj ||
           isNaN(booking.spaDateTimeObj.getTime())
         ) {
-          // console.warn("Skipping booking with invalid spaDateTimeObj:", booking.id);
-          return false; // Skip invalid dates or bookings without scheduled time
+          return false;
         }
-
-        // Ensure the scheduled date is the selected date (start of day comparison)
         return isSameDay(
           startOfDay(booking.spaDateTimeObj),
           startOfDay(selectedDate)
         );
       })
       .sort((a, b) => {
-        // Sort by time using the parsed dates
         const timeA = a.spaDateTimeObj;
         const timeB = b.spaDateTimeObj;
 
-        // Handle potential invalid dates during sorting (should be caught by filter, but defensive)
-        if (!timeA || isNaN(timeA.getTime())) return 1; // Invalid date comes last
-        if (!timeB || isNaN(timeB.getTime())) return -1; // Invalid date comes last
+        if (!timeA || isNaN(timeA.getTime())) return 1;
+        if (!timeB || isNaN(timeB.getTime())) return -1;
 
-        return timeA.getTime() - timeB.getTime(); // Sort ascending by time (milliseconds)
+        return timeA.getTime() - timeB.getTime();
       });
-    console.log(
-      `useMemo selectedDateBookings: Found ${filtered.length} bookings for ${
-        selectedDate ? format(selectedDate, "yyyy-MM-dd") : "N/A"
-      }`
-    );
-    return filtered;
+      console.log(`useMemo selectedDateBookings: Found ${filtered.length} bookings for ${selectedDate ? format(selectedDate, 'yyyy-MM-dd') : 'N/A'}`);
+      return filtered;
+
   }, [bookings, selectedDate]); // Recalculate when bookings or selectedDate change
 
-  // Filter bookings that need scheduling ('À programmer' list)
+
   const bookingsToSchedule = useMemo(() => {
     console.log("useMemo: Calculating bookingsToSchedule...", bookings.length);
     if (!bookings || bookings.length === 0) {
       console.log("useMemo bookingsToSchedule: Returning empty array.");
-      return []; // Return empty if no bookings fetched
+      return [];
     }
-    const filtered = bookings
-      .filter((b) => b.needsScheduling) // Hook adds the needsScheduling flag
+     const filtered = bookings
+      .filter((b) => b.needsScheduling)
       .sort((a, b) => {
-        // Sort by arrival date, then potentially by property or name
-        // Use the parsed date objects stored during fetch
         let arrivalA = a.arrivalDateObj;
         let arrivalB = b.arrivalDateObj;
 
-        if (!arrivalA || isNaN(arrivalA.getTime())) arrivalA = new Date(0); // Treat invalid dates as epoch for sorting
+        if (!arrivalA || isNaN(arrivalA.getTime())) arrivalA = new Date(0);
         if (!arrivalB || isNaN(arrivalB.getTime())) arrivalB = new Date(0);
 
         if (arrivalA.getTime() - arrivalB.getTime() !== 0)
           return arrivalA.getTime() - arrivalB.getTime();
-        // Optional secondary sort by property
-        return a.property?.localeCompare(b.property || "") || 0; // Safely compare property
+        return a.property?.localeCompare(b.property || "") || 0;
       });
-    console.log(
-      `useMemo bookingsToSchedule: Found ${filtered.length} bookings needing scheduling.`
-    );
-    return filtered;
+       console.log(`useMemo bookingsToSchedule: Found ${filtered.length} bookings needing scheduling.`);
+       return filtered;
   }, [bookings]); // Recalculate when bookings change
 
   // --- Combined Loading State for Main UI ---
-  // This controls the main loading spinner over the whole content
-  // It does NOT include slotsLoading, as that's specific to the right panel
-  const overallLoading = bookingsLoading || settingsLoading;
+  const overallLoading = bookingsLoading || settingsLoading; // Note: slotsLoading is NOT included here
+
+
+   // --- Effect to Synchronize Fetched Settings with Editable State ---
+   useEffect(() => {
+       console.log("SpaCalendar Effect: spaSettings changed", spaSettings);
+       if (spaSettings) {
+           // Only update editable state if spaSettings is loaded
+           setEditableSpaSettings(spaSettings);
+           console.log("SpaCalendar Effect: Synchronized editableSpaSettings with fetched spaSettings.");
+       } else {
+           // Optionally clear editable settings if fetched settings become null (e.g. error?)
+           setEditableSpaSettings(null);
+           console.log("SpaCalendar Effect: spaSettings is null, cleared editableSpaSettings.");
+       }
+        // Depend on spaSettings changing
+   }, [spaSettings]);
+
 
   // --- Data Mutation Functions (Remain here, called by handlers) ---
 
-  // This handles the actual async Firebase update for scheduling
   const handleUpdateBookingSpaDate = async (
     bookingId,
     dateTime,
@@ -250,14 +251,15 @@ const SpaCalendar = () => {
       refetchBookings(currentMonth);
       // Refetch slots for the selected date as availability might have changed
       if (selectedDate) {
-        console.log("Refetching slots after update...");
-        refetchSlots(selectedDate, selectedBooking, spaSettings);
+          console.log("Refetching slots after update...");
+          refetchSlots(selectedDate, selectedBooking, spaSettings);
       }
       // --- End Refetch ---
 
+
       setSelectedBooking(null); // Clear selected booking after successful scheduling
 
-      // Show confirmation
+      // Show confirmation (consider using a more modern notification system instead of alert)
       alert(
         `Rendez-vous SPA planifié pour le ${format(dateTime, "EEEE d MMMM", {
           locale: fr,
@@ -278,13 +280,12 @@ const SpaCalendar = () => {
     }
   };
 
-  // This handles the actual async Firebase delete action
   const handleDeleteSpaAppointment = async () => {
     console.log("handleDeleteSpaAppointment called");
     // No window.confirm here, confirmation is handled in the modal UI
     if (!bookingToEdit) {
       console.log("Delete action called but bookingToEdit is null. Aborting.");
-      closeEditDeleteModal(); // Close modal if state is inconsistent
+      // closeEditDeleteModal(); // Called in finally
       return;
     }
 
@@ -312,8 +313,7 @@ const SpaCalendar = () => {
         `Booking ${bookingToEdit.id} deleted successfully in Firebase.`
       );
       alert("Rendez-vous SPA supprimé.");
-      // closeModal happens in finally
-      console.log("handleDeleteSpaAppointment finished successfully");
+       console.log("handleDeleteSpaAppointment finished successfully");
 
       // --- Refetch Data After Write ---
       // Refetch bookings for the month to see the changes
@@ -322,20 +322,21 @@ const SpaCalendar = () => {
       // Refetch slots for the selected date as availability might have changed
       // Pass null for selectedBooking as the one being edited is now deleted or pending reschedule
       if (selectedDate) {
-        console.log("Refetching slots after delete...");
-        refetchSlots(selectedDate, null, spaSettings);
+           console.log("Refetching slots after delete...");
+           refetchSlots(selectedDate, null, spaSettings); // Pass spaSettings
       }
-      // Also clear selectedBooking if it was the one deleted (less likely but safe)
+       // Also clear selectedBooking if it was the one deleted (less likely but safe)
       if (selectedBooking?.id === bookingToEdit.id) {
-        setSelectedBooking(null);
+         setSelectedBooking(null);
       }
       // --- End Refetch ---
+
     } catch (error) {
       console.error("Error deleting SPA appointment:", error);
       alert("Échec de la suppression du rendez-vous SPA.");
-      console.log("handleDeleteSpaAppointment finished with error");
+       console.log("handleDeleteSpaAppointment finished with error");
     } finally {
-      closeEditDeleteModal(); // Close modal regardless of success/failure
+       closeEditDeleteModal(); // Close modal regardless of success/failure
       setActionLoading(false); // End action loading
       console.log("handleDeleteSpaAppointment actionLoading set to false");
     }
@@ -349,7 +350,7 @@ const SpaCalendar = () => {
       console.log(
         "Reschedule action called but bookingToEdit is null. Aborting."
       );
-      closeEditDeleteModal(); // Close modal if state is inconsistent
+      // closeEditDeleteModal(); // Called in finally
       return;
     }
 
@@ -378,8 +379,7 @@ const SpaCalendar = () => {
         `Booking ${bookingToEdit.id} marked for rescheduling successfully.`
       );
       alert("Rendez-vous SPA marqué pour être reprogrammé.");
-      // closeModal happens in finally
-      console.log("handleMarkBookingForRescheduling finished successfully");
+       console.log("handleMarkBookingForRescheduling finished successfully");
 
       // --- Refetch Data After Write ---
       // Refetch bookings for the month
@@ -388,20 +388,21 @@ const SpaCalendar = () => {
       // Refetch slots for the selected date as availability might have changed
       // Pass null for selectedBooking as the one being edited is now deleted or pending reschedule
       if (selectedDate) {
-        console.log("Refetching slots after reschedule...");
-        refetchSlots(selectedDate, null, spaSettings);
+          console.log("Refetching slots after reschedule...");
+          refetchSlots(selectedDate, null, spaSettings); // Pass spaSettings
       }
-      // If the booking being edited was also the selectedBooking, clear selectedBooking
+       // If the booking being edited was also the selectedBooking, clear selectedBooking
       if (selectedBooking?.id === bookingToEdit.id) {
-        setSelectedBooking(null);
+         setSelectedBooking(null);
       }
       // --- End Refetch ---
+
     } catch (error) {
       console.error("Error marking SPA appointment for rescheduling:", error);
       alert("Échec de la mise à jour pour la reprogrammation.");
-      console.log("handleMarkBookingForRescheduling finished with error");
+       console.log("handleMarkBookingForRescheduling finished with error");
     } finally {
-      closeEditDeleteModal(); // Close modal regardless of success/failure
+       closeEditDeleteModal(); // Close modal regardless of success/failure
       setActionLoading(false); // End action loading
       console.log(
         "handleMarkBookingForRescheduling actionLoading set to false"
@@ -409,24 +410,117 @@ const SpaCalendar = () => {
     }
   };
 
+
+  // --- Settings Save Function ---
+  const handleSaveSpaSettings = async () => {
+      console.log("handleSaveSpaSettings called", editableSpaSettings);
+      if (!editableSpaSettings) {
+          console.warn("handleSaveSpaSettings: editableSpaSettings is null. Aborting.");
+          return;
+      }
+
+       // --- Validation ---
+      setSettingsSavingError(null); // Clear previous error
+      const { startTime, endTime, slotDurationMinutes } = editableSpaSettings;
+
+       // Basic validation for time strings (HH:mm format)
+      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+      if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+          const errorMsg = "Les heures de début et de fin doivent être au format HH:mm.";
+          setSettingsSavingError(errorMsg);
+          console.warn("Settings validation failed:", errorMsg);
+          alert(errorMsg);
+          return;
+      }
+
+       // Basic validation for duration
+       if (typeof slotDurationMinutes !== 'number' || slotDurationMinutes <= 0 || !Number.isInteger(slotDurationMinutes)) {
+           const errorMsg = "La durée du créneau doit être un nombre entier positif (en minutes).";
+           setSettingsSavingError(errorMsg);
+           console.warn("Settings validation failed:", errorMsg);
+           alert(errorMsg);
+           return;
+       }
+
+       // Optional: More complex validation, e.g., startTime is before endTime on the same day
+       // Create temporary dates on an arbitrary day to compare times
+       try {
+           const today = startOfDay(new Date());
+           const startTimeDate = parseISO(format(today, 'yyyy-MM-dd') + 'T' + startTime);
+           const endTimeDate = parseISO(format(today, 'yyyy-MM-dd') + 'T' + endTime);
+
+           if (!isDateValid(startTimeDate) || !isDateValid(endTimeDate) || isAfter(startTimeDate, endTimeDate)) {
+                const errorMsg = "L'heure de début doit être avant l'heure de fin le même jour.";
+                setSettingsSavingError(errorMsg);
+                console.warn("Settings validation failed:", errorMsg);
+                alert(errorMsg);
+                return;
+           }
+       } catch (e) {
+            console.error("Error during settings time comparison validation:", e);
+            const errorMsg = "Erreur lors de la validation des heures.";
+            setSettingsSavingError(errorMsg);
+            alert(errorMsg);
+            return;
+       }
+
+       // --- End Validation ---
+
+
+      try {
+          setSettingsSavingLoading(true); // Start saving loading
+          console.log("Saving SPA settings to Firebase:", editableSpaSettings);
+
+          // Create a clean object to save, only including the fields we want to update
+          const settingsToSave = {
+              startTime: editableSpaSettings.startTime,
+              endTime: editableSpaSettings.endTime,
+              slotDurationMinutes: editableSpaSettings.slotDurationMinutes,
+              // Add any other relevant settings fields here
+          };
+
+          // Update the document in Firebase
+          await updateDoc(doc(db, "spaSettings", "default"), settingsToSave);
+
+          console.log("SPA settings saved successfully.");
+          alert("Paramètres SPA enregistrés avec succès.");
+
+          // --- Refetch Data After Settings Save ---
+          // Refetch settings first to ensure state is updated from source of truth
+          console.log("Refetching settings after save...");
+          refetchSpaSettings();
+           // Refetch bookings as settings like slot duration/hours might affect display/availability calculation
+          console.log("Refetching bookings and slots after settings save...");
+          refetchBookings(currentMonth); // Refetch bookings for the current month
+           if (selectedDate) {
+               refetchSlots(selectedDate, selectedBooking, editableSpaSettings); // Refetch slots for the selected date with NEW settings
+           } else {
+               // If no date is selected, refetchSlots won't do anything, which is fine.
+           }
+          // --- End Refetch ---
+
+      } catch (error) {
+          console.error("Error saving SPA settings:", error);
+          const errorMsg = `Échec de l'enregistrement des paramètres SPA: ${error.message}`;
+          setSettingsSavingError(errorMsg);
+          alert(errorMsg);
+      } finally {
+          setSettingsSavingLoading(false); // End saving loading
+          console.log("handleSaveSpaSettings finished.");
+      }
+  };
+
+
   // --- Event Handlers ---
 
-  // Handle date selection (Sole source for populating selectedDateBookings and availableSlots)
-  // Updated to use hook loading states and pass selectedBooking context to isDateWithinBookingStay
   const handleDateSelect = (date) => {
-    console.log(
-      "handleDateSelect called for date:",
-      format(date, "yyyy-MM-dd")
-    );
-    // Avoid actions if overall data is loading or an action is in progress
-    if (overallLoading || actionLoading) {
-      console.log("handleDateSelect blocked due to loading or actionLoading");
+    console.log("handleDateSelect called for date:", format(date, 'yyyy-MM-dd'));
+    // Avoid actions if overall data is loading, an action is in progress, OR settings are being saved
+    if (overallLoading || actionLoading || settingsSavingLoading) { // Add settingsSavingLoading
+      console.log("handleDateSelect blocked due to loading or actionLoading or settingsSavingLoading");
       return;
     }
 
-    // Before setting, check if this date *should* be selectable based on selectedBooking
-    // If a booking is selected, the date must be within its stay period.
-    // isDateWithinBookingStay is now imported from utils
     if (selectedBooking) {
       if (!isDateWithinBookingStay(date, selectedBooking)) {
         console.log(
@@ -434,40 +528,25 @@ const SpaCalendar = () => {
           format(date, "yyyy-MM-dd"),
           selectedBooking.id
         );
-        // The calendar day button is disabled based on this check (in JSX), but this is a final safeguard.
-        return; // Do not select the date
+        return;
       }
-      // Console log below is kept from original for debugging clarity
       console.log(
         "handleDateSelect allowed: Date is within selected booking stay:",
         format(date, "yyyy-MM-dd"),
         selectedBooking.id
       );
     } else {
-      // Console log below is kept from original for debugging clarity
       console.log(
         "handleDateSelect allowed: No booking selected, any date selectable:",
         format(date, "yyyy-MM-dd")
       );
     }
 
-    // If the date is allowed, proceed to select it
     setSelectedDate(date);
     console.log("Date selected:", format(date, "yyyy-MM-dd"));
-
-    // The fetching of available slots for the newly selected date
-    // is now handled automatically by the useAvailableSlots hook's useEffect
-    // because `selectedDate` is a dependency.
-    // No need to call fetchAvailableSlotsForDate(date) directly here anymore.
-
-    // The selectedDateBookings derived state is updated automatically by the useMemo hook
-    // when the 'bookings' state (from useBookingsForMonth) changes based on the new 'selectedDate'.
-    // No need to filter and set selectedDateBookings directly here anymore.
-    console.log("handleDateSelect finished.");
+     console.log("handleDateSelect finished.");
   };
 
-  // Handle booking a slot (from Available Slots panel)
-  // Updated to use hook states, derived state, utility function, and call the new async wrapper function
   const handleBookSlot = (date, timeSlot) => {
     console.log(
       "handleBookSlot called with date:",
@@ -475,206 +554,138 @@ const SpaCalendar = () => {
       "timeSlot:",
       timeSlot
     );
-    // Validate inputs and states
     if (!selectedBooking) {
       alert("Please select a booking from the 'À programmer' list first.");
       console.warn("handleBookSlot: No booking selected.");
       return;
     }
 
-    // Prevent booking if an action is already in progress (e.g., modal open)
-    if (actionLoading || showEditDeleteModal) {
+    // Prevent booking if an action is already in progress (e.g., modal open) OR settings are being saved
+    if (actionLoading || showEditDeleteModal || settingsSavingLoading) { // Add settingsSavingLoading
       console.log(
-        "handleBookSlot blocked due to actionLoading or showEditDeleteModal"
+        "handleBookSlot blocked due to actionLoading or showEditDeleteModal or settingsSavingLoading"
       );
       return;
     }
 
-    // Redundant check here because the button should be disabled based on calendar logic, but good as a safeguard
-    // isDateWithinBookingStay is imported utility
     if (!isDateWithinBookingStay(date, selectedBooking)) {
       alert("Cannot book SPA outside of the client's stay dates.");
       console.warn("handleBookSlot: Selected date is outside booking stay.");
       return;
     }
 
-    // Validate slot availability - Use availableSlots state from the hook
-    // Check if the selected timeSlot is even in the list of *currently* available slots
     if (!availableSlots.includes(timeSlot)) {
-      console.error(
-        "handleBookSlot: Selected time slot is not in the current availableSlots list:",
-        timeSlot,
-        availableSlots
-      );
-      alert("Le créneau horaire sélectionné n'est pas disponible.");
-      refetchSlots(selectedDate, selectedBooking, spaSettings); // Refresh slots view using hook refetch
-      console.log("handleBookSlot aborted due to slot unavailability.");
-      return; // Abort
+       console.error("handleBookSlot: Selected time slot is not in the current availableSlots list:", timeSlot, availableSlots);
+       alert("Le créneau horaire sélectionné n'est pas disponible.");
+       refetchSlots(selectedDate, selectedBooking, spaSettings);
+       console.log("handleBookSlot aborted due to slot unavailability.");
+       return;
     }
 
-    // Create a Date object for the selected date and time
     const [hours, minutes] = timeSlot.split(":").map(Number);
     const dateTime = new Date(date);
     dateTime.setHours(hours, minutes, 0, 0);
-    dateTime.setSeconds(0, 0); // Ensure seconds/ms are 0
+    dateTime.setSeconds(0, 0);
     console.log(
       "handleBookSlot: Calculated start DateTime:",
       format(dateTime, "yyyy-MM-dd HH:mm:ss")
     );
 
-    // Determine the required number of slots based on selected booking duration and settings
-    // Use selectedBooking state for duration
     const treatmentDurationMinutes =
       selectedBooking.spaTreatmentDuration &&
       typeof selectedBooking.spaTreatmentDuration === "number"
         ? selectedBooking.spaTreatmentDuration
-        : 120; // Default 120 minutes (2 hours)
+        : 120;
 
-    // Get slot size from settings (use spaSettings state from hook)
-    const slotDurationMinutes = spaSettings?.slotDurationMinutes || 30; // Use spaSettings from hook state
+    const slotDurationMinutes = spaSettings?.slotDurationMinutes || 30; // Use settings from hook state
 
-    // Validate duration settings before calculating slots
-    if (slotDurationMinutes <= 0 || treatmentDurationMinutes <= 0) {
-      console.error("Invalid duration settings:", {
-        treatmentDurationMinutes,
-        slotDurationMinutes,
-      });
-      alert(
-        "Erreur de configuration des durées SPA. Impossible de calculer les créneaux nécessaires."
-      );
-      console.log("handleBookSlot aborted due to invalid duration settings.");
-      return;
-    }
+     if (slotDurationMinutes <= 0 || treatmentDurationMinutes <= 0) {
+          console.error("Invalid duration settings:", {treatmentDurationMinutes, slotDurationMinutes});
+          alert("Erreur de configuration des durées SPA. Impossible de calculer les créneaux nécessaires.");
+          console.log("handleBookSlot aborted due to invalid duration settings.");
+          return;
+     }
+
 
     try {
-      // Calculate the specific slot strings that the booking will occupy
-      // Use calculateBookingSlots utility (imported)
-      const slotsToBook = calculateBookingSlots(
-        dateTime,
-        treatmentDurationMinutes,
-        slotDurationMinutes
-      );
-      console.log("handleBookSlot: Calculated bookedSlots array:", slotsToBook);
+         const slotsToBook = calculateBookingSlots(dateTime, treatmentDurationMinutes, slotDurationMinutes);
+         console.log("handleBookSlot: Calculated bookedSlots array:", slotsToBook);
 
-      // Final validation: Check if the number of calculated slots matches required count
-      const requiredSlotsCount = Math.ceil(
-        treatmentDurationMinutes / slotDurationMinutes
-      );
-      if (
-        slotsToBook.length !== requiredSlotsCount ||
-        slotsToBook[0] !== timeSlot
-      ) {
-        console.error(
-          "handleBookSlot: Slot calculation mismatch or start time inconsistency:",
-          {
-            calculated: slotsToBook,
-            requiredCount: requiredSlotsCount,
-            selectedSlot: timeSlot,
+         const requiredSlotsCount = Math.ceil(treatmentDurationMinutes / slotDurationMinutes);
+         if (slotsToBook.length !== requiredSlotsCount || slotsToBook[0] !== timeSlot) {
+              console.error("handleBookSlot: Slot calculation mismatch or start time inconsistency:", {
+                calculated: slotsToBook,
+                requiredCount: requiredSlotsCount,
+                selectedSlot: timeSlot,
+              });
+              refetchSlots(selectedDate, selectedBooking, spaSettings);
+              alert("Erreur interne: Le créneau sélectionné ne correspond pas à la durée du traitement calculée.");
+               console.log("handleBookSlot aborted due to slot calculation mismatch.");
+              return;
+         }
+
+         const requiredSlotsAvailable = slotsToBook.every(requiredSlot => availableSlots.includes(requiredSlot));
+
+          if (!requiredSlotsAvailable) {
+              console.error("handleBookSlot: Not all calculated slots are in the available list.", {
+                  selectedSlot: timeSlot,
+                  slotsToBook: slotsToBook,
+                  availableSlots: availableSlots
+              });
+              refetchSlots(selectedDate, selectedBooking, spaSettings);
+              alert("Le créneau horaire sélectionné nécessite des créneaux consécutifs qui ne sont pas tous disponibles.");
+               console.log("handleBookSlot aborted due to consecutive slot unavailability.");
+              return;
           }
-        );
-        // Use hook refetch
-        refetchSlots(selectedDate, selectedBooking, spaSettings); // Refresh slots view
-        alert(
-          "Erreur interne: Le créneau sélectionné ne correspond pas à la durée du traitement calculée."
-        );
-        console.log("handleBookSlot aborted due to slot calculation mismatch.");
-        return; // Abort if calculation result is unexpected
-      }
 
-      // --- Robust Validation against availableSlots ---
-      // Ensure that *all* slots calculated as needed (`slotsToBook`) are actually present
-      // in the *current* list of `availableSlots` fetched from the API.
-      // Use availableSlots state from hook
-      const requiredSlotsAvailable = slotsToBook.every((requiredSlot) =>
-        availableSlots.includes(requiredSlot)
-      );
+         console.log("handleBookSlot proceeding to call handleUpdateBookingSpaDate");
+         handleUpdateBookingSpaDate(selectedBooking.id, dateTime, slotsToBook);
 
-      if (!requiredSlotsAvailable) {
-        console.error(
-          "handleBookSlot: Not all calculated slots are in the available list.",
-          {
-            selectedSlot: timeSlot,
-            slotsToBook: slotsToBook,
-            availableSlots: availableSlots,
-          }
-        );
-        // Use hook refetch
-        refetchSlots(selectedDate, selectedBooking, spaSettings); // Refresh slots view
-        alert(
-          "Le créneau horaire sélectionné nécessite des créneaux consécutifs qui ne sont pas tous disponibles."
-        );
-        console.log(
-          "handleBookSlot aborted due to consecutive slot unavailability."
-        );
-        return; // Abort
-      }
-      // --- End Robust Validation ---
-
-      // Call the async wrapper function that updates Firebase and triggers refetch
-      // This function sets actionLoading and handles refetching internally
-      console.log(
-        "handleBookSlot proceeding to call handleUpdateBookingSpaDate"
-      );
-      handleUpdateBookingSpaDate(selectedBooking.id, dateTime, slotsToBook);
     } catch (error) {
-      // Catch errors thrown by calculateBookingSlots or other sync logic
-      console.error("Slot calculation or validation failed:", error);
-      alert(
-        `Erreur lors du calcul des créneaux : ${
-          error.message || "une erreur inconnue est survenue"
-        }`
-      );
-      // Optionally refetch slots here if calculation/validation indicates a potential data issue
-      // refetchSlots(selectedDate, selectedBooking, spaSettings);
-      console.log("handleBookSlot finished with sync error.");
+         console.error("Slot calculation or validation failed:", error);
+         alert(`Erreur lors du calcul des créneaux : ${error.message || "une erreur inconnue est survenue"}`);
+          console.log("handleBookSlot finished with sync error.");
     }
-    console.log("handleBookSlot finished.");
+     console.log("handleBookSlot finished.");
   };
 
-  // Handle click on a scheduled slot in the timeline or list
-  // Updated to use actionLoading state
+
   const handleTimelineSlotClick = (booking) => {
     console.log("handleTimelineSlotClick called for booking:", booking.id);
-    // Prevent opening modal if an action is already in progress
-    if (actionLoading) {
-      console.log("handleTimelineSlotClick blocked due to actionLoading");
+    // Prevent opening modal if an action is already in progress OR settings are being saved
+    if (actionLoading || settingsSavingLoading) { // Add settingsSavingLoading
+      console.log("handleTimelineSlotClick blocked due to actionLoading or settingsSavingLoading");
       return;
     }
-    setBookingToEdit(booking); // Set the booking to edit state
-    setModalStep("options"); // Reset modal step to show options first
-    setShowEditDeleteModal(true); // Show the modal
+    setBookingToEdit(booking);
+    setModalStep("options");
+    setShowEditDeleteModal(true);
     console.log("Modal state set to true, bookingToEdit:", booking.id);
-    console.log("handleTimelineSlotClick finished.");
+     console.log("handleTimelineSlotClick finished.");
   };
 
-  // Close the edit/delete modal
-  // Kept as is, used by the modal component's close button
   const closeEditDeleteModal = () => {
     console.log("closeEditDeleteModal called");
-    setBookingToEdit(null); // Clear the booking being edited
-    setModalStep("options"); // Reset step on close
-    setShowEditDeleteModal(false); // Hide the modal
+    setBookingToEdit(null);
+    setModalStep("options");
+    setShowEditDeleteModal(false);
     console.log("Modal state set to false");
   };
 
-  // --- Handlers Passed to Modal Component to Request Step Changes ---
-  // These functions are defined here because they need access to the setModalStep state setter
-  const requestRescheduleStep = () => {
-    console.log(
-      "requestRescheduleStep called, setting modalStep to 'confirm-reschedule'"
-    );
-    setModalStep("confirm-reschedule");
-  };
-  const requestDeleteStep = () => {
-    console.log(
-      "requestDeleteStep called, setting modalStep to 'confirm-delete'"
-    );
-    setModalStep("confirm-delete");
-  };
-  const requestOptionsStep = () => {
-    console.log("requestOptionsStep called, setting modalStep to 'options'");
-    setModalStep("options");
-  };
+   // Handlers to change modal step state managed in THIS component
+   const requestRescheduleStep = () => {
+       console.log("requestRescheduleStep called, setting modalStep to 'confirm-reschedule'");
+       setModalStep('confirm-reschedule');
+   }
+   const requestDeleteStep = () => {
+       console.log("requestDeleteStep called, setting modalStep to 'confirm-delete'");
+       setModalStep('confirm-delete');
+   }
+   const requestOptionsStep = () => {
+       console.log("requestOptionsStep called, setting modalStep to 'options'");
+       setModalStep('options');
+   }
+
 
   // --- Render UI ---
 
@@ -699,6 +710,104 @@ const SpaCalendar = () => {
             "Une erreur inconnue est survenue."}
         </div>
       )}
+      {!settingsLoading && spaSettings && editableSpaSettings && (
+        <div className="p-3 mb-4 bg-white border rounded-lg shadow-sm">
+          <h3 className="flex items-center gap-1 mb-2 text-base font-medium">
+Paramètres SPA
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            <div className="flex-1 min-w-[120px]">
+              <label
+                htmlFor="settingsStartTime"
+                className="block text-xs font-medium text-gray-600"
+              >
+                Début
+              </label>
+              <input
+                type="time"
+                id="settingsStartTime"
+                value={editableSpaSettings.startTime || ""}
+                onChange={(e) =>
+                  setEditableSpaSettings({
+                    ...editableSpaSettings,
+                    startTime: e.target.value,
+                  })
+                }
+                className="block w-full px-2 py-1 text-sm border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+                disabled={settingsSavingLoading}
+              />
+            </div>
+            <div className="flex-1 min-w-[120px]">
+              <label
+                htmlFor="settingsEndTime"
+                className="block text-xs font-medium text-gray-600"
+              >
+                Fin
+              </label>
+              <input
+                type="time"
+                id="settingsEndTime"
+                value={editableSpaSettings.endTime || ""}
+                onChange={(e) =>
+                  setEditableSpaSettings({
+                    ...editableSpaSettings,
+                    endTime: e.target.value,
+                  })
+                }
+                className="block w-full px-2 py-1 text-sm border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+                disabled={settingsSavingLoading}
+              />
+            </div>
+            <div className="flex-1 min-w-[120px]">
+              <label
+                htmlFor="settingsSlotDuration"
+                className="block text-xs font-medium text-gray-600"
+              >
+                Durée (min)
+              </label>
+              <input
+                type="number"
+                id="settingsSlotDuration"
+                value={editableSpaSettings.slotDurationMinutes || ""}
+                onChange={(e) =>
+                  setEditableSpaSettings({
+                    ...editableSpaSettings,
+                    slotDurationMinutes: parseInt(e.target.value) || 0,
+                  })
+                }
+                min="15"
+                step="5"
+                className="block w-full px-2 py-1 text-sm border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+                disabled={settingsSavingLoading}
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-end pt-2 mt-3 border-t border-gray-100">
+            {settingsSavingLoading && (
+              <span className="mr-2 text-xs text-blue-500">
+                Enregistrement...
+              </span>
+            )}
+            {settingsSavingError && (
+              <span className="mr-2 text-xs text-red-500">
+                {settingsSavingError}
+              </span>
+            )}
+            <button
+              onClick={handleSaveSpaSettings}
+              className="flex items-center px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-60"
+              disabled={settingsSavingLoading}
+            >
+              Enregistrer
+            </button>
+          </div>
+        </div>
+      )}
+      {settingsError && !settingsLoading && (
+        <div className="p-2 mb-3 text-xs text-center text-red-600 border border-red-200 rounded bg-red-50">
+          Erreur: {settingsError.message}
+        </div>
+      )}
       {/* Month navigation */}
       {/* Disabled using overallLoading and actionLoading */}
       <div className="flex items-center justify-between mb-4">
@@ -709,7 +818,7 @@ const SpaCalendar = () => {
             )
           }
           className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={overallLoading || actionLoading}
+          disabled={overallLoading || actionLoading || settingsSavingLoading} // Add settingsSavingLoading
         >
           Mois précédent
         </button>
@@ -723,7 +832,7 @@ const SpaCalendar = () => {
             )
           }
           className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={overallLoading || actionLoading}
+          disabled={overallLoading || actionLoading || settingsSavingLoading} // Add settingsSavingLoading
         >
           Mois suivant
         </button>
@@ -771,7 +880,8 @@ const SpaCalendar = () => {
               const isSelected = selectedDate && isSameDay(date, selectedDate);
 
               // Determine if date should be disabled
-              let isDisabled = overallLoading || actionLoading;
+              let isDisabled =
+                overallLoading || actionLoading || settingsSavingLoading; // Add settingsSavingLoading
 
               // Disable date if a booking is selected AND the date is outside its stay
               if (!isDisabled && selectedBooking) {
@@ -804,7 +914,8 @@ const SpaCalendar = () => {
                     isDisabled &&
                     selectedBooking &&
                     !overallLoading &&
-                    !actionLoading
+                    !actionLoading &&
+                    !settingsSavingLoading
                       ? `Cette date (${format(
                           date,
                           "dd/MM"
@@ -854,29 +965,28 @@ const SpaCalendar = () => {
         </div>
 
         {/* Middle: Bookings to schedule panel (Extracted Component) */}
-        {/* Pass derived state and handlers */}
         <BookingsToSchedulePanel
           bookingsToSchedule={bookingsToSchedule} // Pass derived state
           selectedBooking={selectedBooking} // Pass state
           onBookingSelect={setSelectedBooking} // Pass setter
           isLoading={overallLoading} // Pass main loading state from hooks
-          isActionLoading={actionLoading} // Pass action loading state
+          isActionLoading={actionLoading || settingsSavingLoading} // Disable while saving settings
         />
 
         {/* Right: Selected date details panel (Extracted Component) */}
-        {/* Pass state, derived state, hook data, handlers */}
         <SelectedDateDetailsPanel
           selectedDate={selectedDate} // Pass state
           selectedBooking={selectedBooking} // Pass state
           availableSlots={availableSlots} // Pass data from hook
           selectedDateBookings={selectedDateBookings} // Pass derived state
-          spaSettings={spaSettings} // Pass data from hook
+          spaSettings={spaSettings} // Pass data from hook (current settings)
           onBookSlot={handleBookSlot} // Pass handler
           onScheduledBookingClick={handleTimelineSlotClick} // Pass handler
           isLoading={overallLoading} // Pass main loading state from hooks (for bookings list)
           isSlotsLoading={slotsLoading} // Pass specific slots loading state from hook (for slots list)
           slotsError={slotsError} // Pass slotsError prop
           bookingsError={bookingsError} // Pass bookingsError prop (needed for scheduled list error display)
+          isActionLoading={actionLoading || settingsSavingLoading} // Disable while saving settings
         />
       </div>{" "}
       {/* End of 3-panel grid */}
@@ -889,9 +999,9 @@ const SpaCalendar = () => {
           <SpaTimeline
             selectedDate={selectedDate} // Pass state
             selectedDateBookings={selectedDateBookings} // Pass derived state
-            spaSettings={spaSettings} // Pass data from hook
+            spaSettings={spaSettings} // Pass data from hook (current settings)
             onScheduledBookingClick={handleTimelineSlotClick} // Pass handler
-            actionLoading={actionLoading} // Pass action loading state
+            actionLoading={actionLoading || settingsSavingLoading} // Disable while saving settings
           />
         )}
       {/* Edit/Delete Modal (Extracted Component) */}
@@ -903,11 +1013,11 @@ const SpaCalendar = () => {
           onClose={closeEditDeleteModal} // Pass handler
           onRescheduleConfirm={handleMarkBookingForRescheduling} // Pass async wrapper handler
           onDeleteConfirm={handleDeleteSpaAppointment} // Pass async wrapper handler
-          actionLoading={actionLoading} // Pass action loading state
+          actionLoading={actionLoading || settingsSavingLoading} // Disable while saving settings
           // Pass handlers to request step changes
-          onRequestRescheduleStep={requestRescheduleStep} // <-- PASS HANDLER
-          onRequestDeleteStep={requestDeleteStep} // <-- PASS HANDLER
-          onRequestOptionsStep={requestOptionsStep} // <-- PASS HANDLER
+          onRequestRescheduleStep={requestRescheduleStep}
+          onRequestDeleteStep={requestDeleteStep}
+          onRequestOptionsStep={requestOptionsStep}
         />
       )}
     </div>
