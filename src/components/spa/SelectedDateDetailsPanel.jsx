@@ -1,12 +1,22 @@
-// File: src/components/Admin/SelectedDateDetailsPanel.jsx (Corrected)
+// File: src/components/Admin/SelectedDateDetailsPanel.jsx
 import React from "react";
-import { format } from "date-fns";
+// Keep necessary date-fns imports for formatting and basic date comparisons
+import {
+  format,
+  parseISO,
+  startOfDay,
+  addDays,
+  addMinutes,
+  isAfter,
+  isBefore,
+  isSameDay,
+} from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  parseBookingDateTime, // Import utility for fallback display if needed
-  isDateWithinBookingStay, // Import utility for display logic
-  getPropertyColor, // Import utility for styling
-} from "../spa/spaCalendarUtils"; // <-- CORRECTED UTILITY IMPORT PATH
+  parseBookingDateTime,
+  isDateWithinBookingStay,
+  getPropertyColor,
+} from "./spaCalendarUtils"; // Correct utility path
 
 /**
  * Component to display available slots and scheduled bookings for the selected date.
@@ -15,30 +25,47 @@ import {
  * @param {object|null} props.selectedBooking - The booking currently selected from the 'À programmer' list.
  * @param {string[]} props.availableSlots - Array of available slot time strings (HH:mm).
  * @param {Array<object>} props.selectedDateBookings - Array of scheduled bookings for the selected date.
- * @param {object|null} props.spaSettings - Spa settings object (needed for duration info display).
+ * @param {object|null} props.spaSettings - Spa settings object (needed for duration info display and potentially end time limits).
  * @param {(date: Date, timeSlot: string) => void} props.onBookSlot - Handler function when an available slot is clicked.
  * @param {(booking: object) => void} props.onScheduledBookingClick - Handler function when a scheduled booking is clicked.
  * @param {boolean} props.isLoading - Global loading state from parent (e.g., initial bookings fetch).
  * @param {boolean} props.isSlotsLoading - Loading state specific to the available slots fetch.
- * @param {Error|null} props.slotsError - Error state specific to the available slots fetch. // <-- ADDED slotsError PROP
+ * @param {Error|null} props.slotsError - Error state specific to the available slots fetch.
+ * @param {Error|null} props.bookingsError - Error state specific to the bookings fetch.
  * @param {boolean} props.isActionLoading - State indicating if an action (save/delete) is in progress.
  */
 const SelectedDateDetailsPanel = ({
   selectedDate,
   selectedBooking,
-  availableSlots,
+  availableSlots, // Array of available START times for the requested duration
   selectedDateBookings,
-  spaSettings,
+  spaSettings, // Pass settings for duration info and potentially end time limits
   onBookSlot,
   onScheduledBookingClick,
-  isLoading, // Overall data loading (used for initial state)
-  isSlotsLoading, // Loading specific to slots API
+  isLoading,
+  isSlotsLoading,
   slotsError,
-  bookingsError, // <-- ACCEPT slotsError PROP
-  isActionLoading, // Action loading (used for disabling buttons)
+  bookingsError,
+  isActionLoading,
 }) => {
+  console.log("SelectedDateDetailsPanel rendering", {
+    selectedDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : null,
+    selectedBooking: selectedBooking?.id || null,
+    availableSlots: availableSlots.length,
+    selectedDateBookings: selectedDateBookings.length,
+    spaSettings,
+    isLoading,
+    isSlotsLoading,
+    slotsError,
+    bookingsError,
+    isActionLoading,
+  });
+
   // If no date is selected, show the prompt message
   if (!selectedDate) {
+    console.log(
+      "SelectedDateDetailsPanel: No selectedDate, showing placeholder."
+    );
     return (
       <div className="p-3 border rounded">
         <h3 className="mb-2 text-lg font-semibold">Sélectionnez une date</h3>
@@ -50,13 +77,13 @@ const SelectedDateDetailsPanel = ({
     );
   }
 
-  // Determine the duration displayed for the available slots calculation message
-  // Use the duration from the selected booking if available, otherwise fallback
-  const slotSearchDuration =
+  // Determine the duration to DISPLAY above the available slots list.
+  // This should reflect the duration the API was asked for, which is based on the *selectedBooking*'s duration or a fallback (120 min for double).
+  const displaySearchDuration =
     selectedBooking?.spaTreatmentDuration &&
     typeof selectedBooking.spaTreatmentDuration === "number"
-      ? selectedBooking.spaTreatmentDuration
-      : spaSettings?.slotDurationMinutes || 30; // Fallback to settings slot size or 30
+      ? selectedBooking.spaTreatmentDuration // Use actual booking duration if available
+      : 120; // Fallback display duration (assuming double slot mode is standard)
 
   return (
     <div className="p-3 border rounded">
@@ -74,12 +101,13 @@ const SelectedDateDetailsPanel = ({
           {/* Available Slots Section */}
           <div>
             <h4 className="mb-2 text-sm font-medium">
-              Créneaux disponibles (recherche pour {slotSearchDuration} min){" "}
-              {isSlotsLoading && " (Chargement...)"}{" "}
+              {/* Updated duration display message */}
+              Créneaux disponibles (recherche pour {
+                displaySearchDuration
+              } min) {isSlotsLoading && " (Chargement...)"}{" "}
               {/* Use specific slots loading state */}
             </h4>
             {/* Show error message from slots hook if there is one */}
-            {/* Use slotsError prop */}
             {slotsError && (
               <div className="p-2 text-sm text-red-600 border border-red-200 rounded bg-red-50">
                 Erreur chargement créneaux: {slotsError.message}
@@ -96,59 +124,92 @@ const SelectedDateDetailsPanel = ({
               !isSlotsLoading &&
               !slotsError && (
                 <div className="grid grid-cols-2 gap-2 pr-1 overflow-y-auto sm:grid-cols-3 max-h-40">
-                  {/* Map over availableSlots state */}
+                  {/* Map over availableSlots state (This list should ONLY contain valid START times for the requested duration) */}
                   {availableSlots.map((slot) => {
-                    // Disable slot button if no booking is selected
-                    // Or if the selected date is outside the selected booking's stay (redundant if calendar button is disabled, but defensive)
-                    const isDisabledForBooking =
-                      !selectedBooking ||
+                    // --- Determine if this slot should be disabled client-side ---
+                    // This logic supplements the API availability check by adding UI/business rules.
+
+                    // 1. Disabled if no booking is selected (cannot book a slot without a booking context)
+                    const noBookingSelected = !selectedBooking;
+
+                    // 2. Disabled if selected date is outside the selected booking's stay (redundant if calendar button disabled, but defensive)
+                    const outsideBookingStay =
+                      selectedBooking &&
                       !isDateWithinBookingStay(selectedDate, selectedBooking); // Use imported utility
+
+                    // 3. Disabled if an action (save/delete) is in progress
+                    const actionIsLoading = isActionLoading;
+
+                    // Combine all client-side disable conditions
+                    const isDisabled =
+                      noBookingSelected ||
+                      outsideBookingStay ||
+                      actionIsLoading;
+
+                    // --- End Client-side Disable Logic (Simplified) ---
+
+                    // Determine if the slot is currently selected visually
+                    // Check if the slot string is the *start time* of the selected booking
+                    const isSelected =
+                      selectedBooking?.spaDateTimeObj &&
+                      !isNaN(selectedBooking.spaDateTimeObj.getTime())
+                        ? format(selectedBooking.spaDateTimeObj, "HH:mm") ===
+                          slot // Check if this is the exact start slot time string
+                        : false; // Not selected if no booking or invalid time
 
                     return (
                       <button
                         key={slot}
-                        onClick={() => onBookSlot(selectedDate, slot)} // Use passed handler
-                        disabled={isDisabledForBooking || isActionLoading} // Disable during action
-                        className={`p-2 text-sm rounded border text-center
-                           ${
-                             isDisabledForBooking || isActionLoading
-                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                               : "bg-white hover:bg-green-50 hover:border-green-500"
-                           }`}
+                        type="button" // Important for buttons inside forms
+                        onClick={() => onBookSlot(selectedDate, slot)} // Call passed handler
+                        disabled={isDisabled || isLoading} // Disable while fetching slots or if slot is disabled
+                        className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                          isSelected // Use the isSelected check
+                            ? "bg-[#668E73] text-white border-[#5a7d66] ring-[#668E73]" // Selected style
+                            : isDisabled
+                            ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" // Disabled style
+                            : "bg-white text-gray-700 border-gray-300 hover:border-[#668E73] hover:text-[#668E73]" // Default enabled style
+                        }`}
                         title={
-                          !selectedBooking
-                            ? "Sélectionnez d'abord une réservation à programmer"
-                            : !isDateWithinBookingStay(
-                                selectedDate,
-                                selectedBooking
-                              ) // Use imported utility for title
-                            ? `Cette date (${format(
-                                selectedDate,
-                                "dd/MM"
-                              )}) est hors du séjour du client (${
-                                selectedBooking.arrivalDateObj // Use parsed obj from parent
-                                  ? format(
-                                      selectedBooking.arrivalDateObj,
-                                      "dd/MM"
-                                    )
-                                  : "?"
-                              } - ${
-                                selectedBooking.departureDateObj // Use parsed obj from parent
-                                  ? format(
-                                      selectedBooking.departureDateObj,
-                                      "dd/MM"
-                                    )
-                                  : "?"
-                              })`
-                            : null
+                          // Combine tooltips for different reasons for disabling
+                          [
+                            noBookingSelected
+                              ? "Sélectionnez d'abord une réservation à programmer"
+                              : null,
+                            outsideBookingStay
+                              ? `Cette date (${format(
+                                  selectedDate,
+                                  "dd/MM"
+                                )}) est hors du séjour du client (${
+                                  selectedBooking?.arrivalDateObj
+                                    ? format(
+                                        selectedBooking.arrivalDateObj,
+                                        "dd/MM"
+                                      )
+                                    : "?"
+                                } - ${
+                                  selectedBooking?.departureDateObj
+                                    ? format(
+                                        selectedBooking.departureDateObj,
+                                        "dd/MM"
+                                      )
+                                    : "?"
+                                })`
+                              : null,
+                            // Removed end time tooltip as that check is moved to API/simplified client-side
+                            isActionLoading ? "Action en cours..." : null,
+                            isLoading ? "Chargement des créneaux..." : null,
+                          ]
+                            .filter(Boolean)
+                            .join("\n") // Filter out nulls and join with newlines
                         }
                       >
-                        {slot}
+                        {slot} {/* e.g., "14:00" */}
                       </button>
                     );
                   })}
                 </div>
-              ) // End !isSlotsLoading && !slotsError condition
+              )
             )}
             {/* Messages guiding the user */}
             {!selectedBooking && (
@@ -158,16 +219,16 @@ const SelectedDateDetailsPanel = ({
               </div>
             )}
             {selectedBooking &&
-              selectedDate && // Added check for selectedDate exists
-              !isDateWithinBookingStay(selectedDate, selectedBooking) && ( // Use imported utility
+              selectedDate &&
+              !isDateWithinBookingStay(selectedDate, selectedBooking) && (
                 <div className="p-2 mt-2 text-sm text-center text-red-600 border border-red-200 rounded bg-red-50">
                   La date sélectionnée ({format(selectedDate, "dd/MM")}) est
                   hors du séjour (
-                  {selectedBooking.arrivalDateObj // Use parsed obj from parent
+                  {selectedBooking.arrivalDateObj
                     ? format(selectedBooking.arrivalDateObj, "dd/MM")
                     : "?"}{" "}
                   -{" "}
-                  {selectedBooking.departureDateObj // Use parsed obj from parent
+                  {selectedBooking.departureDateObj
                     ? format(selectedBooking.departureDateObj, "dd/MM")
                     : "?"}
                   ) du client "
@@ -176,29 +237,26 @@ const SelectedDateDetailsPanel = ({
                   ". Vous ne pouvez pas planifier le SPA pour cette date.
                 </div>
               )}
-          </div>
+          </div>{" "}
+          {/* End Available Slots Section */}
           {/* List of Existing bookings for the selected date */}
           <div>
             <h4 className="mb-2 text-sm font-medium">
               Réservations planifiées pour cette date (
-              {selectedDateBookings.length}){" "}
-              {/* Use derived state length from parent */}
-              {/* Indicate bookings loading if the list is empty */}
+              {selectedDateBookings.length})
               {isLoading &&
                 selectedDateBookings.length === 0 &&
                 " (Mise à jour...)"}
             </h4>
             {/* Show error message from bookings hook IF this panel is shown and bookings load failed */}
-            {bookingsError &&
-              selectedDate &&
-              !isLoading && ( // Use bookingsError from parent
-                <div className="p-2 text-sm text-red-600 border border-red-200 rounded bg-red-50">
-                  Erreur chargement réservations: {bookingsError.message}
-                </div>
-              )}
+            {bookingsError && selectedDate && !isLoading && (
+              <div className="p-2 text-sm text-red-600 border border-red-200 rounded bg-red-50">
+                Erreur chargement réservations: {bookingsError.message}
+              </div>
+            )}
 
             {/* Use derived state */}
-            {selectedDateBookings.length === 0 && !isLoading ? ( // Check overall loading
+            {selectedDateBookings.length === 0 && !isLoading ? (
               <div className="p-2 text-sm text-center text-gray-500 rounded bg-gray-50">
                 Aucune réservation SPA planifiée pour cette date
               </div>
@@ -208,7 +266,7 @@ const SelectedDateDetailsPanel = ({
                 <div className="pr-1 space-y-2 overflow-y-auto max-h-40">
                   {/* Map over derived state */}
                   {selectedDateBookings.map((booking) => {
-                    const colors = getPropertyColor(booking); // Use imported utility
+                    const colors = getPropertyColor(booking);
                     // Use the parsed objects stored by the hook, fallback to utility parse if needed for display
                     const startTime =
                       booking.spaDateTimeObj ||
@@ -217,27 +275,79 @@ const SelectedDateDetailsPanel = ({
                       booking.spaEndDateTimeObj ||
                       parseBookingDateTime(booking.spaEndDateTime);
 
-                    const isValidTime =
-                      startTime &&
-                      !isNaN(startTime.getTime()) &&
-                      endTime &&
-                      !isNaN(endTime.getTime());
+                    // Format the display string including the time range
+                    let displayTimeRange = "Heure invalide";
+                    // Need spaSettings to estimate duration if end time is missing
+                    const slotDuration =
+                      spaSettings?.slotDurationMinutes || null;
+
+                    if (startTime && !isNaN(startTime.getTime())) {
+                      displayTimeRange = format(startTime, "HH:mm", {
+                        locale: fr,
+                      });
+                      if (
+                        endTime &&
+                        !isNaN(endTime.getTime()) &&
+                        endTime.getTime() >= startTime.getTime()
+                      ) {
+                        displayTimeRange += ` - ${format(endTime, "HH:mm", {
+                          locale: fr,
+                        })}`;
+                      } else if (booking.spaSlots?.length > 0 && slotDuration) {
+                        // If end time is missing but slots and duration exist, estimate end time for display
+                        const assumedEndTime = addMinutes(
+                          startTime,
+                          booking.spaSlots.length * slotDuration
+                        ); // Use addMinutes
+                        // Add a basic check that assumedEndTime is after startTime
+                        if (assumedEndTime.getTime() >= startTime.getTime()) {
+                          displayTimeRange += ` - ${format(
+                            assumedEndTime,
+                            "HH:mm",
+                            { locale: fr }
+                          )} (estimé)`;
+                        } else {
+                          console.warn(
+                            "SelectedDateDetailsPanel: Estimated end time is before start time for booking:",
+                            booking.id,
+                            {
+                              startTime,
+                              assumedEndTime,
+                              slots: booking.spaSlots,
+                              duration: slotDuration,
+                            }
+                          );
+                          displayTimeRange += ` (Heure de fin invalide)`; // Indicate issue
+                        }
+                      } else if (
+                        booking.spaSlots?.length > 0 &&
+                        !slotDuration
+                      ) {
+                        console.warn(
+                          "SelectedDateDetailsPanel: Cannot estimate end time for display, slotDurationMinutes missing from settings.",
+                          booking.id
+                        );
+                        displayTimeRange += ` (Durée inconnue)`; // Indicate issue
+                      } else {
+                        console.warn(
+                          "SelectedDateDetailsPanel: spaEndDateTime and spaSlots missing or invalid for booking:",
+                          booking.id
+                        );
+                        displayTimeRange += ` (Heure de fin manquante)`; // Indicate issue
+                      }
+                    }
 
                     return (
                       <button
                         key={booking.id}
+                        type="button" // Important for buttons inside forms
                         onClick={() => onScheduledBookingClick(booking)} // Use passed handler
                         disabled={isActionLoading} // Disable during action
                         className={`w-full text-left p-2 border rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${colors.bg} ${colors.text} ${colors.border}`}
                       >
                         <div className="text-sm font-medium">
-                          {isValidTime
-                            ? `${format(startTime, "HH:mm")} - ${format(
-                                endTime,
-                                "HH:mm"
-                              )}`
-                            : "Heure invalide"}{" "}
-                          {/* Display error if times are bad */}
+                          {displayTimeRange}{" "}
+                          {/* Display the formatted time range */}
                         </div>
                         <div className="text-xs">
                           {booking.guestName ||
@@ -248,9 +358,10 @@ const SelectedDateDetailsPanel = ({
                     );
                   })}
                 </div>
-              ) // End !isLoading condition
+              )
             )}
-          </div>
+          </div>{" "}
+          {/* End Scheduled Bookings List */}
         </div>
       )}{" "}
     </div>
