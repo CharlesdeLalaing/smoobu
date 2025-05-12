@@ -160,15 +160,9 @@ export const InfoSupSection = ({
           </div>
         </>
       )}
-      <div className="absolute top-[70px] left-[220px] sm:top-[70px] sm:left-[250px] md:top-[50px] md:left-[550px] lg:top-[50px] lg:left-[300px] xl:top-[230px] xl:left-[550px]">
-        <img
-          src={LongBird}
-          alt="Long Bird"
-          className="w-24 h-auto opacity-50 pointer-events-none md:w-32 lg:w-40" // Added opacity/pointer-events if needed
-        />
-      </div>
+
       {/* --- Coupon Section --- */}
-      <div className="pt-4 pb-4 mt-6 mb-6 border-t border-b border-gray-200">
+      <div className="pt-2 pb-2 mt-2 mb-2 ">
         <div>
           {/* Label is now separate from the input */}
           <label
@@ -236,7 +230,7 @@ export const InfoSupSection = ({
 
       <div
         className={`col-span-full ${
-          shouldShowSpaSection ? "pt-6 border-t" : "pt-0 border-t-0"
+          shouldShowSpaSection ? "pt-2" : "pt-0"
         } border-gray-200`}
       >
         <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">

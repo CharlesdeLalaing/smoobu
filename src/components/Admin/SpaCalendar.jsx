@@ -1,4 +1,3 @@
-// File: src/components/Admin/SpaCalendar.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import {
   format,
@@ -7,19 +6,19 @@ import {
   eachDayOfInterval,
   isSameDay,
   startOfDay,
-  parseISO,
   addDays,
   isAfter,
   isValid as isDateValid,
+  parseISO, // Needed for parsing time strings with date context
 } from "date-fns";
 import { fr } from "date-fns/locale";
-
-
 import {
-  // Firebase imports needed for actions (update/delete)
+  // Firebase imports needed for actions (update/delete), settings save, and override save/delete
   doc,
   updateDoc,
   deleteField,
+  setDoc, // Needed for creating a new override document
+  deleteDoc, // Needed for deleting an override document
 } from "firebase/firestore";
 import { db } from "../../firebase"; // Adjust path as needed
 
@@ -29,64 +28,75 @@ import {
   isDateWithinBookingStay,
   getPropertyColor,
   calculateBookingSlots,
-} from "../spa/spaCalendarUtils";
+} from "../spa/spaCalendarUtils"; // Correct path
 
 // Import custom hooks from src/hooks
 import {
   useSpaSettings,
   useBookingsForMonth,
-  useAvailableSlots,
+  useAvailableSlots, // This hook now returns override data too
 } from "../spa/useSpaCalendarData";
 
-// Import extracted UI components from the same directory (src/components/Admin)
+// Import extracted UI components
 import BookingsToSchedulePanel from "../spa/BookingsToSchedulePanel";
 import SelectedDateDetailsPanel from "../spa/SelectedDateDetailsPanel";
 import SpaTimeline from "../spa/SpaTimeline";
-import EditDeleteSpaModal from "../spa/EditDeleteSpaModal"; // Ensure this path and filename are correct
+import EditDeleteSpaModal from "../spa/EditDeleteSpaModal";
 
 // --- Main Component ---
 const SpaCalendar = () => {
   console.log("SpaCalendar rendering...");
   // --- State Variables (Managed by this component) ---
-  const [currentMonth, setCurrentMonth] = useState(new Date()); // Month for calendar navigation
-  const [selectedDate, setSelectedDate] = useState(null); // The date selected in the calendar
-  const [selectedBooking, setSelectedBooking] = useState(null); // The booking selected from 'À programmer' list for scheduling
-  const [bookingToEdit, setBookingToEdit] = useState(null); // The scheduled booking selected for editing/deleting
-  const [showEditDeleteModal, setShowEditDeleteModal] = useState(false); // State for modal visibility
-  const [modalStep, setModalStep] = useState("options"); // 'options' | 'confirm-reschedule' | 'confirm-delete'
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [bookingToEdit, setBookingToEdit] = useState(null);
+  const [showEditDeleteModal, setShowEditDeleteModal] = useState(false);
+  const [modalStep, setModalStep] = useState("options");
 
-  // State for actions initiated from the UI (Saving booking, deleting booking)
-  const [actionLoading, setActionLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false); // For booking actions (save/delete/reschedule)
 
-   // --- State for Settings Editing ---
-   const [editableSpaSettings, setEditableSpaSettings] = useState(null); // Holds settings data while editing
-   const [settingsSavingLoading, setSettingsSavingLoading] = useState(false); // Loading state for saving settings
-   const [settingsSavingError, setSettingsSavingError] = useState(null); // Error state for saving settings
-   // --- End State for Settings Editing ---
+  // --- State for Settings Editing ---
+  const [editableSpaSettings, setEditableSpaSettings] = useState(null);
+  const [settingsSavingLoading, setSettingsSavingLoading] = useState(false);
+  const [settingsSavingError, setSettingsSavingError] = useState(null);
+  // --- End State for Settings Editing ---
 
+  // --- State for Override Editing ---
+  const [editableOverrideSettings, setEditableOverrideSettings] =
+    useState(null); // { startTime, endTime, isClosed }
+  const [overrideSavingLoading, setOverrideSavingLoading] = useState(false); // Loading state for saving/deleting override
+  const [overrideSavingError, setOverrideSavingError] = useState(null); // Error state for saving/deleting override
+  // --- End State for Override Editing ---
 
-   console.log("SpaCalendar state:", {
-       currentMonth: format(currentMonth, 'yyyy-MM'),
-       selectedDate: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null,
-       selectedBooking: selectedBooking?.id || null,
-       bookingToEdit: bookingToEdit?.id || null,
-       showEditDeleteModal,
-       modalStep,
-       actionLoading,
-       editableSpaSettings, // Add to log
-       settingsSavingLoading, // Add to log
-       settingsSavingError // Add to log
-   });
-
+  console.log("SpaCalendar state:", {
+    currentMonth: format(currentMonth, "yyyy-MM"),
+    selectedDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : null,
+    selectedBooking: selectedBooking?.id || null,
+    bookingToEdit: bookingToEdit?.id || null,
+    showEditDeleteModal,
+    modalStep,
+    actionLoading,
+    editableSpaSettings,
+    settingsSavingLoading,
+    settingsSavingError,
+    editableOverrideSettings, // Add to log
+    overrideSavingLoading, // Add to log
+    overrideSavingError, // Add to log
+  });
 
   // --- Use Custom Hooks to Fetch Data ---
   const {
-    spaSettings, // The current settings from Firebase
-    loading: settingsLoading, // Loading for fetching settings
-    error: settingsError, // Error for fetching settings
-    refetch: refetchSpaSettings, // Function to refetch settings
-  } = useSpaSettings(); // This hook fetches settings
-   console.log("useSpaSettings hook data:", { spaSettings, settingsLoading, settingsError });
+    spaSettings,
+    loading: settingsLoading,
+    error: settingsError,
+    refetch: refetchSpaSettings,
+  } = useSpaSettings();
+  console.log("useSpaSettings hook data:", {
+    spaSettings,
+    settingsLoading,
+    settingsError,
+  });
 
   const {
     bookings,
@@ -94,17 +104,23 @@ const SpaCalendar = () => {
     error: bookingsError,
     refetch: refetchBookings,
   } = useBookingsForMonth(currentMonth);
-   console.log("useBookingsForMonth hook data:", { bookings: bookings.length, bookingsLoading, bookingsError });
-
+  console.log("useBookingsForMonth hook data:", {
+    bookings: bookings.length,
+    bookingsLoading,
+    bookingsError,
+  });
 
   const {
-    availableSlots,
-    loading: slotsLoading,
-    error: slotsError,
-    refetch: refetchSlots,
-  } = useAvailableSlots(selectedDate, selectedBooking, spaSettings); // Pass spaSettings from hook
-   console.log("useAvailableSlots hook data:", { availableSlots: availableSlots.length, slotsLoading, slotsError });
+    availableSlots, // Slots from API (might be empty if override.isClosed)
+    loading: slotsLoading, // Loading for API call
+    error: slotsError, // Error for API call
+    overrideData, // <--- Override data from hook
+    overrideLoading, // <--- Loading for override fetch
+    overrideError, // <--- Error for override fetch
+    refetch: refetchSlotsAndOverride, // Refetch includes both override and slots
+  } = useAvailableSlots(selectedDate, selectedBooking, spaSettings); // Pass spaSettings
 
+  
 
   // --- Derived State (Calculated using useMemo) ---
   const selectedDateBookings = useMemo(() => {
@@ -140,11 +156,13 @@ const SpaCalendar = () => {
 
         return timeA.getTime() - timeB.getTime();
       });
-      console.log(`useMemo selectedDateBookings: Found ${filtered.length} bookings for ${selectedDate ? format(selectedDate, 'yyyy-MM-dd') : 'N/A'}`);
-      return filtered;
-
+    console.log(
+      `useMemo selectedDateBookings: Found ${filtered.length} bookings for ${
+        selectedDate ? format(selectedDate, "yyyy-MM-dd") : "N/A"
+      }`
+    );
+    return filtered;
   }, [bookings, selectedDate]); // Recalculate when bookings or selectedDate change
-
 
   const bookingsToSchedule = useMemo(() => {
     console.log("useMemo: Calculating bookingsToSchedule...", bookings.length);
@@ -152,7 +170,7 @@ const SpaCalendar = () => {
       console.log("useMemo bookingsToSchedule: Returning empty array.");
       return [];
     }
-     const filtered = bookings
+    const filtered = bookings
       .filter((b) => b.needsScheduling)
       .sort((a, b) => {
         let arrivalA = a.arrivalDateObj;
@@ -165,29 +183,74 @@ const SpaCalendar = () => {
           return arrivalA.getTime() - arrivalB.getTime();
         return a.property?.localeCompare(b.property || "") || 0;
       });
-       console.log(`useMemo bookingsToSchedule: Found ${filtered.length} bookings needing scheduling.`);
-       return filtered;
+    console.log(
+      `useMemo bookingsToSchedule: Found ${filtered.length} bookings needing scheduling.`
+    );
+    return filtered;
   }, [bookings]); // Recalculate when bookings change
 
   // --- Combined Loading State for Main UI ---
-  const overallLoading = bookingsLoading || settingsLoading; // Note: slotsLoading is NOT included here
+  // Include override loading in overall loading
+  const overallLoading = bookingsLoading || settingsLoading || overrideLoading; // Added overrideLoading
 
+  // --- Effect to Synchronize Fetched Settings with Editable State ---
+  useEffect(() => {
+    console.log("SpaCalendar Effect: spaSettings changed", spaSettings);
+    if (spaSettings) {
+      setEditableSpaSettings({
+        startTime: spaSettings.startTime || "14:00",
+        endTime: spaSettings.endTime || "23:59",
+        slotDurationMinutes: spaSettings.slotDurationMinutes || 60,
+      });
+      console.log(
+        "SpaCalendar Effect: Synchronized editableSpaSettings with fetched spaSettings."
+      );
+    } else {
+      setEditableSpaSettings(null);
+      console.log(
+        "SpaCalendar Effect: spaSettings is null, cleared editableSpaSettings."
+      );
+    }
+  }, [spaSettings]);
 
-   // --- Effect to Synchronize Fetched Settings with Editable State ---
-   useEffect(() => {
-       console.log("SpaCalendar Effect: spaSettings changed", spaSettings);
-       if (spaSettings) {
-           // Only update editable state if spaSettings is loaded
-           setEditableSpaSettings(spaSettings);
-           console.log("SpaCalendar Effect: Synchronized editableSpaSettings with fetched spaSettings.");
-       } else {
-           // Optionally clear editable settings if fetched settings become null (e.g. error?)
-           setEditableSpaSettings(null);
-           console.log("SpaCalendar Effect: spaSettings is null, cleared editableSpaSettings.");
-       }
-        // Depend on spaSettings changing
-   }, [spaSettings]);
-
+  // --- Effect to Synchronize Fetched Override with Editable State ---
+  useEffect(() => {
+    console.log("SpaCalendar Effect: overrideData or selectedDate changed", {
+      overrideData,
+      selectedDate,
+    });
+    // Reset editable override state whenever selectedDate changes
+    if (selectedDate) {
+      if (overrideData) {
+        // If override data exists for the selected date, set it for editing
+        setEditableOverrideSettings({
+          startTime: overrideData.startTime || "",
+          endTime: overrideData.endTime || "",
+          isClosed: overrideData.isClosed || false,
+        });
+        console.log(
+          "SpaCalendar Effect: Initialized editableOverrideSettings from fetched overrideData."
+        );
+      } else {
+        // If no override data for the selected date, initialize with default empty/false state
+        setEditableOverrideSettings({
+          startTime: "",
+          endTime: "",
+          isClosed: false,
+        });
+        console.log(
+          "SpaCalendar Effect: Initialized editableOverrideSettings with empty defaults as no override data found."
+        );
+      }
+    } else {
+      // If no date is selected, clear the editable override state
+      setEditableOverrideSettings(null);
+      console.log(
+        "SpaCalendar Effect: selectedDate is null, cleared editableOverrideSettings."
+      );
+    }
+    // Depend on overrideData and selectedDate
+  }, [overrideData, selectedDate]);
 
   // --- Data Mutation Functions (Remain here, called by handlers) ---
 
@@ -197,6 +260,11 @@ const SpaCalendar = () => {
     slotsToBook
   ) => {
     console.log("handleUpdateBookingSpaDate started");
+    // Prevent action if another action is in progress
+    if (actionLoading || settingsSavingLoading || overrideSavingLoading) {
+      console.log("handleUpdateBookingSpaDate blocked by other loading states");
+      return;
+    }
     try {
       setActionLoading(true); // Start action loading
       console.log(
@@ -208,7 +276,6 @@ const SpaCalendar = () => {
         slotsToBook
       );
 
-      // Calculate end time based on the START time plus the total duration covered by the slots.
       const slotDurationMinutes = spaSettings?.slotDurationMinutes || 30; // Use settings from hook state
       const totalDurationMinutes =
         (slotsToBook?.length || 0) * slotDurationMinutes;
@@ -246,20 +313,18 @@ const SpaCalendar = () => {
       console.log(`Booking ${bookingId} updated successfully in Firebase.`);
 
       // --- Refetch Data After Write ---
-      // Refetch bookings for the month to see the changes reflected in all lists/timeline
       console.log("Refetching bookings after update...");
       refetchBookings(currentMonth);
-      // Refetch slots for the selected date as availability might have changed
+      // Refetch slots and override data for the selected date
       if (selectedDate) {
-          console.log("Refetching slots after update...");
-          refetchSlots(selectedDate, selectedBooking, spaSettings);
+        console.log("Refetching slots and override after update...");
+        refetchSlotsAndOverride(selectedDate, selectedBooking, spaSettings);
       }
       // --- End Refetch ---
 
-
       setSelectedBooking(null); // Clear selected booking after successful scheduling
 
-      // Show confirmation (consider using a more modern notification system instead of alert)
+      // Show confirmation
       alert(
         `Rendez-vous SPA planifié pour le ${format(dateTime, "EEEE d MMMM", {
           locale: fr,
@@ -282,7 +347,11 @@ const SpaCalendar = () => {
 
   const handleDeleteSpaAppointment = async () => {
     console.log("handleDeleteSpaAppointment called");
-    // No window.confirm here, confirmation is handled in the modal UI
+    // Prevent action if another action is in progress
+    if (actionLoading || settingsSavingLoading || overrideSavingLoading) {
+      console.log("handleDeleteSpaAppointment blocked by other loading states");
+      return;
+    }
     if (!bookingToEdit) {
       console.log("Delete action called but bookingToEdit is null. Aborting.");
       // closeEditDeleteModal(); // Called in finally
@@ -293,19 +362,18 @@ const SpaCalendar = () => {
       setActionLoading(true); // Start action loading
       console.log("Starting delete action for booking:", bookingToEdit.id);
       await updateDoc(doc(db, "bookings", bookingToEdit.id), {
-        spaDateTime: deleteField(), // Remove the field
-        spaEndDateTime: deleteField(), // Remove the field
-        spaSlots: deleteField(), // Remove the field
-        spaBookingPreference: "none", // Set preference to none
+        spaDateTime: deleteField(),
+        spaEndDateTime: deleteField(),
+        spaSlots: deleteField(),
+        spaBookingPreference: "none",
         spaInfo: {
-          // Reset spaInfo
           hasSpaTreatment: false,
           scheduledDateTime: null,
           endDateTime: null,
           preference: "none",
           formattedDateTime: null,
           slots: [],
-          status: "cancelled", // Or "deleted"
+          status: "cancelled",
         },
       });
 
@@ -313,39 +381,41 @@ const SpaCalendar = () => {
         `Booking ${bookingToEdit.id} deleted successfully in Firebase.`
       );
       alert("Rendez-vous SPA supprimé.");
-       console.log("handleDeleteSpaAppointment finished successfully");
+      console.log("handleDeleteSpaAppointment finished successfully");
 
       // --- Refetch Data After Write ---
-      // Refetch bookings for the month to see the changes
       console.log("Refetching bookings after delete...");
       refetchBookings(currentMonth);
-      // Refetch slots for the selected date as availability might have changed
-      // Pass null for selectedBooking as the one being edited is now deleted or pending reschedule
+      // Refetch slots and override data for the selected date
       if (selectedDate) {
-           console.log("Refetching slots after delete...");
-           refetchSlots(selectedDate, null, spaSettings); // Pass spaSettings
+        console.log("Refetching slots and override after delete...");
+        refetchSlotsAndOverride(selectedDate, null, spaSettings); // Pass spaSettings
       }
-       // Also clear selectedBooking if it was the one deleted (less likely but safe)
+      // Also clear selectedBooking if it was the one deleted (less likely but safe)
       if (selectedBooking?.id === bookingToEdit.id) {
-         setSelectedBooking(null);
+        setSelectedBooking(null);
       }
       // --- End Refetch ---
-
     } catch (error) {
       console.error("Error deleting SPA appointment:", error);
       alert("Échec de la suppression du rendez-vous SPA.");
-       console.log("handleDeleteSpaAppointment finished with error");
+      console.log("handleDeleteSpaAppointment finished with error");
     } finally {
-       closeEditDeleteModal(); // Close modal regardless of success/failure
+      closeEditDeleteModal(); // Close modal regardless of success/failure
       setActionLoading(false); // End action loading
       console.log("handleDeleteSpaAppointment actionLoading set to false");
     }
   };
 
-  // This handles the actual async Firebase action to mark for rescheduling
   const handleMarkBookingForRescheduling = async () => {
     console.log("handleMarkBookingForRescheduling called");
-    // No window.confirm here, confirmation is handled in the modal UI
+    // Prevent action if another action is in progress
+    if (actionLoading || settingsSavingLoading || overrideSavingLoading) {
+      console.log(
+        "handleMarkBookingForRescheduling blocked by other loading states"
+      );
+      return;
+    }
     if (!bookingToEdit) {
       console.log(
         "Reschedule action called but bookingToEdit is null. Aborting."
@@ -358,13 +428,11 @@ const SpaCalendar = () => {
       setActionLoading(true); // Start action loading
       console.log("Starting reschedule action for booking:", bookingToEdit.id);
       await updateDoc(doc(db, "bookings", bookingToEdit.id), {
-        spaDateTime: deleteField(), // Remove the field
-        spaEndDateTime: deleteField(), // Remove the field
-        spaSlots: deleteField(), // Remove the field
-        // Set preference back to 'later' so it appears in the middle list
+        spaDateTime: deleteField(),
+        spaEndDateTime: deleteField(),
+        spaSlots: deleteField(),
         spaBookingPreference: "later",
         spaInfo: {
-          // Update spaInfo status
           hasSpaTreatment: true, // Still wants treatment, just needs scheduling
           scheduledDateTime: null,
           endDateTime: null,
@@ -379,30 +447,27 @@ const SpaCalendar = () => {
         `Booking ${bookingToEdit.id} marked for rescheduling successfully.`
       );
       alert("Rendez-vous SPA marqué pour être reprogrammé.");
-       console.log("handleMarkBookingForRescheduling finished successfully");
+      console.log("handleMarkBookingForRescheduling finished successfully");
 
       // --- Refetch Data After Write ---
-      // Refetch bookings for the month
       console.log("Refetching bookings after reschedule...");
       refetchBookings(currentMonth);
-      // Refetch slots for the selected date as availability might have changed
-      // Pass null for selectedBooking as the one being edited is now deleted or pending reschedule
+      // Refetch slots and override data for the selected date
       if (selectedDate) {
-          console.log("Refetching slots after reschedule...");
-          refetchSlots(selectedDate, null, spaSettings); // Pass spaSettings
+        console.log("Refetching slots and override after reschedule...");
+        refetchSlotsAndOverride(selectedDate, null, spaSettings); // Pass spaSettings
       }
-       // If the booking being edited was also the selectedBooking, clear selectedBooking
+      // If the booking being edited was also the selectedBooking, clear selectedBooking
       if (selectedBooking?.id === bookingToEdit.id) {
-         setSelectedBooking(null);
+        setSelectedBooking(null);
       }
       // --- End Refetch ---
-
     } catch (error) {
       console.error("Error marking SPA appointment for rescheduling:", error);
       alert("Échec de la mise à jour pour la reprogrammation.");
-       console.log("handleMarkBookingForRescheduling finished with error");
+      console.log("handleMarkBookingForRescheduling finished with error");
     } finally {
-       closeEditDeleteModal(); // Close modal regardless of success/failure
+      closeEditDeleteModal(); // Close modal regardless of success/failure
       setActionLoading(false); // End action loading
       console.log(
         "handleMarkBookingForRescheduling actionLoading set to false"
@@ -410,114 +475,349 @@ const SpaCalendar = () => {
     }
   };
 
-
   // --- Settings Save Function ---
   const handleSaveSpaSettings = async () => {
-      console.log("handleSaveSpaSettings called", editableSpaSettings);
-      if (!editableSpaSettings) {
-          console.warn("handleSaveSpaSettings: editableSpaSettings is null. Aborting.");
-          return;
+    console.log("handleSaveSpaSettings called", editableSpaSettings);
+    // Prevent action if another action is in progress
+    if (actionLoading || settingsSavingLoading || overrideSavingLoading) {
+      console.log("handleSaveSpaSettings blocked by other loading states");
+      return;
+    }
+    if (!editableSpaSettings) {
+      console.warn(
+        "handleSaveSpaSettings: editableSpaSettings is null. Aborting."
+      );
+      return;
+    }
+
+    // --- Validation ---
+    setSettingsSavingError(null); // Clear previous error
+    const { startTime, endTime, slotDurationMinutes } = editableSpaSettings;
+
+    // Basic validation for time strings (HH:mm format)
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+      const errorMsg =
+        "Les heures de début et de fin doivent être au format HH:mm.";
+      setSettingsSavingError(errorMsg);
+      console.warn("Settings validation failed:", errorMsg);
+      alert(errorMsg);
+      return;
+    }
+
+    // Basic validation for duration
+    if (
+      typeof slotDurationMinutes !== "number" ||
+      !Number.isInteger(slotDurationMinutes) ||
+      slotDurationMinutes <= 0
+    ) {
+      const errorMsg =
+        "La durée du créneau doit être un nombre entier positif (en minutes).";
+      setSettingsSavingError(errorMsg);
+      console.warn("Settings validation failed:", errorMsg);
+      alert(errorMsg);
+      return;
+    }
+
+    // Validation: startTime is before endTime on the same day
+    try {
+      const today = startOfDay(new Date());
+      const startTimeDate = parseISO(
+        format(today, "yyyy-MM-dd") + "T" + startTime
+      );
+      const endTimeDate = parseISO(format(today, "yyyy-MM-dd") + "T" + endTime);
+
+      if (!isDateValid(startTimeDate) || !isDateValid(endTimeDate)) {
+        const errorMsg = "Format d'heure invalide pour le début ou la fin.";
+        setSettingsSavingError(errorMsg);
+        console.warn("Settings validation failed:", errorMsg);
+        alert(errorMsg);
+        return;
       }
 
-       // --- Validation ---
-      setSettingsSavingError(null); // Clear previous error
-      const { startTime, endTime, slotDurationMinutes } = editableSpaSettings;
+      const startHours = startTimeDate.getHours();
+      const startMinutes = startTimeDate.getMinutes();
+      const endHours = endTimeDate.getHours();
+      const endMinutes = endTimeDate.getMinutes();
 
-       // Basic validation for time strings (HH:mm format)
-      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-      if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
-          const errorMsg = "Les heures de début et de fin doivent être au format HH:mm.";
-          setSettingsSavingError(errorMsg);
-          console.warn("Settings validation failed:", errorMsg);
-          alert(errorMsg);
-          return;
+      if (
+        endHours < startHours ||
+        (endHours === startHours && endMinutes <= startMinutes)
+      ) {
+        const errorMsg =
+          "L'heure de fin doit être strictement après l'heure de début le même jour.";
+        setSettingsSavingError(errorMsg);
+        console.warn("Settings validation failed:", errorMsg);
+        alert(errorMsg);
+        return;
       }
+      // Also check if the start time plus slot duration goes past the end time
+      const testBookingStart = new Date(today);
+      testBookingStart.setHours(startHours, startMinutes, 0, 0);
+      const testBookingEndIfOneSlot = addMinutes(
+        testBookingStart,
+        slotDurationMinutes
+      );
 
-       // Basic validation for duration
-       if (typeof slotDurationMinutes !== 'number' || slotDurationMinutes <= 0 || !Number.isInteger(slotDurationMinutes)) {
-           const errorMsg = "La durée du créneau doit être un nombre entier positif (en minutes).";
-           setSettingsSavingError(errorMsg);
-           console.warn("Settings validation failed:", errorMsg);
-           alert(errorMsg);
-           return;
-       }
-
-       // Optional: More complex validation, e.g., startTime is before endTime on the same day
-       // Create temporary dates on an arbitrary day to compare times
-       try {
-           const today = startOfDay(new Date());
-           const startTimeDate = parseISO(format(today, 'yyyy-MM-dd') + 'T' + startTime);
-           const endTimeDate = parseISO(format(today, 'yyyy-MM-dd') + 'T' + endTime);
-
-           if (!isDateValid(startTimeDate) || !isDateValid(endTimeDate) || isAfter(startTimeDate, endTimeDate)) {
-                const errorMsg = "L'heure de début doit être avant l'heure de fin le même jour.";
-                setSettingsSavingError(errorMsg);
-                console.warn("Settings validation failed:", errorMsg);
-                alert(errorMsg);
-                return;
-           }
-       } catch (e) {
-            console.error("Error during settings time comparison validation:", e);
-            const errorMsg = "Erreur lors de la validation des heures.";
-            setSettingsSavingError(errorMsg);
-            alert(errorMsg);
-            return;
-       }
-
-       // --- End Validation ---
-
-
-      try {
-          setSettingsSavingLoading(true); // Start saving loading
-          console.log("Saving SPA settings to Firebase:", editableSpaSettings);
-
-          // Create a clean object to save, only including the fields we want to update
-          const settingsToSave = {
-              startTime: editableSpaSettings.startTime,
-              endTime: editableSpaSettings.endTime,
-              slotDurationMinutes: editableSpaSettings.slotDurationMinutes,
-              // Add any other relevant settings fields here
-          };
-
-          // Update the document in Firebase
-          await updateDoc(doc(db, "spaSettings", "default"), settingsToSave);
-
-          console.log("SPA settings saved successfully.");
-          alert("Paramètres SPA enregistrés avec succès.");
-
-          // --- Refetch Data After Settings Save ---
-          // Refetch settings first to ensure state is updated from source of truth
-          console.log("Refetching settings after save...");
-          refetchSpaSettings();
-           // Refetch bookings as settings like slot duration/hours might affect display/availability calculation
-          console.log("Refetching bookings and slots after settings save...");
-          refetchBookings(currentMonth); // Refetch bookings for the current month
-           if (selectedDate) {
-               refetchSlots(selectedDate, selectedBooking, editableSpaSettings); // Refetch slots for the selected date with NEW settings
-           } else {
-               // If no date is selected, refetchSlots won't do anything, which is fine.
-           }
-          // --- End Refetch ---
-
-      } catch (error) {
-          console.error("Error saving SPA settings:", error);
-          const errorMsg = `Échec de l'enregistrement des paramètres SPA: ${error.message}`;
-          setSettingsSavingError(errorMsg);
-          alert(errorMsg);
-      } finally {
-          setSettingsSavingLoading(false); // End saving loading
-          console.log("handleSaveSpaSettings finished.");
+      if (isAfter(testBookingEndIfOneSlot, endTimeDate)) {
+        const errorMsg =
+          "La durée du créneau dépasse l'intervalle entre l'heure de début et de fin.";
+        setSettingsSavingError(errorMsg);
+        console.warn("Settings validation failed:", errorMsg);
+        alert(errorMsg);
+        return;
       }
+    } catch (e) {
+      console.error("Error during settings time comparison validation:", e);
+      const errorMsg = "Erreur inattendue lors de la validation des heures.";
+      setSettingsSavingError(errorMsg);
+      alert(errorMsg);
+      return;
+    }
+
+    // --- End Validation ---
+
+    try {
+      setSettingsSavingLoading(true); // Start saving loading
+      console.log("Saving SPA settings to Firebase:", editableSpaSettings);
+
+      const settingsToSave = {
+        startTime: editableSpaSettings.startTime,
+        endTime: editableSpaSettings.endTime,
+        slotDurationMinutes: editableSpaSettings.slotDurationMinutes,
+      };
+
+      // Update the document in Firebase (using doc with id 'default')
+      await updateDoc(doc(db, "spaSettings", "default"), settingsToSave);
+
+      console.log("SPA settings saved successfully.");
+      alert("Paramètres SPA enregistrés avec succès.");
+
+      // --- Refetch Data After Settings Save ---
+      console.log("Refetching settings after save...");
+      refetchSpaSettings(); // Refetch settings first to ensure state is updated from source of truth
+      // Refetch bookings as settings like slot duration/hours might affect display/availability calculation
+      console.log("Refetching bookings and slots after settings save...");
+      refetchBookings(currentMonth); // Refetch bookings for the current month
+      if (selectedDate) {
+        // Pass the *newly saved* settings (from editable state, which will sync with fetched)
+        refetchSlotsAndOverride(
+          selectedDate,
+          selectedBooking,
+          editableSpaSettings
+        ); // Refetch slots for the selected date with NEW settings
+      }
+      // --- End Refetch ---
+    } catch (error) {
+      console.error("Error saving SPA settings:", error);
+      const errorMsg = `Échec de l'enregistrement des paramètres SPA: ${error.message}`;
+      setSettingsSavingError(errorMsg);
+      alert(errorMsg);
+    } finally {
+      setSettingsSavingLoading(false); // End saving loading
+      console.log("handleSaveSpaSettings finished.");
+    }
   };
 
+  // --- Override Save Function ---
+  const handleSaveOverride = async () => {
+    console.log(
+      "handleSaveOverride called",
+      editableOverrideSettings,
+      selectedDate
+    );
+    if (!selectedDate || !editableOverrideSettings) {
+      console.warn(
+        "handleSaveOverride: selectedDate or editableOverrideSettings is null. Aborting."
+      );
+      return;
+    }
+    // Prevent action if another action is in progress
+    if (actionLoading || settingsSavingLoading || overrideSavingLoading) {
+      console.log("handleSaveOverride blocked by other loading states");
+      return;
+    }
+
+    // --- Validation ---
+    setOverrideSavingError(null); // Clear previous error
+
+    const { startTime, endTime, isClosed } = editableOverrideSettings;
+
+    if (!isClosed) {
+      // Only validate times if not closed
+      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+      if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+        const errorMsg =
+          "Les heures de début et de fin pour l'override doivent être au format HH:mm.";
+        setOverrideSavingError(errorMsg);
+        console.warn("Override validation failed:", errorMsg);
+        alert(errorMsg);
+        return;
+      }
+      // Validation: startTime is before endTime on the same day
+      try {
+        const today = startOfDay(selectedDate); // Use the selected date for context
+        const startTimeDate = parseISO(
+          format(today, "yyyy-MM-dd") + "T" + startTime
+        );
+        const endTimeDate = parseISO(
+          format(today, "yyyy-MM-dd") + "T" + endTime
+        );
+
+        if (!isDateValid(startTimeDate) || !isDateValid(endTimeDate)) {
+          const errorMsg =
+            "Format d'heure invalide pour le début ou la fin de l'override.";
+          setOverrideSavingError(errorMsg);
+          console.warn("Override validation failed:", errorMsg);
+          alert(errorMsg);
+          return;
+        }
+
+        const startHours = startTimeDate.getHours();
+        const startMinutes = startTimeDate.getMinutes();
+        const endHours = endTimeDate.getHours();
+        const endMinutes = endTimeDate.getMinutes();
+
+        if (
+          endHours < startHours ||
+          (endHours === startHours && endMinutes <= startMinutes)
+        ) {
+          const errorMsg =
+            "L'heure de fin de l'override doit être strictement après l'heure de début le même jour.";
+          setOverrideSavingError(errorMsg);
+          console.warn("Override validation failed:", errorMsg);
+          alert(errorMsg);
+          return;
+        }
+      } catch (e) {
+        console.error("Error during override time comparison validation:", e);
+        const errorMsg =
+          "Erreur inattendue lors de la validation des heures d'override.";
+        setOverrideSavingError(errorMsg);
+        alert(errorMsg);
+        return;
+      }
+    }
+
+    // --- End Validation ---
+
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+
+    try {
+      setOverrideSavingLoading(true); // Start saving loading
+      console.log(
+        "Saving override for",
+        dateStr,
+        ":",
+        editableOverrideSettings
+      );
+
+      const overrideToSave = {
+        startTime: editableOverrideSettings.startTime,
+        endTime: editableOverrideSettings.endTime,
+        isClosed: editableOverrideSettings.isClosed,
+      };
+
+      // Use setDoc with merge: true or updateDoc if the document is guaranteed to exist
+      // setDoc is safer if it might be a new override
+      await setDoc(
+        doc(db, "spaAvailabilityOverrides", dateStr),
+        overrideToSave,
+        { merge: true }
+      );
+
+      console.log(`Override for ${dateStr} saved successfully.`);
+      alert(`Override pour le ${dateStr} enregistré avec succès.`);
+
+      // --- Refetch Data After Override Save ---
+      // Refetch slots and override data for the selected date
+      console.log("Refetching slots and override after override save...");
+      refetchSlotsAndOverride(selectedDate, selectedBooking, spaSettings); // Pass spaSettings
+      // No need to refetch bookings unless override affects which bookings are shown (it doesn't in this logic)
+      // No need to refetch settings
+      // --- End Refetch ---
+    } catch (error) {
+      console.error(`Error saving override for ${dateStr}:`, error);
+      const errorMsg = `Échec de l'enregistrement de l'override: ${error.message}`;
+      setOverrideSavingError(errorMsg);
+      alert(errorMsg);
+    } finally {
+      setOverrideSavingLoading(false); // End saving loading
+      console.log("handleSaveOverride finished.");
+    }
+  };
+
+  // --- Override Delete Function ---
+  const handleDeleteOverride = async () => {
+    console.log("handleDeleteOverride called", selectedDate);
+    if (!selectedDate || !overrideData) {
+      // Can only delete if a date is selected and an override exists
+      console.warn(
+        "handleDeleteOverride: selectedDate is null or no override exists. Aborting."
+      );
+      return;
+    }
+    // Prevent action if another action is in progress
+    if (actionLoading || settingsSavingLoading || overrideSavingLoading) {
+      console.log("handleDeleteOverride blocked by other loading states");
+      return;
+    }
+
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    // Add confirmation dialog
+    if (
+      !window.confirm(
+        `Êtes-vous sûr de vouloir supprimer l'override pour le ${dateStr} ?`
+      )
+    ) {
+      console.log("Delete override cancelled by user.");
+      return;
+    }
+
+    try {
+      setOverrideSavingLoading(true); // Start saving loading
+      console.log("Deleting override for", dateStr);
+
+      // Delete the document in Firebase
+      await deleteDoc(doc(db, "spaAvailabilityOverrides", dateStr));
+
+      console.log(`Override for ${dateStr} deleted successfully.`);
+      alert(`Override pour le ${dateStr} supprimé.`);
+
+      // --- Refetch Data After Override Delete ---
+      // Refetch slots and override data for the selected date
+      console.log("Refetching slots and override after override delete...");
+      refetchSlotsAndOverride(selectedDate, selectedBooking, spaSettings); // Pass spaSettings
+      // --- End Refetch ---
+    } catch (error) {
+      console.error(`Error deleting override for ${dateStr}:`, error);
+      const errorMsg = `Échec de la suppression de l'override: ${error.message}`;
+      setOverrideSavingError(errorMsg);
+      alert(errorMsg);
+    } finally {
+      setOverrideSavingLoading(false); // End saving loading
+      console.log("handleDeleteOverride finished.");
+    }
+  };
 
   // --- Event Handlers ---
 
   const handleDateSelect = (date) => {
-    console.log("handleDateSelect called for date:", format(date, 'yyyy-MM-dd'));
-    // Avoid actions if overall data is loading, an action is in progress, OR settings are being saved
-    if (overallLoading || actionLoading || settingsSavingLoading) { // Add settingsSavingLoading
-      console.log("handleDateSelect blocked due to loading or actionLoading or settingsSavingLoading");
+    console.log(
+      "handleDateSelect called for date:",
+      format(date, "yyyy-MM-dd")
+    );
+    // Avoid actions if overall data is loading, an action is in progress, OR settings/overrides are being saved
+    if (
+      overallLoading ||
+      actionLoading ||
+      settingsSavingLoading ||
+      overrideSavingLoading
+    ) {
+      // Add overrideSavingLoading
+      console.log(
+        "handleDateSelect blocked due to loading or actionLoading or settings/overrideSavingLoading"
+      );
       return;
     }
 
@@ -542,9 +842,9 @@ const SpaCalendar = () => {
       );
     }
 
-    setSelectedDate(date);
+    setSelectedDate(date); // This will trigger the useAvailableSlots hook
     console.log("Date selected:", format(date, "yyyy-MM-dd"));
-     console.log("handleDateSelect finished.");
+    console.log("handleDateSelect finished.");
   };
 
   const handleBookSlot = (date, timeSlot) => {
@@ -560,26 +860,44 @@ const SpaCalendar = () => {
       return;
     }
 
-    // Prevent booking if an action is already in progress (e.g., modal open) OR settings are being saved
-    if (actionLoading || showEditDeleteModal || settingsSavingLoading) { // Add settingsSavingLoading
+    // Prevent booking if an action is already in progress (e.g., modal open) OR settings/overrides are being saved
+    if (
+      actionLoading ||
+      showEditDeleteModal ||
+      settingsSavingLoading ||
+      overrideSavingLoading
+    ) {
+      // Add overrideSavingLoading
       console.log(
-        "handleBookSlot blocked due to actionLoading or showEditDeleteModal or settingsSavingLoading"
+        "handleBookSlot blocked due to actionLoading or showEditDeleteModal or settings/overrideSavingLoading"
       );
       return;
     }
 
-    if (!isDateWithinBookingStay(date, selectedBooking)) {
-      alert("Cannot book SPA outside of the client's stay dates.");
-      console.warn("handleBookSlot: Selected date is outside booking stay.");
+    // Check if the date is marked as closed by an override
+    if (
+      overrideData?.isClosed &&
+      selectedDate &&
+      isSameDay(selectedDate, parseISO(overrideData.id))
+    ) {
+      // Check overrideData exists and its ID matches selectedDate
+      alert("Cannot book a slot on a day marked as closed.");
+      console.warn(
+        "handleBookSlot aborted: Date is marked as closed by override."
+      );
       return;
     }
 
     if (!availableSlots.includes(timeSlot)) {
-       console.error("handleBookSlot: Selected time slot is not in the current availableSlots list:", timeSlot, availableSlots);
-       alert("Le créneau horaire sélectionné n'est pas disponible.");
-       refetchSlots(selectedDate, selectedBooking, spaSettings);
-       console.log("handleBookSlot aborted due to slot unavailability.");
-       return;
+      console.error(
+        "handleBookSlot: Selected time slot is not in the current availableSlots list:",
+        timeSlot,
+        availableSlots
+      );
+      alert("Le créneau horaire sélectionné n'est pas disponible.");
+      refetchSlotsAndOverride(selectedDate, selectedBooking, spaSettings); // Pass spaSettings
+      console.log("handleBookSlot aborted due to slot unavailability.");
+      return;
     }
 
     const [hours, minutes] = timeSlot.split(":").map(Number);
@@ -595,73 +913,106 @@ const SpaCalendar = () => {
       selectedBooking.spaTreatmentDuration &&
       typeof selectedBooking.spaTreatmentDuration === "number"
         ? selectedBooking.spaTreatmentDuration
-        : 120;
+        : 120; // Default 120 min assumed
 
-    const slotDurationMinutes = spaSettings?.slotDurationMinutes || 30; // Use settings from hook state
+    const slotDurationMinutes = spaSettings?.slotDurationMinutes || 60; // Use settings from hook state, fallback to 60
 
-     if (slotDurationMinutes <= 0 || treatmentDurationMinutes <= 0) {
-          console.error("Invalid duration settings:", {treatmentDurationMinutes, slotDurationMinutes});
-          alert("Erreur de configuration des durées SPA. Impossible de calculer les créneaux nécessaires.");
-          console.log("handleBookSlot aborted due to invalid duration settings.");
-          return;
-     }
-
+    if (slotDurationMinutes <= 0 || treatmentDurationMinutes <= 0) {
+      console.error("Invalid duration settings:", {
+        treatmentDurationMinutes,
+        slotDurationMinutes,
+      });
+      alert(
+        "Erreur de configuration des durées SPA. Impossible de calculer les créneaux nécessaires."
+      );
+      console.log("handleBookSlot aborted due to invalid duration settings.");
+      return;
+    }
 
     try {
-         const slotsToBook = calculateBookingSlots(dateTime, treatmentDurationMinutes, slotDurationMinutes);
-         console.log("handleBookSlot: Calculated bookedSlots array:", slotsToBook);
+      const slotsToBook = calculateBookingSlots(
+        dateTime,
+        treatmentDurationMinutes,
+        slotDurationMinutes
+      );
+      console.log("handleBookSlot: Calculated bookedSlots array:", slotsToBook);
 
-         const requiredSlotsCount = Math.ceil(treatmentDurationMinutes / slotDurationMinutes);
-         if (slotsToBook.length !== requiredSlotsCount || slotsToBook[0] !== timeSlot) {
-              console.error("handleBookSlot: Slot calculation mismatch or start time inconsistency:", {
-                calculated: slotsToBook,
-                requiredCount: requiredSlotsCount,
-                selectedSlot: timeSlot,
-              });
-              refetchSlots(selectedDate, selectedBooking, spaSettings);
-              alert("Erreur interne: Le créneau sélectionné ne correspond pas à la durée du traitement calculée.");
-               console.log("handleBookSlot aborted due to slot calculation mismatch.");
-              return;
-         }
-
-         const requiredSlotsAvailable = slotsToBook.every(requiredSlot => availableSlots.includes(requiredSlot));
-
-          if (!requiredSlotsAvailable) {
-              console.error("handleBookSlot: Not all calculated slots are in the available list.", {
-                  selectedSlot: timeSlot,
-                  slotsToBook: slotsToBook,
-                  availableSlots: availableSlots
-              });
-              refetchSlots(selectedDate, selectedBooking, spaSettings);
-              alert("Le créneau horaire sélectionné nécessite des créneaux consécutifs qui ne sont pas tous disponibles.");
-               console.log("handleBookSlot aborted due to consecutive slot unavailability.");
-              return;
+      const requiredSlotsCount = Math.ceil(
+        treatmentDurationMinutes / slotDurationMinutes
+      );
+      if (
+        slotsToBook.length !== requiredSlotsCount ||
+        slotsToBook[0] !== timeSlot
+      ) {
+        console.error(
+          "handleBookSlot: Slot calculation mismatch or start time inconsistency:",
+          {
+            calculated: slotsToBook,
+            requiredCount: requiredSlotsCount,
+            selectedSlot: timeSlot,
           }
+        );
+        refetchSlotsAndOverride(selectedDate, selectedBooking, spaSettings); // Pass spaSettings
+        alert(
+          "Erreur interne: Le créneau sélectionné ne correspond pas à la durée du traitement calculée."
+        );
+        console.log("handleBookSlot aborted due to slot calculation mismatch.");
+        return;
+      }
 
-         console.log("handleBookSlot proceeding to call handleUpdateBookingSpaDate");
-         handleUpdateBookingSpaDate(selectedBooking.id, dateTime, slotsToBook);
+      const requiredSlotsAvailable = slotsToBook.every((requiredSlot) =>
+        availableSlots.includes(requiredSlot)
+      );
 
+      if (!requiredSlotsAvailable) {
+        console.error(
+          "handleBookSlot: Not all calculated slots are in the available list.",
+          {
+            selectedSlot: timeSlot,
+            slotsToBook: slotsToBook,
+            availableSlots: availableSlots,
+          }
+        );
+        refetchSlotsAndOverride(selectedDate, selectedBooking, spaSettings); // Pass spaSettings
+        alert(
+          "Le créneau horaire sélectionné nécessite des créneaux consécutifs qui ne sont pas tous disponibles."
+        );
+        console.log(
+          "handleBookSlot aborted due to consecutive slot unavailability."
+        );
+        return;
+      }
+
+      console.log(
+        "handleBookSlot proceeding to call handleUpdateBookingSpaDate"
+      );
+      handleUpdateBookingSpaDate(selectedBooking.id, dateTime, slotsToBook);
     } catch (error) {
-         console.error("Slot calculation or validation failed:", error);
-         alert(`Erreur lors du calcul des créneaux : ${error.message || "une erreur inconnue est survenue"}`);
-          console.log("handleBookSlot finished with sync error.");
+      console.error("Slot calculation or validation failed:", error);
+      alert(
+        `Erreur lors du calcul des créneaux : ${
+          error.message || "une erreur inconnue est survenue"
+        }`
+      );
+      console.log("handleBookSlot finished with sync error.");
     }
-     console.log("handleBookSlot finished.");
+    console.log("handleBookSlot finished.");
   };
-
 
   const handleTimelineSlotClick = (booking) => {
     console.log("handleTimelineSlotClick called for booking:", booking.id);
-    // Prevent opening modal if an action is already in progress OR settings are being saved
-    if (actionLoading || settingsSavingLoading) { // Add settingsSavingLoading
-      console.log("handleTimelineSlotClick blocked due to actionLoading or settingsSavingLoading");
+    // Prevent opening modal if an action is already in progress OR settings/overrides are being saved
+    if (actionLoading || settingsSavingLoading || overrideSavingLoading) {
+      console.log(
+        "handleTimelineSlotClick blocked due to actionLoading or settings/overrideSavingLoading"
+      );
       return;
     }
     setBookingToEdit(booking);
     setModalStep("options");
     setShowEditDeleteModal(true);
     console.log("Modal state set to true, bookingToEdit:", booking.id);
-     console.log("handleTimelineSlotClick finished.");
+    console.log("handleTimelineSlotClick finished.");
   };
 
   const closeEditDeleteModal = () => {
@@ -672,20 +1023,23 @@ const SpaCalendar = () => {
     console.log("Modal state set to false");
   };
 
-   // Handlers to change modal step state managed in THIS component
-   const requestRescheduleStep = () => {
-       console.log("requestRescheduleStep called, setting modalStep to 'confirm-reschedule'");
-       setModalStep('confirm-reschedule');
-   }
-   const requestDeleteStep = () => {
-       console.log("requestDeleteStep called, setting modalStep to 'confirm-delete'");
-       setModalStep('confirm-delete');
-   }
-   const requestOptionsStep = () => {
-       console.log("requestOptionsStep called, setting modalStep to 'options'");
-       setModalStep('options');
-   }
-
+  // Handlers to change modal step state managed in THIS component
+  const requestRescheduleStep = () => {
+    console.log(
+      "requestRescheduleStep called, setting modalStep to 'confirm-reschedule'"
+    );
+    setModalStep("confirm-reschedule");
+  };
+  const requestDeleteStep = () => {
+    console.log(
+      "requestDeleteStep called, setting modalStep to 'confirm-delete'"
+    );
+    setModalStep("confirm-delete");
+  };
+  const requestOptionsStep = () => {
+    console.log("requestOptionsStep called, setting modalStep to 'options'");
+    setModalStep("options");
+  };
 
   // --- Render UI ---
 
@@ -694,7 +1048,7 @@ const SpaCalendar = () => {
       {console.log("Rendering SpaCalendar JSX")}
       <h2 className="mb-4 text-xl font-bold">Calendrier SPA Admin</h2>
       {/* Overall Loading Indicator - Uses combined loading from hooks */}
-      {overallLoading && (
+      {(overallLoading || settingsSavingLoading || overrideSavingLoading) && ( // Include overrideSavingLoading
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
           <div className="text-lg font-semibold text-blue-600">
             Chargement des données...
@@ -702,18 +1056,20 @@ const SpaCalendar = () => {
         </div>
       )}
       {/* Overall Error Message - Uses errors from hooks */}
-      {(bookingsError || settingsError) && !overallLoading && (
-        <div className="p-4 mb-4 text-center text-red-700 bg-red-100 border border-red-300 rounded">
-          Erreur lors du chargement des données :{" "}
-          {bookingsError?.message ||
-            settingsError?.message ||
-            "Une erreur inconnue est survenue."}
-        </div>
-      )}
+      {(bookingsError || settingsError || overrideError) &&
+        !overallLoading && ( // Include overrideError
+          <div className="p-4 mb-4 text-center text-red-700 bg-red-100 border border-red-300 rounded">
+            Erreur lors du chargement des données :{" "}
+            {bookingsError?.message ||
+              settingsError?.message ||
+              overrideError?.message ||
+              "Une erreur inconnue est survenue."}
+          </div>
+        )}
       {!settingsLoading && spaSettings && editableSpaSettings && (
         <div className="p-3 mb-4 bg-white border rounded-lg shadow-sm">
           <h3 className="flex items-center gap-1 mb-2 text-base font-medium">
-Paramètres SPA
+          Paramètres SPA
           </h3>
           <div className="flex flex-wrap gap-3">
             <div className="flex-1 min-w-[120px]">
@@ -809,7 +1165,6 @@ Paramètres SPA
         </div>
       )}
       {/* Month navigation */}
-      {/* Disabled using overallLoading and actionLoading */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() =>
@@ -818,7 +1173,12 @@ Paramètres SPA
             )
           }
           className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={overallLoading || actionLoading || settingsSavingLoading} // Add settingsSavingLoading
+          disabled={
+            overallLoading ||
+            actionLoading ||
+            settingsSavingLoading ||
+            overrideSavingLoading
+          } // Add overrideSavingLoading
         >
           Mois précédent
         </button>
@@ -832,7 +1192,12 @@ Paramètres SPA
             )
           }
           className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={overallLoading || actionLoading || settingsSavingLoading} // Add settingsSavingLoading
+          disabled={
+            overallLoading ||
+            actionLoading ||
+            settingsSavingLoading ||
+            overrideSavingLoading
+          } // Add overrideSavingLoading
         >
           Mois suivant
         </button>
@@ -881,7 +1246,10 @@ Paramètres SPA
 
               // Determine if date should be disabled
               let isDisabled =
-                overallLoading || actionLoading || settingsSavingLoading; // Add settingsSavingLoading
+                overallLoading ||
+                actionLoading ||
+                settingsSavingLoading ||
+                overrideSavingLoading; // Add overrideSavingLoading
 
               // Disable date if a booking is selected AND the date is outside its stay
               if (!isDisabled && selectedBooking) {
@@ -912,23 +1280,38 @@ Paramètres SPA
                   `}
                   title={
                     isDisabled &&
-                    selectedBooking &&
-                    !overallLoading &&
-                    !actionLoading &&
-                    !settingsSavingLoading
-                      ? `Cette date (${format(
-                          date,
-                          "dd/MM"
-                        )}) est hors du séjour du client (${
-                          selectedBooking.arrivalDateObj
-                            ? format(selectedBooking.arrivalDateObj, "dd/MM")
-                            : "?"
-                        } - ${
-                          selectedBooking.departureDateObj
-                            ? format(selectedBooking.departureDateObj, "dd/MM")
-                            : "?"
-                        })`
-                      : null
+                    (selectedBooking ||
+                      overallLoading ||
+                      actionLoading ||
+                      settingsSavingLoading ||
+                      overrideSavingLoading) // Add other loading states to title condition
+                      ? selectedBooking &&
+                        !overallLoading &&
+                        !actionLoading &&
+                        !settingsSavingLoading &&
+                        !overrideSavingLoading
+                        ? `Cette date (${format(
+                            date,
+                            "dd/MM"
+                          )}) est hors du séjour du client (${
+                            selectedBooking.arrivalDateObj
+                              ? format(selectedBooking.arrivalDateObj, "dd/MM")
+                              : "?"
+                          } - ${
+                            selectedBooking.departureDateObj
+                              ? format(
+                                  selectedBooking.departureDateObj,
+                                  "dd/MM"
+                                )
+                              : "?"
+                          })`
+                        : overallLoading ||
+                          actionLoading ||
+                          settingsSavingLoading ||
+                          overrideSavingLoading
+                        ? "Chargement ou action en cours..."
+                        : null // General loading tooltip
+                      : null // No title if not disabled or disabled by other factors
                   }
                 >
                   <div className="text-center">{format(date, "d")}</div>
@@ -970,7 +1353,9 @@ Paramètres SPA
           selectedBooking={selectedBooking} // Pass state
           onBookingSelect={setSelectedBooking} // Pass setter
           isLoading={overallLoading} // Pass main loading state from hooks
-          isActionLoading={actionLoading || settingsSavingLoading} // Disable while saving settings
+          isActionLoading={
+            actionLoading || settingsSavingLoading || overrideSavingLoading
+          } // Disable while any action is loading
         />
 
         {/* Right: Selected date details panel (Extracted Component) */}
@@ -980,13 +1365,23 @@ Paramètres SPA
           availableSlots={availableSlots} // Pass data from hook
           selectedDateBookings={selectedDateBookings} // Pass derived state
           spaSettings={spaSettings} // Pass data from hook (current settings)
+          overrideData={overrideData} // <--- Pass override data from hook
+          overrideLoading={overrideLoading} // <--- Pass override loading from hook
+          overrideError={overrideError} // <--- Pass override error from hook
+          editableOverrideSettings={editableOverrideSettings} // <--- Pass editable override state
+          onEditableOverrideChange={setEditableOverrideSettings} // <--- Pass setter for editable override state
+          onSaveOverride={handleSaveOverride} // <--- Pass handler for saving override
+          onDeleteOverride={handleDeleteOverride} // <--- Pass handler for deleting override
           onBookSlot={handleBookSlot} // Pass handler
           onScheduledBookingClick={handleTimelineSlotClick} // Pass handler
           isLoading={overallLoading} // Pass main loading state from hooks (for bookings list)
           isSlotsLoading={slotsLoading} // Pass specific slots loading state from hook (for slots list)
           slotsError={slotsError} // Pass slotsError prop
           bookingsError={bookingsError} // Pass bookingsError prop (needed for scheduled list error display)
-          isActionLoading={actionLoading || settingsSavingLoading} // Disable while saving settings
+          isActionLoading={
+            actionLoading || settingsSavingLoading || overrideSavingLoading
+          } // Disable while any action is loading
+          isOverrideSaving={overrideSavingLoading} // <--- Pass specific override saving loading
         />
       </div>{" "}
       {/* End of 3-panel grid */}
@@ -1000,8 +1395,11 @@ Paramètres SPA
             selectedDate={selectedDate} // Pass state
             selectedDateBookings={selectedDateBookings} // Pass derived state
             spaSettings={spaSettings} // Pass data from hook (current settings)
+            overrideData={overrideData} // <--- Pass override data to timeline
             onScheduledBookingClick={handleTimelineSlotClick} // Pass handler
-            actionLoading={actionLoading || settingsSavingLoading} // Disable while saving settings
+            actionLoading={
+              actionLoading || settingsSavingLoading || overrideSavingLoading
+            } // Disable while any action is loading
           />
         )}
       {/* Edit/Delete Modal (Extracted Component) */}
@@ -1013,8 +1411,10 @@ Paramètres SPA
           onClose={closeEditDeleteModal} // Pass handler
           onRescheduleConfirm={handleMarkBookingForRescheduling} // Pass async wrapper handler
           onDeleteConfirm={handleDeleteSpaAppointment} // Pass async wrapper handler
-          actionLoading={actionLoading || settingsSavingLoading} // Disable while saving settings
-          // Pass handlers to request step changes
+          actionLoading={
+            actionLoading || settingsSavingLoading || overrideSavingLoading
+          } // Disable while any action is loading
+
           onRequestRescheduleStep={requestRescheduleStep}
           onRequestDeleteStep={requestDeleteStep}
           onRequestOptionsStep={requestOptionsStep}
