@@ -14,7 +14,17 @@ import { useNavigate } from "react-router-dom";
 import { roomsData } from "../hooks/roomsData";
 
 // Define constants outside the hook if they don't depend on props/state
-const SPA_ITEM_IDS = ["formuleSpa", "formuleSpaBottle"];
+const SPA_ITEM_IDS = [
+  "formuleSpa",
+  "formuleSpaBottle",
+  "packEssentiel",
+  "packDetenteGourmet",
+  "packRomantiqueGourmet",
+  "packRacletteDetente",
+  "packRacletteRomantique",
+  "packBbqDetente",
+  "packBbqRomantique",
+];
 
 // Start the hook definition
 export const useBookingForm = () => {

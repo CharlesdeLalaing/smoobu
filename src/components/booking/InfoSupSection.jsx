@@ -9,7 +9,17 @@ import SpaScheduler from "../spa/SpaScheduler"; // Adjust path if needed
 // const SINGLE_SLOT_COUPON_CODE = "LETSGOMYLOVE";
 
 // Define SPA item IDs here or import from a shared constants file
-const SPA_ITEM_IDS = ["formuleSpa", "formuleSpaBottle"];
+const SPA_ITEM_IDS = [
+  "formuleSpa",
+  "formuleSpaBottle",
+  "packEssentiel",
+  "packDetenteGourmet",
+  "packRomantiqueGourmet",
+  "packRacletteDetente",
+  "packRacletteRomantique",
+  "packBbqDetente",
+  "packBbqRomantique",
+];
 
 export const InfoSupSection = ({
   formData,

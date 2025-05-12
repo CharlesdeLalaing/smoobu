@@ -107,7 +107,17 @@ function renderExtraItem(item) {
     ? t(item.descriptionKey)
     : item.description;
 
-  const spaItemIds = ["formuleSpa", "formuleSpaBottle"]; // List of your SPA extra IDs
+  const spaItemIds = [
+    "formuleSpa",
+    "formuleSpaBottle",
+    "packEssentiel",
+    "packDetenteGourmet",
+    "packRomantiqueGourmet",
+    "packRacletteDetente",
+    "packRacletteRomantique",
+    "packBbqDetente",
+    "packBbqRomantique",
+  ]; // List of your SPA extra IDs
   const isSpaPackage = spaItemIds.includes(item.id); // Check if the current item's ID is in the list
   const spaQuantity = selectedExtras[item.id] || 0;
   // --- END ADDED ---
