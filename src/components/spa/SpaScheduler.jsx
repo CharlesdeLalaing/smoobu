@@ -1,5 +1,11 @@
 // File: src/components/Admin/SpaScheduler.jsx
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 // Import necessary date-fns functions
@@ -15,20 +21,16 @@ import {
 } from "date-fns";
 import { fr } from "date-fns/locale"; // Needed for formatDateForDisplay fallback
 
-// Import utility function if used here (not directly used now, but keep imports clean)
-// import { parseBookingDateTime } from "../../utils/spaCalendarUtils";
-
 // --- Constants ---
 const ARRIVAL_DAY_START_TIME = "14:00"; // Special start time for the arrival day
 
-
+// --- Helper Functions ---
 
 const formatDateForDisplay = (date, locale = "en-US") => {
   if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
     console.warn("formatDateForDisplay: Invalid date input", date);
     return "";
   }
-  // Example locales: 'en-US', 'fr-BE', 'nl-BE'
   try {
     // Use i18n locale if available, otherwise fallback
     return date.toLocaleDateString(locale, {
@@ -44,11 +46,10 @@ const formatDateForDisplay = (date, locale = "en-US") => {
       locale,
       e
     );
-    // Fallback using date-fns format if toLocaleDateString fails or locale is not supported
-    // This fallback might not match the exact appearance of the requested locale but is safer.
+    // Fallback using date-fns format
     return format(date, "EEEE d MMMM yyyy", {
-      locale: locale === "fr-BE" ? fr : undefined,
-    }); // Use fr locale explicitly if fr-BE/fr
+      locale: locale.startsWith("fr") ? fr : undefined,
+    });
   }
 };
 
@@ -73,9 +74,8 @@ const calculateNextSlotTime = (startTimeString, durationMinutes) => {
   }
   try {
     const [hours, minutes] = startTimeString.split(":").map(Number);
-    // Use a fixed arbitrary date (like start of today) to avoid DST issues with just time manipulation
-    // by adding minutes to a Date object at the start of the day containing the time.
-    const today = startOfDay(new Date()); // Using current day's start is generally safe for time arithmetic
+    // Use a fixed arbitrary date to avoid DST issues with just time manipulation
+    const today = startOfDay(new Date());
     const start = new Date(
       today.getFullYear(),
       today.getMonth(),
@@ -83,18 +83,12 @@ const calculateNextSlotTime = (startTimeString, durationMinutes) => {
       hours,
       minutes
     );
-
     const nextDate = addMinutes(start, durationMinutes);
 
     // Optional: Check if adding minutes crossed day boundary unexpectedly
     if (!isSameDay(start, nextDate) && format(nextDate, "HH:mm") !== "00:00") {
       console.warn(
-        "calculateNextSlotTime: Adding duration crossed day boundary unexpectedly (not midnight).",
-        {
-          startTimeString,
-          durationMinutes,
-          nextTime: format(nextDate, "HH:mm"),
-        }
+        "calculateNextSlotTime: Adding duration crossed day boundary unexpectedly."
       );
     }
 
@@ -106,121 +100,81 @@ const calculateNextSlotTime = (startTimeString, durationMinutes) => {
 };
 
 // --- Component ---
-
 const SpaScheduler = ({
   onScheduleChange, // Callback: receives bookingData object {startDateTime, endDateTime, slots} or 'later' or null
   initialDateTime, // Optional: ISO String or Timestamp for the START time
   initialPreference, // Optional: 'later' if previously selected
-  minDate, // Expecting Date object or undefined (Booking arrival date)
-  maxDate, // Expecting Date object or undefined (Booking departure date - may need adjustment before passing)
-  appliedCoupon, // Coupon prop is still received but not used for mode logic here
+  minDate, // Expecting Date object or undefined (Booking arrival date - should be memoized by parent)
+  maxDate, // Expecting Date object or undefined (Booking departure date - should be memoized by parent)
+  appliedCoupon, // Prop received but logic using it for mode selection is removed/hardcoded
 }) => {
   const { t, i18n } = useTranslation();
-  const currentLocale = i18n.language || "en-US"; // Get current locale for date formatting
+  const currentLocale = i18n.language || "en-US";
+  const selectionMode = "double"; // Hardcoded as per requirement
 
-  console.log("SpaScheduler rendering", {
-    initialDateTime,
-    initialPreference,
-    minDate: minDate ? format(minDate, "yyyy-MM-dd") : null,
-    maxDate: maxDate ? format(maxDate, "yyyy-MM-dd") : null,
-    appliedCoupon,
-  });
-
-  // --- Determine Selection Mode ---
-  // Mode is hardcoded to 'double' as per user request.
-  const selectionMode = "double"; // Always operate in double slot mode
-
-  // --- State Initialization ---
-  const getInitialDateString = () => {
-    // Only set initial date string if there's an initialDateTime AND it wasn't 'later'
-    if (initialDateTime && initialPreference !== "later") {
+  // State Initialization Helpers (moved outside for clarity, call inside useState)
+  const getInitialDateString = (dateTime, preference) => {
+    if (dateTime && preference !== "later") {
       try {
-        // Use Date constructor which handles ISO strings and Firebase Timestamps
-        const initialDate = new Date(initialDateTime);
-        if (isNaN(initialDate.getTime())) {
-          console.warn(
-            "SpaScheduler: initialDateTime resulted in Invalid Date during initialization.",
-            initialDateTime
-          );
-          return ""; // Return empty string if parsing fails
-        }
-        return formatDateForAPI(initialDate);
+        const initialDate = new Date(dateTime);
+        return !isNaN(initialDate.getTime())
+          ? formatDateForAPI(initialDate)
+          : "";
       } catch (e) {
-        console.error(
-          "SpaScheduler: Error parsing initialDateTime for date string during initialization:",
-          initialDateTime,
-          e
-        );
-        return ""; // Return empty string on error
+        console.error("Error parsing initialDateTime for date string:", e);
+        return "";
       }
     }
     return "";
   };
 
-  const getInitialSlots = () => {
-    // Only set initial slots if there's initialDateTime AND it wasn't 'later'
-    if (initialDateTime && initialPreference !== "later") {
+  const getInitialSlots = (dateTime, preference) => {
+    if (dateTime && preference !== "later") {
       try {
-        // The initialDateTime might be a Date object or Timestamp from Firebase
-        const initialDate = new Date(initialDateTime);
-        if (isNaN(initialDate.getTime())) {
-          console.warn(
-            "SpaScheduler: initialDateTime resulted in Invalid Date during initialization.",
-            initialDateTime
-          );
-          return []; // Return empty array if parsing fails
-        }
-        // Get the *first* slot time string from the initial DateTime
-        const firstSlotTime = format(initialDate, "HH:mm"); // Use format for reliable HH:mm
-
-        // If the booking was scheduled as a DOUBLE slot, it *should* have a second slot.
-        // When initializing from existing data, we *could* try to grab all saved slots.
-        // However, the SpaScheduler's role is to determine the *next* slots based on the *first* click
-        // and the mode/duration. So, initializing with just the first slot time string is sufficient
-        // for `handleSlotSelect` to work with. The effect below re-validates this.
+        const initialDate = new Date(dateTime);
+        if (isNaN(initialDate.getTime())) return [];
+        const firstSlotTime = format(initialDate, "HH:mm");
+        // In double mode, when initializing, just knowing the start is enough.
+        // The fetch validation effect will handle ensuring the second slot is selected if valid.
         return [firstSlotTime];
       } catch (e) {
-        console.error(
-          "SpaScheduler: Error parsing initialDateTime for initial slot during initialization:",
-          initialDateTime,
-          e
-        );
-        return []; // Return empty array on error
+        console.error("Error parsing initialDateTime for initial slot:", e);
+        return [];
       }
     }
     return [];
   };
 
-  // Initialize states using the getters
+  // --- State ---
   const [selectedSpaDateString, setSelectedSpaDateString] = useState(
-    getInitialDateString()
+    () => getInitialDateString(initialDateTime, initialPreference) // Use functional initial state
   );
-  const [availableSlots, setAvailableSlots] = useState([]); // Slots fetched from API
-  const [slotDuration, setSlotDuration] = useState(null); // Duration of a single slot from API (e.g., 30 or 60)
-  const [selectedSlots, setSelectedSlots] = useState(getInitialSlots()); // Array of HH:mm strings for selected slots (e.g., ['15:00', '16:00'])
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [slotDuration, setSlotDuration] = useState(null);
+  const [selectedSlots, setSelectedSlots] = useState(
+    () => getInitialSlots(initialDateTime, initialPreference) // Use functional initial state
+  );
   const [chooseLaterChecked, setChooseLaterChecked] = useState(
     initialPreference === "later"
-  ); // State for the 'choose later' checkbox
-  const [isLoading, setIsLoading] = useState(false); // Loading state for API calls
-  const [error, setError] = useState(""); // Error message for API calls
-  // Flag to prevent refetching slots repeatedly for the same date/mode unless triggered by state/prop change
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  // Flag to indicate if slots have been loaded (or load attempted) for the currently selected date
   const [slotsLoadedForCurrentDate, setSlotsLoadedForCurrentDate] =
     useState(false);
 
-  console.log("SpaScheduler initial state:", {
-    selectedSpaDateString,
-    selectedSlots,
-    chooseLaterChecked,
-  });
+  // Ref to track mount status (can be useful for effects, though not strictly used in final logic here)
+  const isMounted = useRef(false);
+  useEffect(() => {
+    isMounted.current = true; // Set after the first render cycle
+    return () => {
+      isMounted.current = false;
+    }; // Clean up on unmount
+  }, []);
 
   // --- Memos ---
-  // Generate available dates from minDate to maxDate
+  // Generate available date options for the dropdown
   const dateOptions = useMemo(() => {
-    console.log("SpaScheduler: Recalculating dateOptions", {
-      minDate,
-      maxDate,
-      currentLocale,
-    });
     const options = [];
     // Basic validation for min/max dates
     if (
@@ -228,9 +182,14 @@ const SpaScheduler = ({
       !maxDate ||
       !(minDate instanceof Date) ||
       !(maxDate instanceof Date) ||
+      isNaN(minDate) ||
+      isNaN(maxDate) ||
       isBefore(maxDate, minDate)
     ) {
-      console.log("SpaScheduler: Invalid min/max dates for dateOptions.");
+      console.log("SpaScheduler: Invalid min/max dates for dateOptions.", {
+        minDate,
+        maxDate,
+      });
       return options; // Return empty if dates are invalid
     }
     let currentDate = startOfDay(minDate);
@@ -242,625 +201,747 @@ const SpaScheduler = ({
       });
       currentDate = addDays(currentDate, 1); // Use addDays
     }
-    console.log(`SpaScheduler: Generated ${options.length} date options.`);
     return options;
     // Depend on minDate, maxDate, and locale as they affect the options
   }, [minDate, maxDate, currentLocale]);
 
   // Get the arrival date formatted for API (needed for the "too early on arrival day" check)
   const arrivalDateString = useMemo(() => {
-    console.log("SpaScheduler: Recalculating arrivalDateString", { minDate });
-    return minDate instanceof Date ? formatDateForAPI(minDate) : null;
-    // Depend on minDate
+    return minDate instanceof Date && !isNaN(minDate)
+      ? formatDateForAPI(minDate)
+      : null;
+    // Depend on minDate stability (should be memoized in parent)
   }, [minDate]);
 
   // --- Effects ---
 
-  // Effect to handle state updates when initial props change (e.g., initialDateTime or initialPreference updated from parent)
+  // Effect 1: Handles state synchronization when initial props change (initialDateTime, initialPreference)
   useEffect(() => {
-    console.log(
-      "SpaScheduler Effect: initialDateTime or initialPreference changed.",
-      { initialDateTime, initialPreference }
-    );
+    // This effect syncs the component's internal state (selected date, selected slots, checkbox)
+    // based on changes to the initialDateTime and initialPreference props passed from the parent.
+    // It aims to reflect the parent's desired initial state without fighting user interactions within this component.
+    console.log("SpaScheduler Effect [Props Sync]: Running.", {
+      initialDateTime,
+      initialPreference,
+      currentSelectedDate: selectedSpaDateString,
+    });
+
     const isLater = initialPreference === "later";
-    setChooseLaterChecked(isLater);
 
-    if (!isLater && initialDateTime) {
+    // 1. Always sync the 'Choose Later' checkbox state with the prop
+    // This ensures the checkbox reflects the official preference from the parent.
+    if (chooseLaterChecked !== isLater) {
+      console.log(
+        "SpaScheduler Effect [Props Sync]: Syncing 'chooseLaterChecked' state to:",
+        isLater
+      );
+      setChooseLaterChecked(isLater);
+    }
+
+    // 2. If preference is 'later', ensure slots/availability state is cleared.
+    //    This cleans up the UI and state when the parent indicates 'later' preference.
+    if (isLater) {
+      let changed = false;
+      // Clear selected time slots if any exist
+      if (selectedSlots.length > 0) {
+        setSelectedSlots([]);
+        changed = true;
+      }
+      // Clear the list of available slots if any exist
+      if (availableSlots.length > 0) {
+        setAvailableSlots([]);
+        changed = true;
+      }
+      // Clear the slot duration if it was set
+      if (slotDuration) {
+        setSlotDuration(null);
+        changed = true;
+      }
+      // Clear any existing error message
+      if (error) {
+        setError("");
+        changed = true;
+      }
+      // Resetting the load flag is important if switching to 'later', as slots are no longer relevant/loaded.
+      if (slotsLoadedForCurrentDate) {
+        setSlotsLoadedForCurrentDate(false);
+        changed = true;
+      }
+      // Ensure loading indicator is off
+      if (isLoading) {
+        setIsLoading(false);
+        changed = true;
+      }
+
+      if (changed)
+        console.log(
+          "SpaScheduler Effect [Props Sync]: Preference is 'later', cleared slot-related state."
+        );
+      // Do not process initialDateTime if 'later' is active. Exit the effect early.
+      return;
+    }
+
+    // 3. If preference is NOT 'later', handle the initialDateTime prop
+    // This section runs only if the desired state is a specific scheduled time.
+    if (initialDateTime) {
+      // A specific date/time is provided via props. Attempt to parse and sync.
       try {
-        const initialDate = new Date(initialDateTime);
-        if (!isNaN(initialDate.getTime())) {
-          const initialDateAPI = formatDateForAPI(initialDate);
-          setSelectedSpaDateString(initialDateAPI);
-          // Initialize local slots with the first slot string.
-          // The fetch effect will validate this selection against availability.
-          setSelectedSlots([format(initialDate, "HH:mm")]);
-          setSlotsLoadedForCurrentDate(false); // Need to refetch availability for this new date/selection
+        const initialDateObj = new Date(initialDateTime);
+        // Validate the date object derived from the prop
+        if (!isNaN(initialDateObj.getTime())) {
+          // Prop contains a valid date/time
+          const newInitialDateAPI = formatDateForAPI(initialDateObj);
+          const newInitialSlotString = format(initialDateObj, "HH:mm");
 
-          console.log(
-            "SpaScheduler Effect: Initial scheduled booking found, setting date and initial slot string.",
-            { date: initialDateAPI, slot: format(initialDate, "HH:mm") }
-          );
+          // *** CORE LOGIC: Check if the DATE part from the prop is different ***
+          // from the currently selected date state within this component.
+          const dateHasChanged = newInitialDateAPI !== selectedSpaDateString;
+
+          if (dateHasChanged) {
+            // Date from prop is different: This implies the parent wants to set a NEW date.
+            // Update the internal date state, set the initial slot based on the prop's time,
+            // and crucially, mark slots as needing loading for this new date.
+            console.log(
+              "SpaScheduler Effect [Props Sync]: Date part CHANGED via prop. Updating date, initial slot, and marking slots as NOT loaded.",
+              { newDate: newInitialDateAPI, oldDate: selectedSpaDateString }
+            );
+            setSelectedSpaDateString(newInitialDateAPI);
+            // Set only the first slot initially; the fetch effect will validate/add the second if needed
+            setSelectedSlots([newInitialSlotString]);
+            setSlotsLoadedForCurrentDate(false); // <- This triggers the fetch effect for the new date
+            // Clear related state for the new date fetch
+            setAvailableSlots([]);
+            setSlotDuration(null);
+            setError("");
+          } else {
+            // Date part is the same: The prop update likely reflects a recent user selection *within* this component
+            // that was communicated to the parent and then passed back down.
+            // We should ensure our local selectedSlots matches the prop's time,
+            // but DO NOT reset slotsLoadedForCurrentDate, as this would cause an unnecessary fetch/flicker.
+            console.log(
+              "SpaScheduler Effect [Props Sync]: Date part SAME via prop. Ensuring local slot matches prop time if needed. Slots remain LOADED.",
+              { newInitialSlotString, currentSlots: selectedSlots }
+            );
+
+            // Determine the expected slots based on the prop's time and current mode/duration
+            // This helps ensure the correct number of slots (e.g., two for 'double' mode) are reflected locally.
+            let expectedSlotsBasedOnProp = [newInitialSlotString];
+            if (selectionMode === "double" && slotDuration) {
+              const nextSlot = calculateNextSlotTime(
+                newInitialSlotString,
+                slotDuration
+              );
+              if (nextSlot) {
+                expectedSlotsBasedOnProp.push(nextSlot);
+              }
+            }
+            // Only update local state (selectedSlots) if it doesn't already match the expectation from the prop.
+            // This avoids unnecessary state updates and re-renders.
+            if (
+              JSON.stringify(selectedSlots) !==
+              JSON.stringify(expectedSlotsBasedOnProp)
+            ) {
+              console.log(
+                "SpaScheduler Effect [Props Sync]: Updating local selectedSlots to match prop time.",
+                expectedSlotsBasedOnProp
+              );
+              setSelectedSlots(expectedSlotsBasedOnProp);
+            }
+            // *** Crucially, do NOT setSlotsLoadedForCurrentDate(false) here ***
+          }
         } else {
+          // initialDateTime prop resulted in an Invalid Date
           console.warn(
-            "SpaScheduler Effect: Invalid initialDateTime provided, clearing state."
+            "SpaScheduler Effect [Props Sync]: Invalid initialDateTime prop received, ignoring sync for this cycle.",
+            initialDateTime
           );
-          setSelectedSpaDateString("");
-          setSelectedSlots([]);
-          setSlotsLoadedForCurrentDate(false); // Ensure availability fetch is triggered if a date is then selected
+          // We choose not to automatically clear state here if the prop is invalid,
+          // as the component might already hold valid user-selected state. Clearing could be disruptive.
+          // The parent component should ideally ensure valid props are passed.
         }
       } catch (e) {
         console.error(
-          "SpaScheduler Effect: Error processing initialDateTime",
+          "SpaScheduler Effect [Props Sync]: Error processing initialDateTime prop",
           e
         );
-        setSelectedSpaDateString("");
-        setSelectedSlots([]);
-        setSlotsLoadedForCurrentDate(false);
+        // Handle potential errors during date parsing or processing. Maybe clear state if error is severe?
       }
-    } else if (!initialDateTime && !isLater) {
-      // Initial state is neither scheduled nor later, reset all
+    } else {
+      // 4. Handle initialDateTime being null/undefined (and preference is NOT 'later')
+      // This means the parent is not specifying a particular time slot.
+      // *** PREVIOUS BUG FIX: We no longer automatically clear selectedSpaDateString here ***
+      // Clearing the date string here would fight with the user's selection via the dropdown (`handleDateChange`).
+      // We trust that `handleDateChange` or `handleChooseLaterChange` are responsible for clearing the date string based on user action.
       console.log(
-        "SpaScheduler Effect: Initial state is not scheduled/later, resetting."
+        "SpaScheduler Effect [Props Sync]: initialDateTime is null/undefined and not 'later'. No automatic clearing of selected date based on this prop state alone."
       );
-      setSelectedSpaDateString("");
-      setSelectedSlots([]);
-      setSlotsLoadedForCurrentDate(false); // Ensure availability fetch is triggered if a date is then selected
-      // No parent notification here, this is just about initial state setup.
-    }
-    // Note: onScheduleChange is not a dependency here, as this effect shouldn't call it.
-  }, [initialDateTime, initialPreference]); // Depend on the initial props
 
-  // Effect to fetch available slots when the selected date changes or 'choose later' is unchecked.
-  // Also prevents refetching if slots are already loaded for the current date/mode.
+      // Optional Refinement: If the parent *explicitly* sets initialDateTime to null after it previously had a value,
+      // maybe we *should* clear the locally selected time slots (`selectedSlots`), while keeping the selected date?
+      // This depends on the desired interaction contract with the parent.
+      // Example (currently commented out):
+      // if (selectedSpaDateString && selectedSlots.length > 0) {
+      //     console.log("SpaScheduler Effect [Props Sync]: initialDateTime became null, clearing only selected time slots, keeping date.");
+      //     setSelectedSlots([]);
+      //     // Do NOT clear selectedSpaDateString or setSlotsLoadedForCurrentDate(false) here.
+      // }
+    }
+    // Dependencies: List props and key state values that influence the synchronization logic.
+    // selectedSpaDateString is needed for the date comparison logic.
+    // slotDuration is needed for calculating the expected second slot in double mode.
+    // chooseLaterChecked gates the main logic branches.
+  }, [
+    initialDateTime,
+    initialPreference,
+    selectedSpaDateString,
+    selectionMode,
+    slotDuration,
+    chooseLaterChecked,
+  ]); // Keep dependencies focused on what the effect *reads* to make decisions. State setters are stable.
+
+  // Effect 2: Fetches available slots when date changes or 'choose later' is unchecked
+  // This effect is primarily gated by the `slotsLoadedForCurrentDate` flag.
   useEffect(() => {
-    console.log("SpaScheduler Effect: Fetch trigger check.", {
+    // Log entry point to trace when this effect's logic is evaluated
+    console.log("SpaScheduler Effect [Fetch]: Checking conditions.", {
       selectedSpaDateString,
       chooseLaterChecked,
-      selectionMode,
       slotsLoadedForCurrentDate,
       isLoading,
     });
 
-    // Only fetch if a date is selected, 'choose later' is unchecked, and slots haven't been loaded yet for this date/mode, and not already loading
+    // Condition to fetch:
+    // 1. A valid date string must be selected.
+    // 2. 'Choose Later' must NOT be checked.
+    // 3. Slots must NOT have been loaded *yet* for this specific date (`slotsLoadedForCurrentDate` is false).
+    // 4. A fetch must NOT already be in progress (`isLoading` is false).
     if (
       selectedSpaDateString &&
       !chooseLaterChecked &&
-      !slotsLoadedForCurrentDate &&
+      !slotsLoadedForCurrentDate && // This flag is the main gatekeeper, set by date changes or prop sync
       !isLoading
     ) {
-      setIsLoading(true); // Start loading
-      setError(""); // Clear previous error
-      setSlotDuration(null); // Clear previous duration
-      setAvailableSlots([]); // Clear previous slots
+      console.log(
+        "SpaScheduler Effect [Fetch]: ---> Condition MET - Initiating Fetch <---"
+      );
+      // Set loading state and clear previous data/errors before the API call
+      setIsLoading(true);
+      setError("");
+      setSlotDuration(null);
+      setAvailableSlots([]); // Clear old slots before fetch
 
-      const dateString = selectedSpaDateString;
+      const dateString = selectedSpaDateString; // Use the current state value
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:3000";
       const apiEndpoint = `${apiUrl}/api/spa/availability`;
+      // Determine total duration needed based on mode (API needs total time to find valid start slots)
+      const apiRequestDuration = selectionMode === "single" ? 60 : 120;
 
-      // Determine the duration parameter for the API call.
-      // This should represent the *total* duration needed for the booking,
-      // as the API is expected to return available *start times* for that duration block.
-      // Assuming 'double' mode needs 120min, 'single' needs 60min as per your original logic.
-      // If the actual required duration per booking varies, this needs to come from a parent prop.
-      // For now, hardcoding based on selectionMode seems to match your context.
-      const apiRequestDuration = selectionMode === "single" ? 60 : 120; // Duration to ask the API for
-
+      // Prepare API parameters
       const apiParams = {
         date: dateString,
         arrival:
-          minDate instanceof Date ? formatDateForAPI(minDate) : undefined, // Pass arrival date for server-side validation
+          minDate instanceof Date ? formatDateForAPI(minDate) : undefined,
         departure:
-          maxDate instanceof Date ? formatDateForAPI(maxDate) : undefined, // Pass departure date for server-side validation
-        duration: apiRequestDuration, // <--- Pass duration based on mode
+          maxDate instanceof Date ? formatDateForAPI(maxDate) : undefined,
+        duration: apiRequestDuration, // Pass the required total duration
       };
-
-      // Clean up undefined params
+      // Remove undefined parameters to keep the request clean
       Object.keys(apiParams).forEach(
         (key) => apiParams[key] === undefined && delete apiParams[key]
       );
 
-      console.log("SpaScheduler Effect: Fetching availability", {
+      console.log("SpaScheduler Effect [Fetch]: Fetching availability", {
         apiEndpoint,
         apiParams,
       });
 
+      // Perform the API request
       axios
         .get(apiEndpoint, { params: apiParams })
         .then((response) => {
-          const fetchedSlots = response.data?.slots || []; // Array of available start times (HH:mm)
-          const fetchedDuration = response.data?.slotDurationMinutes; // Expecting the base slot duration (e.g., 30 or 60) from API
+          // API call successful
+          const fetchedSlots = response.data?.slots || []; // Available start times (HH:mm array)
+          const fetchedDuration = response.data?.slotDurationMinutes; // Base duration of one slot (e.g., 60)
           setAvailableSlots(fetchedSlots);
-          setSlotDuration(fetchedDuration); // Store the base slot duration
-
-          console.log("SpaScheduler Effect: Slots fetched successfully", {
+          setSlotDuration(fetchedDuration); // Store the base duration
+          console.log("SpaScheduler Effect [Fetch]: Success", {
             fetchedSlots,
             fetchedDuration,
           });
 
-          // --- Validation and Update based on Fetched Slots ---
-          // After fetching, re-validate any existing/initial selection (held in `selectedSlots`)
-          // This ensures that if the user's previously selected slot(s) are no longer available (e.g., due to data change),
-          // the local selection is cleared and parent is notified.
+          // --- Post-Fetch Validation of Selection ---
+          // After getting fresh availability, check if any locally selected slots
+          // (which might have come from `initialDateTime` prop or previous selection) are still valid.
           if (selectedSlots.length > 0 && fetchedDuration) {
+            // We have a local selection and a valid slot duration from the API
             const firstSelectedSlotString = selectedSlots[0];
-            let isInitialSelectionValid = false;
-            console.log(
-              "SpaScheduler Effect: Validating existing selection starting at",
-              firstSelectedSlotString
-            );
-
-            // Re-determine the *expected* slots based on the first selected slot string and the *fetched* duration
-            let expectedSlots = [];
-            if (selectionMode === "single") {
-              // In single mode, the expected slots are just the first selected one
-              expectedSlots = [firstSelectedSlotString];
-            } else {
-              // selectionMode === "double"
-              // In double mode, the expected slots are the first selected one AND the next one
-              const nextExpectedSlotString = calculateNextSlotTime(
+            // Determine what the full selection *should* be based on the first slot and mode
+            let expectedSlotsAfterFetch = [firstSelectedSlotString];
+            if (selectionMode === "double") {
+              const nextSlot = calculateNextSlotTime(
                 firstSelectedSlotString,
                 fetchedDuration
               );
-              if (nextExpectedSlotString) {
-                expectedSlots = [
-                  firstSelectedSlotString,
-                  nextExpectedSlotString,
-                ];
-              } else {
-                console.warn(
-                  "SpaScheduler Effect: Could not calculate expected second slot for double mode validation."
-                );
-              }
+              // Ensure next slot calculation was successful
+              if (nextSlot) expectedSlotsAfterFetch.push(nextSlot);
             }
 
-            // Check if *all* expected slots are present in the *fetched* available slots list
-            isInitialSelectionValid =
-              expectedSlots.length > 0 &&
-              expectedSlots.every((slot) => fetchedSlots.includes(slot));
-
-            console.log(
-              "SpaScheduler Effect: Initial selection validation result:",
-              isInitialSelectionValid,
-              {
-                selectedSlotsWere: selectedSlots,
-                expectedSlotsAre: expectedSlots,
-                availableFetched: fetchedSlots,
-              }
+            // Check if *all* expected slots (e.g., ['14:00', '15:00']) are present in the *fetched* available slots list
+            const isSelectionValid = expectedSlotsAfterFetch.every((slot) =>
+              fetchedSlots.includes(slot)
             );
 
-            if (isInitialSelectionValid) {
+            if (isSelectionValid) {
               console.log(
-                "SpaScheduler Effect: Initial/existing selection is valid after fetch."
+                "SpaScheduler Effect [Fetch]: Existing/Initial selection is VALID after fetch."
               );
-              // Update local state to ensure `selectedSlots` array matches `expectedSlots` (e.g., adding the second slot if needed)
-              // Only update local state if the array content is actually different to avoid unnecessary re-renders.
+              // Ensure local state reflects the potentially calculated second slot correctly.
               if (
-                JSON.stringify(selectedSlots) !== JSON.stringify(expectedSlots)
+                JSON.stringify(selectedSlots) !==
+                JSON.stringify(expectedSlotsAfterFetch)
               ) {
-                console.log(
-                  "SpaScheduler Effect: Updating local selectedSlots to match validated expected slots."
-                );
-                setSelectedSlots(expectedSlots); // This will trigger a render, but not a refetch due to slotsLoadedForCurrentDate
+                setSelectedSlots(expectedSlotsAfterFetch);
               }
-
-              // If the initial selection *is* valid after fetching, notify the parent again
-              // with the full booking data structure, including the correct end time and the validated slots array.
-              // This handles cases where SpaScheduler mounts/refetches *after* the booking was saved,
-              // ensuring the parent always has the complete, validated data for the current selection.
-              try {
-                const datePart = parse(
-                  selectedSpaDateString,
-                  "yyyy-MM-dd",
-                  new Date()
-                );
-                const [hours, minutes] = firstSelectedSlotString
-                  .split(":")
-                  .map(Number);
-                const startDateTime = new Date(datePart);
-                startDateTime.setHours(hours, minutes, 0, 0);
-
-                // Calculate end time based on the *start time* of the first slot
-                // plus the *total duration* of the selected slots (length of expectedSlots * fetchedDuration)
-                const totalDurationMinutes =
-                  expectedSlots.length * fetchedDuration;
-                const endDateTime = addMinutes(
-                  startDateTime,
-                  totalDurationMinutes
-                );
-
-                const bookingData = {
-                  startDateTime: startDateTime, // Date object for the start time (first slot)
-                  endDateTime: endDateTime, // Date object for the *actual end* time (after last slot finishes)
-                  slots: expectedSlots, // Pass the validated/corrected array of HH:mm strings
-                };
-                console.log(
-                  "SpaScheduler Effect: Notifying parent with validated initial selection bookingData:",
-                  bookingData
-                );
-                // Important: Only notify parent if we're *not* in chooseLater mode
-                if (
-                  !chooseLaterChecked &&
-                  typeof onScheduleChange === "function"
-                ) {
-                  onScheduleChange(bookingData);
-                }
-              } catch (e) {
-                console.error(
-                  "SpaScheduler Effect: Error preparing booking data for parent notification after validation",
-                  e
-                );
-                if (
-                  !chooseLaterChecked &&
-                  typeof onScheduleChange === "function"
-                ) {
-                  onScheduleChange(null);
-                }
-              }
-            } else {
-              // Initial selection is NOT valid based on fetched slots
-              console.warn(
-                `SpaScheduler Effect: Initial/existing selection [${selectedSlots.join(
-                  ", "
-                )}] no longer valid for mode '${selectionMode}' based on fetched slots. Clearing.`
-              );
-              setSelectedSlots([]); // Clear local state
-              // Notify parent that the previously selected slot is no longer valid
+              // If the selection is valid, notify the parent with the complete booking data.
+              // Do this only if 'Choose Later' is not checked.
               if (
                 !chooseLaterChecked &&
                 typeof onScheduleChange === "function"
               ) {
-                console.log(
-                  "SpaScheduler Effect: Notifying parent (null) due to invalid initial selection."
-                );
+                try {
+                  // Construct Date objects for start and end times
+                  const datePart = parse(
+                    selectedSpaDateString,
+                    "yyyy-MM-dd",
+                    new Date()
+                  );
+                  const [h, m] = expectedSlotsAfterFetch[0]
+                    .split(":")
+                    .map(Number);
+                  const startDateTime = new Date(
+                    datePart.getFullYear(),
+                    datePart.getMonth(),
+                    datePart.getDate(),
+                    h,
+                    m
+                  );
+                  const totalDurationMinutes =
+                    expectedSlotsAfterFetch.length * fetchedDuration;
+                  const endDateTime = addMinutes(
+                    startDateTime,
+                    totalDurationMinutes
+                  );
+                  // Prepare the data structure expected by the parent
+                  const bookingData = {
+                    startDateTime,
+                    endDateTime,
+                    slots: expectedSlotsAfterFetch,
+                  };
+                  console.log(
+                    "SpaScheduler Effect [Fetch]: Notifying parent with validated bookingData:",
+                    bookingData
+                  );
+                  onScheduleChange(bookingData); // Send data to parent
+                } catch (e) {
+                  console.error(
+                    "SpaScheduler Effect [Fetch]: Error preparing booking data for parent notification",
+                    e
+                  );
+                  onScheduleChange(null); // Notify parent of invalid state due to error
+                }
+              }
+            } else {
+              // The previously selected slot(s) are no longer available according to the API response.
+              console.warn(
+                `SpaScheduler Effect [Fetch]: Existing/Initial selection [${selectedSlots.join(
+                  ", "
+                )}] is NO LONGER VALID based on fetched slots. Clearing.`
+              );
+              setSelectedSlots([]); // Clear the invalid local selection
+              // Notify parent that the previous selection is now invalid (only if not 'later')
+              if (
+                !chooseLaterChecked &&
+                typeof onScheduleChange === "function"
+              ) {
                 onScheduleChange(null);
               }
             }
           } else if (selectedSlots.length > 0 && !fetchedDuration) {
-            // We had a selection but couldn't get slot duration from API - invalid state
+            // This case indicates an API issue: we had a selection but the API didn't return the slot duration needed for validation/calculation.
             console.warn(
-              "SpaScheduler Effect: Had initial selection but slotDuration is missing after fetch. Clearing."
+              "SpaScheduler Effect [Fetch]: Had initial selection but slotDuration is missing from API response after fetch. Clearing selection."
             );
-            setSelectedSlots([]); // Clear local state
-            // Notify parent of invalid state
+            setSelectedSlots([]); // Clear invalid local selection
+            // Notify parent of the invalid state (only if not 'later')
             if (!chooseLaterChecked && typeof onScheduleChange === "function") {
-              console.log(
-                "SpaScheduler Effect: Notifying parent (null) due to missing slot duration after fetch."
-              );
               onScheduleChange(null);
             }
           } else {
-            // No initial selection or initial selection was already cleared. Ensure parent is null if not 'later'.
+            // No initial selection existed, or API didn't return duration.
+            // Ensure parent state is null if nothing is selected (and not 'later').
+            // This notification might be redundant if handlers/prop sync already sent null, but acts as a safeguard.
             if (!chooseLaterChecked && typeof onScheduleChange === "function") {
-              console.log(
-                "SpaScheduler Effect: No initial selection, notifying parent with null."
-              );
-              onScheduleChange(null); // Ensures parent state is null if nothing is selected initially
+              // Let's assume parent state is already null if selectedSlots is empty here. Avoid redundant null notification.
+              // onScheduleChange(null);
             }
           }
-          // --- End Validation and Update ---
+          // --- End Post-Fetch Validation ---
 
-          // Set the flag *after* processing the fetched slots and selection validation
+          // Mark slots as loaded *after* processing and validation is complete
           setSlotsLoadedForCurrentDate(true);
         })
         .catch((err) => {
+          // Handle API errors
           console.error("SpaScheduler: Error fetching SPA slots:", err);
+          // Set user-friendly error message
           let errorMsg = t("extras.spa.errorLoading", "Failed to load slots.");
           if (err.message === "Network Error")
             errorMsg = t("errors.network", "Network error.");
-          else if (err.response)
-            errorMsg = err.response.data?.message || errorMsg;
-          setError(errorMsg); // Set hook's error state
-          setAvailableSlots([]); // Clear available slots
-          setSelectedSlots([]); // Clear local selection
-          setSlotDuration(null); // Clear duration
-          // Notify parent that there's no valid selection available
+          else if (err.response?.data?.message)
+            errorMsg = err.response.data.message; // Use server message if available
+          setError(errorMsg);
+          // Clear state related to slots on error
+          setAvailableSlots([]);
+          setSelectedSlots([]); // Clear selection on error
+          setSlotDuration(null);
+          // Notify parent about the error / lack of valid selection
           if (!chooseLaterChecked && typeof onScheduleChange === "function") {
             console.log(
-              "SpaScheduler Effect: Notifying parent (null) due to fetch error."
+              "SpaScheduler Effect [Fetch]: Notifying parent (null) due to fetch error."
             );
             onScheduleChange(null);
           }
-          setSlotsLoadedForCurrentDate(true); // Mark as loaded (or failed) to prevent loop for this attempt
+          // Mark as 'attempted to load' even on error to prevent immediate retry loops for the same date.
+          setSlotsLoadedForCurrentDate(true);
         })
         .finally(() => {
-          setIsLoading(false); // End loading
-          console.log("SpaScheduler Effect: Fetch availability finished.");
+          // This block runs whether the promise resolved or rejected
+          setIsLoading(false); // Always turn off loading indicator
+          console.log(
+            "SpaScheduler Effect [Fetch]: Fetch process finished (success or error)."
+          );
         });
     } else if (selectedSpaDateString && chooseLaterChecked) {
-      // If a date is selected but "Choose Later" is checked, clear slots and don't fetch
+      // Condition: Date selected BUT 'Choose Later' is checked.
+      // No fetch needed. Ensure loading/error/slots state is clear.
       console.log(
-        "SpaScheduler Effect: Date selected but 'Choose Later' checked, clearing slots and skipping fetch."
+        "SpaScheduler Effect [Fetch]: 'Choose Later' checked. Clearing active slots/state if needed."
       );
-      setAvailableSlots([]);
-      setSlotDuration(null);
-      setSelectedSlots([]); // Ensure local slots are empty
-      setError(""); // Clear any error
-      setSlotsLoadedForCurrentDate(false); // Reset flag if date is selected and choose later is checked (maybe unnecessary)
-
-      // Notify parent that the preference is 'later'
-      if (typeof onScheduleChange === "function") {
-        console.log(
-          "SpaScheduler Effect: Notifying parent ('later') because chooseLaterChecked is true."
-        );
-        onScheduleChange("later");
+      let stateChanged = false;
+      // Clear any potentially lingering state from previous interactions
+      if (availableSlots.length > 0) {
+        setAvailableSlots([]);
+        stateChanged = true;
       }
+      if (slotDuration) {
+        setSlotDuration(null);
+        stateChanged = true;
+      }
+      if (error) {
+        setError("");
+        stateChanged = true;
+      }
+      if (isLoading) {
+        setIsLoading(false);
+        stateChanged = true;
+      } // Stop loading if it was somehow true
+      // Keep selectedSlots cleared (handled by 'Choose Later' handler or prop sync)
+      // Reset the loaded flag as slots are not relevant now.
+      if (slotsLoadedForCurrentDate) {
+        setSlotsLoadedForCurrentDate(false);
+        stateChanged = true;
+      }
+
+      if (stateChanged)
+        console.log(
+          "SpaScheduler Effect [Fetch]: Cleared state because 'Choose Later' is checked."
+        );
+      // Parent notification ('later') is handled by handleChooseLaterChange or prop sync effect.
     } else if (!selectedSpaDateString) {
-      // If no date is selected, clear everything related to slots and preference (unless chooseLater was true)
+      // Condition: No date is selected.
+      // Clear any active slot/error/loading state.
       console.log(
-        "SpaScheduler Effect: No date selected, clearing all slot/date state."
+        "SpaScheduler Effect [Fetch]: No date selected. Clearing active slots/state if needed."
       );
-      setAvailableSlots([]);
-      setSlotDuration(null);
-      setSelectedSlots([]);
-      setError("");
-      setSlotsLoadedForCurrentDate(false); // Reset flag if date is unselected
-
-      // Notify parent (no valid selection) - Only if not in 'later' mode
-      if (!chooseLaterChecked && typeof onScheduleChange === "function") {
-        console.log(
-          "SpaScheduler Effect: Notifying parent (null) because no date is selected."
-        );
-        onScheduleChange(null);
+      let stateChanged = false;
+      // Clear potentially lingering state
+      if (availableSlots.length > 0) {
+        setAvailableSlots([]);
+        stateChanged = true;
       }
+      if (slotDuration) {
+        setSlotDuration(null);
+        stateChanged = true;
+      }
+      if (error) {
+        setError("");
+        stateChanged = true;
+      }
+      if (isLoading) {
+        setIsLoading(false);
+        stateChanged = true;
+      } // Stop loading if active
+      // Ensure the loaded flag is false when no date is selected.
+      // Check before setting to avoid unnecessary state updates if already false.
+      if (slotsLoadedForCurrentDate) {
+        setSlotsLoadedForCurrentDate(false);
+        stateChanged = true; // Mark that state changed
+      }
+      if (stateChanged)
+        console.log(
+          "SpaScheduler Effect [Fetch]: Cleared state because no date is selected."
+        );
+      // Keep selectedSlots cleared (handled by handleDateChange or prop sync)
+      // Parent notification (null) is handled by handleDateChange or prop sync effect.
+    } else {
+      // This block logs if the effect ran but none of the main conditions were met
+      // (e.g., date selected, not later, but slots *already* loaded).
+      console.log(
+        "SpaScheduler Effect [Fetch]: Condition NOT MET for fetch (likely slots already loaded or still loading). No fetch action taken."
+      );
     }
-    console.log("SpaScheduler Effect finished.");
+
+    // Dependencies: List all external variables (props, state, stable functions/values from hooks)
+    // that are read inside this effect. Ensure props passed down are memoized where necessary (minDate, maxDate, onScheduleChange).
   }, [
-    selectedSpaDateString, // Trigger fetch when date dropdown changes
-    chooseLaterChecked, // Trigger fetch or state clear when checkbox changes
-    selectionMode, // Trigger fetch/validation if mode changes (although hardcoded 'double' now)
-    slotsLoadedForCurrentDate, // Flag to prevent refetch loops for the same date/mode
-    isLoading, // Avoid triggering fetch while already loading
-    // Other dependencies used inside the effect logic:
-    t, // For translation (used in error messages)
-    minDate, // Used in apiParams and arrivalDateString check
-    maxDate, // Used in apiParams
-    availableSlots, // Used for initial selection validation
-    slotDuration, // Used for initial selection validation and end time calculation
-    selectedSlots, // Used for initial selection validation
-    onScheduleChange, // Used to notify parent
-    arrivalDateString, // Used for arrival day check
+    selectedSpaDateString,
+    chooseLaterChecked,
+    slotsLoadedForCurrentDate, // The primary gatekeeper flag
+    isLoading, // Prevents concurrent fetches
+    selectionMode, // Determines API request duration
+    minDate, // Stable prop (useMemo in parent)
+    maxDate, // Stable prop (useMemo in parent)
+    onScheduleChange, // Stable prop (useCallback in parent hook)
+    arrivalDateString, // Stable (derived from memoized minDate)
+    t, // Stable (from useTranslation hook)
+    // Note: State setters (setIsLoading, setError, etc.) are stable and don't need to be dependencies.
   ]);
 
   // --- Event Handlers ---
 
   // Handles change in the date selection dropdown
-  const handleDateChange = (event) => {
-    console.log("handleDateChange called");
-    const newDateString = event.target.value;
-    setSelectedSpaDateString(newDateString); // Update state to the new date string
-    setSlotsLoadedForCurrentDate(false); // Reset this flag to force a fetch for the new date
-    setSelectedSlots([]); // Clear any previously selected slots when date changes
-    setAvailableSlots([]); // Clear available slots for the old date
-    setSlotDuration(null); // Clear slot duration
-    setError(""); // Clear any previous error message
-    // Notify the parent that the selection is now invalid/cleared due to date change
-    if (typeof onScheduleChange === "function") {
-      console.log("handleDateChange: Notifying parent with null.");
-      onScheduleChange(null);
-    }
-    console.log("handleDateChange finished.");
-  };
+  const handleDateChange = useCallback(
+    (event) => {
+      console.log("handleDateChange triggered");
+      const newDateString = event.target.value;
+      // Update the selected date string state
+      setSelectedSpaDateString(newDateString);
+      // Reset flags and dependent state because the date context has changed
+      setSlotsLoadedForCurrentDate(false); // <-- This is crucial to trigger fetch for the new date
+      setSelectedSlots([]); // Clear any previous time selection
+      setAvailableSlots([]); // Clear visual slots immediately
+      setSlotDuration(null); // Clear duration info
+      setError(""); // Clear any previous error message
+      // Stop loading indicator if it was active (e.g., user changes date while loading)
+      if (isLoading) setIsLoading(false);
+
+      // Notify the parent component immediately that the selection is now invalid/cleared due to the date change.
+      // Pass null to indicate no valid time slot is selected.
+      if (typeof onScheduleChange === "function") {
+        console.log("handleDateChange: Notifying parent with null.");
+        onScheduleChange(null);
+      }
+    },
+    [onScheduleChange, isLoading]
+  ); // Add isLoading to dependency to use setIsLoading safely
 
   // Handles clicks on the time slot buttons
   const handleSlotSelect = useCallback(
     (clickedSlot) => {
       console.log("handleSlotSelect called with slot:", clickedSlot);
-      // Validate essential data needed for calculation
-      if (!slotDuration || slotDuration <= 0 || !selectedSpaDateString) {
+      // Guard clauses: Ensure necessary data is available before proceeding
+      if (!slotDuration || slotDuration <= 0) {
         console.warn(
-          "handleSlotSelect: Cannot select slot: duration (",
-          slotDuration,
-          ") or date string missing."
+          "handleSlotSelect: Cannot select slot - slotDuration missing or invalid.",
+          { slotDuration }
         );
         if (typeof onScheduleChange === "function") onScheduleChange(null); // Notify parent of invalid state
         return;
       }
-      // Validate against arrival day restriction
+      if (!selectedSpaDateString) {
+        console.warn(
+          "handleSlotSelect: Cannot select slot - selectedSpaDateString missing."
+        );
+        if (typeof onScheduleChange === "function") onScheduleChange(null); // Notify parent of invalid state
+        return;
+      }
+      // Check arrival day restriction
       const isArrivalDaySelected = selectedSpaDateString === arrivalDateString;
       if (isArrivalDaySelected && clickedSlot < ARRIVAL_DAY_START_TIME) {
         console.warn(
-          `handleSlotSelect: Selection prevented: ${clickedSlot} is before ${ARRIVAL_DAY_START_TIME} on arrival day.`
+          `handleSlotSelect: Selection prevented on arrival day before ${ARRIVAL_DAY_START_TIME}.`
         );
-        if (typeof onScheduleChange === "function") onScheduleChange(null); // Notify parent of invalid selection attempt
+        // Provide visual feedback (e.g., brief message/toast) is recommended here.
+        // Do not change selection or notify parent.
         return;
       }
 
-      let newSelectedSlots = []; // Array to hold the HH:mm strings of the slots we *should* select
-      let isValidSelectionAttempt = false; // Flag indicating if the attempt *could* result in a valid selection
+      // Determine the slots to be selected based on the mode and availability
+      let newSelectedSlots = [];
+      let isValidSelectionAttempt = false;
 
-      // --- Determine slots to select based on mode ---
       if (selectionMode === "single") {
-        // In single mode, the user selects just one slot.
-        // Check if the clicked slot is available.
+        // Single slot mode: Only the clicked slot needs to be available
         if (availableSlots.includes(clickedSlot)) {
           newSelectedSlots = [clickedSlot];
           isValidSelectionAttempt = true;
-          console.log(`SpaScheduler: Single slot ${clickedSlot} is available.`);
-        } else {
-          console.warn(
-            `SpaScheduler: Single slot ${clickedSlot} is unavailable.`
-          );
-          isValidSelectionAttempt = false; // Clicked an unavailable slot
         }
       } else {
-        // selectionMode === "double"
-        // In double mode, the user selects the *start* of a two-slot block.
-        // We need the clicked slot AND the next slot to be available.
-        const nextSlotTime = calculateNextSlotTime(clickedSlot, slotDuration); // Calculate the time of the second slot
+        // Double slot mode
+        // Calculate the expected time of the second slot
+        const nextSlotTime = calculateNextSlotTime(clickedSlot, slotDuration);
+        // Both the clicked slot AND the next slot must be in the available list
         if (
           nextSlotTime &&
           availableSlots.includes(clickedSlot) &&
           availableSlots.includes(nextSlotTime)
         ) {
-          newSelectedSlots = [clickedSlot, nextSlotTime]; // Both slots must be selected
+          newSelectedSlots = [clickedSlot, nextSlotTime]; // Select both
           isValidSelectionAttempt = true;
-          console.log(
-            `SpaScheduler: Double slots ${clickedSlot}, ${nextSlotTime} are available.`
-          );
         } else {
+          // Log why selection failed (e.g., clicked available, next isn't, or vice-versa)
           console.warn(
-            `SpaScheduler: Cannot select double slot starting at ${clickedSlot}. One or both slots unavailable.`,
-            {
-              clicked: availableSlots.includes(clickedSlot),
-              nextExpected: nextSlotTime,
-              nextAvailable: nextSlotTime
-                ? availableSlots.includes(nextSlotTime)
-                : "N/A",
-            }
+            `SpaScheduler: Cannot select double slot starting at ${clickedSlot}. Clicked available: ${availableSlots.includes(
+              clickedSlot
+            )}, Next (${nextSlotTime}) available: ${
+              nextSlotTime && availableSlots.includes(nextSlotTime)
+            }`
           );
-          isValidSelectionAttempt = false; // Clicked an unavailable slot OR the next slot isn't available
+          // Provide user feedback (e.g., visual cue on the button) is recommended.
         }
       }
-      // --- End slot determination ---
 
-      // If the selection attempt was valid and we identified slots
+      // If the selection attempt was valid (found the required available slot(s))
       if (isValidSelectionAttempt && newSelectedSlots.length > 0) {
-        // Update the local state *inside* SpaScheduler with the determined slots
-        setSelectedSlots(newSelectedSlots); // This sets selectedSlots to ['15:00', '16:00'] if valid double, or ['15:00'] if valid single.
+        console.log(
+          "handleSlotSelect: Valid selection attempt",
+          newSelectedSlots
+        );
+        // Update local state IMMEDIATELY to provide responsive UI feedback
+        setSelectedSlots(newSelectedSlots);
 
-        // Prepare data to pass back to the parent component
+        // Prepare data structure and notify the parent component
         try {
+          // Parse the selected date string back into a Date object part
           const datePart = parse(
             selectedSpaDateString,
             "yyyy-MM-dd",
             new Date()
           );
-          // Get the start time Date object from the *first* slot string in the selected slots array
-          const [hours, minutes] = newSelectedSlots[0].split(":").map(Number);
-          const startDateTime = new Date(datePart);
-          startDateTime.setHours(hours, minutes, 0, 0);
-
-          // --- CORRECTED: Calculate endDateTime based on TOTAL duration ---
-          // The total duration is the number of *determined* selected slots multiplied by the *base slot duration*
+          // Get hours/minutes from the *first* selected slot string
+          const [h, m] = newSelectedSlots[0].split(":").map(Number);
+          // Create the start DateTime object
+          const startDateTime = new Date(
+            datePart.getFullYear(),
+            datePart.getMonth(),
+            datePart.getDate(),
+            h,
+            m
+          );
+          // Calculate the total duration based on number of slots selected and base duration
           const totalDurationMinutes = newSelectedSlots.length * slotDuration;
-          const endDateTime = addMinutes(startDateTime, totalDurationMinutes); // Use addMinutes
+          // Calculate the end DateTime object
+          const endDateTime = addMinutes(startDateTime, totalDurationMinutes);
 
-          console.log("SpaScheduler: Prepared bookingData for parent", {
+          // Prepare the booking data object for the parent
+          const bookingData = {
             startDateTime,
             endDateTime,
-            newSelectedSlots,
-          });
-
-          const bookingData = {
-            startDateTime: startDateTime, // Date object for the start time
-            endDateTime: endDateTime, // Date object for the *actual end time* (start time + total duration)
-            slots: newSelectedSlots, // Array of HH:mm strings (e.g., ['15:00', '16:00'])
+            slots: newSelectedSlots,
           };
-
-          // Call the parent's handler with the valid booking data object
+          console.log(
+            "handleSlotSelect: Notifying parent with bookingData:",
+            bookingData
+          );
+          // Call the parent's handler function if provided
           if (typeof onScheduleChange === "function") {
-            console.log(
-              "SpaScheduler: Calling onScheduleChange with valid bookingData."
-            );
             onScheduleChange(bookingData);
           }
         } catch (e) {
+          // Handle errors during date/time object creation
           console.error(
             "SpaScheduler: Error creating bookingData object for parent:",
             e
           );
-          setSelectedSlots([]); // Clear local state on error
-          // Notify parent of error/invalid state
+          // Clear local state as it led to an error
+          setSelectedSlots([]);
+          // Notify parent of the error/invalid state
           if (typeof onScheduleChange === "function") {
-            console.log(
-              "SpaScheduler: Calling onScheduleChange with null due to error."
-            );
             onScheduleChange(null);
           }
         }
       } else {
-        // If selection attempt was invalid (e.g. clicked unavailable slot or next slot unavailable)
+        // If selection attempt was invalid (e.g., clicked unavailable/disabled slot or pair)
+        // Usually, do nothing to the current state. The button was likely visually disabled,
+        // or if clickable, the availability check failed. Don't clear a previously valid selection.
         console.log(
-          "SpaScheduler: Selection attempt invalid, clearing local slots and notifying parent with null."
+          "handleSlotSelect: Invalid selection attempt (likely clicked disabled or unavailable slot/pair). No state change."
         );
-        setSelectedSlots([]); // Clear local selection
-        // Inform parent no valid selection was made
-        if (typeof onScheduleChange === "function") {
-          console.log("SpaScheduler: Calling onScheduleChange with null.");
-          onScheduleChange(null);
-        }
+        // Do NOT clear selectedSlots here unless implementing specific deselect logic.
+        // Do NOT notify parent with null, as the previous valid state (if any) should persist.
       }
-      console.log("handleSlotSelect finished.");
     },
-    // Dependencies for useCallback: Ensure any state or prop used inside is listed
     [
-      selectedSpaDateString, // Used to create Date objects
-      onScheduleChange, // Parent callback
-      availableSlots, // List of available slots from API (used for availability check)
-      slotDuration, // Duration of a single slot from API (used in calculations)
-      arrivalDateString, // Formatted arrival date string (used for arrival day check)
-      selectionMode, // 'single' or 'double' mode (determines selection logic)
-      // calculateNextSlotTime is a local helper, implicitly stable if its dependencies (addMinutes, format) are stable.
-      // If calculateNextSlotTime used external state/props, it would need useCallback itself and be a dependency here.
+      selectedSpaDateString,
+      onScheduleChange,
+      availableSlots,
+      slotDuration,
+      arrivalDateString,
+      selectionMode, // Include all dependencies read inside the callback
     ]
   );
 
   // Handles change in the "Book Later" checkbox
-  const handleChooseLaterChange = (e) => {
-    console.log("handleChooseLaterChange called", e.target.checked);
-    const isChecked = e.target.checked;
-    setChooseLaterChecked(isChecked); // Update local state
+  const handleChooseLaterChange = useCallback(
+    (e) => {
+      console.log("handleChooseLaterChange triggered", e.target.checked);
+      const isChecked = e.target.checked;
+      // Update local checkbox state immediately
+      setChooseLaterChecked(isChecked);
 
-    if (!isChecked) {
-      // If unchecking "Book Later", reset flag to trigger a fetch of available slots
-      console.log(
-        "SpaScheduler: Choose later unchecked, resetting slotsLoadedForCurrentDate."
-      );
-      setSlotsLoadedForCurrentDate(false);
-      // Clear local selection immediately, the useEffect will handle potentially re-selecting based on initial data or user click.
-      setSelectedSlots([]);
-      // Clear available slots and related info immediately for a cleaner UI transition before fetch starts
-      setAvailableSlots([]);
-      setSlotDuration(null);
-      setError("");
-
-      // Notify parent that the preference is no longer 'later'.
-      // The parent should clear any saved schedule state. We send null for now.
-      // Note: The useEffect that fetches slots will *also* notify the parent if it finds a valid
-      // initial selection or if the fetch fails. This might result in parent being notified twice (null then either bookingData or null again).
-      // Depending on parent logic, this might be acceptable, or the null notification here could be removed.
-      if (typeof onScheduleChange === "function") {
+      if (!isChecked) {
+        // ---- UNCHECKING 'Choose Later' ----
         console.log(
-          "SpaScheduler: Choose later unchecked, notifying parent with null."
+          "handleChooseLaterChange: Unchecked 'Choose Later'. Resetting flags/state."
         );
-        onScheduleChange(null);
-      }
-    } else {
-      // If checking "Book Later"
-      // Clear all slot-related state locally
-      setSelectedSlots([]); // Clear local selection
-      setAvailableSlots([]); // Clear available slots UI
-      setSlotDuration(null); // Clear duration UI
-      setError(""); // Clear error UI
-      console.log(
-        "SpaScheduler: Choose later checked, clearing all slot state locally."
-      );
-      setSlotsLoadedForCurrentDate(false); // Reset flag (good practice, although fetch won't happen if checked)
-
-      // Notify parent that the preference is now 'later'
-      if (typeof onScheduleChange === "function") {
+        // Reset flag to allow the fetch effect to run if a date is selected
+        setSlotsLoadedForCurrentDate(false);
+        // Clear any previous time selection/error immediately for cleaner UI transition
+        setSelectedSlots([]);
+        setAvailableSlots([]);
+        setSlotDuration(null);
+        setError("");
+        // Stop loading if it was active
+        if (isLoading) setIsLoading(false);
+        // Let the fetch effect handle notifying the parent (with null or bookingData)
+        // based on whether a date is selected and the fetch outcome.
+        // Avoid sending premature 'null' notification here.
+      } else {
+        // ---- CHECKING 'Choose Later' ----
         console.log(
-          "SpaScheduler: Choose later checked, notifying parent with 'later'."
+          "handleChooseLaterChange: Checked 'Choose Later'. Clearing state and notifying parent."
         );
-        onScheduleChange("later");
+        // Clear all local state related to specific time slots
+        setSelectedSlots([]);
+        setAvailableSlots([]);
+        setSlotDuration(null);
+        setError("");
+        setSlotsLoadedForCurrentDate(false); // Reset flag as slots are no longer relevant
+        // Ensure loading indicator is off
+        if (isLoading) setIsLoading(false);
+
+        // Notify parent component immediately that the preference is now 'later'
+        if (typeof onScheduleChange === "function") {
+          onScheduleChange("later");
+        }
       }
-    }
-    console.log("handleChooseLaterChange finished.");
-  };
+    },
+    [onScheduleChange, isLoading]
+  ); // Add isLoading dependency
 
   // --- JSX Rendering ---
   return (
     <div className="p-3 space-y-4 bg-white border border-gray-200 rounded-md">
-      {console.log("Rendering SpaScheduler JSX. State:", {
-        selectedSpaDateString,
-        selectedSlots,
-        chooseLaterChecked,
-        isLoading,
-        error,
-        availableSlots: availableSlots.length,
-        slotDuration,
-        slotsLoadedForCurrentDate,
-      })}
       {/* Date Selection Dropdown */}
       <div>
         <label
@@ -871,9 +952,11 @@ const SpaScheduler = ({
         </label>
         <select
           id="spaDateSelect"
-          value={selectedSpaDateString || ""} // Ensure value is never undefined for controlled component
-          onChange={handleDateChange} // <-- This should now be correctly defined and called
-          disabled={chooseLaterChecked || isLoading || dateOptions.length === 0} // Disable while loading or no options
+          value={selectedSpaDateString || ""} // Ensure controlled component has a valid value
+          onChange={handleDateChange} // Attach the handler
+          // Disable dropdown if 'choose later' is checked, while loading, or if no date options exist
+          disabled={chooseLaterChecked || isLoading || dateOptions.length === 0}
+          // Standard styling + custom dropdown arrow
           className="w-full p-2 pr-8 bg-white bg-right bg-no-repeat border border-gray-300 rounded-md shadow-sm appearance-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           style={{
             backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>')`,
@@ -881,9 +964,10 @@ const SpaScheduler = ({
             backgroundSize: "1.25em 1.25em",
           }}
         >
+          {/* Default placeholder option */}
           <option value="" disabled={selectedSpaDateString !== ""}>
             {" "}
-            {/* Disable default option once a date is picked */}
+            {/* Disable placeholder once a date is picked */}
             {dateOptions.length > 0
               ? t("extras.spa.datePlaceholderDropdown", "-- Select a Date --")
               : t(
@@ -891,13 +975,14 @@ const SpaScheduler = ({
                   "-- No dates available --"
                 )}
           </option>
+          {/* Map generated date options */}
           {dateOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
         </select>
-        {/* Show message if no date options generated */}
+        {/* Message if no date options were generated (and not choosing later) */}
         {dateOptions.length === 0 && !chooseLaterChecked && (
           <p className="mt-1 text-xs text-gray-500">
             {t(
@@ -908,140 +993,135 @@ const SpaScheduler = ({
         )}
       </div>
 
-      {/* Time Slot Selection Area (conditional) */}
-      {selectedSpaDateString &&
-        !chooseLaterChecked && ( // Only show if a date is selected and "choose later" is unchecked
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {t("extras.spa.selectTime", "Select Time Slot")}
-              {/* Display duration based on mode */}
-              {selectionMode === "double" && (
-                <span className="ml-2 text-xs text-gray-500">
-                  (
-                  {t(
-                    "extras.spa.selectTwoSlotsNote",
-                    "Select start time for 2 slots"
-                  )}
-                  )
-                </span>
-              )}
-              {selectionMode === "single" && (
-                <span className="ml-2 text-xs text-gray-500">
-                  ({t("extras.spa.selectOneSlotNote", "Select 1 time slot")})
-                </span>
-              )}
-            </label>
-            {/* Loading, Error, No Slots Messages */}
-            {isLoading && (
-              <p className="text-sm text-gray-500 animate-pulse">
-                {t("loading", "Loading slots...")}
-              </p>
+      {/* Time Slot Selection Area (Conditionally Rendered) */}
+      {/* Show only if a date is selected AND 'choose later' is NOT checked */}
+      {selectedSpaDateString && !chooseLaterChecked && (
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            {t("extras.spa.selectTime", "Select Time Slot")}
+            {/* Add mode-specific instruction */}
+            {selectionMode === "double" && (
+              <span className="ml-2 text-xs text-gray-500">
+                (
+                {t(
+                  "extras.spa.selectTwoSlotsNote",
+                  "Select start time for 2 slots"
+                )}
+                )
+              </span>
             )}
-            {error && !isLoading && (
+            {/* Add similar note for single mode if it were possible */}
+          </label>
+
+          {/* Loading Indicator */}
+          {isLoading && (
+            <p className="text-sm text-gray-500 animate-pulse">
+              {t("loading", "Loading slots...")}
+            </p>
+          )}
+
+          {/* Error Message Display */}
+          {error &&
+            !isLoading && ( // Show only if error exists and not currently loading
               <p className="p-2 text-sm text-red-600 rounded-md bg-red-50">
                 {error}
               </p>
             )}
-            {/* Show no slots message only if not loading, no error, no slots, AND slots have been attempted to load for this date */}
-            {!isLoading &&
-              !error &&
-              availableSlots.length === 0 &&
-              slotsLoadedForCurrentDate && (
-                <p className="p-2 text-sm text-gray-500 rounded-md bg-gray-50">
-                  {t("extras.spa.noSlots", "No slots for this date.")}
-                </p>
-              )}
 
-            {/* Slot Buttons */}
-            {/* Only render slots if not loading, no error, slots exist, AND slotDuration is known */}
-            {!isLoading &&
-              !error &&
-              availableSlots.length > 0 &&
-              slotDuration && (
-                <div className="flex flex-wrap gap-2">
-                  {availableSlots.map((slot) => {
-                    const isArrivalDaySelected =
-                      selectedSpaDateString === arrivalDateString;
-                    const isTooEarlyOnArrival =
-                      isArrivalDaySelected && slot < ARRIVAL_DAY_START_TIME;
-                    let isEnabled = !isTooEarlyOnArrival; // Start enabled unless too early on arrival day
-                    let disabledTooltip = isTooEarlyOnArrival
-                      ? t(
-                          "extras.spa.slotDisabledArrivalTooltip",
-                          `From ${ARRIVAL_DAY_START_TIME}`
-                        )
-                      : "";
+          {/* "No Slots Available" Message */}
+          {/* Show only if NOT loading, NO error, fetched slots ARE empty, AND load attempt finished */}
+          {!isLoading &&
+            !error &&
+            availableSlots.length === 0 &&
+            slotsLoadedForCurrentDate && (
+              <p className="p-2 text-sm text-gray-500 rounded-md bg-gray-50">
+                {t("extras.spa.noSlots", "No slots available for this date.")}
+              </p>
+            )}
 
-                    // Disable based on mode and availability of necessary slots
-                    if (isEnabled) {
-                      // Only perform further checks if not already disabled by arrival time
-                      if (selectionMode === "single") {
-                        // In single mode, if the slot is in availableSlots, it's enabled.
-                        // This check is already covered by the map iterating over availableSlots.
-                      } else {
-                        // selectionMode === "double"
-                        // In double mode, check if the *next* slot is also available
-                        const expectedNextSlot = calculateNextSlotTime(
-                          slot,
-                          slotDuration
+          {/* "Missing Duration" Message (Indicates potential API issue) */}
+          {/* Show if NOT loading, NO error, slots EXIST, but duration is MISSING, AND load attempt finished */}
+          {!isLoading &&
+            !error &&
+            availableSlots.length > 0 &&
+            !slotDuration &&
+            slotsLoadedForCurrentDate && (
+              <p className="p-2 text-sm text-orange-600 rounded-md bg-orange-50">
+                {t(
+                  "extras.spa.errorDurationMissing",
+                  "Slot duration missing from API response."
+                )}
+              </p>
+            )}
+
+          {/* Slot Buttons Container */}
+          {/* Render only if NOT loading, NO error, slots EXIST, AND duration is KNOWN */}
+          {!isLoading &&
+            !error &&
+            availableSlots.length > 0 &&
+            slotDuration && (
+              <div className="flex flex-wrap gap-2">
+                {/* Map over the available slot times fetched from the API */}
+                {availableSlots.map((slot) => {
+                  // Determine if the button for this slot should be disabled
+                  const isArrival = selectedSpaDateString === arrivalDateString;
+                  const isTooEarly = isArrival && slot < ARRIVAL_DAY_START_TIME;
+                  let isClickable = !isTooEarly; // Start by assuming clickable unless too early
+                  let disabledTooltip = isTooEarly
+                    ? t(
+                        "extras.spa.slotDisabledArrivalTooltip",
+                        `From ${ARRIVAL_DAY_START_TIME}`
+                      )
+                    : "";
+
+                  // Additional check for double mode: disable if the *next* required slot isn't available
+                  if (isClickable && selectionMode === "double") {
+                    const nextSlot = calculateNextSlotTime(slot, slotDuration);
+                    // If next slot cannot be calculated OR is not in the available list, disable this button
+                    if (!nextSlot || !availableSlots.includes(nextSlot)) {
+                      isClickable = false;
+                      // Set tooltip only if not already set by arrival time rule
+                      if (!disabledTooltip)
+                        disabledTooltip = t(
+                          "extras.spa.slotDisabledNextUnavailableTooltip",
+                          "Next slot unavailable"
                         );
-                        const nextSlotIsAvailable =
-                          expectedNextSlot &&
-                          availableSlots.includes(expectedNextSlot);
-                        if (!nextSlotIsAvailable) {
-                          isEnabled = false; // Disable if the second required slot isn't available
-                          if (!disabledTooltip)
-                            disabledTooltip = t(
-                              "extras.spa.slotDisabledNextUnavailableTooltip",
-                              "Next slot unavailable"
-                            );
-                        }
-                      }
                     }
+                  }
 
-                    const isDisabled = !isEnabled; // Final disable state
-                    // Check if the slot is currently selected (handles both single and double visually)
-                    // Uses the local `selectedSlots` state
-                    const isSelected = selectedSlots.includes(slot);
+                  const isDisabled = !isClickable; // Final disabled state
+                  // Check if this slot is part of the currently selected slots array
+                  const isSelected = selectedSlots.includes(slot);
 
-                    return (
-                      <button
-                        key={slot}
-                        type="button"
-                        onClick={() => handleSlotSelect(slot)} // Call the handler
-                        disabled={isDisabled || isLoading} // Disable while fetching slots too, or if slot is disabled
-                        className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-1 ${
-                          isSelected
-                            ? "bg-[#668E73] text-white border-[#5a7d66] ring-[#668E73]" // Selected style
-                            : isDisabled
-                            ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" // Disabled style
-                            : "bg-white text-gray-700 border-gray-300 hover:border-[#668E73] hover:text-[#668E73]" // Default enabled style
-                        }`}
-                        title={disabledTooltip} // Tooltip explains why it's disabled
-                      >
-                        {slot} {/* e.g., "14:00" */}
-                      </button>
-                    );
-                  })}
-                </div> // Closing div for flex-wrap gap-2
-              )}
-            {/* Message if duration is missing (indicates potential API issue) */}
-            {!isLoading &&
-              !error &&
-              availableSlots.length > 0 &&
-              !slotDuration && (
-                <p className="p-2 text-sm text-orange-600 rounded-md bg-orange-50">
-                  {t(
-                    "extras.spa.errorDurationMissing",
-                    "Slot duration missing from API response."
-                  )}
-                </p>
-              )}
-          </div> // Closing div for space-y-2 (Time Slot Selection Area)
-        )}
+                  return (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => handleSlotSelect(slot)} // Call handler on click
+                      disabled={isDisabled || isLoading} // Disable based on calculated state OR if loading globally
+                      // Dynamic classes for styling based on selected/disabled/default states
+                      className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                        isSelected
+                          ? "bg-[#668E73] text-white border-[#5a7d66] ring-[#668E73]" // Selected style
+                          : isDisabled
+                          ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" // Disabled style
+                          : "bg-white text-gray-700 border-gray-300 hover:border-[#668E73] hover:text-[#668E73]" // Default enabled style
+                      }`}
+                      title={disabledTooltip} // Add tooltip explaining why it might be disabled
+                    >
+                      {slot} {/* Display the slot time e.g., "14:00" */}
+                    </button>
+                  );
+                })}
+              </div> // End flex-wrap container
+            )}
+        </div> // End conditional time slot area
+      )}
 
-      {/* "Book Later" Option */}
+      {/* "Book Later" Option Section */}
       <div className="pt-3 border-t border-gray-100">
+        {" "}
+        {/* Add top border for separation */}
         <label
           htmlFor="chooseLaterSpa"
           className="flex items-center gap-2 cursor-pointer"
@@ -1049,21 +1129,22 @@ const SpaScheduler = ({
           <input
             id="chooseLaterSpa"
             type="checkbox"
-            checked={chooseLaterChecked}
-            onChange={handleChooseLaterChange} // Call the handler
+            checked={chooseLaterChecked} // Controlled by state
+            onChange={handleChooseLaterChange} // Attach handler
             className="h-4 w-4 rounded text-[#668E73] focus:ring-[#5a7d66] border-gray-300"
           />
           <span className="text-sm text-gray-700">
             {t("extras.spa.bookLater", "I want to book my time slot later")}
           </span>
         </label>
+        {/* Informational text shown only when the checkbox is checked */}
         {chooseLaterChecked && (
           <p className="pl-6 mt-1 text-xs text-gray-500">
             {t("extras.spa.bookLaterInfo", "Arrange time directly with host.")}
           </p>
         )}
       </div>
-    </div> // Closing div for the main component container
+    </div> // Closing main component div
   );
 };
 

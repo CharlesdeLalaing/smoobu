@@ -6,6 +6,7 @@ import {
   eachDayOfInterval,
   isSameDay,
   startOfDay,
+  addMinutes,
   addDays,
   isAfter,
   isValid as isDateValid,
