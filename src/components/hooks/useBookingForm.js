@@ -12,6 +12,7 @@ import { db } from "../../firebase"; // Adjust the import path as needed
 import { extraCategories } from "../extraCategories";
 import { useNavigate } from "react-router-dom";
 import { roomsData } from "../hooks/roomsData";
+import { useTranslation } from "react-i18next";
 
 // Define constants outside the hook if they don't depend on props/state
 const SPA_ITEM_IDS = [
@@ -30,6 +31,7 @@ const SPA_ITEM_IDS = [
 export const useBookingForm = () => {
   // --- State Definitions ---
   const navigate = useNavigate();
+  const {t} = useTranslation();
   const [formData, setFormData] = useState({
     arrivalDate: "",
     departureDate: "",
@@ -567,7 +569,10 @@ export const useBookingForm = () => {
             formData.spaDateTime || formData.spaBookingPreference === "later";
           if (!spaSelectionMade) {
             setSpaValidationError(
-              "Veuillez sélectionner une date/heure pour le SPA ou choisir 'Réserver plus tard'."
+              t(
+                "extras.spa.selectTimeOrBookLater",
+                "Please select a date/time for the SPA or choose 'Book later'."
+              )
             );
             return false;
           } else {

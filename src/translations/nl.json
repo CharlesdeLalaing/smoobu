@@ -241,6 +241,7 @@
           "selectTwoSlotsNote": "Selectie is voor twee tijdsloten",
           "selectTime": "Selecteer een tijdslot",
           "bookLater": "Ik wil mijn tijdsloten later kiezen",
+          "selectTimeOrBookLater": "Selecteer een datum/tijd voor de SPA of kies 'Later boeken'.",
           "scheduleTitle": "Plan uw SPA-sessie",
           "errorDurationMissing": "Duur van tijdslot ontbreekt in de API",
           "bookLaterInfo": "In uw boekingsbevestiging vindt u het e-mailadres van de host om uw tijdsloten te kiezen"

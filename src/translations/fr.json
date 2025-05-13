@@ -232,18 +232,19 @@
             "description": "Cette formule comprend un accès de 2 heures au spa en plein air avec jacuzzi, sauna, douche chaude avec seau nordique, peignoirs, claquettes, et une bouteille de crémant."
           },
           "selectDate": "Seléctionnez une date",
-          "loading" : "Chargement des créneaux...",
-          "errorLoadingSettings" : "Erreur de chagement des paramètres SPA",
-          "datePlaceholderDropdown" : "Sélectionnez une date",
-          "noSlots" : "Pas de créneaux disponibles pour cette date",
-          "datePlaceholderNoDates" : "Pas de dates disponibles",
-          "checkBookingDates" : "Assurez-vous qu'une date est sélectionnée",
-          "selectTwoSlotsNote" : "La sélection se fait sur deux créneaux",
-          "selectTime" : "Sélectionner un créneau horaire",
+          "loading": "Chargement des créneaux...",
+          "errorLoadingSettings": "Erreur de chagement des paramètres SPA",
+          "datePlaceholderDropdown": "Sélectionnez une date",
+          "noSlots": "Pas de créneaux disponibles pour cette date",
+          "datePlaceholderNoDates": "Pas de dates disponibles",
+          "checkBookingDates": "Assurez-vous qu'une date est sélectionnée",
+          "selectTwoSlotsNote": "La sélection se fait sur deux créneaux",
+          "selectTime": "Sélectionner un créneau horaire",
           "bookLater": "Je souhaite choisir mes créneaux plus tard",
-          "scheduleTitle" : "Planifier votre séance SPA",
-          "errorDurationMissing" : "La durée des créneaux manque de l'API",
-          "bookLaterInfo" :"Dans la confirmation de votre réservation, vous aurez le mail de l'hôte pour choisir vos créneaux"
+          "selectTimeOrBookLater": "Veuillez sélectionner une date/heure pour le SPA ou choisir 'Réserver plus tard'.",
+          "scheduleTitle": "Planifier votre séance SPA",
+          "errorDurationMissing": "La durée des créneaux manque de l'API",
+          "bookLaterInfo": "Dans la confirmation de votre réservation, vous aurez le mail de l'hôte pour choisir vos créneaux"
         },
         "meals": {
           "meatballsLiege": {

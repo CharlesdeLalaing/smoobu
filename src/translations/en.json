@@ -242,6 +242,7 @@
               "selectTime": "Select a time slot",
               "bookLater": "I want to choose my time slots later",
               "scheduleTitle": "Schedule your SPA session",
+              "selectTimeOrBookLater": "Please select a date/time for the SPA or choose 'Book later'.",
               "errorDurationMissing": "Time slot duration is missing from the API",
               "bookLaterInfo": "In your booking confirmation, you will find the host's email to choose your time slots"
             },
