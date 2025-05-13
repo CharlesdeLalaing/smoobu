@@ -445,6 +445,12 @@
               "travelers": "Reizigers: {{adults}} volwassenen",
               "travelersWithChildren": "Reizigers: {{adults}} volwassenen, {{children}} kinderen"
             },
+            "spaTime": {
+              "scheduledTitle": "SPA Sessie",
+              "scheduleLaterTitle": "Planning SPA Sessie",
+              "scheduleLaterInstruction": "Om uw SPA-sessie te plannen, neem alstublieft contact met ons op via het volgende adres: ",
+              "scheduleLaterPriority": "Let op: Tijdsloten worden toegewezen op basis van 'wie het eerst komt, het eerst maalt'."
+            },
             "guestDetails": {
               "title": "Gastinformatie",
               "fullName": "Volledige naam: {{firstName}} {{lastName}}",

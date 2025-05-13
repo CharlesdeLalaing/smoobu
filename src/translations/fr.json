@@ -444,6 +444,12 @@
               "travelers": "Voyageurs: {{adults}} adultes",
               "travelersWithChildren": "Voyageurs: {{adults}} adultes, {{children}} enfants"
             },
+            "spaTime": {
+              "scheduledTitle": "Session SPA",
+              "scheduleLaterTitle": "Programmation Séance SPA",
+              "scheduleLaterInstruction": "Pour planifier votre séane SPA, veuillez nous contacte à l'adresse suivante : ",
+              "scheduleLaterPriority": "Note : Les créneaux sont attribués selon le principe du premier arrivé, premier servi."
+            },
             "guestDetails": {
               "title": "Informations du client",
               "fullName": "Nom complet: {{firstName}} {{lastName}}",

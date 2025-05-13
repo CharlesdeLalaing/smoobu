@@ -144,7 +144,7 @@ export const InfoSupSection = ({
             </div>
           )}
 
-          <div className="min-h-[200px]">
+          <div className="">
             {spaSettingsLoading && (
               <p className="text-sm text-gray-500 animate-pulse">
                 {t("extras.spa.loading")}

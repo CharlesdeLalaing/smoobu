@@ -517,7 +517,7 @@ const RoomCard = ({ room, isAvailable }) => {
 };
 
   return (
-    <div className="space-y-8 bg-[#fbfdfb]">
+    <div className="space-y-4 bg-[#fbfdfb]">
       {filteredRooms.length > 0 && (
         <div>
           {!showOnlySelected && !showOnlyUnselected && (

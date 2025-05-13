@@ -437,21 +437,27 @@
             "title": "Booking Confirmed",
             "subtitle": "A confirmation has been sent to {{email}}",
             "sections": {
-            "stayDetails": {
+              "stayDetails": {
                 "title": "Stay Details",
                 "checkIn": "Check-in: {{date}}",
                 "arrivalTime": "Arrival time: {{time}}",
                 "checkOut": "Check-out: {{date}}",
                 "travelers": "Travelers: {{adults}} adults",
                 "travelersWithChildren": "Travelers: {{adults}} adults, {{children}} children"
-            },
-            "guestDetails": {
+              },
+              "spaTime": {
+    "scheduledTitle": "SPA Session",
+    "scheduleLaterTitle": "SPA Session Scheduling",
+    "scheduleLaterInstruction": "To schedule your SPA session, please contact us at the following address: ",
+    "scheduleLaterPriority": "Note: Time slots are allocated on a first-come, first-served basis."
+  },
+              "guestDetails": {
                 "title": "Guest Information",
                 "fullName": "Full name: {{firstName}} {{lastName}}",
                 "email": "Email: {{email}}",
                 "phone": "Phone: {{phone}}"
-            },
-            "priceDetails": {
+              },
+              "priceDetails": {
                 "title": "Price Details",
                 "basePrice": "Base price: {{price}}€",
                 "extraPerson": "Additional person ({{quantity}}x): {{price}}€",
@@ -462,10 +468,10 @@
                 "promoCodeFixed": "Promo code ({{code}}): -{{amount}}€",
                 "guestFees": "Additional guest fees ({{extraGuests}} person(s)): €{{amount}}",
                 "promoCodePercentage": "Promo code ({{code}} - {{value}}%): -{{amount}}€"
-            },
-            "address": {
+              },
+              "address": {
                 "title": "Address"
-            }
+              }
             },
             "buttons": {
             "backHome": "Back to Home",
