@@ -185,9 +185,7 @@
             "meals": "Meals from Bossimé",
             "boissons": "Drinks"
             },
-            "spa": {
-                "selectDate" : "Select a date"
-            },
+        
             "drinkTypes": {
             "wine": "Wines",
             "beer": "Beers",
@@ -225,14 +223,27 @@
                 }
             },
             "spa": {
-                "basic": {
+              "basic": {
                 "name": "SPA Package (2 pers)",
                 "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket, bathrobes and slippers."
-                },
-                "withBottle": {
+              },
+              "withBottle": {
                 "name": "SPA Package + bottle (2 pers)",
                 "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket, bathrobes, slippers, and a bottle of sparkling wine."
-                }
+              },
+              "selectDate": "Select a date",
+              "loading": "Loading time slots...",
+              "errorLoadingSettings": "Error loading SPA settings",
+              "datePlaceholderDropdown": "Select a date",
+              "noSlots": "No time slots available for this date",
+              "datePlaceholderNoDates": "No dates available",
+              "checkBookingDates": "Please ensure a date is selected",
+              "selectTwoSlotsNote": "Selection is for two time slots",
+              "selectTime": "Select a time slot",
+              "bookLater": "I want to choose my time slots later",
+              "scheduleTitle": "Schedule your SPA session",
+              "errorDurationMissing": "Time slot duration is missing from the API",
+              "bookLaterInfo": "In your booking confirmation, you will find the host's email to choose your time slots"
             },
             "meals": {
                 "meatballsLiege": {

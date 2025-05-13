@@ -19,12 +19,9 @@ import {
   addMinutes,
   isSameDay, // Needed for calculateNextSlotTime check
 } from "date-fns";
-import { fr } from "date-fns/locale"; // Needed for formatDateForDisplay fallback
+import { fr } from "date-fns/locale"; 
 
-// --- Constants ---
-// Special start time for the arrival day
 
-// --- Helper Functions ---
 
 const formatDateForDisplay = (date, locale = "en-US") => {
   if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
@@ -588,24 +585,40 @@ const SpaScheduler = ({
     (e) => {
       const isChecked = e.target.checked;
       setChooseLaterChecked(isChecked);
+
       if (!isChecked) {
-        setSlotsLoadedForCurrentDate(false);
+        // WHEN UNCHECKING
+        console.log("SpaScheduler: Unchecked 'Choose Later'");
+        setSlotsLoadedForCurrentDate(false); // This will trigger the fetch effect if a date is selected
         setSelectedSlots([]);
-        setAvailableSlots([]);
+        setAvailableSlots([]); // Clear visual slots immediately
         setSlotDuration(null);
         setError("");
-        if (isLoading) setIsLoading(false);
+        if (isLoading) setIsLoading(false); // Stop any ongoing load
+
+        // Notify parent that preference is no longer 'later' and no slot is selected yet.
+        // The fetch effect will handle sending actual slot data if a selection is made/validated.
+        if (typeof onScheduleChange === "function") {
+          onScheduleChange(null);
+        }
       } else {
+        // WHEN CHECKING
+        console.log("SpaScheduler: Checked 'Choose Later'");
+        // Clear all local state related to specific time slots
         setSelectedSlots([]);
         setAvailableSlots([]);
         setSlotDuration(null);
         setError("");
-        setSlotsLoadedForCurrentDate(false);
+        setSlotsLoadedForCurrentDate(false); // Slots are not relevant when 'later'
         if (isLoading) setIsLoading(false);
-        if (typeof onScheduleChange === "function") onScheduleChange("later");
+
+        // Notify parent component immediately that the preference is now 'later'
+        if (typeof onScheduleChange === "function") {
+          onScheduleChange("later");
+        }
       }
     },
-    [onScheduleChange, isLoading]
+    [onScheduleChange, isLoading] // isLoading dependency is good here
   );
 
   return (
@@ -671,7 +684,7 @@ const SpaScheduler = ({
 
           {isLoading && (
             <p className="text-sm text-gray-500 animate-pulse">
-              {t("loading", "Loading slots...")}
+              {t("extras.spa.loading", "Loading slots...")}
             </p>
           )}
 

@@ -147,14 +147,13 @@ export const InfoSupSection = ({
           <div className="min-h-[200px]">
             {spaSettingsLoading && (
               <p className="text-sm text-gray-500 animate-pulse">
-                {t("loading", "Chargement des paramètres SPA...")}
+                {t("extras.spa.loading")}
               </p>
             )}
             {spaSettingsError && !spaSettingsLoading && (
               <p className="p-2 text-sm text-red-600 rounded-md bg-red-50">
                 {t(
-                  "extras.spa.errorLoadingSettings",
-                  "Erreur de chargement des paramètres SPA."
+                  "extras.spa.errorLoadingSettings"
                 )}
                 {/* Consider showing spaSettingsError.message for more details in dev */}
               </p>

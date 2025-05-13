@@ -230,7 +230,20 @@
           "withBottle": {
             "name": "SPA Formule + fles (2 pers)",
             "description": "Deze formule omvat 2 uur toegang tot de buitenspa met jacuzzi, sauna, warme douche met Noordse emmer, badjassen, slippers en een fles bubbels."
-          }
+          },
+          "selectDate": "Selecteer een datum",
+          "loading": "Tijdsloten laden...",
+          "errorLoadingSettings": "Fout bij het laden van SPA-instellingen",
+          "datePlaceholderDropdown": "Selecteer een datum",
+          "noSlots": "Geen tijdsloten beschikbaar voor deze datum",
+          "datePlaceholderNoDates": "Geen datums beschikbaar",
+          "checkBookingDates": "Zorg ervoor dat een datum is geselecteerd",
+          "selectTwoSlotsNote": "Selectie is voor twee tijdsloten",
+          "selectTime": "Selecteer een tijdslot",
+          "bookLater": "Ik wil mijn tijdsloten later kiezen",
+          "scheduleTitle": "Plan uw SPA-sessie",
+          "errorDurationMissing": "Duur van tijdslot ontbreekt in de API",
+          "bookLaterInfo": "In uw boekingsbevestiging vindt u het e-mailadres van de host om uw tijdsloten te kiezen"
         },
         "meals": {
           "meatballsLiege": {
