@@ -1,5 +1,6 @@
+// third-party/smoobu/actions/api/spa-availability.js
 import { db } from "../../../../firebase-config.js"; // Adjust path and ensure .js if needed
-import { format, parse, startOfDay, endOfDay, isEqual } from "date-fns"; // Removed addMinutes as it's not used here
+import { format, parse, startOfDay, endOfDay, isEqual } from "date-fns";
 
 // --- Helper Functions (internal to this file) ---
 const timeToMinutes = (timeStr) => {
@@ -19,11 +20,10 @@ const minutesToTime = (totalMinutes) => {
 
 // --- Constants for Departure Day ---
 const DEPARTURE_DAY_START_TIME = "06:00";
-const DEPARTURE_DAY_END_TIME = "10:00"; // Slots starting before this time allowed
+const DEPARTURE_DAY_END_TIME = "10:00";
 
 // --- Route Handler ---
 export async function handleGetSpaAvailability(req, res) {
-  // Extract all query parameters
   const {
     date: dateString,
     arrival: arrivalDateString,
@@ -34,7 +34,6 @@ export async function handleGetSpaAvailability(req, res) {
     `[SPA Availability Route] Request for date: ${dateString}, arrival: ${arrivalDateString}, departure: ${departureDateString}`
   );
 
-  // Validate target date format
   if (!dateString) {
     return res
       .status(400)
@@ -53,7 +52,6 @@ export async function handleGetSpaAvailability(req, res) {
     }
     const targetDateStart = startOfDay(targetDate);
 
-    // Get Default SPA Settings from Firestore
     const settingsRef = db.collection("spaSettings").doc("default");
     const settingsSnap = await settingsRef.get();
     if (!settingsSnap.exists) {
@@ -65,14 +63,15 @@ export async function handleGetSpaAvailability(req, res) {
         .json({ message: "SPA settings are not configured." });
     }
     const settings = settingsSnap.data();
-    const defaultStartTime = settings.startTime || "14:00"; // Using your previously mentioned defaults
-    const defaultEndTime = settings.endTime || "23:59"; // Using your previously mentioned defaults (23:59 for midnight)
-    const slotDurationMinutes = settings.slotDurationMinutes || 120; // Using your previously mentioned default
+    const defaultStartTime = settings.startTime || "14:00";
+    const defaultEndTime = settings.endTime || "23:59";
+    const slotDurationMinutes = settings.slotDurationMinutes || 120;
 
-    // --- Determine Base Effective Times (Including Firestore Override) ---
     let baseEffectiveStartTime = defaultStartTime;
     let baseEffectiveEndTime = defaultEndTime;
-    let isClosed = false;
+    let isClosed = false; // Will be set by override if applicable
+    let manuallyDeactivatedSlotsList = []; // Initialize
+
     const overrideRef = db
       .collection("spaAvailabilityOverrides")
       .doc(dateString);
@@ -84,44 +83,56 @@ export async function handleGetSpaAvailability(req, res) {
         overrideData
       );
       if (overrideData.isClosed === true) {
-        isClosed = true;
+        isClosed = true; // Set the flag here
       } else {
-        // Override defaults only if specified in the document
+        // Override defaults only if specified and not closed
         baseEffectiveStartTime =
           overrideData.startTime || baseEffectiveStartTime;
         baseEffectiveEndTime = overrideData.endTime || baseEffectiveEndTime;
       }
+      // Always read manuallyDeactivatedSlots if they exist, regardless of isClosed status
+      if (
+        overrideData.manuallyDeactivatedSlots &&
+        Array.isArray(overrideData.manuallyDeactivatedSlots)
+      ) {
+        manuallyDeactivatedSlotsList = overrideData.manuallyDeactivatedSlots;
+        console.log(
+          `[SPA Availability Route] Found manually deactivated slots for ${dateString}:`,
+          manuallyDeactivatedSlotsList
+        );
+      }
     }
-    // --- End Base Effective Times ---
 
-    // --- Apply Departure Day Logic (if not closed and departure date matches) ---
+    // Apply Departure Day Logic (only if not explicitly closed by override)
     let finalEffectiveStartTime = baseEffectiveStartTime;
     let finalEffectiveEndTime = baseEffectiveEndTime;
     const isDepartureDay =
       departureDateString && dateString === departureDateString;
 
     if (!isClosed && isDepartureDay) {
+      // Check isClosed before applying departure logic
       console.log(
         `[SPA Availability Route] Applying departure day hours (${DEPARTURE_DAY_START_TIME} - ${DEPARTURE_DAY_END_TIME}) for ${dateString}`
       );
       finalEffectiveStartTime = DEPARTURE_DAY_START_TIME;
       finalEffectiveEndTime = DEPARTURE_DAY_END_TIME;
     }
-    // --- End Departure Day Logic ---
 
-    // If closed by override, return empty slots but include duration/endtime
+    // If explicitly closed by an override, return now with the appropriate structure
     if (isClosed) {
       console.log(
         `[SPA Availability Route] SPA is closed on ${dateString} based on override.`
       );
       return res.status(200).json({
-        slots: [],
+        availableSlots: [], // No slots available if closed
+        manuallyDeactivatedSlots: manuallyDeactivatedSlotsList, // Still return this
+        isClosed: true, // Indicate it's closed
         slotDurationMinutes: slotDurationMinutes,
-        effectiveEndTime: finalEffectiveEndTime, // Still useful to know the intended end time
+        effectiveEndTime: finalEffectiveEndTime, // The end time that *would* have applied or from override
       });
     }
 
-    // Convert FINAL effective times to minutes
+    // Convert FINAL effective times to minutes (only if not closed)
     const startMinutes = timeToMinutes(finalEffectiveStartTime);
     const endMinutes = timeToMinutes(finalEffectiveEndTime);
 
@@ -134,97 +145,111 @@ export async function handleGetSpaAvailability(req, res) {
       console.error(
         `[SPA Availability Route] Invalid final effective start/end times for ${dateString}: ${finalEffectiveStartTime} - ${finalEffectiveEndTime}`
       );
+      // If times are invalid, it's effectively closed or misconfigured.
+      // Return as if closed but with specific error if needed, or just empty slots.
       return res
-        .status(500)
-        .json({ message: "Invalid SPA operating hours configuration." });
+        .status(200) // Still 200, but with data indicating no availability
+        .json({
+          availableSlots: [],
+          manuallyDeactivatedSlots: manuallyDeactivatedSlotsList,
+          isClosed: true, // Treat as closed due to invalid time config for this day
+          slotDurationMinutes: slotDurationMinutes,
+          effectiveEndTime: finalEffectiveEndTime,
+          error: "Invalid SPA operating hours configuration for this day.", // Optional error hint
+        });
     }
 
-    // --- Get Existing Bookings from Firestore ---
-const rangeStart = targetDateStart;
-const rangeEnd = endOfDay(targetDateStart);
-const bookingsRef = db.collection("bookings");
+    // Get Existing Bookings from Firestore
+    const rangeStart = targetDateStart;
+    const rangeEnd = endOfDay(targetDateStart);
+    const bookingsRef = db.collection("bookings");
 
-// First, get bookings with spaDateTime on the target date
-const bookingsSnap = await bookingsRef
-  .where("spaDateTime", ">=", rangeStart)
-  .where("spaDateTime", "<=", rangeEnd)
-  .get();
+    const bookingsSnap = await bookingsRef
+      .where("spaDateTime", ">=", rangeStart)
+      .where("spaDateTime", "<=", rangeEnd)
+      .get();
 
-const bookedSlots = new Set(); // Store booked slots as "HH:MM" strings
-
-// Process each booking to mark all affected slots as booked
-bookingsSnap.forEach((doc) => {
-  const booking = doc.data();
-
-  if (booking.spaDateTime && typeof booking.spaDateTime.toDate === "function") {
-    const startSlotDateTime = booking.spaDateTime.toDate();
-
-    if (isEqual(startOfDay(startSlotDateTime), targetDateStart)) {
-      // Add the start slot
-      const startTimeString = format(startSlotDateTime, "HH:mm");
-      bookedSlots.add(startTimeString);
-
-      // If we have spaSlots array, add all slots in it
-      if (booking.spaSlots && Array.isArray(booking.spaSlots)) {
-        booking.spaSlots.forEach((slot) => {
-          bookedSlots.add(slot);
-        });
-      }
-      // If we have spaEndDateTime, calculate and add any intermediate slots
-      else if (
-        booking.spaEndDateTime &&
-        typeof booking.spaEndDateTime.toDate === "function"
+    const bookedSlots = new Set();
+    bookingsSnap.forEach((doc) => {
+      const booking = doc.data();
+      if (
+        booking.spaDateTime &&
+        typeof booking.spaDateTime.toDate === "function"
       ) {
-        const endSlotDateTime = booking.spaEndDateTime.toDate();
-        const endTimeString = format(endSlotDateTime, "HH:mm");
+        const startSlotDateTime = booking.spaDateTime.toDate();
+        if (isEqual(startOfDay(startSlotDateTime), targetDateStart)) {
+          // Prefer spaSlots array if available and valid
+          if (
+            booking.spaSlots &&
+            Array.isArray(booking.spaSlots) &&
+            booking.spaSlots.length > 0
+          ) {
+            booking.spaSlots.forEach((slot) => {
+              if (typeof slot === "string" && slot.includes(":")) {
+                // Basic validation
+                bookedSlots.add(slot);
+              }
+            });
+          } else {
+            // Fallback: if spaSlots is missing or empty, use spaDateTime and spaEndDateTime
+            const startTimeString = format(startSlotDateTime, "HH:mm");
+            bookedSlots.add(startTimeString); // Add the initial slot
 
-        // Calculate number of slots between start and end
-        const startMinutes = timeToMinutes(startTimeString);
-        const endMinutes = timeToMinutes(endTimeString);
-        const numSlots = Math.ceil(
-          (endMinutes - startMinutes) / slotDurationMinutes
-        );
+            // If spaEndDateTime is present, calculate intermediate slots
+            if (
+              booking.spaEndDateTime &&
+              typeof booking.spaEndDateTime.toDate === "function"
+            ) {
+              let currentSlotTimeJS = startSlotDateTime.getTime();
+              const endTimeJS = booking.spaEndDateTime.toDate().getTime();
 
-        // Mark all intermediate slots as booked
-        let currentMinutes = startMinutes;
-        for (let i = 0; i < numSlots; i++) {
-          const slotTime = minutesToTime(currentMinutes);
-          bookedSlots.add(slotTime);
-          currentMinutes += slotDurationMinutes;
+              // Iterate by slotDurationMinutes to fill in all slots covered by the booking
+              // This loop ensures we add slots *up to but not including* the one that would start at or after spaEndDateTime
+              while (currentSlotTimeJS < endTimeJS) {
+                const slotToAdd = format(new Date(currentSlotTimeJS), "HH:mm");
+                bookedSlots.add(slotToAdd);
+                currentSlotTimeJS += slotDurationMinutes * 60000; // Increment by slot duration
+              }
+            }
+            // If only spaDateTime is present and no spaSlots/spaEndDateTime,
+            // it implies a booking of at least one slotDuration.
+            // The initial slot is already added. If a treatment spans multiple default slots,
+            // this basic fallback might not cover all booked time without spaSlots array.
+            // However, new bookings *should* have the spaSlots array.
+          }
         }
       }
-      // If we only have the start time, assume it books the default duration
-      else {
-        // Mark the next slot as booked too (for double slot bookings)
-        const startMinutes = timeToMinutes(startTimeString);
-        const nextSlotTime = minutesToTime(startMinutes + slotDurationMinutes);
-        bookedSlots.add(nextSlotTime);
-      }
-    }
-  }
-});
-    // --- End Get Bookings ---
+    });
 
-    // --- Generate potential slots using FINAL effective times ---
-    const availableSlots = [];
+    // Generate potential slots using FINAL effective times
+    const availableSlotsResult = []; // Renamed to avoid conflict with existing 'availableSlots' variable from hook
     let currentMinutes = startMinutes;
-    // Loop generates slots starting strictly BEFORE the final end time
+
     while (currentMinutes < endMinutes) {
       const potentialSlotTime = minutesToTime(currentMinutes);
-      if (!bookedSlots.has(potentialSlotTime)) {
-        availableSlots.push(potentialSlotTime);
+      // Check against booked slots AND manually deactivated slots
+      if (
+        !bookedSlots.has(potentialSlotTime) &&
+        !manuallyDeactivatedSlotsList.includes(potentialSlotTime)
+      ) {
+        availableSlotsResult.push(potentialSlotTime);
       }
       currentMinutes += slotDurationMinutes;
     }
-    // --- End Slot Generation ---
 
     console.log(
-      `[SPA Availability Route] Sending available slots for ${dateString} (DepDay: ${isDepartureDay}):`,
-      availableSlots
+      `[SPA Availability Route] Sending data for ${dateString} (DepDay: ${isDepartureDay}):`,
+      {
+        available: availableSlotsResult,
+        deactivated: manuallyDeactivatedSlotsList,
+        closed: isClosed, // Should be false here if we reached this point
+      }
     );
     // Respond with the filtered slots, duration, and the end time used for filtering
     res.status(200).json({
-      slots: availableSlots,
+      availableSlots: availableSlotsResult, // Use the new variable name
+      manuallyDeactivatedSlots: manuallyDeactivatedSlotsList,
+      isClosed: isClosed, // This will be false if we are in this part of the code
       slotDurationMinutes: slotDurationMinutes,
       effectiveEndTime: finalEffectiveEndTime,
     });
@@ -237,6 +262,7 @@ bookingsSnap.forEach((doc) => {
     res.status(500).json({
       message:
         "An internal server error occurred while retrieving SPA availability.",
+      // For dev, you might want to include more detail: error: error.message
     });
   }
 }
