@@ -22,7 +22,7 @@ import {
 import { fr } from "date-fns/locale"; // Needed for formatDateForDisplay fallback
 
 // --- Constants ---
-const ARRIVAL_DAY_START_TIME = "14:00"; // Special start time for the arrival day
+// Special start time for the arrival day
 
 // --- Helper Functions ---
 
@@ -108,11 +108,13 @@ const SpaScheduler = ({
   initialDateTime, // Optional: ISO String or Timestamp for the START time
   initialPreference, // Optional: 'later' if previously selected
   minDate, // Expecting Date object or undefined (Booking arrival date - should be memoized by parent)
-  maxDate, // Expecting Date object or undefined (Booking departure date - should be memoized by parent)
+  maxDate,
+  spaSettings, // Expecting Date object or undefined (Booking departure date - should be memoized by parent)
 }) => {
   const { t, i18n } = useTranslation();
   const currentLocale = i18n.language || "en-US";
   const selectionMode = "double"; // Hardcoded as per requirement
+  const arrivalDayEffectiveStartTime = spaSettings?.startTime || "14:00"; 
 
   // State Initialization Helpers
   const getInitialDateString = (dateTime, preference) => {
@@ -505,20 +507,20 @@ const SpaScheduler = ({
         return;
       }
       const isArrivalDaySelected = selectedSpaDateString === arrivalDateString;
-      if (isArrivalDaySelected && clickedSlot < ARRIVAL_DAY_START_TIME) {
+      // VVVV CORRECTED LINE VVVV
+      if (isArrivalDaySelected && clickedSlot < arrivalDayEffectiveStartTime) {
         console.warn(
-          `SpaScheduler: Selection prevented on arrival day before ${ARRIVAL_DAY_START_TIME}.`
+          // VVVV CORRECTED LOG MESSAGE VVVV
+          `SpaScheduler: Selection prevented on arrival day before ${arrivalDayEffectiveStartTime}.`
         );
         return;
       }
 
-      // The button's disabled state (calculated in JSX) should prevent selection of invalid start slots.
-      // This handler assumes 'clickedSlot' is a potentially valid start based on button logic.
       if (!availableSlots.includes(clickedSlot)) {
         console.warn(
           "handleSlotSelect: Clicked slot is not in the master list of available slots. This is unexpected if button wasn't disabled."
         );
-        return; // Don't proceed if the base slot isn't even available
+        return;
       }
 
       let newSelectedSlots = [];
@@ -526,12 +528,10 @@ const SpaScheduler = ({
 
       if (selectionMode === "single") {
         newSelectedSlots = [clickedSlot];
-        isValidPair = true; // Single slot is always a "valid pair" of one
+        isValidPair = true;
       } else {
-        // "double" mode
         const nextSlotTime = calculateNextSlotTime(clickedSlot, slotDuration);
         if (nextSlotTime && availableSlots.includes(nextSlotTime)) {
-          // Check if the calculated next slot is in the master available list
           newSelectedSlots = [clickedSlot, nextSlotTime];
           isValidPair = true;
         } else {
@@ -540,8 +540,6 @@ const SpaScheduler = ({
               nextSlotTime && availableSlots.includes(nextSlotTime)
             }`
           );
-          // Do not change selection or notify parent if a valid pair cannot be formed.
-          // The button's disabled logic should ideally prevent this.
           return;
         }
       }
@@ -571,7 +569,7 @@ const SpaScheduler = ({
           "SpaScheduler handleSlotSelect: Error creating bookingData",
           e
         );
-        setSelectedSlots([]); // Reset on error
+        setSelectedSlots([]);
         if (typeof onScheduleChange === "function") onScheduleChange(null);
       }
     },
@@ -582,6 +580,7 @@ const SpaScheduler = ({
       slotDuration,
       arrivalDateString,
       selectionMode,
+      arrivalDayEffectiveStartTime, // Ensure this is in the dependency array
     ]
   );
 
@@ -632,7 +631,7 @@ const SpaScheduler = ({
         >
           <option value="" disabled={selectedSpaDateString !== ""}>
             {dateOptions.length > 0
-              ? t("extras.spa.datePlaceholderDropdown", "-- Select a Date --")
+              ? t("extras.spa.datePlaceholderDropdown",)
               : t(
                   "extras.spa.datePlaceholderNoDates",
                   "-- No dates available --"
@@ -713,7 +712,7 @@ const SpaScheduler = ({
                 {availableSlots.map((slot1) => {
                   const isArrival = selectedSpaDateString === arrivalDateString;
                   const isTooEarlyOnArrival =
-                    isArrival && slot1 < ARRIVAL_DAY_START_TIME;
+                    isArrival && slot1 < arrivalDayEffectiveStartTime;
 
                   let canBeValidStart = true;
                   let disabledTooltip = "";
@@ -722,7 +721,7 @@ const SpaScheduler = ({
                     canBeValidStart = false;
                     disabledTooltip = t(
                       "extras.spa.slotDisabledArrivalTooltip",
-                      `From ${ARRIVAL_DAY_START_TIME}`
+                      `From ${arrivalDayEffectiveStartTime}`
                     );
                   }
 

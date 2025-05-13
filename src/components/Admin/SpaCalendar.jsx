@@ -872,14 +872,11 @@ const SpaCalendar = () => {
                   {hasSpaBookings && (
                     <div className="flex justify-center mt-1 space-x-1">
                       {dateSpaBookingsForDots.slice(0, 3).map((b, i) => {
-                        const colors = getPropertyColor(b);
+
                         return (
                           <div
                             key={i}
-                            className={`w-2 h-2 rounded-full ${colors.bg.replace(
-                              "-100",
-                              "-500"
-                            )}`}
+                            className={`w-2 h-2 rounded-full bg-green-400`}
                             title={b.property}
                           ></div>
                         );

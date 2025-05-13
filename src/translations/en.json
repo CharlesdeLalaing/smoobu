@@ -185,6 +185,9 @@
             "meals": "Meals from Bossimé",
             "boissons": "Drinks"
             },
+            "spa": {
+                "selectDate" : "Select a date"
+            },
             "drinkTypes": {
             "wine": "Wines",
             "beer": "Beers",
