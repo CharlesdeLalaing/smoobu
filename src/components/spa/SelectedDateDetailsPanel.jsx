@@ -429,8 +429,7 @@ const SelectedDateDetailsPanel = ({
                 Sélectionnez une réservation "À programmer" pour réserver un
                 créneau disponible. Cliquez sur un créneau disponible pour le
                 désactiver, ou sur un créneau désactivé pour le réactiver (si
-                aucune réservation "Plus tard" n'est sélectionnée pour la
-                désactivation).
+                aucune réservation "Plus tard" n'est sélectionnée).
               </div>
             )}
         </>
