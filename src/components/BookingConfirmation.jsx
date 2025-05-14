@@ -1,80 +1,75 @@
+// src/pages/BookingConfirmation.js (or appropriate path)
 import React, { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom"; // Import useNavigate
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import logoBaseilles from "../assets/logoBaseilles.webp"; // Verify path to logo
 import { addMinutes, format as formatFn } from "date-fns";
-import { fr } from "date-fns/locale"; // Import French locale
+import { fr, enUS, nl } from "date-fns/locale"; // Import all required locales
 import "../assets/bookingConfirmation.css"; // Verify path to CSS
-// Import an icon if desired, e.g., from lucide-react
-import { CalendarClock } from "lucide-react"; // Make sure to install lucide-react if using: npm install lucide-react
+import { CalendarClock } from "lucide-react";
+
+// Helper to get date-fns locale (can be moved to a shared utils file)
+const getDateFnLocale = (lang = "fr") => {
+  const baseLang = lang.split("-")[0]; // Use base language (e.g., "en" from "en-US")
+  switch (baseLang) {
+    case "fr":
+      return fr;
+    case "en":
+      return enUS;
+    case "nl":
+      return nl;
+    default:
+      return fr; // Default to French
+  }
+};
 
 const BookingConfirmation = () => {
-  const { t } = useTranslation();
-  const navigate = useNavigate(); // Hook for navigation back home
-  const [status, setStatus] = useState("loading"); // Possible values: 'loading', 'success', 'error'
-  const [bookingDetails, setBookingDetails] = useState(null); // State to hold the confirmed booking data
-  const [searchParams] = useSearchParams(); // Hook to read URL query parameters
-  const paymentIntent = searchParams.get("payment_intent"); // Get payment_intent value from URL
-  const [displayPrice, setDisplayPrice] = useState(null); // State for the final price shown to user
-  const [priceCalculated, setPriceCalculated] = useState(false); // Flag to run price calculation only once
+  const { t, i18n } = useTranslation(); // Get i18n instance
+  const navigate = useNavigate();
+  const [status, setStatus] = useState("loading");
+  const [bookingDetails, setBookingDetails] = useState(null);
+  const [searchParams] = useSearchParams();
+  const paymentIntent = searchParams.get("payment_intent");
+  const [displayPrice, setDisplayPrice] = useState(null);
+  const [priceCalculated, setPriceCalculated] = useState(false);
 
-  // --- Effect 1: Load Booking Data ---
-  // Tries to load data from localStorage first (passed after payment),
-  // otherwise fetches from backend using paymentIntent ID from URL.
+  const currentLocale = i18n.language; // e.g., "en", "fr-BE", "nl"
+  const currentDateFnsLocale = getDateFnLocale(currentLocale);
+
   useEffect(() => {
     const storedBookingData = localStorage.getItem("bookingData");
-
     if (storedBookingData) {
-      // Data found in localStorage
       try {
         const parsedData = JSON.parse(storedBookingData);
-        console.log("Loaded booking data from localStorage:", parsedData);
-        setBookingDetails(parsedData); // Set the booking details state
-        setStatus("success"); // Set status to success
-        localStorage.removeItem("bookingData"); // Clean up localStorage
+        setBookingDetails(parsedData);
+        setStatus("success");
+        localStorage.removeItem("bookingData");
       } catch (error) {
         console.error("Error parsing booking data from localStorage:", error);
-        setStatus("error"); // Set error status if parsing fails
+        setStatus("error");
       }
     } else if (paymentIntent) {
-      // No localStorage data, but paymentIntent exists in URL, fetch from API
-      console.log(
-        "No localStorage data, fetching using paymentIntent:",
-        paymentIntent
-      );
-      fetchBookingDetails(paymentIntent); // Call the API fetching function
+      fetchBookingDetails(paymentIntent);
     } else {
-      // Critical error: No way to retrieve booking data
       console.error(
         "Cannot display confirmation: No booking data found in localStorage or paymentIntent in URL."
       );
-      setStatus("error"); // Set error status
+      setStatus("error");
     }
-    // This effect runs once on mount or if paymentIntent changes (unlikely after mount)
-  }, [paymentIntent]); // Dependency array
+  }, [paymentIntent]);
 
-  // --- Effect 2: Calculate Display Price ---
-  // Runs after bookingDetails state is updated to calculate the final price shown.
   useEffect(() => {
-    // Only run if bookingDetails are loaded and price hasn't been calculated yet
     if (bookingDetails && !priceCalculated) {
-      calculateAndSetFinalPrice(bookingDetails); // Calculate the price
-      setPriceCalculated(true); // Set flag to prevent recalculation
+      calculateAndSetFinalPrice(bookingDetails);
+      setPriceCalculated(true);
     }
-  }, [bookingDetails, priceCalculated]); // Dependencies: re-run if details change or flag resets
+  }, [bookingDetails, priceCalculated]);
 
-  // --- Price Calculation Logic ---
-  // Calculates the final price based on various fields potentially present in bookingDetails
   const calculateAndSetFinalPrice = (data) => {
-    // Prefer the simple 'price' field if it exists (likely calculated finally on backend/payment)
     if (data.price !== null && data.price !== undefined) {
-      console.log("Using top-level price:", data.price);
       setDisplayPrice(parseFloat(data.price));
       return;
     }
-
-    // Fallback calculation if 'price' is missing
-    console.log("Calculating price from breakdown...");
     const basePrice = parseFloat(
       data.priceBreakdown?.basePrice ||
         data.basePrice ||
@@ -105,237 +100,165 @@ const BookingConfirmation = () => {
         data.couponApplied?.discount ||
         0
     );
-
     const finalPrice =
       basePrice + guestFees + extrasTotal - longStayDiscount - couponDiscount;
-    console.log("Calculated price breakdown:", {
-      basePrice,
-      guestFees,
-      extrasTotal,
-      longStayDiscount,
-      couponDiscount,
-      finalPrice,
-    });
-    setDisplayPrice(finalPrice >= 0 ? finalPrice : 0); // Ensure it's not negative
+    setDisplayPrice(finalPrice >= 0 ? finalPrice : 0);
   };
 
-  // --- API Fetching Logic ---
-  // Fetches booking details from backend using payment intent ID with retries
   const fetchBookingDetails = async (paymentIntentId) => {
     let attempts = 0;
-    const maxAttempts = 5; // Max number of retries
-    const retryDelay = 2000; // Delay between retries in milliseconds
-    // Use environment variable for API URL, fallback to localhost for development
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"; // Adjust port if needed
+    const maxAttempts = 5;
+    const retryDelay = 2000;
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
     const attemptFetch = async () => {
       try {
-        console.log(
-          `Attempt ${
-            attempts + 1
-          } fetching booking for paymentIntent: ${paymentIntentId}`
-        );
         const response = await fetch(
           `${API_URL}/api/bookings/${paymentIntentId}`,
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          }
+          { method: "GET", headers: { "Content-Type": "application/json" } }
         );
-
-        // Handle 404 Not Found (possibly temporary)
         if (response.status === 404) {
           attempts++;
           if (attempts < maxAttempts) {
-            console.log(
-              `Booking not found (404), retrying in ${retryDelay / 1000}s...`
-            );
-            setTimeout(attemptFetch, retryDelay); // Schedule retry
-            return; // Exit current attempt
+            setTimeout(attemptFetch, retryDelay);
+            return;
           } else {
-            console.error(`Booking not found after ${maxAttempts} attempts.`);
-            throw new Error(
-              t(
-                "bookingConfirmation.error.notFound",
-                "Booking details not found."
-              )
-            );
+            throw new Error(t("bookingConfirmation.error.notFound"));
           }
         }
-
-        // Handle other non-successful HTTP statuses
         if (!response.ok) {
-          const errorText = await response.text(); // Try to get error text from body
-          console.error(
-            `API responded with status: ${response.status}. Body: ${errorText}`
-          );
+          const errorText = await response.text();
           throw new Error(
-            t(
-              "bookingConfirmation.error.fetchFailed",
-              "Failed to fetch booking details."
-            )
+            `${t("bookingConfirmation.error.fetchFailed")} Status: ${
+              response.status
+            }. Body: ${errorText}`
           );
         }
-
-        // Parse successful JSON response
         const data = await response.json();
-        console.log("Fetched booking data from API:", data);
-
-        // Check for application-level errors within the JSON data
-        if (data.error) {
-          console.error("API returned application error:", data.error);
-          throw new Error(data.error);
-        }
-
-        // Success! Update state
+        if (data.error) throw new Error(data.error);
         setBookingDetails(data);
         setStatus("success");
       } catch (error) {
-        // Handle errors during fetch or retries
         console.error("Detailed error in fetchBookingDetails attempt:", error);
         if (attempts < maxAttempts && status !== "success") {
-          // Check attempts and ensure we haven't succeeded elsewhere
           attempts++;
-          console.log(
-            `Fetch attempt failed, retrying in ${retryDelay / 1000}s...`
-          );
-          setTimeout(attemptFetch, retryDelay); // Schedule retry
+          setTimeout(attemptFetch, retryDelay);
         } else {
-          setStatus("error"); // Set final error state if max attempts reached or already succeeded
+          setStatus("error");
         }
       }
     };
-
-    attemptFetch(); // Initiate the first fetch attempt
+    attemptFetch();
   };
 
   const getJsDate = (dateValue) => {
-    if (!dateValue) return null; // Return null if input is falsy
+    if (!dateValue) return null;
     try {
       let date;
-      // CHECK 1: Is it already a JS Date?
-      if (dateValue instanceof Date) {
-        date = dateValue;
+      if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
+        return dateValue;
       }
-      // CHECK 2: Does it have the .toDate() method (true Firestore Timestamp)?
-      else if (dateValue && typeof dateValue.toDate === "function") {
+      if (dateValue && typeof dateValue.toDate === "function") {
         date = dateValue.toDate();
-      }
-      // CHECK 3: Does it look like a serialized Timestamp object?
-      else if (
+      } else if (
         dateValue &&
         typeof dateValue === "object" &&
         dateValue._seconds !== undefined
       ) {
-        // Reconstruct from seconds (milliseconds = seconds * 1000)
-        date = new Date(dateValue._seconds * 1000);
-      }
-      // CHECK 4: Assume it's a string or number parseable by new Date()
-      else {
+        date = new Date(
+          dateValue._seconds * 1000 + (dateValue._nanoseconds || 0) / 1000000
+        );
+      } else {
         date = new Date(dateValue);
       }
-
-      // CHECK 5: Validate the resulting date object
       if (isNaN(date.getTime())) {
         console.error(
           "getJsDate resulted in an Invalid Date for input:",
           dateValue
         );
-        throw new Error("Invalid Date object created");
+        return null; // Return null for invalid dates
       }
-      return date; // Return the valid JS Date object
+      return date;
     } catch (e) {
       console.error("Error converting to JS Date:", dateValue, e);
-      return null; // Return null on error
+      return null;
     }
   };
 
-  // --- Formatting Helper Functions ---
-  // Formats a date string (e.g., "2024-08-15" or ISO string) to locale-specific string ("15 août 2024")
   const formatDate = (dateValue) => {
     if (!dateValue) return "N/A";
+    const date = getJsDate(dateValue);
+    if (!date) return t("errors.invalidDate", "Date invalide");
     try {
-      let date;
-      // CHECK 1: Is it already a JS Date?
-      if (dateValue instanceof Date) {
-        date = dateValue;
-      }
-      // CHECK 2: Does it have the .toDate() method (true Firestore Timestamp)?
-      else if (dateValue && typeof dateValue.toDate === "function") {
-        date = dateValue.toDate();
-      }
-      // CHECK 3: Does it look like a serialized Timestamp object?
-      else if (
-        dateValue &&
-        typeof dateValue === "object" &&
-        dateValue._seconds !== undefined
-      ) {
-        date = new Date(dateValue._seconds * 1000); // Reconstruct from seconds
-      }
-      // CHECK 4: Assume it's a string or number parseable by new Date()
-      else {
-        date = new Date(dateValue);
-      }
-
-      // CHECK 5: Validate the resulting date object
-      if (isNaN(date.getTime())) {
-        console.error(
-          "formatDate resulted in an Invalid Date for input:",
-          dateValue
-        );
-        throw new Error("Invalid Date object created");
-      }
-
-      // Proceed with formatting
-      return new Intl.DateTimeFormat("fr-BE", {
+      return new Intl.DateTimeFormat(currentLocale, {
+        // Use currentLocale
         day: "numeric",
         month: "long",
         year: "numeric",
       }).format(date);
     } catch (e) {
-      console.error("Error formatting date:", dateValue, e);
-      return t("errors.invalidDate", "Date invalide");
+      console.error("Error formatting date with Intl:", dateValue, e);
+      // Fallback to a simpler format if Intl fails for some reason
+      try {
+        return formatFn(date, "d MMMM yyyy", { locale: currentDateFnsLocale });
+      } catch (e2) {
+        console.error(
+          "Error formatting date with date-fns fallback:",
+          dateValue,
+          e2
+        );
+        return t("errors.invalidDate", "Date invalide");
+      }
     }
   };
 
-  // Formats a time string (e.g., "14:00") - basic implementation, returns '-' if null/empty
-  const formatTime = (timeString) => {
-    return timeString || "-";
+  const formatTime = (timeStringOrDate) => {
+    if (!timeStringOrDate) return "-";
+    const dateObj = getJsDate(timeStringOrDate); // Try to parse if it's a full date string/object
+    if (dateObj) {
+      try {
+        return formatFn(dateObj, "HH:mm", { locale: currentDateFnsLocale });
+      } catch (e) {
+        console.error("Error formatting dateObj as time:", timeStringOrDate, e);
+        // If it was a date object that failed, it's an issue.
+        // If it was meant to be a simple time string like "14:00", it might pass through.
+      }
+    }
+    // If it's already a simple HH:mm string, return it.
+    // This is a basic check; more robust validation might be needed if various formats are expected.
+    if (
+      typeof timeStringOrDate === "string" &&
+      /^\d{2}:\d{2}$/.test(timeStringOrDate)
+    ) {
+      return timeStringOrDate;
+    }
+    return "-"; // Fallback
   };
 
-  // Translates extra names using i18n keys if applicable, otherwise returns the name
   const renderExtraName = (extra) => {
     if (!extra?.name)
-      return t("bookingConfirmation.unknownExtra", "Extra Item"); // Fallback name
-    // Check if the name follows the convention 'category.item.name'
+      return t("bookingConfirmation.unknownExtra", "Extra Item");
     return extra.name.startsWith("extras.") ? t(extra.name) : extra.name;
   };
 
-  // Formats a price value to two decimal places, handling various input types
   const formatPrice = (price) => {
-    if (price === null || price === undefined) return "0.00"; // Handle null/undefined
-    // Convert string to number if necessary
+    if (price === null || price === undefined) return "0.00";
     const numberPrice = typeof price === "string" ? parseFloat(price) : price;
-    // Check if it's a valid number before formatting
     return typeof numberPrice === "number" && !isNaN(numberPrice)
       ? numberPrice.toFixed(2)
       : "0.00";
   };
 
-  // Calculates the number of "extra" guests beyond the base occupancy
   const calculateExtraGuests = () => {
-    if (!bookingDetails) return 0; // Guard clause
+    if (!bookingDetails) return 0;
     const totalGuests =
       (parseInt(bookingDetails.adults) || 0) +
       (parseInt(bookingDetails.children) || 0);
-    // Default base occupancy to 2 if not specified in booking details
     const startingGuests =
       bookingDetails.priceDetails?.settings?.startingAtGuest || 2;
-    return Math.max(0, totalGuests - startingGuests); // Ensure result is not negative
+    return Math.max(0, totalGuests - startingGuests);
   };
-  // --- End Helper Functions ---
 
-  // --- Render Loading State ---
   if (status === "loading") {
     return (
       <div
@@ -352,16 +275,13 @@ const BookingConfirmation = () => {
             {t("bookingConfirmation.loading.title")}
           </h2>
           <p>{t("bookingConfirmation.loading.message")}</p>
-          {/* You could add a simple spinner here */}
-          <div className="mt-4 spinner"></div> {/* Add CSS for .spinner */}
+          <div className="mt-4 spinner"></div>
         </div>
       </div>
     );
   }
 
-  // --- Render Error State ---
   if (status === "error" || !bookingDetails) {
-    // Show error if status is error OR if booking details are null after loading
     return (
       <div
         className="container"
@@ -373,16 +293,11 @@ const BookingConfirmation = () => {
         }}
       >
         <div className="card error-card" style={{ textAlign: "center" }}>
-          {" "}
-          {/* Centered error card */}
           <h2 className="mb-2 text-xl font-semibold text-red-600">
             {t("bookingConfirmation.error.title")}
           </h2>
           <p className="mb-4">{t("bookingConfirmation.error.message")}</p>
-          <button
-            onClick={() => navigate("/")} // Navigate back home
-            className="button-primary"
-          >
+          <button onClick={() => navigate("/")} className="button-primary">
             {t(
               "bookingConfirmation.error.backHomeButton",
               "Retour à l'accueil"
@@ -393,73 +308,73 @@ const BookingConfirmation = () => {
     );
   }
 
-  // --- Render Success State ---
-  // Determine SPA scheduling status *after* confirming bookingDetails exist
-
   const needsSpaScheduling = bookingDetails.spaBookingPreference === "later";
   const scheduledSpaTime =
     bookingDetails.spaDateTime &&
     bookingDetails.spaBookingPreference === "scheduled";
-
-  let spaTimeDisplay = t("errors.invalidTime", "Heure invalide"); // Default error message
+  let spaTimeDisplay = t("errors.invalidTime", "Heure invalide");
 
   if (scheduledSpaTime && bookingDetails) {
-    // Ensure bookingDetails exist here too
-    const startTimeObj = getJsDate(bookingDetails.spaDateTime); // Use helper to get Date object
+    const startTimeObj = getJsDate(bookingDetails.spaDateTime);
+    let endTimeObj = bookingDetails.spaEndDateTime
+      ? getJsDate(bookingDetails.spaEndDateTime)
+      : null;
 
     if (startTimeObj) {
-      // Proceed only if we got a valid Date object
-      const startTimeString = startTimeObj.toLocaleTimeString("fr-BE", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      // --- Determine Slot Duration ---
-      let actualSlotDurationMinutes;
-      // Check if bookingDetails exists before accessing spaSlotDuration
-      if (
-        bookingDetails &&
-        typeof bookingDetails.spaSlotDuration === "number" &&
-        bookingDetails.spaSlotDuration > 0
-      ) {
-        actualSlotDurationMinutes = bookingDetails.spaSlotDuration;
-      } else {
-        // Fallback and warning if spaSlotDuration is missing or invalid
-        console.warn(
-          `BookingConfirmation: spaSlotDuration is missing, invalid, or zero in bookingDetails. Falling back to 120 minutes. Booking ID: ${
-            bookingDetails?.id || bookingDetails?.smoobuId || "N/A"
-          }. Please ensure 'spaSlotDuration' (in minutes) is saved in booking details when SPA is scheduled.`
-        );
-        actualSlotDurationMinutes = 120; // Default fallback duration in minutes (Assuming 2-hour treatment)
+      if (!endTimeObj) {
+        // Fallback to calculate end time if spaEndDateTime is not available
+        let actualSlotDurationMinutes;
+        if (
+          bookingDetails.spaSlotDuration &&
+          typeof bookingDetails.spaSlotDuration === "number" &&
+          bookingDetails.spaSlotDuration > 0
+        ) {
+          actualSlotDurationMinutes = bookingDetails.spaSlotDuration;
+        } else if (
+          bookingDetails.spaInfo?.slots?.length > 0 &&
+          bookingDetails.spaSettings?.slotDurationMinutes
+        ) {
+          // Fallback similar to email, if spaInfo and spaSettings are in bookingDetails
+          actualSlotDurationMinutes =
+            bookingDetails.spaInfo.slots.length *
+            bookingDetails.spaSettings.slotDurationMinutes;
+        } else {
+          console.warn(
+            `BookingConfirmation: spaEndDateTime and spaSlotDuration are missing or invalid. Falling back to a default duration (e.g., 120 minutes) or unable to determine end time accurately. Booking ID: ${
+              bookingDetails?.id || bookingDetails?.smoobuId || "N/A"
+            }. Consider ensuring 'spaEndDateTime' or 'spaSlotDuration' is saved in booking details.`
+          );
+          actualSlotDurationMinutes = 120; // Default fallback if no other info
+        }
+        if (actualSlotDurationMinutes > 0) {
+          try {
+            endTimeObj = addMinutes(startTimeObj, actualSlotDurationMinutes);
+          } catch (e) {
+            console.error("Error calculating fallback end time for SPA:", e);
+          }
+        }
       }
-      // --- End Determine Slot Duration ---
 
-      let endTimeString = null; // Initialize end time string
-
-      // --- Calculate End Time based on Start Time and Duration ---
-      // We always calculate the end time based on the start time and the actual duration (actualSlotDurationMinutes).
-      // We are removing the logic that prioritized using savedSlots[1] for the end time display.
       try {
-        const endTimeObj = addMinutes(startTimeObj, actualSlotDurationMinutes);
-        // Format the calculated end time
-        endTimeString = formatFn(endTimeObj, "HH:mm", { locale: fr }); // Use aliased formatFn, explicitly use fr locale
-      } catch (e) {
-        console.error("Error calculating end time using addMinutes:", e);
-        // endTimeString remains null if calculation fails
-      }
-      // --- End Calculate End Time ---
+        const startTimeString = formatFn(startTimeObj, "HH:mm", {
+          locale: currentDateFnsLocale,
+        });
+        const endTimeString = endTimeObj
+          ? formatFn(endTimeObj, "HH:mm", { locale: currentDateFnsLocale })
+          : null;
 
-      // Construct the final display string
-      if (startTimeString && endTimeString) {
-        spaTimeDisplay = `${startTimeString} - ${endTimeString}`; // "HH:mm - HH:mm"
-      } else if (startTimeString) {
-        // This fallback only happens if addMinutes failed to produce an endTimeString
-        spaTimeDisplay = startTimeString; // Fallback to only start time
-        console.warn(
-          "SPA time display only has start time, end time could not be determined from start time + duration."
-        );
+        if (startTimeString && endTimeString) {
+          spaTimeDisplay = `${startTimeString} - ${endTimeString}`;
+        } else if (startTimeString) {
+          spaTimeDisplay = startTimeString; // Only start time if end time couldn't be determined
+          console.warn(
+            "SPA time display only has start time, end time could not be determined or was invalid."
+          );
+        }
+      } catch (e) {
+        console.error("Error formatting SPA times:", e);
+        // spaTimeDisplay remains "Heure invalide" or its default
       }
-      // If both are null, it keeps the default error message "Heure invalide"
     }
   }
 
@@ -471,11 +386,10 @@ const BookingConfirmation = () => {
         display: "flex",
         alignItems: "center",
         padding: "2rem 0",
-      }} // Added padding
+      }}
       className="container"
     >
       <div className="card">
-        {/* Header Section */}
         <div className="header">
           <div className="icon-container">
             <img
@@ -493,9 +407,7 @@ const BookingConfirmation = () => {
             </p>
           </div>
         </div>
-        {/* Details Grid */}
         <div className="grid">
-          {/* Stay Details Card */}
           <div className="details-card">
             <h2 className="titleConfirmation">
               {t("bookingConfirmation.success.sections.stayDetails.title")}
@@ -530,7 +442,6 @@ const BookingConfirmation = () => {
                     { adults: bookingDetails.adults }
                   )}
             </p>
-            {/* Display Scheduled SPA Time if it exists */}
             {scheduledSpaTime && (
               <p className="pt-2 mt-2 text-sm border-t border-gray-200">
                 <CalendarClock
@@ -543,15 +454,12 @@ const BookingConfirmation = () => {
                     "Séance SPA:"
                   )}
                 </span>{" "}
-                {/* Use the robust formatDate for the date part */}
                 {formatDate(bookingDetails.spaDateTime)}{" "}
-                {/* Use the correctly calculated time range */}
                 <span className="">{spaTimeDisplay}</span>
               </p>
             )}
           </div>
 
-          {/* Guest Details Card */}
           <div className="details-card">
             <h2 className="titleConfirmation">
               {t("bookingConfirmation.success.sections.guestDetails.title")}
@@ -574,12 +482,10 @@ const BookingConfirmation = () => {
             </p>
           </div>
 
-          {/* Price Details Card */}
           <div className="details-card">
             <h2 className="titleConfirmation">
               {t("bookingConfirmation.success.sections.priceDetails.title")}
             </h2>
-            {/* Base Price */}
             <p>
               {t(
                 "bookingConfirmation.success.sections.priceDetails.basePrice",
@@ -592,7 +498,6 @@ const BookingConfirmation = () => {
                 }
               )}
             </p>
-            {/* Guest Fees */}
             {bookingDetails.guestFees > 0 && (
               <p>
                 {t(
@@ -604,16 +509,11 @@ const BookingConfirmation = () => {
                 )}
               </p>
             )}
-            {/* Extras List */}
             <div className="mt-1 mb-2 extras-list">
-              {" "}
-              {/* Wrapper for extras */}
               {bookingDetails.extras?.map((extra, index) => {
                 const hasExtraPerson = extra.extraPersonQuantity > 0;
                 return (
                   <p key={index} className="text-sm">
-                    {" "}
-                    {/* Reduced text size */}
                     {renderExtraName(extra)} (x{extra.quantity}):{" "}
                     {formatPrice(extra.amount)}€
                     {hasExtraPerson && (
@@ -627,18 +527,15 @@ const BookingConfirmation = () => {
                 );
               })}
             </div>
-            {/* Long Stay Discount */}
             {(bookingDetails.priceDetails?.discount > 0 ||
               bookingDetails.priceDetails?.longStayDiscount > 0) && (
               <p className="text-sm text-orange-600 discount-text">
-                {" "}
-                {/* Added text-sm and color */}
                 {t(
                   "bookingConfirmation.success.sections.priceDetails.longStayDiscount",
                   {
                     percentage:
                       bookingDetails.priceDetails?.settings
-                        ?.lengthOfStayDiscount?.discountPercentage || "?", // Show '?' if percentage unknown
+                        ?.lengthOfStayDiscount?.discountPercentage || "?",
                     amount: formatPrice(
                       bookingDetails.priceDetails?.discount ||
                         bookingDetails.priceDetails?.longStayDiscount ||
@@ -648,23 +545,19 @@ const BookingConfirmation = () => {
                 )}
               </p>
             )}
-            {/* Coupon Discount */}
             {bookingDetails.couponApplied && (
               <p className="text-sm text-green-600 discount-text">
-                {" "}
-                {/* Added text-sm */}
                 {t(
                   "bookingConfirmation.success.sections.priceDetails.promoCode",
                   {
                     code: bookingDetails.couponApplied.code,
                     amount: formatPrice(
                       bookingDetails.couponApplied.discount || 0
-                    ), // Use coupon discount value directly
+                    ),
                   }
                 )}
               </p>
             )}
-            {/* Total Section */}
             <div className="total-section">
               <p className="total-text">
                 {t("bookingConfirmation.success.sections.priceDetails.total", {
@@ -677,7 +570,6 @@ const BookingConfirmation = () => {
             </div>
           </div>
 
-          {/* Address Card */}
           <div className="details-card">
             <h2 className="titleConfirmation">
               {t("bookingConfirmation.success.sections.address.title")}
@@ -690,16 +582,10 @@ const BookingConfirmation = () => {
             <p>{bookingDetails.country || "-"}</p>
           </div>
 
-          {/* Conditional SPA Scheduling Info Card (Only shows if preference is 'later') */}
           {needsSpaScheduling && (
             <div className="details-card spa-schedule-later-card">
-              {" "}
-              {/* Added class for potential styling */}
               <h2 className="flex items-center titleConfirmation spa-schedule-title">
-                {" "}
-                {/* Added class and flex */}
-                <CalendarClock size={18} className="inline-block mr-2" />{" "}
-                {/* Icon */}
+                <CalendarClock size={18} className="inline-block mr-2" />
                 {t(
                   "bookingConfirmation.success.sections.spaTime.scheduleLaterTitle",
                   "Programmation Séance SPA"
@@ -707,8 +593,7 @@ const BookingConfirmation = () => {
               </h2>
               <p className="mb-1 text-sm">
                 {t(
-                  "bookingConfirmation.success.sections.spaTime.scheduleLaterInstruction",
-                  "Pour planifier votre séance SPA, veuillez nous contacter à l'adresse suivante :"
+                  "bookingConfirmation.success.sections.spaTime.scheduleLaterInstruction"
                 )}
               </p>
               <p className="mb-2 text-sm font-semibold">
@@ -721,30 +606,22 @@ const BookingConfirmation = () => {
               </p>
               <p className="text-xs text-gray-600">
                 {t(
-                  "bookingConfirmation.success.sections.spaTime.scheduleLaterPriority",
-                  "Note : Les créneaux sont attribués selon le principe du premier arrivé, premier servi."
+                  "bookingConfirmation.success.sections.spaTime.scheduleLaterPriority"
                 )}
               </p>
             </div>
           )}
-          {/* End Conditional SPA Card */}
-        </div>{" "}
-        {/* End Bento Grid */}
-        {/* Action Buttons */}
+        </div>
         <div className="actions">
-          <button
-            onClick={() => navigate("/")} // Use navigate for SPA navigation
-            className="button-primary"
-          >
+          <button onClick={() => navigate("/")} className="button-primary">
             {t("bookingConfirmation.success.buttons.backHome")}
           </button>
           <button onClick={() => window.print()} className="button-secondary">
             {t("bookingConfirmation.success.buttons.print")}
           </button>
         </div>
-      </div>{" "}
-      {/* End Card */}
-    </div> // End Container
+      </div>
+    </div>
   );
 };
 

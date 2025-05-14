@@ -1,6 +1,6 @@
 // src/components/hooks/useBookingForm.js
 
-import { useState, useCallback } from "react"; // Imports should be first
+import { useState, useCallback, useEffect } from "react"; // Imports should be first
 import { api } from "../utils/api";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../firebase"; // Adjust the import path as needed
@@ -31,7 +31,7 @@ const SPA_ITEM_IDS = [
 export const useBookingForm = () => {
   // --- State Definitions ---
   const navigate = useNavigate();
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const [formData, setFormData] = useState({
     arrivalDate: "",
     departureDate: "",
@@ -50,7 +50,7 @@ export const useBookingForm = () => {
     priceStatus: 1,
     deposit: 0,
     depositStatus: 1,
-    language: "en",
+    language: i18n.language,
     street: "",
     postalCode: "",
     location: "",
@@ -78,14 +78,16 @@ export const useBookingForm = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState(null);
 
-  // --- Helper Functions (defined INSIDE the hook) ---
-  const calculateNumberOfNights = (start, end) => {
-    // Renamed params for clarity
-    if (!start || !end) return 0;
-    const startDateObj = new Date(start);
-    const endDateObj = new Date(end);
-    return Math.floor((endDateObj - startDateObj) / (1000 * 60 * 60 * 24));
-  };
+  useEffect(() => {
+    setFormData((prevData) => {
+      if (prevData.language !== i18n.language) {
+        return { ...prevData, language: i18n.language };
+      }
+      return prevData;
+    });
+  }, [i18n.language]);
+
+
 
   const calculateGuestFees = (adults, children, settings) => {
     if (!settings) return 0; // Add guard clause
