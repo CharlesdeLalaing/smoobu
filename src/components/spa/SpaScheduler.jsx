@@ -295,7 +295,7 @@ const SpaScheduler = ({
       setAvailableSlots([]); // Clear previous slots before new fetch
 
       const dateString = selectedSpaDateString;
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:3000";
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
       const apiEndpoint = `${apiUrl}/api/spa/availability`;
       const apiParams = {
         date: dateString,

@@ -263,7 +263,7 @@ export const useAvailableSlots = (
       try {
         // Use your actual API base URL
         const apiUrlBase =
-          process.env.REACT_APP_API_URL || "http://localhost:3000";
+          import.meta.env.VITE_API_URL || "http://localhost:3000";
         let apiEndpoint = `${apiUrlBase}/api/spa/availability?date=${dateStr}`;
 
         // The backend primarily needs the date.
