@@ -31,7 +31,7 @@ const SPA_ITEM_IDS = [
 export const useBookingForm = () => {
   // --- State Definitions ---
   const navigate = useNavigate();
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
   const [formData, setFormData] = useState({
     arrivalDate: "",
     departureDate: "",
@@ -87,8 +87,6 @@ export const useBookingForm = () => {
     });
   }, [i18n.language]);
 
-
-
   const calculateGuestFees = (adults, children, settings) => {
     if (!settings) return 0; // Add guard clause
     const totalGuests = (parseInt(adults) || 0) + (parseInt(children) || 0);
@@ -99,35 +97,95 @@ export const useBookingForm = () => {
     return extraGuests * (settings.extraGuestsPerNight || 0); // Default extraGuestsPerNight if missing
   };
 
+  // useBookingForm.js
   const validateCouponPeriod = (couponData, arrival, departure) => {
-    // Renamed params
-    if (
-      !couponData ||
-      !couponData.validityStartDate ||
-      !couponData.validityEndDate ||
-      !arrival ||
-      !departure
-    ) {
-      return true; // Cannot validate or no period defined
+    if (!arrival || !departure) {
+      console.warn("validateCouponPeriod: Missing arrival or departure date.");
+      return false; // Or true depending on how you want to handle this incomplete data
     }
-    const validityStart =
-      couponData.validityStartDate?.toDate?.() ||
-      new Date(couponData.validityStartDate);
-    const validityEnd =
-      couponData.validityEndDate?.toDate?.() ||
-      new Date(couponData.validityEndDate);
+
+    // Get JS Dates from Firestore Timestamps (or null if not set)
+    let validityStart = null;
+    if (couponData?.validityStartDate) {
+      if (couponData.validityStartDate.toDate) {
+        // It's a Firestore Timestamp
+        validityStart = couponData.validityStartDate.toDate();
+      } else if (couponData.validityStartDate instanceof Date) {
+        // Already a JS Date
+        validityStart = couponData.validityStartDate;
+      } else {
+        // Try parsing if it's a string (less likely from Firestore directly for dates)
+        try {
+          validityStart = new Date(couponData.validityStartDate);
+        } catch (e) {
+          validityStart = null;
+        }
+      }
+    }
+
+    let validityEnd = null;
+    if (couponData?.validityEndDate) {
+      if (couponData.validityEndDate.toDate) {
+        // Firestore Timestamp
+        validityEnd = couponData.validityEndDate.toDate();
+      } else if (couponData.validityEndDate instanceof Date) {
+        // JS Date
+        validityEnd = couponData.validityEndDate;
+      } else {
+        try {
+          validityEnd = new Date(couponData.validityEndDate);
+        } catch (e) {
+          validityEnd = null;
+        }
+      }
+    }
+
+    // If the coupon has no specific validity period defined, it's considered valid for any date.
+    if (!validityStart || !validityEnd) {
+      console.log(
+        "Coupon has no defined validity period, considered valid for dates."
+      );
+      return true;
+    }
+
+    // Ensure all dates are valid before comparison
     const bookingStart = new Date(arrival);
     const bookingEnd = new Date(departure);
-    // Ensure valid dates before comparison
+
     if (
-      isNaN(validityStart) ||
-      isNaN(validityEnd) ||
-      isNaN(bookingStart) ||
-      isNaN(bookingEnd)
+      isNaN(validityStart.getTime()) ||
+      isNaN(validityEnd.getTime()) ||
+      isNaN(bookingStart.getTime()) ||
+      isNaN(bookingEnd.getTime())
     ) {
-      return false; // Invalid dates involved
+      console.warn("validateCouponPeriod: One or more dates are invalid.", {
+        validityStart,
+        validityEnd,
+        bookingStart,
+        bookingEnd,
+      });
+      return false; // One of the crucial dates is invalid
     }
-    return bookingStart <= validityEnd && bookingEnd >= validityStart;
+
+    // Actual comparison logic:
+    // Booking period must overlap with the coupon's validity period.
+    // Booking start must be before or on coupon end.
+    // Booking end must be after or on coupon start.
+    const isBookingStartValid = bookingStart <= validityEnd;
+    const isBookingEndValid = bookingEnd >= validityStart;
+
+    console.log("Coupon Validity Check:", {
+      couponCode: couponData.code,
+      couponStart: validityStart.toISOString(),
+      couponEnd: validityEnd.toISOString(),
+      bookingStart: bookingStart.toISOString(),
+      bookingEnd: bookingEnd.toISOString(),
+      isBookingStartValid,
+      isBookingEndValid,
+      overall: isBookingStartValid && isBookingEndValid,
+    });
+
+    return isBookingStartValid && isBookingEndValid;
   };
 
   // --- Event Handlers & Logic Functions (defined INSIDE the hook) ---
@@ -395,7 +453,6 @@ export const useBookingForm = () => {
         : null,
     };
 
-    
     localStorage.setItem("bookingData", JSON.stringify(bookingData));
 
     // Include payment_intent only if it exists (not a free booking)
@@ -405,40 +462,40 @@ export const useBookingForm = () => {
     navigate(`/booking-confirmation${paymentIntentQuery}`);
   };
 
- const handleSpaScheduleChange = useCallback(
-   (value) => {
-     setFormData((prev) => {
-       let newState = { ...prev };
-       if (value === "later") {
-         newState.spaDateTime = null;
-         newState.spaEndDateTime = null; // Add this field
-         newState.spaSlots = null; // Add this field
-         newState.spaBookingPreference = "later";
-       } else if (value && value.startDateTime instanceof Date) {
-         // Handle the new object format
-         newState.spaDateTime = value.startDateTime.toISOString();
-         newState.spaEndDateTime = value.endDateTime
-           ? value.endDateTime.toISOString()
-           : null;
-         newState.spaSlots = value.slots || [];
-         newState.spaBookingPreference = "scheduled";
-       } else {
-         newState.spaDateTime = null;
-         newState.spaEndDateTime = null;
-         newState.spaSlots = null;
-         newState.spaBookingPreference = null;
-       }
-       return newState;
-     });
-     if (value !== null) {
-       setSpaValidationError("");
-     }
-   },
-   [setFormData, setSpaValidationError]
- );
+  const handleSpaScheduleChange = useCallback(
+    (value) => {
+      setFormData((prev) => {
+        let newState = { ...prev };
+        if (value === "later") {
+          newState.spaDateTime = null;
+          newState.spaEndDateTime = null; // Add this field
+          newState.spaSlots = null; // Add this field
+          newState.spaBookingPreference = "later";
+        } else if (value && value.startDateTime instanceof Date) {
+          // Handle the new object format
+          newState.spaDateTime = value.startDateTime.toISOString();
+          newState.spaEndDateTime = value.endDateTime
+            ? value.endDateTime.toISOString()
+            : null;
+          newState.spaSlots = value.slots || [];
+          newState.spaBookingPreference = "scheduled";
+        } else {
+          newState.spaDateTime = null;
+          newState.spaEndDateTime = null;
+          newState.spaSlots = null;
+          newState.spaBookingPreference = null;
+        }
+        return newState;
+      });
+      if (value !== null) {
+        setSpaValidationError("");
+      }
+    },
+    [setFormData, setSpaValidationError]
+  );
 
   const handleApplyCoupon = async (couponCode) => {
-    // ... (Coupon application logic - seems okay) ...
+    setError(null);
     try {
       const couponsRef = collection(db, "coupons");
       const q = query(
@@ -446,12 +503,22 @@ export const useBookingForm = () => {
         where("code", "==", couponCode.toUpperCase())
       );
       const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        return { error: "not_found" };
-      }
+      if (querySnapshot.empty) return { error: "not_found" };
+
       const couponDoc = querySnapshot.docs[0];
-      const couponData = couponDoc.data();
-      // ... (rest of validation: status, usedCount, expiry, dates) ...
+      const couponData = { id: couponDoc.id, ...couponDoc.data() };
+
+      if (couponData.status !== "active") return { error: "inactive" };
+      if (couponData.usedCount >= couponData.maxUsage) return { error: "used" };
+
+      const now = new Date();
+      const expiryDate = couponData.expiryDate?.toDate
+        ? couponData.expiryDate.toDate()
+        : couponData.expiryDate
+        ? new Date(couponData.expiryDate)
+        : null;
+      if (expiryDate && now > expiryDate) return { error: "expired" };
+
       if (
         !validateCouponPeriod(
           couponData,
@@ -459,93 +526,98 @@ export const useBookingForm = () => {
           formData.departureDate
         )
       ) {
-        // ... return invalid_dates error ...
         const validityStart =
           couponData.validityStartDate?.toDate?.() ||
           new Date(couponData.validityStartDate);
         const validityEnd =
           couponData.validityEndDate?.toDate?.() ||
           new Date(couponData.validityEndDate);
-        const formattedStart = validityStart.toLocaleDateString("fr-BE", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-        const formattedEnd = validityEnd.toLocaleDateString("fr-BE", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
         return {
           error: "invalid_dates",
-          message: `Ce code n'est valable que pour les séjours entre le ${formattedStart} et le ${formattedEnd}`,
+          message: t("booking.coupon.errors.invalid_dates_dynamic", {
+            start: validityStart.toLocaleDateString(i18n.language, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            end: validityEnd.toLocaleDateString(i18n.language, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+          }),
         };
       }
 
       const currentRoomPriceDetails = priceDetails?.[formData.apartmentId];
-      if (!currentRoomPriceDetails) {
+      if (
+        !currentRoomPriceDetails ||
+        currentRoomPriceDetails.originalPrice === undefined
+      ) {
         return {
           error: "invalid",
-          message: "Veuillez d'abord sélectionner une chambre et des dates.",
+          message: t(
+            "booking.coupon.errors.selectRoomFirst",
+            "Veuillez sélectionner une chambre et des dates valides."
+          ),
         };
       }
-      // Base discount calculation on price *before* other coupons/discounts if possible
-      const priceToApplyDiscount =
-        currentRoomPriceDetails.originalPrice +
-        calculateGuestFees(
-          formData.adults,
-          formData.children,
-          currentRoomPriceDetails.settings
-        ) +
-        createSelectedExtrasArray().reduce(
-          (sum, extra) => sum + extra.amount + (extra.extraPersonAmount || 0),
-          0
-        ) -
-        (currentRoomPriceDetails.discount || 0); // Price before this coupon
 
-      let discount = 0;
-      if (couponData.type === "percentage") {
-        discount =
-          (priceToApplyDiscount * (couponData.percentageValue || 0)) / 100;
-      } else {
-        discount = couponData.amount || couponData.discount || 0;
-      }
-      discount = Math.min(discount, priceToApplyDiscount); // Ensure discount isn't more than the price
+      // --- MODIFIED PRICE ELIGIBLE FOR COUPON ---
+      // The coupon should typically apply to the base room price, potentially after long-stay discounts.
+      // It should NOT apply to guest fees or extras.
+      const roomBasePriceAfterLongStay =
+        (currentRoomPriceDetails.originalPrice || 0) -
+        (currentRoomPriceDetails.discount || 0);
+      const priceEligibleForCoupon = Math.max(0, roomBasePriceAfterLongStay); // Ensure it's not negative
 
-      setAppliedCoupon({
-        id: couponDoc.id,
-        code: couponCode.toUpperCase(),
-        type: couponData.type,
-        discount /* etc */,
-      });
-      // Update price details correctly
-      setPriceDetails((prev) => {
-        if (!prev || !prev[formData.apartmentId]) return prev;
-        const currentDetails = prev[formData.apartmentId];
-        const newFinalPrice = currentDetails.finalPrice - discount; // Adjust current final price
-        const updatedElements = [
-          ...(currentDetails.priceElements || []),
-          {
-            type: "discount",
-            name: `Code promo (${couponCode.toUpperCase()})`,
-            amount: -discount /* etc */,
-          },
-        ];
+      if (priceEligibleForCoupon <= 0) {
         return {
-          ...prev,
-          [formData.apartmentId]: {
-            ...currentDetails,
-            finalPrice: Math.max(0, newFinalPrice),
-            priceElements: updatedElements,
-          },
+          error: "invalid",
+          message: t(
+            "booking.coupon.errors.noAmountToDiscountRoom",
+            "Le prix de la chambre n'est pas éligible à une réduction supplémentaire."
+          ),
         };
-      });
-      setCoupon("");
-      setCouponError(null); // Clear error on success
-      return { success: true };
+      }
+      // --- END MODIFICATION ---
+
+      let calculatedDiscount = 0;
+      if (couponData.type === "percentage" && couponData.percentageValue) {
+        calculatedDiscount =
+          (priceEligibleForCoupon * couponData.percentageValue) / 100;
+      } else if (couponData.type === "fixed" && couponData.amount) {
+        calculatedDiscount = couponData.amount;
+      }
+
+      // Ensure discount does not exceed the eligible price (which is now just the room price part)
+      calculatedDiscount = Math.min(calculatedDiscount, priceEligibleForCoupon);
+      calculatedDiscount = parseFloat(calculatedDiscount.toFixed(2));
+
+      if (calculatedDiscount <= 0 && couponData.amount > 0) {
+        // If fixed amount coupon led to 0 discount because eligible price was too low
+        return {
+          error: "invalid",
+          message: t(
+            "booking.coupon.errors.discountTooHighForRoom",
+            "La valeur du code promo dépasse le prix de la chambre éligible."
+          ),
+        };
+      }
+
+      const couponToApply = {
+        id: couponData.id,
+        code: couponData.code,
+        type: couponData.type,
+        discount: calculatedDiscount, // The actual calculated discount amount
+        percentageValue: couponData.percentageValue || null, // Store original percentage if type is 'percentage'
+      };
+      setAppliedCoupon(couponToApply);
+      // The PriceDetails component and handleSubmit will use this appliedCoupon to calculate the final total.
+      return { success: true, appliedCouponData: couponToApply };
     } catch (error) {
-      console.error("Error applying coupon:", error);
-      return { error: "invalid" };
+      console.error("Error applying coupon in useBookingForm:", error);
+      return { error: "invalid", message: t("errors.generic") };
     }
   };
 
