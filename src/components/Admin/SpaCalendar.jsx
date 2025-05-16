@@ -7,10 +7,11 @@ import {
   isSameDay,
   startOfDay,
   addMinutes,
-  addDays, // Keep addDays for month navigation logic if simplified
+  addDays,
   isAfter,
   isValid as isDateValid,
   parseISO,
+  getDay, // Added for correct day alignment
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -23,9 +24,8 @@ import {
 import { db } from "../../firebase";
 
 import {
-  // parseBookingDateTime, // Not directly used in SpaCalendar, but utils might be
-  isDateWithinBookingStay, // Crucial for disabling dates
-  getPropertyColor,
+  isDateWithinBookingStay,
+  getPropertyColor, // Although not directly used in SpaCalendar JSX, it's good to keep if utils export it
   calculateBookingSlots,
 } from "../spa/spaCalendarUtils";
 
@@ -80,11 +80,6 @@ const SpaCalendar = () => {
     loading: slotsAndOverrideHookLoading,
     error: slotsAndOverrideHookError,
     overrideData,
-    // Individual loading/error states from hook if needed for finer UI distinctions:
-    // slotsLoading: apiSlotsLoading,
-    // slotsError: apiSlotsError,
-    // overrideLoading: docOverrideLoading, // Loading for the override document fetch
-    // overrideError: docOverrideError,   // Error for the override document fetch
     refetch: refetchSlotsAndOverride,
   } = useAvailableSlots(selectedDate, selectedBooking, spaSettings);
 
@@ -336,13 +331,13 @@ const SpaCalendar = () => {
       });
       alert("Paramètres SPA enregistrés.");
       refetchSpaSettings();
-      refetchBookings(currentMonth); // Refetch bookings as settings might affect display
+      refetchBookings(currentMonth);
       if (selectedDate)
         refetchSlotsAndOverride(
           selectedDate,
           selectedBooking,
           editableSpaSettings
-        ); // Pass new settings for refetch
+        );
     } catch (error) {
       console.error("Error saving SPA settings:", error);
       setSettingsSavingError(`Échec: ${error.message}`);
@@ -448,7 +443,7 @@ const SpaCalendar = () => {
     try {
       await deleteDoc(doc(db, "spaAvailabilityOverrides", dateStr));
       alert(`Override pour ${dateStr} supprimé.`);
-      refetchSlotsAndOverride(selectedDate, selectedBooking, spaSettings); // Refetch after delete
+      refetchSlotsAndOverride(selectedDate, selectedBooking, spaSettings);
     } catch (error) {
       console.error(`Error deleting override for ${dateStr}:`, error);
       setOverrideSavingError(`Échec suppression: ${error.message}`);
@@ -538,7 +533,6 @@ const SpaCalendar = () => {
   };
 
   const handleDateSelect = (date) => {
-    // This condition is already checked by the button's disabled state, but good for safety.
     if (
       overallLoading ||
       actionLoading ||
@@ -546,7 +540,6 @@ const SpaCalendar = () => {
       overrideSavingLoading
     )
       return;
-    // This check is also partly handled by button's disabled state.
     if (selectedBooking && !isDateWithinBookingStay(date, selectedBooking)) {
       console.warn("Date select blocked: outside booking stay or loading.");
       return;
@@ -568,7 +561,6 @@ const SpaCalendar = () => {
       return;
 
     if (isDayClosed) {
-      // isDayClosed from useAvailableSlots hook is the source of truth
       alert("Impossible de réserver, le SPA est fermé pour cette date.");
       return;
     }
@@ -635,11 +627,27 @@ const SpaCalendar = () => {
   const requestDeleteStep = () => setModalStep("confirm-delete");
   const requestOptionsStep = () => setModalStep("options");
 
-  // Month Navigation Simplified
   const goToPreviousMonth = () =>
     setCurrentMonth((prev) => addDays(startOfMonth(prev), -1));
   const goToNextMonth = () =>
-    setCurrentMonth((prev) => addDays(startOfMonth(prev), 32)); // Go to start of next month
+    setCurrentMonth((prev) => addDays(startOfMonth(prev), 32));
+
+  // --- Calendar Grid Logic ---
+  const firstDayCurrentMonth = startOfMonth(currentMonth);
+  const daysInCurrentMonth = eachDayOfInterval({
+    start: firstDayCurrentMonth,
+    end: endOfMonth(currentMonth),
+  });
+
+  const dayOfWeekOfFirstDay = getDay(firstDayCurrentMonth); // 0 for Sunday, 1 for Mon, ... 6 for Sat
+  // Adjust for week starting on Monday (0th column)
+  // If getDay returns 1 (Mon), padding is 0. If 0 (Sun), padding is 6.
+  const paddingCellsCount = (dayOfWeekOfFirstDay + 6) % 7;
+
+  const paddingDivs = Array.from({ length: paddingCellsCount }).map((_, index) => (
+    <div key={`padding-${index}`} className="p-2" />
+  ));
+  // --- End Calendar Grid Logic ---
 
   return (
     <div className="p-4 bg-white rounded-lg shadow">
@@ -807,10 +815,8 @@ const SpaCalendar = () => {
                 {day}
               </div>
             ))}
-            {eachDayOfInterval({
-              start: startOfMonth(currentMonth),
-              end: endOfMonth(currentMonth),
-            }).map((date) => {
+            {paddingDivs}
+            {daysInCurrentMonth.map((date) => {
               const dateStr = format(date, "yyyy-MM-dd");
               const isToday = isSameDay(date, new Date());
               const isSelected = selectedDate && isSameDay(date, selectedDate);
@@ -872,7 +878,6 @@ const SpaCalendar = () => {
                   {hasSpaBookings && (
                     <div className="flex justify-center mt-1 space-x-1">
                       {dateSpaBookingsForDots.slice(0, 3).map((b, i) => {
-
                         return (
                           <div
                             key={i}
@@ -912,25 +917,21 @@ const SpaCalendar = () => {
           isDayClosed={isDayClosed}
           selectedDateBookings={selectedDateBookings}
           spaSettings={spaSettings}
-          overrideData={overrideData} // Raw override doc content for "Gestion Horaire" tab
-          // For "Gestion Horaire" tab (override document specific loading/error)
-          // Use the more specific states from the hook if you need to distinguish.
-          // For simplicity, we can use the combined states from the hook.
-          overrideLoading={slotsAndOverrideHookLoading} // Loading for override doc fetch is part of this
-          overrideError={slotsAndOverrideHookError} // Error for override doc fetch is part of this
+          overrideData={overrideData}
+          overrideLoading={slotsAndOverrideHookLoading}
+          overrideError={slotsAndOverrideHookError}
           editableOverrideSettings={editableOverrideSettings}
           onEditableOverrideChange={setEditableOverrideSettings}
           onSaveOverride={handleSaveOverride}
           onDeleteOverride={handleDeleteOverride}
           onBookSlot={handleBookSlot}
           onScheduledBookingClick={handleTimelineSlotClick}
-          isLoading={overallLoading} // Global loading state for the whole panel
-          // For "Créneaux" tab (slot display):
-          isSlotsLoading={slotsAndOverrideHookLoading} // Loading for the API call that fetches all slot data
-          slotsError={slotsAndOverrideHookError} // Error for that API call
+          isLoading={overallLoading}
+          isSlotsLoading={slotsAndOverrideHookLoading}
+          slotsError={slotsAndOverrideHookError}
           bookingsError={bookingsError}
-          isActionLoading={actionLoading || settingsSavingLoading} // General save actions NOT including override save itself
-          isOverrideSaving={overrideSavingLoading} // Specific to *saving/deleting* an override (via button or slot toggle)
+          isActionLoading={actionLoading || settingsSavingLoading}
+          isOverrideSaving={overrideSavingLoading}
           onToggleSlotActivation={handleToggleSlotActivation}
         />
       </div>
