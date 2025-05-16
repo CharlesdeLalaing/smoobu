@@ -534,7 +534,7 @@ export const useBookingForm = () => {
           new Date(couponData.validityEndDate);
         return {
           error: "invalid_dates",
-          message: t("booking.coupon.errors.invalid_dates_dynamic", {
+          message: t("booking.coupon.errors.invalid_dates", {
             start: validityStart.toLocaleDateString(i18n.language, {
               year: "numeric",
               month: "long",
