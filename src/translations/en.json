@@ -232,6 +232,7 @@
                 "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket, bathrobes, slippers, and a bottle of sparkling wine."
               },
               "selectDate": "Select a date",
+              "greyedSlotInfoHelpText" : "If the time slot is grayed out, it is available with the previous hour and not with the following hour (as the latter is not available).",
               "loading": "Loading time slots...",
               "errorLoadingSettings": "Error loading SPA settings",
               "datePlaceholderDropdown": "Select a date",

@@ -111,7 +111,7 @@ const SpaScheduler = ({
   const { t, i18n } = useTranslation();
   const currentLocale = i18n.language || "en-US";
   const selectionMode = "double"; // Hardcoded as per requirement
-  const arrivalDayEffectiveStartTime = spaSettings?.startTime || "14:00"; 
+  const arrivalDayEffectiveStartTime = spaSettings?.startTime || "09:00"; 
 
   // State Initialization Helpers
   const getInitialDateString = (dateTime, preference) => {
@@ -644,7 +644,7 @@ const SpaScheduler = ({
         >
           <option value="" disabled={selectedSpaDateString !== ""}>
             {dateOptions.length > 0
-              ? t("extras.spa.datePlaceholderDropdown",)
+              ? t("extras.spa.datePlaceholderDropdown")
               : t(
                   "extras.spa.datePlaceholderNoDates",
                   "-- No dates available --"
@@ -665,6 +665,22 @@ const SpaScheduler = ({
           </p>
         )}
       </div>
+
+      {selectionMode === "double" &&
+        !isLoading &&
+        !error &&
+        availableSlots.length > 0 && // Only show if there are slots to consider
+        slotDuration && ( // And duration is known
+          <p className="mt-1 mb-2 text-xs italic text-gray-600">
+            {t(
+              "extras.spa.greyedSlotInfoHelpText", // Use your new i18n key
+              "If a time slot is grayed out, it means the next consecutive slot needed for the booking is unavailable. However, the grayed-out slot itself might be available as the *second* slot if you select an appropriate earlier start time."
+              // Using a more descriptive default here, but your translations will override this.
+              // You can use your exact English translation as the default:
+              // "If the time slot is grayed out, it is available with the previous hour and not with the following hour (as the latter is not available)."
+            )}
+          </p>
+        )}
 
       {selectedSpaDateString && !chooseLaterChecked && (
         <div className="space-y-2">

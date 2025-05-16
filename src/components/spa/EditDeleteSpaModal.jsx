@@ -24,9 +24,9 @@ const EditDeleteSpaModal = ({
   onRescheduleConfirm,
   onDeleteConfirm,
   actionLoading,
-  onRequestRescheduleStep, // Accepts prop from parent
-  onRequestDeleteStep, // Accepts prop from parent
-  onRequestOptionsStep, // Accepts prop from parent
+  onRequestRescheduleStep,
+  onRequestDeleteStep,
+  onRequestOptionsStep,
 }) => {
   console.log(
     "EditDeleteSpaModal rendering, modalStep:",
@@ -37,33 +37,30 @@ const EditDeleteSpaModal = ({
     actionLoading
   );
 
-  // Don't render the modal if no booking is selected for editing
   if (!bookingToEdit) {
     console.log("EditDeleteSpaModal: No bookingToEdit, returning null");
     return null;
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="max-w-full p-6 bg-white rounded-lg shadow-xl w-96">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
         {/* Modal Content based on step */}
         {modalStep === "options" && (
           <>
-            <h3 className="mb-4 text-lg font-semibold">
+            <h3 className="mb-4 text-lg font-semibold text-gray-800">
               Options pour le rendez-vous SPA
             </h3>
 
-            {/* Booking Details - Use data from bookingToEdit prop */}
-            <div className="mb-4 text-sm text-gray-700">
+            {/* Booking Details */}
+            <div className="mb-4 space-y-1 text-sm text-gray-700">
               <div className="text-base font-medium">
                 Client:{" "}
                 {bookingToEdit.guestName ||
                   `${bookingToEdit.firstName} ${bookingToEdit.lastName}`}
               </div>
               <div className="">Chambre: {bookingToEdit.property}</div>
-              {/* Safely parse and format dates for display - Use parsed objects or utility */}
               {(() => {
-                // Use the parsed objects stored by the hook if available, otherwise use utility parse for display
                 const startTime =
                   bookingToEdit.spaDateTimeObj ||
                   parseBookingDateTime(bookingToEdit.spaDateTime);
@@ -87,9 +84,7 @@ const EditDeleteSpaModal = ({
                           Heure: {format(startTime, "HH:mm", { locale: fr })} -{" "}
                           {format(endTime, "HH:mm", { locale: fr })}
                         </div>
-                      ) : // Fallback display if only start time is valid
-                      // Check if slots array exists and has items before assuming duration
-                      bookingToEdit.spaSlots?.length > 0 ? (
+                      ) : bookingToEdit.spaSlots?.length > 0 ? (
                         <div className="text-xs text-gray-600">
                           Heure de début:{" "}
                           {format(startTime, "HH:mm", { locale: fr })} (Heure de
@@ -120,55 +115,57 @@ const EditDeleteSpaModal = ({
                   <div className="text-xs text-red-500">
                     Date/Heure de début SPA invalide ou manquante
                   </div>
-                ); // Message if dates are bad
+                );
               })()}
-              {bookingToEdit.notes && ( // Display notes if available
+              {bookingToEdit.notes && (
                 <div className="mt-1 text-xs italic text-gray-700">
                   Notes: {bookingToEdit.notes}
                 </div>
               )}
             </div>
 
-            {/* Action Buttons - Use passed handlers and actionLoading state */}
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  console.log("Modal: Fermer clicked");
-                  onClose();
-                }} // Use passed handler to close
-                className="px-4 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300"
-                disabled={actionLoading}
-              >
-                Fermer
-              </button>
-              {/* Call props handlers to request step changes */}
-              <button
-                onClick={() => {
-                  console.log("Modal: Reprogrammer (options) clicked");
-                  onRequestRescheduleStep();
-                }} // <-- CORRECTED: CALL PROP + log
-                className="px-4 py-2 text-sm text-white bg-yellow-500 rounded hover:bg-yellow-600"
-                disabled={actionLoading}
-              >
-                Reprogrammer
-              </button>
+            {/* Action Buttons */}
+            <div className="flex flex-col items-center pt-4 mt-4 space-y-3 border-t sm:flex-row sm:justify-between sm:space-y-0 sm:space-x-2">
+              {/* MODIFIED "Supprimer" BUTTON */}
               <button
                 onClick={() => {
                   console.log("Modal: Supprimer (options) clicked");
                   onRequestDeleteStep();
-                }} // <-- CORRECTED: CALL PROP + log
-                className="px-4 py-2 text-sm text-white bg-red-500 rounded hover:bg-red-600"
+                }}
+                className="py-1 text-xs font-medium text-red-600 sm:w-auto hover:text-red-700 hover:underline focus:outline-none focus:underline focus:text-red-700 disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
                 disabled={actionLoading}
               >
                 Supprimer
               </button>
+              <div className="flex flex-col w-full space-y-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2 sm:w-auto">
+                <button
+                  onClick={() => {
+                    console.log("Modal: Fermer clicked");
+                    onClose();
+                  }}
+                  className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md sm:w-auto hover:bg-gray-200"
+                  disabled={actionLoading}
+                >
+                  Fermer
+                </button>
+                <button
+                  onClick={() => {
+                    console.log("Modal: Reprogrammer (options) clicked");
+                    onRequestRescheduleStep();
+                  }}
+                  className="w-full px-4 py-2 text-sm font-medium text-white bg-yellow-500 border border-transparent rounded-md sm:w-auto hover:bg-yellow-600"
+                  disabled={actionLoading}
+                >
+                  Reprogrammer
+                </button>
+              </div>
             </div>
           </>
         )}
 
         {modalStep === "confirm-reschedule" && (
           <>
-            <h3 className="mb-4 text-lg font-semibold">
+            <h3 className="mb-4 text-lg font-semibold text-gray-800">
               Confirmer la Reprogrammation
             </h3>
             <p className="mb-6 text-sm text-gray-700">
@@ -176,9 +173,8 @@ const EditDeleteSpaModal = ({
               reprogrammer ? Il apparaîtra de nouveau dans la liste "À
               programmer".
             </p>
-            {/* Show action loading state passed from parent */}
             {actionLoading && (
-              <div className="p-2 mb-3 text-center text-blue-600">
+              <div className="p-2 mb-3 text-sm text-center text-blue-600 animate-pulse">
                 Action en cours...
               </div>
             )}
@@ -187,8 +183,8 @@ const EditDeleteSpaModal = ({
                 onClick={() => {
                   console.log("Modal: Annuler (reschedule confirm) clicked");
                   onRequestOptionsStep();
-                }} // <-- CORRECTED: CALL PROP + log
-                className="px-4 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300"
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
                 disabled={actionLoading}
               >
                 Annuler
@@ -197,9 +193,9 @@ const EditDeleteSpaModal = ({
                 onClick={() => {
                   console.log("Modal: Oui, Reprogrammer (confirm) clicked");
                   onRescheduleConfirm();
-                }} // Use passed handler for confirmation + log
-                className="px-4 py-2 text-sm text-white bg-yellow-500 rounded hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={actionLoading} // Disable during action
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-yellow-500 rounded-md hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={actionLoading}
               >
                 Oui, Reprogrammer
               </button>
@@ -209,16 +205,17 @@ const EditDeleteSpaModal = ({
 
         {modalStep === "confirm-delete" && (
           <>
-            <h3 className="mb-4 text-lg font-semibold">
+            <h3 className="mb-4 text-lg font-semibold text-gray-800">
               Confirmer la Suppression
             </h3>
             <p className="mb-6 text-sm text-gray-700">
-              Êtes-vous sûr de vouloir supprimer ce rendez-vous SPA ? Cette
-              action est irréversible.
+              Êtes-vous sûr de vouloir supprimer ce rendez-vous SPA ?{" "}
+              <span className="font-semibold">
+                Cette action est irréversible.
+              </span>
             </p>
-            {/* Show action loading state passed from parent */}
             {actionLoading && (
-              <div className="p-2 mb-3 text-center text-blue-600">
+              <div className="p-2 mb-3 text-sm text-center text-blue-600 animate-pulse">
                 Action en cours...
               </div>
             )}
@@ -227,8 +224,8 @@ const EditDeleteSpaModal = ({
                 onClick={() => {
                   console.log("Modal: Annuler (delete confirm) clicked");
                   onRequestOptionsStep();
-                }} // <-- CORRECTED: CALL PROP + log
-                className="px-4 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300"
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
                 disabled={actionLoading}
               >
                 Annuler
@@ -237,9 +234,9 @@ const EditDeleteSpaModal = ({
                 onClick={() => {
                   console.log("Modal: Oui, Supprimer (confirm) clicked");
                   onDeleteConfirm();
-                }} // Use passed handler for confirmation + log
-                className="px-4 py-2 text-sm text-white bg-red-500 rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={actionLoading} // Disable during action
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={actionLoading}
               >
                 Oui, Supprimer
               </button>

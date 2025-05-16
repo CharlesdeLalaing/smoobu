@@ -233,6 +233,7 @@
           },
           "selectDate": "Seléctionnez une date",
           "loading": "Chargement des créneaux...",
+          "greyedSlotInfoHelpText": "Si le créneau est grisé, il est disponible avec l'heure précédente et non avec l'heure suivante (car cette dernière n'est pas disponible).",
           "errorLoadingSettings": "Erreur de chagement des paramètres SPA",
           "datePlaceholderDropdown": "Sélectionnez une date",
           "noSlots": "Pas de créneaux disponibles pour cette date",

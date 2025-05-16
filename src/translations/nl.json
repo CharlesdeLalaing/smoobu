@@ -233,6 +233,7 @@
           },
           "selectDate": "Selecteer een datum",
           "loading": "Tijdsloten laden...",
+          "greyedSlotInfoHelpText": "Als het tijdslot grijs is, is het beschikbaar met het vorige uur en niet met het volgende uur (aangezien dit laatste niet beschikbaar is).",
           "errorLoadingSettings": "Fout bij het laden van SPA-instellingen",
           "datePlaceholderDropdown": "Selecteer een datum",
           "noSlots": "Geen tijdsloten beschikbaar voor deze datum",
