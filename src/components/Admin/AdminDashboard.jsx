@@ -12,7 +12,7 @@ const AdminDashboard = () => {
     { name: "Rapport extras", href: "/extras-report", icon: FileText },
     { name: "Coupons", href: "/coupons", icon: Tag },
     { name: "Liste extras", href: "/extras-list", icon: List },
-    { name: "Annuler Réservation", href: "/cancel-booking", icon: Trash2 },
+    // { name: "Annuler Réservation", href: "/cancel-booking", icon: Trash2 },
   ];
 
   // Redirect to booking report if at root admin path
