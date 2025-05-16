@@ -296,12 +296,9 @@ export const useBookingForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isStepValid()) {
-      // Check final step validity
       console.log("Form submit blocked, final step invalid.");
-      // Optionally scroll to the first error on the final page
       return;
     }
-    // Final coupon validation
     if (
       appliedCoupon &&
       !validateCouponPeriod(
@@ -311,19 +308,30 @@ export const useBookingForm = () => {
       )
     ) {
       setError(
-        "Le code promo n'est plus valable pour ces dates. Veuillez le retirer ou changer vos dates."
-      );
-      return; // Block submission
-    }
-    const selectedRoomPrice = priceDetails?.[formData.apartmentId];
-    const settings = selectedRoomPrice?.settings;
-    if (!selectedRoomPrice || !settings) {
-      setError(
-        "Les détails du prix ne sont pas disponibles. Veuillez sélectionner des dates et une chambre valide."
+        t(
+          "booking.coupon.errors.invalidDatesSubmit",
+          "Le code promo n'est plus valable pour ces dates. Veuillez le retirer ou changer vos dates."
+        )
       );
       return;
     }
+
+    const selectedRoomPrice = priceDetails?.[formData.apartmentId];
+    const settings = selectedRoomPrice?.settings;
+
+    if (!selectedRoomPrice || !settings) {
+      setError(
+        t(
+          "booking.errors.priceDetailsMissing",
+          "Les détails du prix ne sont pas disponibles. Veuillez sélectionner des dates et une chambre valide."
+        )
+      );
+      return;
+    }
+
     setLoading(true);
+    setError(null);
+
     try {
       const selectedExtrasArray = createSelectedExtrasArray();
       const guestFees = calculateGuestFees(
@@ -333,134 +341,192 @@ export const useBookingForm = () => {
       );
       const basePrice = selectedRoomPrice.originalPrice || 0;
       const extrasTotal = selectedExtrasArray.reduce(
-        (sum, extra) => sum + extra.amount + (extra.extraPersonAmount || 0),
+        (sum, extra) =>
+          sum + (extra.amount || 0) + (extra.extraPersonAmount || 0),
         0
       );
+
       const subtotalBeforeDiscounts = basePrice + extrasTotal + guestFees;
       const longStayDiscount = selectedRoomPrice.discount || 0;
-      const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-      const finalTotal = Math.max(
+      const couponDiscountAmount = appliedCoupon ? appliedCoupon.discount : 0;
+
+      // Calculate total after long-stay discount but before coupon
+      const totalAfterLongStay = Math.max(
         0,
-        subtotalBeforeDiscounts - longStayDiscount - couponDiscount
+        subtotalBeforeDiscounts - longStayDiscount
       );
 
+      // Calculate final total after coupon application
+      const finalTotal = Math.max(0, totalAfterLongStay - couponDiscountAmount);
+
+      // --- CORE CHANGE: Enforce that the payable amount MUST be greater than 0 ---
+      if (finalTotal <= 0) {
+        setError(
+          t(
+            "booking.errors.mustPayAboveZero",
+            "Le montant total de la réservation est de 0€ ou moins. Pour finaliser votre réservation, veuillez ajouter des extras ou ajuster votre sélection afin que le montant à payer soit supérieur à 0€."
+          )
+        );
+        setLoading(false);
+        return; // Stop processing, user needs to adjust booking
+      }
+      // --- END OF CORE CHANGE ---
+
+      // If we reach here, finalTotal > 0, so proceed to create payment intent
       const bookingDataForPayment = {
-        /* ... construct data ... */ ...formData,
-        price: finalTotal,
-        basePrice,
+        ...formData,
+        price: finalTotal, // This is the amount for Stripe
+        basePrice: basePrice, // Original room price before any discounts
+        longStayDiscount: longStayDiscount,
         guestFees,
         extras: selectedExtrasArray,
+        extrasTotal: extrasTotal,
         couponApplied: appliedCoupon
-          ? { code: appliedCoupon.code, discount: couponDiscount /* etc */ }
+          ? {
+              code: appliedCoupon.code,
+              discount: couponDiscountAmount,
+              type: appliedCoupon.type,
+              isGiftVoucher: appliedCoupon.isGiftVoucher,
+              originalAmount: appliedCoupon.originalAmount, // Store original coupon value
+            }
           : null,
-        priceDetails: {
-          ...selectedRoomPrice,
-          guestFees,
-          finalPrice: finalTotal /* etc */,
+        // Detailed breakdown for records or confirmation
+        priceBreakdown: {
+          roomBasePrice: basePrice,
+          calculatedExtrasTotal: extrasTotal,
+          calculatedGuestFees: guestFees,
+          subtotal: subtotalBeforeDiscounts,
+          appliedLongStayDiscount: longStayDiscount,
+          totalAfterLongStayDiscount: totalAfterLongStay,
+          appliedCouponDiscount: couponDiscountAmount,
+          finalPayableAmount: finalTotal, // The amount to be paid
+        },
+        // Snapshot of the price details used for this calculation
+        priceDetailsSnapshot: {
+          ...selectedRoomPrice, // Includes originalPrice, discount (long-stay), settings etc.
+          guestFees, // Add calculated guest fees here too for the snapshot
         },
       };
 
-      if (finalTotal > 0) {
-        const response = await api.post("/create-payment-intent", {
-          price: finalTotal,
-          bookingData: bookingDataForPayment,
-        });
-        setClientSecret(response.data.clientSecret);
-        setShowPayment(true);
-        setError(null);
-      } else {
-        // Handle free bookings or show error
-        if (finalTotal === 0 && appliedCoupon) {
-          // Allow booking with 0 total if coupon made it free?
-          console.log(
-            "Booking total is 0 due to coupon. Proceeding without payment intent."
-          );
-          // Simulate payment success directly or call a specific backend endpoint for free bookings
-          handlePaymentSuccess(true); // Pass a flag indicating free booking maybe
-        } else {
-          setError("Le montant total ne peut pas être négatif ou nul.");
-        }
-      }
+      const response = await api.post("/create-payment-intent", {
+        price: finalTotal, // Amount in currency's smallest unit if required by backend (e.g., cents for EUR)
+        currency: "eur", // Or your default currency
+        bookingData: bookingDataForPayment, // Send booking details for metadata or server-side processing
+      });
+
+      setClientSecret(response.data.clientSecret);
+      setShowPayment(true);
+      // setError(null); // Already cleared at the beginning of try block
     } catch (err) {
-      console.error("Error creating payment:", err);
+      console.error("Error creating payment or processing booking:", err);
       setError(
         err.response?.data?.error ||
-          "Une erreur s'est produite lors de la création du paiement."
+          t(
+            "booking.errors.paymentCreationError",
+            "Une erreur s'est produite lors de la création du paiement ou du traitement de la réservation."
+          )
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePaymentSuccess = (isFreeBooking = false) => {
-    // Accept optional flag
-    if (!clientSecret && !isFreeBooking) {
-      // Check clientSecret only if not free
+  const handlePaymentSuccess = () => {
+    // Removed isFreeBooking flag
+    if (!clientSecret) {
       setError(
-        "Erreur: Tentative de confirmation sans intention de paiement valide."
+        t(
+          "booking.errors.missingPaymentIntentOnSuccess",
+          "Erreur: Tentative de confirmation sans intention de paiement valide."
+        )
       );
       return;
     }
-    // Recalculate final details just before saving (important!)
+
+    // Recalculate final details just before saving for data integrity.
+    // This should ideally use the same source data as handleSubmit to avoid discrepancies.
     const selectedExtrasArray = createSelectedExtrasArray();
     const selectedApartmentPriceDetails = priceDetails?.[formData.apartmentId];
+
     if (!selectedApartmentPriceDetails) {
-      setError("Détails de prix manquants lors de la confirmation.");
+      setError(
+        t(
+          "booking.errors.priceDetailsMissingConfirm",
+          "Détails de prix manquants lors de la confirmation."
+        )
+      );
       return;
     }
-    const roomBasePrice = selectedApartmentPriceDetails.originalPrice || 0;
+
+    const roomOriginalPrice = selectedApartmentPriceDetails.originalPrice || 0;
+    const currentSettings = selectedApartmentPriceDetails.settings;
     const guestFees = calculateGuestFees(
       formData.adults,
       formData.children,
-      selectedApartmentPriceDetails.settings
+      currentSettings
     );
     const extrasTotal = selectedExtrasArray.reduce(
-      (sum, extra) => sum + extra.amount + (extra.extraPersonAmount || 0),
+      (sum, extra) =>
+        sum + (extra.amount || 0) + (extra.extraPersonAmount || 0),
       0
     );
-    const subtotalBeforeDiscounts = roomBasePrice + extrasTotal + guestFees;
+
+    const subtotalBeforeDiscounts = roomOriginalPrice + extrasTotal + guestFees;
     const longStayDiscount = selectedApartmentPriceDetails?.discount || 0;
     const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-    const finalTotal = Math.max(
-      0,
-      subtotalBeforeDiscounts - longStayDiscount - couponDiscount
-    );
 
-    const bookingData = {
-      /* ... construct final booking data ... */ ...formData,
+    const totalAfterLongStay = Math.max(
+      0,
+      subtotalBeforeDiscounts - longStayDiscount
+    );
+    const finalTotal = Math.max(0, totalAfterLongStay - couponDiscount);
+
+    // At this point, finalTotal should be > 0 because handleSubmit enforced it.
+    // If it's somehow <=0 here, it indicates an inconsistency, but we proceed with what's calculated.
+
+    const bookingDataToSave = {
+      ...formData,
       extras: selectedExtrasArray,
-      guestFees,
+      guestFees, // Calculated guest fees
       priceBreakdown: {
-        basePrice: roomBasePrice,
-        guestFees,
-        extrasTotal: extrasTotal,
-        finalPrice: finalTotal,
-        couponDiscount: couponDiscount,
+        roomBasePrice: roomOriginalPrice,
+        calculatedExtrasTotal: extrasTotal,
+        calculatedGuestFees: guestFees,
+        subtotal: subtotalBeforeDiscounts,
+        appliedLongStayDiscount: longStayDiscount,
+        totalAfterLongStayDiscount: totalAfterLongStay,
+        appliedCouponDiscount: couponDiscount,
+        finalPayableAmount: finalTotal, // The amount that was paid
       },
-      priceDetails: {
+      priceDetailsSnapshot: {
         ...selectedApartmentPriceDetails,
         guestFees,
-        discount: longStayDiscount,
-        settings: selectedApartmentPriceDetails?.settings,
       },
-      price: finalTotal,
+      price: finalTotal, // Final amount paid
       spaDateTime: formData.spaDateTime,
+      spaEndDateTime: formData.spaEndDateTime, // Ensure these are correctly populated if used
+      spaSlots: formData.spaSlots, // Ensure these are correctly populated if used
       spaBookingPreference: formData.spaBookingPreference,
       couponApplied: appliedCoupon
         ? {
-            /* ... */
+            code: appliedCoupon.code,
+            discount: appliedCoupon.discount,
+            type: appliedCoupon.type,
+            isGiftVoucher: appliedCoupon.isGiftVoucher,
+            originalAmount: appliedCoupon.originalAmount,
+            percentageValue: appliedCoupon.percentageValue,
           }
         : null,
     };
 
-    localStorage.setItem("bookingData", JSON.stringify(bookingData));
+    localStorage.setItem("bookingData", JSON.stringify(bookingDataToSave));
 
-    // Include payment_intent only if it exists (not a free booking)
     const paymentIntentQuery = clientSecret
       ? `?payment_intent=${clientSecret.split("_secret")[0]}`
-      : "";
+      : ""; // This should always be populated if we reach here
     navigate(`/booking-confirmation${paymentIntentQuery}`);
   };
+
 
   const handleSpaScheduleChange = useCallback(
     (value) => {
@@ -495,7 +561,9 @@ export const useBookingForm = () => {
   );
 
   const handleApplyCoupon = async (couponCode) => {
-    setError(null);
+    setError(null); // Clear previous general errors
+    setCouponError(null); // Clear previous coupon-specific errors
+
     try {
       const couponsRef = collection(db, "coupons");
       const q = query(
@@ -503,13 +571,30 @@ export const useBookingForm = () => {
         where("code", "==", couponCode.toUpperCase())
       );
       const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) return { error: "not_found" };
+
+      if (querySnapshot.empty) {
+        return {
+          error: "not_found",
+          message: t("booking.coupon.errors.notFound"),
+        };
+      }
 
       const couponDoc = querySnapshot.docs[0];
       const couponData = { id: couponDoc.id, ...couponDoc.data() };
 
-      if (couponData.status !== "active") return { error: "inactive" };
-      if (couponData.usedCount >= couponData.maxUsage) return { error: "used" };
+      if (couponData.status !== "active") {
+        return {
+          error: "inactive",
+          message: t("booking.coupon.errors.inactive"),
+        };
+      }
+      if (couponData.maxUsage && couponData.usedCount >= couponData.maxUsage) {
+        // Check maxUsage only if defined
+        return {
+          error: "used",
+          message: t("booking.coupon.errors.maxUsageReached"),
+        };
+      }
 
       const now = new Date();
       const expiryDate = couponData.expiryDate?.toDate
@@ -517,7 +602,12 @@ export const useBookingForm = () => {
         : couponData.expiryDate
         ? new Date(couponData.expiryDate)
         : null;
-      if (expiryDate && now > expiryDate) return { error: "expired" };
+      if (expiryDate && now > expiryDate) {
+        return {
+          error: "expired",
+          message: t("booking.coupon.errors.expired"),
+        };
+      }
 
       if (
         !validateCouponPeriod(
@@ -555,69 +645,141 @@ export const useBookingForm = () => {
         currentRoomPriceDetails.originalPrice === undefined
       ) {
         return {
-          error: "invalid",
+          error: "invalid_room_selection",
           message: t(
             "booking.coupon.errors.selectRoomFirst",
-            "Veuillez sélectionner une chambre et des dates valides."
+            "Veuillez sélectionner une chambre et des dates valides avant d'appliquer un code."
           ),
         };
       }
 
-      // --- MODIFIED PRICE ELIGIBLE FOR COUPON ---
-      // The coupon should typically apply to the base room price, potentially after long-stay discounts.
-      // It should NOT apply to guest fees or extras.
-      const roomBasePriceAfterLongStay =
-        (currentRoomPriceDetails.originalPrice || 0) -
-        (currentRoomPriceDetails.discount || 0);
-      const priceEligibleForCoupon = Math.max(0, roomBasePriceAfterLongStay); // Ensure it's not negative
+      // --- START OF MODIFIED LOGIC FOR COUPON APPLICATION ---
 
-      if (priceEligibleForCoupon <= 0) {
+      const isGiftCard = couponData.isGiftVoucher === true;
+
+      // Calculate price components
+      const roomOriginalPrice = currentRoomPriceDetails.originalPrice || 0;
+      const longStayDiscount = currentRoomPriceDetails.discount || 0;
+      const roomPriceAfterLongStay = Math.max(
+        0,
+        roomOriginalPrice - longStayDiscount
+      );
+
+      const selectedExtrasArrayForCoupon = createSelectedExtrasArray();
+      const extrasTotalForCoupon = selectedExtrasArrayForCoupon.reduce(
+        (sum, extra) =>
+          sum + (extra.amount || 0) + (extra.extraPersonAmount || 0),
+        0
+      );
+
+      const guestFeesForCoupon = calculateGuestFees(
+        formData.adults,
+        formData.children,
+        currentRoomPriceDetails.settings
+      );
+
+      let priceEligibleForDiscountTotal;
+
+      if (isGiftCard) {
+        // Gift cards apply to the total booking value (room after long stay + extras + guest fees)
+        priceEligibleForDiscountTotal =
+          roomPriceAfterLongStay + extrasTotalForCoupon + guestFeesForCoupon;
+      } else {
+        // Promo codes apply only to the room price (after long-stay discount)
+        priceEligibleForDiscountTotal = roomPriceAfterLongStay;
+      }
+      priceEligibleForDiscountTotal = Math.max(
+        0,
+        priceEligibleForDiscountTotal
+      ); // Ensure it's not negative
+
+      // Validation: If it's a promo code, there must be a positive room price to apply it to.
+      if (
+        !isGiftCard &&
+        roomPriceAfterLongStay <= 0 &&
+        (couponData.percentageValue > 0 || couponData.amount > 0)
+      ) {
         return {
-          error: "invalid",
+          error: "no_amount_for_promo",
           message: t(
             "booking.coupon.errors.noAmountToDiscountRoom",
-            "Le prix de la chambre n'est pas éligible à une réduction supplémentaire."
+            "Le prix de la chambre n'est pas éligible à une réduction promotionnelle."
           ),
         };
       }
-      // --- END MODIFICATION ---
+
+      // If total eligible amount for discount is zero, coupon (even gift card) will result in zero discount value.
+      if (
+        priceEligibleForDiscountTotal <= 0 &&
+        (couponData.percentageValue > 0 || couponData.amount > 0)
+      ) {
+        // This means the entire booking is already free or less, so coupon provides no further discount.
+        // This is not an error, but the discount will be 0.
+        // We can proceed, and calculatedDiscount will naturally be 0.
+      }
 
       let calculatedDiscount = 0;
-      if (couponData.type === "percentage" && couponData.percentageValue) {
-        calculatedDiscount =
-          (priceEligibleForCoupon * couponData.percentageValue) / 100;
-      } else if (couponData.type === "fixed" && couponData.amount) {
+      if (couponData.type === "percentage" && couponData.percentageValue > 0) {
+        if (isGiftCard) {
+          // Percentage gift cards apply to the total eligible amount
+          calculatedDiscount =
+            (priceEligibleForDiscountTotal * couponData.percentageValue) / 100;
+        } else {
+          // Percentage promo codes apply only to room price after long stay
+          calculatedDiscount =
+            (roomPriceAfterLongStay * couponData.percentageValue) / 100;
+        }
+      } else if (couponData.type === "fixed" && couponData.amount > 0) {
         calculatedDiscount = couponData.amount;
       }
 
-      // Ensure discount does not exceed the eligible price (which is now just the room price part)
-      calculatedDiscount = Math.min(calculatedDiscount, priceEligibleForCoupon);
-      calculatedDiscount = parseFloat(calculatedDiscount.toFixed(2));
+      // The discount cannot exceed the price it's being applied to.
+      // For gift cards, this means it can cover up to the total eligible amount.
+      // For promo codes, it can cover up to the room price after long stay.
+      calculatedDiscount = Math.min(
+        calculatedDiscount,
+        priceEligibleForDiscountTotal
+      );
 
-      if (calculatedDiscount <= 0 && couponData.amount > 0) {
-        // If fixed amount coupon led to 0 discount because eligible price was too low
-        return {
-          error: "invalid",
-          message: t(
-            "booking.coupon.errors.discountTooHighForRoom",
-            "La valeur du code promo dépasse le prix de la chambre éligible."
-          ),
-        };
-      }
+      calculatedDiscount = parseFloat(calculatedDiscount.toFixed(2));
+      calculatedDiscount = Math.max(0, calculatedDiscount); // Ensure discount is not negative
+
+      // If a coupon that should provide value results in 0 discount (e.g. total eligible price was 0)
+      // it's not an error, it just means no discount is applied. The coupon is still "valid".
+      // The user specifically wants gift cards to apply their "whole value", which Math.min handles correctly relative to the total.
 
       const couponToApply = {
         id: couponData.id,
         code: couponData.code,
         type: couponData.type,
-        discount: calculatedDiscount, // The actual calculated discount amount
-        percentageValue: couponData.percentageValue || null, // Store original percentage if type is 'percentage'
+        discount: calculatedDiscount,
+        originalAmount: couponData.amount || null, // Store original fixed amount if any
+        percentageValue: couponData.percentageValue || null,
+        isGiftVoucher: isGiftCard, // Store if it's a gift voucher
+        // You might want to store more couponData fields if needed later
       };
+
       setAppliedCoupon(couponToApply);
-      // The PriceDetails component and handleSubmit will use this appliedCoupon to calculate the final total.
-      return { success: true, appliedCouponData: couponToApply };
+      // Clear coupon code input on successful application
+      // setCoupon(""); // Optionally clear the input field via parent component state
+
+      return {
+        success: true,
+        appliedCouponData: couponToApply,
+        message: t(
+          "booking.coupon.success",
+          "Code promo appliqué avec succès !"
+        ),
+      };
+
+      // --- END OF MODIFIED LOGIC ---
     } catch (error) {
       console.error("Error applying coupon in useBookingForm:", error);
-      return { error: "invalid", message: t("errors.generic") };
+      // Set a generic error for unexpected issues
+      return {
+        error: "invalid",
+        message: t("errors.generic", "Une erreur s'est produite."),
+      };
     }
   };
 
