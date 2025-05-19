@@ -361,6 +361,7 @@ export const useBookingsData = () => {
 
   const handleExport = () => {
     const wsData = [
+      // Header row
       [
         "ID",
         "Client",
@@ -376,19 +377,20 @@ export const useBookingsData = () => {
         "Check-in",
         "Départ",
         "Nuits",
-        "Prix Base",
-        "Coupon Nom",
-        "Coupon Val.",
-        "Frais Linge",
-        "Promo Long",
-        "Commission",
+        "Prix Base (€)",
+        "Nom Coupon Appliqué",
+        "Valeur Coupon (€)",
+        "Frais Linge (€)",
+        "Promo Long Séjour (€)",
+        "Commission (€)",
         "SPA",
         "Extras Liste",
-        "Extras Total",
-        "Prix Total",
-        "Prix Sans Coupon",
+        "Extras Total (€)",
+        "Prix Total Payé (€)",
+        "Prix Sans Coupon (€)",
       ],
       ...reportData.map((booking) => {
+        // Extras processing logic (assuming this part is correct from your previous code)
         const portalName =
           booking.portalName || booking.channelName || booking.portal;
         const isBookingCom = portalName === "Booking.com";
@@ -429,9 +431,75 @@ export const useBookingsData = () => {
           )
           .join(", ");
 
+        // --- CORRECTED COUPON LOGIC FOR EXPORT ---
+        let exportCouponName = "";
+        let exportCouponValue = 0; // Should be the monetary value of the discount
+
+        if (
+          booking.coupon &&
+          typeof booking.coupon.code === "string" &&
+          booking.coupon.code.trim() !== ""
+        ) {
+          exportCouponName = booking.coupon.code;
+        } else if (booking.appliedCoupon?.code) {
+          // Fallback
+          exportCouponName = booking.appliedCoupon.code;
+        } else if (booking.couponApplied?.code) {
+          // Further fallback
+          exportCouponName = booking.couponApplied.code;
+        } else if (
+          booking.priceDetails?.promoCode?.code &&
+          booking.priceDetails.promoCode.code.toLowerCase() !== "code"
+        ) {
+          exportCouponName = booking.priceDetails.promoCode.code;
+        } else if (
+          booking.priceDetails?.promoCode?.name &&
+          booking.priceDetails.promoCode.name.toLowerCase() !== "code" &&
+          exportCouponName === ""
+        ) {
+          exportCouponName = booking.priceDetails.promoCode.name;
+        }
+        // If still no specific name, and there's a discount, use a generic placeholder
+        if (
+          exportCouponName === "" &&
+          (booking.priceDetails?.couponDiscount ||
+            booking.priceDetails?.promoCode?.amount)
+        ) {
+          exportCouponName = "PROMO APPLIQUÉ";
+        }
+
+        // Get the monetary discount value
+        if (typeof booking.priceDetails?.couponDiscount === "number") {
+          exportCouponValue = parseFloat(booking.priceDetails.couponDiscount);
+        } else if (
+          typeof booking.priceDetails?.promoCode?.amount === "number"
+        ) {
+          exportCouponValue = parseFloat(booking.priceDetails.promoCode.amount);
+        } else if (
+          booking.coupon?.discount &&
+          booking.coupon?.type !== "percentage"
+        ) {
+          exportCouponValue = parseFloat(booking.coupon.discount);
+        }
+        // Ensure coupon value is negative for display if it's a discount and a coupon was applied
+        if (exportCouponValue > 0 && exportCouponName !== "") {
+          exportCouponValue = -exportCouponValue;
+        } else if (exportCouponName === "" && exportCouponValue !== 0) {
+          // If there's a value but no name, something is off, but still record the value
+          // Potentially make it negative if it's a positive discount amount without a clear coupon code
+          if (
+            exportCouponValue > 0 &&
+            (booking.priceDetails?.couponDiscount > 0 ||
+              booking.priceDetails?.promoCode?.amount > 0)
+          ) {
+            exportCouponValue = -exportCouponValue;
+          }
+        }
+        // --- END CORRECTED COUPON LOGIC ---
+
+        // SPA info export (uses booking.spaDateTimeObj)
         let spaInfoExport = "-";
         if (booking.spaDateTimeObj && isValid(booking.spaDateTimeObj)) {
-          // Use spaDateTimeObj
           try {
             spaInfoExport = booking.spaDateTimeObj.toLocaleString("fr-BE", {
               dateStyle: "short",
@@ -443,92 +511,110 @@ export const useBookingsData = () => {
         } else if (booking.spaBookingPreference === "later") {
           spaInfoExport = "À programmer";
         } else if (booking.spaBookingPreference === "scheduled") {
-          // If pref is scheduled but obj is bad
+          // If pref is scheduled but obj is bad/missing
           spaInfoExport = "Date Programmée Invalide";
         }
 
-        // Ensure arrival/departure dates for export are valid before formatting
         const arrivalExport =
           booking.arrivalDateObj && isValid(booking.arrivalDateObj)
             ? booking.arrivalDateObj.toLocaleDateString("fr-FR")
-            : booking.checkIn || "N/A"; // Fallback to original string or N/A
+            : booking.checkIn || "N/A";
         const departureExport =
           booking.departureDateObj && isValid(booking.departureDateObj)
             ? booking.departureDateObj.toLocaleDateString("fr-FR")
-            : booking.checkOut || "N/A"; // Fallback to original string or N/A
-        const createdExport = parseBookingDateTime(booking.created); // Parse created date string
+            : booking.checkOut || "N/A";
+        const createdDateObj = parseBookingDateTime(booking.created); // Use your parser
+
+        // Base Price for export
+        const exportBasePrice = parseFloat(
+          booking.priceDetails?.basePrice || booking.basePrice || 0
+        );
+        // Long Stay Discount for export (ensure negative)
+        const exportLongStayDiscount = parseFloat(
+          booking.priceDetails?.longStayDiscount || 0
+        );
 
         return [
-          booking.id,
+          booking.id, // Smoobu ID or Firestore ID
           booking.guest,
-          createdExport && isValid(createdExport)
-            ? createdExport.toLocaleDateString("fr-FR")
-            : booking.created,
+          createdDateObj && isValid(createdDateObj)
+            ? createdDateObj.toLocaleDateString("fr-FR")
+            : booking.created || "N/A",
           booking.portal,
           booking.property || "",
           booking.email || "",
           booking.phone || "",
           booking.address || "",
-          booking.adults,
-          booking.children,
+          booking.adults || 0,
+          booking.children || 0,
           arrivalExport,
           booking.arrivalTime || "",
           departureExport,
-          booking.nights,
-          booking.priceDetails?.basePrice || 0,
-          booking.priceDetails?.promoCode?.name || "",
-          booking.priceDetails?.promoCode?.amount || "",
-          booking.priceDetails?.linenFee || 0, // Ensure numeric
-          booking.priceDetails?.longStayDiscount || 0, // Ensure numeric
-          booking.commission || 0, // Ensure numeric
+          booking.nights || 0,
+          exportBasePrice, // Prix Base (€)
+          exportCouponName, // Nom Coupon Appliqué
+          exportCouponValue, // Valeur Coupon (€)
+          parseFloat(booking.priceDetails?.linenFee || booking.linenFee || 0), // Frais Linge (€)
+          exportLongStayDiscount > 0 ? -exportLongStayDiscount : 0, // Promo Long Séjour (€)
+          parseFloat(booking.commission || 0), // Commission (€)
           spaInfoExport,
           extrasList || "",
-          extrasTotal || 0,
-          booking.price,
-          parseFloat(booking.price || 0) +
-            parseFloat(booking.priceDetails?.promoCode?.amount || 0),
+          extrasTotal || 0, // Extras Total (€)
+          parseFloat(booking.price || 0), // Prix Total Payé (€)
+          // Prix Sans Coupon: final price paid + absolute value of coupon discount
+          parseFloat(booking.price || 0) + Math.abs(exportCouponValue),
         ];
       }),
     ];
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Column widths - ensure this array has the same number of elements as your header row (25 columns)
     const colWidths = [
-      { wch: 15 },
+      { wch: 12 },
       { wch: 25 },
-      { wch: 20 },
-      { wch: 20 },
+      { wch: 12 },
+      { wch: 15 },
       { wch: 25 },
       { wch: 30 },
-      { wch: 20 },
+      { wch: 15 },
       { wch: 35 },
+      { wch: 7 },
+      { wch: 7 }, // 10
+      { wch: 12 },
       { wch: 10 },
+      { wch: 12 },
+      { wch: 7 },
       { wch: 10 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 10 },
-      { wch: 15 },
       { wch: 20 },
-      { wch: 15 },
-      { wch: 15 },
+      { wch: 10 },
+      { wch: 10 },
+      { wch: 10 },
+      { wch: 10 }, // 20
       { wch: 20 },
-      { wch: 15 },
-      { wch: 25 },
-      { wch: 50 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 18 },
+      { wch: 40 },
+      { wch: 10 },
+      { wch: 10 },
+      { wch: 15 }, // 25
     ];
     ws["!cols"] = colWidths;
-    const priceColumns = [14, 16, 17, 18, 19, 22, 23, 24]; // Adjusted for SPA column
+
+    // Price columns indices for currency formatting (0-indexed)
+    // Check these indices carefully against your header row!
+    // Prix Base (14), Valeur Coupon (16), Frais Linge (17), Promo Long (18), Commission (19)
+    // Extras Total (22), Prix Total Payé (23), Prix Sans Coupon (24)
+    const priceColumns = [14, 16, 17, 18, 19, 22, 23, 24];
     priceColumns.forEach((col) => {
       const range = XLSX.utils.decode_range(ws["!ref"]);
       for (let row = 1; row <= range.e.r; row++) {
+        // Start from row 1 (data)
         const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
-        if (ws[cellRef] && typeof ws[cellRef].v === "number")
+        if (ws[cellRef] && typeof ws[cellRef].v === "number") {
           ws[cellRef].z = "#,##0.00 €";
+        }
       }
     });
+
     XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
     const startDateStr = `${startYear}-${String(startMonth).padStart(2, "0")}`;
     const endDateStr = `${endYear}-${String(endMonth).padStart(2, "0")}`;

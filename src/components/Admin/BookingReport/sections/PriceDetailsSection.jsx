@@ -1,36 +1,104 @@
+// File: src/components/Admin/BookingReport/PriceDetailsSection.jsx
 import React from "react";
-import { formatPrice } from "../../../utils/formatters";
-
+import { formatPrice } from "../../../utils/formatters"; // Adjust path if necessary
 
 const PriceDetailsSection = ({ booking }) => {
-  // Get portal name
+  // For debugging, you can uncomment these lines:
+  // console.log("PriceDetailsSection received booking (stringified for full view):", JSON.stringify(booking, null, 2));
+  // if (booking) {
+  //   console.log("   >>> PriceDetailsSection - booking.coupon:", booking.coupon);
+  //   console.log("   >>> PriceDetailsSection - booking.priceDetails.couponDiscount:", booking.priceDetails?.couponDiscount);
+  //   console.log("   >>> PriceDetailsSection - booking.priceDetails.promoCode:", booking.priceDetails?.promoCode);
+  // }
+
+  if (!booking) {
+    return (
+      <div className="text-sm text-gray-500">
+        Données de réservation manquantes.
+      </div>
+    );
+  }
+
   const portalName =
     booking.portalName || booking.channelName || booking.portal;
   const isAirbnb = portalName === "Airbnb";
   const isBookingCom = portalName === "Booking.com";
 
-  // For Airbnb, we may need special handling
   let basePrice = 0;
   let linenFee = 0;
   let longStayDiscount = 0;
-  let couponDiscount = 0;
+  let couponDiscountAmount = 0;
+  let actualCouponCode = "";
   let taxeDeSejour = 0;
 
-  if (isAirbnb) {
-    // For Airbnb, extract base price from price elements
-    const priceElements = booking.priceDetails?.priceElements || [];
+  // --- Determine the actual coupon code used ---
+  // Priority: booking.coupon (from useBookingsData processing), then fallbacks.
+  if (
+    booking.coupon &&
+    typeof booking.coupon.code === "string" &&
+    booking.coupon.code.trim() !== ""
+  ) {
+    actualCouponCode = booking.coupon.code;
+  } else if (
+    booking.appliedCoupon &&
+    typeof booking.appliedCoupon.code === "string" &&
+    booking.appliedCoupon.code.trim() !== ""
+  ) {
+    actualCouponCode = booking.appliedCoupon.code;
+  } else if (
+    booking.couponApplied &&
+    typeof booking.couponApplied.code === "string" &&
+    booking.couponApplied.code.trim() !== ""
+  ) {
+    actualCouponCode = booking.couponApplied.code;
+  } else if (
+    booking.priceDetails?.promoCode?.code &&
+    typeof booking.priceDetails.promoCode.code === "string" &&
+    booking.priceDetails.promoCode.code.trim() !== "" &&
+    booking.priceDetails.promoCode.code.toLowerCase() !== "code"
+  ) {
+    actualCouponCode = booking.priceDetails.promoCode.code;
+  } else if (
+    booking.priceDetails?.promoCode?.name &&
+    typeof booking.priceDetails.promoCode.name === "string" &&
+    booking.priceDetails.promoCode.name.trim() !== "" &&
+    booking.priceDetails.promoCode.name.toLowerCase() !== "code" &&
+    actualCouponCode === ""
+  ) {
+    // Only use name if code wasn't found or was generic
+    actualCouponCode = booking.priceDetails.promoCode.name;
+  }
 
-    // Find base price element
+  // --- Get coupon discount amount consistently ---
+  // This should represent the final monetary value of the discount.
+  if (typeof booking.priceDetails?.couponDiscount === "number") {
+    couponDiscountAmount = parseFloat(booking.priceDetails.couponDiscount);
+  } else if (typeof booking.priceDetails?.promoCode?.amount === "number") {
+    couponDiscountAmount = parseFloat(booking.priceDetails.promoCode.amount);
+  } else if (booking.coupon?.discount) {
+    // Use booking.coupon.discount if other more specific monetary values are not present
+    // Check type if available to avoid misinterpreting a percentage as a fixed amount.
+    if (!booking.coupon.type || booking.coupon.type !== "percentage") {
+      couponDiscountAmount = parseFloat(booking.coupon.discount);
+    } else if (!couponDiscountAmount) {
+      // If it's a percentage and no monetary amount found yet
+      console.warn(
+        "PriceDetailsSection: booking.coupon.type is 'percentage', 'discount' field might be the percentage value. Monetary discount amount might be missing or derived from priceDetails.couponDiscount which was not found."
+      );
+    }
+  }
+  // Ensure the discount is stored as a positive value for calculations; it will be displayed as negative.
+  couponDiscountAmount = Math.abs(couponDiscountAmount);
+
+  // --- Determine Base Price and other fees based on portal ---
+  if (isAirbnb) {
+    const priceElements = booking.priceDetails?.priceElements || [];
     const basePriceElement = priceElements.find(
       (el) =>
         el && el.name && (el.name === "Base Price" || el.name === "base_price")
     );
+    if (basePriceElement) basePrice = parseFloat(basePriceElement.amount) || 0;
 
-    if (basePriceElement) {
-      basePrice = parseFloat(basePriceElement.amount) || 0;
-    }
-
-    // Find linen fee
     const linenFeeElement = priceElements.find(
       (el) =>
         el &&
@@ -39,40 +107,22 @@ const PriceDetailsSection = ({ booking }) => {
           el.name.includes("linen_fee") ||
           el.name.includes("Linen Fee"))
     );
+    if (linenFeeElement) linenFee = parseFloat(linenFeeElement.amount) || 0;
 
-    if (linenFeeElement) {
-      linenFee = parseFloat(linenFeeElement.amount) || 0;
-    }
-
-    // Find commission (for display only)
-    const commissionElement = priceElements.find(
-      (el) =>
-        el &&
-        el.name &&
-        (el.name.includes("Cancellation Host Fee") ||
-          el.name.includes("Host Fee"))
-    );
-
-    if (commissionElement) {
-      booking.commission = parseFloat(commissionElement.amount) || 0;
-    }
+    // For commission display (not calculation of total)
+    // const commissionElement = priceElements.find(el => el && el.name && (el.name.includes("Cancellation Host Fee") || el.name.includes("Host Fee")));
+    // if (commissionElement) { /* localCommission = parseFloat(commissionElement.amount) || 0; */ }
   } else if (isBookingCom) {
-    // For Booking.com bookings
     basePrice = parseFloat(
       booking.priceDetails?.basePrice || booking.basePrice || 0
     );
-
-    // Look for taxe de séjour in priceElements
     const priceElements = booking.priceDetails?.priceElements || [];
     const taxeElement = priceElements.find(
       (el) => el && el.name && el.name.toLowerCase().includes("taxe de séjour")
     );
-
-    if (taxeElement) {
-      taxeDeSejour = parseFloat(taxeElement.amount) || 0;
-    }
+    if (taxeElement) taxeDeSejour = parseFloat(taxeElement.amount) || 0;
   } else {
-    // For non-Airbnb/non-Booking.com bookings, use the normal fields
+    // For non-Airbnb/non-Booking.com (e.g., Direct/Website)
     basePrice = parseFloat(
       booking.priceDetails?.basePrice || booking.basePrice || 0
     );
@@ -80,31 +130,26 @@ const PriceDetailsSection = ({ booking }) => {
       booking.priceDetails?.linenFee || booking.linenFee || 0
     );
     longStayDiscount = parseFloat(booking.priceDetails?.longStayDiscount || 0);
-    couponDiscount = parseFloat(
-      booking.priceDetails?.promoCode?.amount ||
-        booking.priceDetails?.couponDiscount ||
-        0
-    );
   }
 
-  // Calculate total room price
-  const totalRoomPrice =
-    basePrice + linenFee - longStayDiscount - couponDiscount;
+  // Calculate total room price logic
+  const totalRoomPriceBeforeDiscountsAndTaxes =
+    basePrice + linenFee + (isBookingCom ? taxeDeSejour : 0);
+  const totalDiscountsApplicable = longStayDiscount + couponDiscountAmount; // Both are positive values representing reduction
+  const finalTotalRoomPrice =
+    totalRoomPriceBeforeDiscountsAndTaxes - totalDiscountsApplicable;
 
-  // Get commission for display (if any)
-  const commission = parseFloat(booking.commission || 0);
+  const commission = parseFloat(booking.commission || 0); // For display only
 
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-semibold text-gray-900">Détails de Prix</h3>
       <div className="space-y-2">
-        {/* Base Price */}
         <p className="text-sm">
           <span className="block font-medium">Prix de base:</span>
           {formatPrice(basePrice)}
         </p>
 
-        {/* Linen Fee (if applicable) */}
         {linenFee > 0 && (
           <p className="text-sm">
             <span className="block font-medium">Frais de linge:</span>
@@ -112,7 +157,6 @@ const PriceDetailsSection = ({ booking }) => {
           </p>
         )}
 
-        {/* Taxe de Séjour for Booking.com (if applicable) */}
         {isBookingCom && taxeDeSejour > 0 && (
           <p className="text-sm">
             <span className="block font-medium">Taxe de séjour:</span>
@@ -120,38 +164,32 @@ const PriceDetailsSection = ({ booking }) => {
           </p>
         )}
 
-        {/* Long Stay Discount (if applicable) */}
         {longStayDiscount > 0 && (
           <p className="text-sm text-red-600">
             <span className="block font-medium">Réduction long séjour:</span>
-            {formatPrice(-longStayDiscount)}
+            {formatPrice(-longStayDiscount)}{" "}
+            {/* Display discount as negative */}
           </p>
         )}
 
-        {/* Coupon Discount (if applicable) */}
-        {couponDiscount > 0 && booking.priceDetails?.promoCode && (
+        {couponDiscountAmount > 0.001 && ( // Use a small epsilon for float comparison
           <p className="text-sm text-green-600">
             <span className="block font-medium">
-              {`Code promo: ${booking.priceDetails.promoCode.code || "PROMO"}:`}
+              {`Code promo: ${actualCouponCode || "PROMO APPLIQUÉ"}:`}
             </span>
-            {formatPrice(-couponDiscount)}
+            {formatPrice(-couponDiscountAmount)}{" "}
+            {/* Display discount as negative */}
           </p>
         )}
 
-        {/* Total Room Price */}
         <div className="pt-2 mt-4 border-t border-gray-200">
           <span className="block text-sm font-medium">Total chambre:</span>
-          <span className="text-sm">
-            {isBookingCom
-              ? formatPrice(basePrice + taxeDeSejour)
-              : formatPrice(totalRoomPrice)}
-          </span>
+          <span className="text-sm">{formatPrice(finalTotalRoomPrice)}</span>
         </div>
 
-        {/* Commission (Displayed but NOT added to total) */}
         {commission > 0 && (
           <p className="text-sm text-gray-600">
-            <span className="block font-medium">Commission:</span>
+            <span className="block font-medium">Commission (informative):</span>
             {formatPrice(commission)}
           </p>
         )}
