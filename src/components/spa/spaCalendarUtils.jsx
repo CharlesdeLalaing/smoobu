@@ -1,128 +1,218 @@
+// File: src/components/spa/spaCalendarUtils.js (or your actual path)
+
 import {
-  format, // Keep format for potential use within utilities
+  format,
   parseISO,
   isSameDay,
   isBefore,
   isAfter,
   addDays,
   startOfDay,
-  isValid as isDateValid,
+  isValid,
 } from "date-fns";
 
 /**
- * Safely parses a date value from various formats (Firestore Timestamp, JS Date, ISO string)
- * into a standard JavaScript Date object.
- * @param {any} timestamp - The date value to parse.
+ * Safely parses a date value from various formats into a JavaScript Date object.
+ * Handles Firestore Timestamps (direct instances or plain objects), JS Dates,
+ * ISO strings, and numeric timestamps (milliseconds).
+ * @param {any} dateTimeValue - The date value to parse.
  * @returns {Date | null} A Date object if parsing is successful, otherwise null.
  */
-export const parseBookingDateTime = (timestamp) => {
-  if (!timestamp) return null;
+export const parseBookingDateTime = (dateTimeValue) => {
+  if (!dateTimeValue) {
+    // console.log("parseBookingDateTime: Received falsy value, returning null:", dateTimeValue); // Optional log
+    return null;
+  }
+
+  console.log("parseBookingDateTime: Attempting to parse:", dateTimeValue); // Log input
+
   try {
-    if (timestamp.toDate) {
-      // Firestore Timestamp object
-      return timestamp.toDate();
-    } else if (
-      typeof timestamp.seconds === "number" &&
-      typeof timestamp.nanoseconds === "number"
-    ) {
-      // Handle potential older Timestamp format (if needed)
-      return new Date(
-        timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000
-      );
-    } else if (timestamp instanceof Date) {
-      // Already a Date object
-      return timestamp;
-    } else if (typeof timestamp === "string") {
-      // Attempt to parse ISO string YYYY-MM-DD or full ISO strings
-      const date = parseISO(timestamp);
-      // Check if parsing failed (e.g., invalid string)
-      if (isNaN(date.getTime())) {
-        console.warn("parseISO failed for string:", timestamp);
-        return null;
-      }
-      return date;
+    // 1. If it's already a JavaScript Date object and valid
+    if (dateTimeValue instanceof Date) {
+      console.log("parseBookingDateTime: Value is already a Date object.");
+      return isValid(dateTimeValue) ? dateTimeValue : null;
     }
-    // Log unknown types
-    console.warn("Unknown date format encountered:", timestamp);
-    return null; // Return null for unknown types
+
+    // 2. If it's a Firestore Timestamp object (has a toDate method)
+    if (typeof dateTimeValue.toDate === "function") {
+      console.log(
+        "parseBookingDateTime: Value has toDate method (Firestore Timestamp instance)."
+      );
+      const date = dateTimeValue.toDate();
+      console.log(
+        "parseBookingDateTime: Result from toDate():",
+        date,
+        "Is valid:",
+        isValid(date)
+      );
+      return isValid(date) ? date : null;
+    }
+
+    // 3. If it's a plain object like { _seconds: ..., _nanoseconds: ... } (common from Firestore JSON)
+    //    or { seconds: ..., nanoseconds: ... }
+    if (typeof dateTimeValue === "object" && dateTimeValue !== null) {
+      const seconds =
+        dateTimeValue.seconds !== undefined
+          ? dateTimeValue.seconds
+          : dateTimeValue._seconds;
+      const nanoseconds =
+        dateTimeValue.nanoseconds !== undefined
+          ? dateTimeValue.nanoseconds
+          : dateTimeValue._nanoseconds || 0;
+
+      console.log(
+        "parseBookingDateTime: Value is an object. Seconds:",
+        seconds,
+        "Nanoseconds:",
+        nanoseconds
+      ); // Log extracted s/ns
+
+      if (typeof seconds === "number" && typeof nanoseconds === "number") {
+        if (Number.isFinite(seconds) && Number.isFinite(nanoseconds)) {
+          console.log(
+            "parseBookingDateTime: Seconds and Nanoseconds are finite numbers."
+          );
+          const date = new Date(seconds * 1000 + nanoseconds / 1000000);
+          // For the specific problematic timestamp: 1747746000 seconds
+          // (1747746000 * 1000) = 1747746000000 milliseconds
+          // new Date(1747746000000) should be Tue May 20 2025 15:00:00 GMT+0200 (Central European Summer Time)
+          // (assuming your local timezone is CEST, otherwise the GMT offset will differ)
+          console.log(
+            "parseBookingDateTime: Constructed date from s/ns:",
+            date,
+            "Is valid:",
+            isValid(date)
+          );
+          return isValid(date) ? date : null;
+        } else {
+          console.warn(
+            "parseBookingDateTime: Seconds or Nanoseconds are not finite:",
+            { seconds, nanoseconds }
+          );
+        }
+      } else {
+        console.warn(
+          "parseBookingDateTime: Seconds or Nanoseconds are not numbers:",
+          { seconds, nanoseconds }
+        );
+      }
+    }
+
+    // 4. If it's a string (attempt to parse as ISO or let Date constructor try)
+    if (typeof dateTimeValue === "string") {
+      console.log("parseBookingDateTime: Value is a string.");
+      let date = parseISO(dateTimeValue); // Try date-fns parseISO first for strict ISO
+      console.log(
+        "parseBookingDateTime: Result from parseISO:",
+        date,
+        "Is valid:",
+        isValid(date)
+      );
+      if (isValid(date)) {
+        return date;
+      }
+      // Fallback for other string date formats that new Date() might handle
+      console.log(
+        "parseBookingDateTime: parseISO failed, trying new Date(string)."
+      );
+      date = new Date(dateTimeValue);
+      console.log(
+        "parseBookingDateTime: Result from new Date(string):",
+        date,
+        "Is valid:",
+        isValid(date)
+      );
+      return isValid(date) ? date : null;
+    }
+
+    // 5. If it's a number (likely a timestamp in milliseconds)
+    if (typeof dateTimeValue === "number") {
+      console.log("parseBookingDateTime: Value is a number.");
+      const date = new Date(dateTimeValue);
+      console.log(
+        "parseBookingDateTime: Result from new Date(number):",
+        date,
+        "Is valid:",
+        isValid(date)
+      );
+      return isValid(date) ? date : null;
+    }
+
+    console.warn(
+      "parseBookingDateTime: Could not parse date value, unknown format after all checks:",
+      dateTimeValue
+    );
+    return null;
   } catch (e) {
-    console.error("Error parsing date:", timestamp, e);
-    return null; // Return null on error
+    console.error(
+      "parseBookingDateTime: Error during parsing:",
+      e,
+      dateTimeValue
+    );
+    return null;
   }
 };
 
-/**
- * Checks if a given calendar date falls within a booking's arrival and departure dates (inclusive).
- * Compares dates at the start of the day to ignore time components.
- * @param {Date | string} date - The date from the calendar.
- * @param {object} booking - The booking object, expected to have arrivalDate and departureDate (ideally as strings 'YYYY-MM-DD').
- * @returns {boolean} True if the date is within the booking stay, false otherwise.
- */
 export const isDateWithinBookingStay = (date, booking) => {
-  // Basic validation for required inputs
-  if (!date || !booking || !booking.arrivalDate || !booking.departureDate) {
+  if (
+    !date ||
+    !booking ||
+    (!booking.arrivalDate && !booking.arrivalDateObj) ||
+    (!booking.departureDate && !booking.departureDateObj)
+  ) {
     // console.warn("isDateWithinBookingStay: Missing date or booking details.", { date, booking });
-    return false; // Cannot check range if booking or dates are missing
+    return false;
   }
 
   try {
-    // Ensure both inputs are Date objects at the start of their respective days
-    const currentDate =
-      date instanceof Date && !isNaN(date.getTime())
-        ? startOfDay(date)
-        : startOfDay(parseISO(String(date)));
+    const currentDateInput = date; // Keep original for logging
+    const arrivalInput = booking.arrivalDateObj || booking.arrivalDate;
+    const departureInput = booking.departureDateObj || booking.departureDate;
 
-    // Use the parsed date objects stored during fetch if available (arrivalDateObj/departureDateObj)
-    // otherwise, parse the original strings. Always use startOfDay for comparison.
-    const arrival = booking.arrivalDateObj
-      ? startOfDay(booking.arrivalDateObj)
-      : startOfDay(parseISO(booking.arrivalDate));
-    const departure = booking.departureDateObj
-      ? startOfDay(booking.departureDateObj)
-      : startOfDay(parseISO(booking.departureDate));
+    const currentDate = startOfDay(
+      parseBookingDateTime(currentDateInput) || new Date("invalid")
+    );
 
-    // Validate parsed dates
-    if (
-      isNaN(currentDate.getTime()) ||
-      isNaN(arrival.getTime()) ||
-      isNaN(departure.getTime())
-    ) {
-      console.warn("isDateWithinBookingStay: Invalid date(s) after parsing.", {
-        currentDate: String(date),
-        arrivalDate: booking.arrivalDate,
-        departureDate: booking.departureDate,
-      });
-      return false; // Cannot check range if dates are invalid
+    const arrival = startOfDay(
+      (booking.arrivalDateObj && isValid(booking.arrivalDateObj)
+        ? booking.arrivalDateObj
+        : parseBookingDateTime(booking.arrivalDate)) || new Date("invalid")
+    );
+    const departure = startOfDay(
+      (booking.departureDateObj && isValid(booking.departureDateObj)
+        ? booking.departureDateObj
+        : parseBookingDateTime(booking.departureDate)) || new Date("invalid")
+    );
+
+    if (!isValid(currentDate) || !isValid(arrival) || !isValid(departure)) {
+      // console.warn("isDateWithinBookingStay: Invalid date(s) after parsing.", { currentDateInput, arrivalInput, departureInput });
+      return false;
     }
 
-    // Date must be on or after arrival and on or before departure (inclusive)
-    const isAfterArrival =
+    const isAfterArrivalOrSame =
       isAfter(currentDate, arrival) || isSameDay(currentDate, arrival);
-    const isBeforeDeparture =
+    const isBeforeDepartureOrSame =
       isBefore(currentDate, departure) || isSameDay(currentDate, departure);
 
-    return isAfterArrival && isBeforeDeparture;
+    return isAfterArrivalOrSame && isBeforeDepartureOrSame;
   } catch (error) {
-    console.error("Error in isDateWithinBookingStay:", error);
-    return false; // Default to not within on error
+    console.error("Error in isDateWithinBookingStay:", error, {
+      date,
+      booking,
+    });
+    return false;
   }
 };
 
-/**
- * Determines the color scheme for a booking based on its apartmentId.
- * @param {object} booking - The booking object, expected to have apartmentId.
- * @returns {{bg: string, text: string, border: string}} An object containing Tailwind CSS class names for background, text, and border color.
- */
 export const getPropertyColor = (booking) => {
   const propertyColors = {
-    2565753: 0, // La Cabane du Chêne - Blue
-    1946282: 1, // Le Dôme des Libellules - Green
-    1644643: 2, // La Bulle du Ruisseau - Purple
-    1946279: 3, // Le Moulin - Yellow
-    1946276: 4, // La Chambre de Blé - Pink
-    1946270: 5, // Le Logis - Orange
+    2565753: 0,
+    1946282: 1,
+    1644643: 2,
+    1946279: 3,
+    1946276: 4,
+    1946270: 5,
   };
-
   const bgColors = [
     "bg-blue-100",
     "bg-green-100",
@@ -147,20 +237,14 @@ export const getPropertyColor = (booking) => {
     "border-pink-300",
     "border-orange-300",
   ];
-
-  // Get color index for this apartmentId
-  const colorIndex = propertyColors[booking.apartmentId];
-
-  // Fallback if apartmentId not found or missing
-  const finalIndex = colorIndex !== undefined ? colorIndex : 0; // Default to blue
-
+  const colorIndex = propertyColors[booking?.apartmentId]; // Add optional chaining for booking
+  const finalIndex = colorIndex !== undefined ? colorIndex : 0;
   return {
     bg: bgColors[finalIndex],
     text: textColors[finalIndex],
     border: borderColors[finalIndex],
   };
 };
-
 
 export const calculateBookingSlots = (
   startDateTime,
@@ -170,73 +254,40 @@ export const calculateBookingSlots = (
   if (
     !startDateTime ||
     !(startDateTime instanceof Date) ||
-    isNaN(startDateTime.getTime())
+    !isValid(startDateTime)
   ) {
-    throw new Error("Invalid start date time provided for slot calculation.");
+    throw new Error("calculateBookingSlots: Invalid start date time provided.");
   }
   if (slotDurationMinutes <= 0 || treatmentDurationMinutes <= 0) {
-    throw new Error("Invalid duration settings provided for slot calculation.");
+    throw new Error(
+      "calculateBookingSlots: Invalid duration settings provided."
+    );
   }
-
   const requiredSlotsCount = Math.ceil(
     treatmentDurationMinutes / slotDurationMinutes
   );
   if (requiredSlotsCount <= 0) {
-    // This might happen if duration is less than slot size but somehow rounded down to 0? Or negative duration.
-    console.warn(
-      "calculateBookingSlots: Calculated requiredSlotsCount is zero or less:",
-      requiredSlotsCount,
-      { treatmentDurationMinutes, slotDurationMinutes }
+    throw new Error(
+      "calculateBookingSlots: Calculated required slots count is zero or less."
     );
-    // Decide if this should be an error or return [format(startDateTime, "HH:mm")] for a minimal slot.
-    // Let's make it an error to prevent scheduling zero-duration bookings.
-    throw new Error("Calculated required slots count is zero or less.");
   }
-
   const bookedSlots = [];
-  const start = new Date(startDateTime); // Use a copy to avoid modifying the original Date object
+  const start = new Date(startDateTime);
   for (let i = 0; i < requiredSlotsCount; i++) {
     const slotTime = new Date(
       start.getTime() + i * slotDurationMinutes * 60000
     );
-
-    // Basic sanity check: ensure all required slots fall on the *same day* as the start time
-    // or exactly at midnight (00:00) on the *next* day.
     const startDay = startOfDay(startDateTime);
     const slotDay = startOfDay(slotTime);
-    const nextDayStart = startOfDay(addDays(startDay, 1)); // Use addDays from date-fns
-
-    // A calculated slot is valid if it's on the same day as the start,
-    // OR if it's on the *immediately* following day AND is exactly at midnight (00:00).
-    // This handles bookings that end precisely at midnight or span into the next day slightly.
-    // This check is slightly more complex than the previous version to be more robust.
+    const nextDayStart = startOfDay(addDays(startDay, 1));
     const isSlotOnStartDay = isSameDay(slotDay, startDay);
     const isSlotOnNextDayAtMidnight =
       isSameDay(slotDay, nextDayStart) && format(slotTime, "HH:mm") === "00:00";
-    const isSlotPastNextDayMidnight =
-      isAfter(slotDay, nextDayStart) ||
-      (isSameDay(slotDay, nextDayStart) &&
-        format(slotTime, "HH:mm") !== "00:00");
-
     if (!isSlotOnStartDay && !isSlotOnNextDayAtMidnight) {
-      // If the slot is not on the start day and not exactly at midnight on the next day,
-      // it's an unexpected time.
-      console.error(
-        "Calculated slot crosses day boundary incorrectly or jumps days:",
-        format(slotTime, "yyyy-MM-dd HH:mm"),
-        "Start:",
-        format(startDateTime, "yyyy-MM-dd HH:mm"),
-        "Start Day:",
-        format(startDay, "yyyy-MM-dd"),
-        "Slot Day:",
-        format(slotDay, "yyyy-MM-dd")
-      );
-      // Throw an error as this indicates a problem with duration relative to boundaries
       throw new Error(
-        "Calculated slots extend beyond allowed time frame (crosses day boundary incorrectly)."
+        "calculateBookingSlots: Calculated slots extend beyond allowed time frame."
       );
     }
-
     bookedSlots.push(format(slotTime, "HH:mm"));
   }
   return bookedSlots;

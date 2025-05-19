@@ -1,13 +1,19 @@
-// File: src/hooks/useBookingsData.js
+// File: src/hooks/BookingReport/useBookingsData.js
 import { useState, useEffect, useCallback } from "react";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
-import { db } from "../../../firebase.js";
+import { db } from "../../../firebase.js"; // Verify this path is correct for your project structure
 import * as XLSX from "xlsx";
 import axios from "axios";
 import {
   getCleanExtrasFromPriceElements,
   mergeAndSortExtras,
-} from "../../Admin/BookingReport/utils/extrasUtils.js";
+} from "../../Admin/BookingReport/utils/extrasUtils.js"; // Verify this path
+
+
+import { parseBookingDateTime } from "../../spa/spaCalendarUtils.jsx";
+
+
+import { parseISO, isValid } from "date-fns"; 
 
 export const useBookingsData = () => {
   const [reportData, setReportData] = useState([]);
@@ -15,30 +21,23 @@ export const useBookingsData = () => {
   const [error, setError] = useState(null);
   const [deduplicating, setDeduplicating] = useState(false);
 
-  // Keep date state in this hook, matching the original implementation
   const [startMonth, setStartMonth] = useState(new Date().getMonth() + 1);
   const [startYear, setStartYear] = useState(new Date().getFullYear());
   const [endMonth, setEndMonth] = useState(new Date().getMonth() + 1);
   const [endYear, setEndYear] = useState(new Date().getFullYear());
 
-  // Add this effect to sync months and years when appropriate
   useEffect(() => {
-    // If start and end months were the same before the change
-    // then update end month to match the new start month
     if (startMonth === endMonth && startYear === endYear) {
       setEndMonth(startMonth);
     }
   }, [startMonth, startYear, endMonth, endYear]);
 
-  // Similar for years
   useEffect(() => {
-    // If years were the same, keep them in sync
     if (startYear === endYear) {
       setEndYear(startYear);
     }
   }, [startYear, endYear]);
 
-  // Ensure end date is not before start date
   useEffect(() => {
     if (
       endYear < startYear ||
@@ -49,12 +48,11 @@ export const useBookingsData = () => {
     }
   }, [startYear, startMonth, endYear, endMonth]);
 
-  // Helper function to process booking data
-  const processBookingData = (booking, bookingMap) => {
+  const processBookingData = (bookingInput, bookingMap) => {
+    // bookingInput is an object from Firestore with its Firestore doc ID as 'id'
     try {
-      // Extract the base booking data
       const {
-        id,
+        id, // Firestore document ID
         smoobuId,
         smoobuReservationId,
         firstName,
@@ -97,18 +95,34 @@ export const useBookingsData = () => {
         createdAt,
         updatedAt,
         lastSyncedAt,
-        // Explicitly include SPA fields
+        // Raw SPA fields from Firestore
         spaDateTime,
         spaEndDateTime,
         spaBookingPreference,
         spaInfo,
         spaSlots,
-      } = booking;
+      } = bookingInput;
 
-      // Format the data for the booking report
+      // --- PARSE DATES ---
+      const arrivalDateObj = arrivalDate ? parseISO(arrivalDate) : null;
+      const departureDateObj = departureDate ? parseISO(departureDate) : null;
+
+      const spaDateTimeObj = parseBookingDateTime(spaDateTime);
+      const spaEndDateTimeObj = parseBookingDateTime(spaEndDateTime);
+
+      let spaInfoProcessed = null;
+      if (spaInfo) {
+        spaInfoProcessed = {
+          ...spaInfo,
+          scheduledDateTimeObj: parseBookingDateTime(spaInfo.scheduledDateTime),
+          endDateTimeObj: parseBookingDateTime(spaInfo.endDateTime),
+        };
+      }
+      // --- END PARSE DATES ---
+
       const formattedBooking = {
-        id: smoobuId || smoobuReservationId || id,
-        firestoreId: id,
+        id: smoobuId || smoobuReservationId || id, // Smoobu ID is primary, fallback to Firestore ID
+        firestoreId: id, // Keep Firestore document ID
         guest: guestName || `${firstName || ""} ${lastName || ""}`.trim(),
         email: email || "",
         phone: phone || "",
@@ -119,9 +133,9 @@ export const useBookingsData = () => {
           }`.trim(),
         adults: Number(adults) || 0,
         children: Number(children) || 0,
-        checkIn: arrivalDate,
+        checkIn: arrivalDate, // Keep original string for basic display if needed
         arrivalTime: checkInTime || "",
-        checkOut: departureDate,
+        checkOut: departureDate, // Keep original string
         departureTime: checkOutTime || "",
         nights: Number(nights) || 0,
         property: property || "",
@@ -135,42 +149,69 @@ export const useBookingsData = () => {
         extras: extras || [],
         priceDetails: priceDetails || {},
         coupon: appliedCoupon || couponApplied || null,
-        created: createdAt || new Date().toISOString(),
-        updated: updatedAt || lastSyncedAt || new Date().toISOString(),
+        created: createdAt || new Date().toISOString(), // Fallback for created
+        updated: updatedAt || lastSyncedAt || new Date().toISOString(), // Fallback for updated
 
-        // Preserve SPA data in the formatted booking
-        spaDateTime: spaDateTime,
-        spaEndDateTime: spaEndDateTime,
+        // --- ADD/OVERWRITE WITH PARSED DATE OBJECTS ---
+        arrivalDateObj:
+          arrivalDateObj && isValid(arrivalDateObj) ? arrivalDateObj : null,
+        departureDateObj:
+          departureDateObj && isValid(departureDateObj)
+            ? departureDateObj
+            : null,
+        spaDateTimeObj: spaDateTimeObj, // This is now a Date object or null
+        spaEndDateTimeObj: spaEndDateTimeObj, // This is now a Date object or null
+
+        // Store original raw SPA fields if needed for any reason, but prefer ...Obj
+        spaDateTime: spaDateTime, // Raw original value
+        spaEndDateTime: spaEndDateTime, // Raw original value
         spaBookingPreference: spaBookingPreference,
-        spaInfo: spaInfo,
+        spaInfo: spaInfoProcessed, // spaInfo with its own ...Obj dates
         spaSlots: spaSlots,
-        // Flag for easy detection of SPA bookings
-        hasSpaBooking: !!(spaDateTime || spaBookingPreference || spaInfo),
+
+        hasSpaBooking: !!(
+          spaDateTimeObj ||
+          spaBookingPreference ||
+          spaInfoProcessed?.hasSpaTreatment
+        ),
       };
 
-      // Add logging to verify SPA data is preserved
-      console.log(`Processed booking ${formattedBooking.id} SPA data:`, {
-        hasSpa: formattedBooking.hasSpaBooking,
-        spaDateTime: formattedBooking.spaDateTime,
-        spaBookingPreference: formattedBooking.spaBookingPreference,
-        spaInfo: formattedBooking.spaInfo,
-      });
+      // Optional detailed logging for the specific problematic booking
+      if (
+        formattedBooking.id === "97475833" ||
+        (spaDateTime &&
+          typeof spaDateTime === "object" &&
+          spaDateTime._seconds === 1747746000)
+      ) {
+        console.log(
+          `useBookingsData -> processBookingData (FINAL for ID: ${formattedBooking.id}):`
+        );
+        console.log(
+          `   Formatted spaDateTimeObj:`,
+          formattedBooking.spaDateTimeObj
+        );
+        console.log(
+          `   Is Formatted spaDateTimeObj valid:`,
+          formattedBooking.spaDateTimeObj
+            ? isValid(formattedBooking.spaDateTimeObj)
+            : "N/A"
+        );
+      }
 
-      // Add to the booking map
       bookingMap.set(formattedBooking.id, formattedBooking);
-
-      return formattedBooking;
+      // No explicit return needed as we are modifying bookingMap by reference
     } catch (error) {
-      console.error("Error processing booking data:", error, booking);
-      return null;
+      console.error(
+        "Error processing booking data in useBookingsData:",
+        error,
+        bookingInput
+      );
+      // Optionally, you might want to skip adding this booking to the map or add a flag
     }
   };
 
-  // Function to calculate how complete a booking record is
   const calculateCompletenessScore = (booking) => {
     let score = 0;
-
-    // Check for key data that indicates a complete record
     if (booking.extras && booking.extras.length > 0) score += 10;
     if (
       booking.priceDetails?.priceElements &&
@@ -183,47 +224,30 @@ export const useBookingsData = () => {
     if (booking.email) score += 1;
     if (booking.phone) score += 1;
     if (booking.address) score += 1;
-    if (booking.notice || booking.notes) score += 1;
-
-    // Add score for SPA data
-    if (booking.spaDateTime) score += 5;
+    // SPA data score (using parsed objects if available, or raw as fallback for scoring)
+    if (booking.spaDateTimeObj || booking.spaDateTime) score += 5; // Check parsed first
     if (booking.spaBookingPreference) score += 3;
-    if (booking.spaInfo) score += 5;
+    if (booking.spaInfo?.hasSpaTreatment || booking.spaInfo) score += 5; // Check processed or raw
     if (booking.spaSlots && booking.spaSlots.length) score += 3;
-
-    // More recent updates are preferred
     if (booking.updatedAt) {
-      const updateDate = new Date(booking.updatedAt);
-      if (!isNaN(updateDate)) {
-        // Add a small score based on recency (newer is better)
-        const daysAgo = (Date.now() - updateDate) / (1000 * 60 * 60 * 24);
-        score += Math.max(0, 1 - daysAgo / 100); // Small bonus for recency
+      const updateDate = parseBookingDateTime(booking.updatedAt); // Use parser for safety
+      if (updateDate && isValid(updateDate)) {
+        const daysAgo =
+          (Date.now() - updateDate.getTime()) / (1000 * 60 * 60 * 24);
+        score += Math.max(0, 1 - daysAgo / 100);
       }
     }
-
     return score;
   };
 
-  // Fetch data from Firebase - keep dependency array matching original
   const fetchFromFirebase = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-
-      // Create date range for query
       const startDate = new Date(startYear, startMonth - 1, 1);
       const endDate = new Date(endYear, endMonth, 0, 23, 59, 59);
+      // console.log("Fetching data with date range:", { startDateStr: startDate.toISOString().split("T")[0], endDateStr: endDate.toISOString().split("T")[0] });
 
-      console.log("Fetching data with date range:", {
-        startMonth,
-        startYear,
-        endMonth,
-        endYear,
-        startDateStr: startDate.toISOString().split("T")[0],
-        endDateStr: endDate.toISOString().split("T")[0],
-      });
-
-      // Create Firebase query
       const bookingsRef = collection(db, "bookings");
       const q = query(
         bookingsRef,
@@ -231,105 +255,53 @@ export const useBookingsData = () => {
         where("arrivalDate", "<=", endDate.toISOString().split("T")[0]),
         orderBy("arrivalDate", "desc")
       );
-
       const querySnapshot = await getDocs(q);
-      console.log(`Query returned ${querySnapshot.docs.length} documents`);
+      // console.log(`Query returned ${querySnapshot.docs.length} documents`);
 
-      // Create a map for deduplicated bookings
-      const bookingMap = new Map();
-
-      // First, go through all documents and group by smoobuId
       const bookingsBySmoobuId = {};
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-
-        // Debug log to check SPA data in Firestore
-        console.log(`Document ${doc.id} SPA data:`, {
-          hasSpa: !!(
-            data.spaDateTime ||
-            data.spaBookingPreference ||
-            data.spaInfo
-          ),
-          spaDateTime: data.spaDateTime,
-          spaBookingPreference: data.spaBookingPreference,
-          spaInfo: data.spaInfo,
-          spaSlots: data.spaSlots,
-        });
-
         const smoobuId = data.smoobuId || data.smoobuReservationId;
-
-        if (!smoobuId) return; // Skip entries without smoobuId
-
+        if (!smoobuId) {
+          // console.warn("Skipping document without Smoobu ID:", doc.id, data);
+          return;
+        }
         if (!bookingsBySmoobuId[smoobuId]) {
           bookingsBySmoobuId[smoobuId] = [];
         }
-
-        bookingsBySmoobuId[smoobuId].push({
-          id: doc.id,
-          ...data,
-          firestoreId: doc.id, // Store the Firestore document ID
-          // Explicitly include SPA fields to ensure they're preserved
-          spaDateTime: data.spaDateTime || null,
-          spaEndDateTime: data.spaEndDateTime || null,
-          spaBookingPreference: data.spaBookingPreference || null,
-          spaInfo: data.spaInfo || null,
-          spaSlots: data.spaSlots || null,
-          // Add a flag for debugging
-          hasSpaBooking: !!(
-            data.spaDateTime ||
-            data.spaBookingPreference ||
-            data.spaInfo
-          ),
-        });
+        // Push the raw data along with the Firestore ID
+        bookingsBySmoobuId[smoobuId].push({ id: doc.id, ...data });
       });
 
-      // For each smoobuId, pick the most complete entry
-      Object.entries(bookingsBySmoobuId).forEach(([smoobuId, bookings]) => {
-        if (bookings.length === 1) {
-          // If only one entry, use it
-          const booking = bookings[0];
-          processBookingData(booking, bookingMap);
+      const bookingMap = new Map();
+      Object.entries(bookingsBySmoobuId).forEach(([smoobuId, bookingsList]) => {
+        if (bookingsList.length === 1) {
+          processBookingData(bookingsList[0], bookingMap);
         } else {
-          // If multiple entries, choose the one with the most data
-          bookings.sort((a, b) => {
-            // Calculate "completeness" score
-            const scoreA = calculateCompletenessScore(a);
-            const scoreB = calculateCompletenessScore(b);
-
-            // Higher score is more complete
-            return scoreB - scoreA;
-          });
-
-          // Use the most complete entry
-          const bestBooking = bookings[0];
-          processBookingData(bestBooking, bookingMap);
+          bookingsList.sort(
+            (a, b) =>
+              calculateCompletenessScore(b) - calculateCompletenessScore(a)
+          );
+          processBookingData(bookingsList[0], bookingMap); // Process the "best" one
         }
       });
 
-      // Convert map values to array
-      const bookings = Array.from(bookingMap.values());
+      const finalBookingsArray = Array.from(bookingMap.values());
+      // Log the specific booking if found in the final array
+      // const problemBooking = finalBookingsArray.find(b => b.id === "97475833" || (b.spaDateTime && typeof b.spaDateTime === 'object' && b.spaDateTime._seconds === 1747746000) );
+      // if (problemBooking) {
+      //   console.log("useBookingsData -> fetchFromFirebase (Problematic Booking in FINAL ARRAY):", problemBooking.id, "spaDateTimeObj:", problemBooking.spaDateTimeObj, "isValid:", problemBooking.spaDateTimeObj ? isValid(problemBooking.spaDateTimeObj) : 'N/A');
+      // }
 
-      // Log the SPA data in final bookings to verify it's preserved
-      bookings.forEach((booking) => {
-        if (booking.hasSpaBooking) {
-          console.log(`Final booking ${booking.id} has SPA data:`, {
-            spaDateTime: booking.spaDateTime,
-            spaBookingPreference: booking.spaBookingPreference,
-            spaInfo: booking.spaInfo,
-          });
-        }
-      });
-
-      setReportData(bookings);
+      setReportData(finalBookingsArray);
     } catch (err) {
       console.error("Error fetching bookings from Firebase:", err);
       setError("Failed to fetch bookings: " + err.message);
     } finally {
       setLoading(false);
     }
-  }, [startMonth, startYear, endMonth, endYear]); // Match original dependency array
+  }, [startMonth, startYear, endMonth, endYear]); // Dependencies kept as per original
 
-  // Call fetchFromFirebase when the hook is first used
   useEffect(() => {
     fetchFromFirebase();
   }, [fetchFromFirebase]);
@@ -337,11 +309,8 @@ export const useBookingsData = () => {
   const handleFetchAndSync = async () => {
     try {
       setLoading(true);
-
-      // UPDATED: Call your production server endpoint instead of localhost
       const backendUrl =
         import.meta.env.VITE_API_URL || "http://localhost:3000";
-
       const response = await axios.get(`${backendUrl}/api/fetch-and-sync`, {
         params: {
           startDate: new Date(startYear - 1, startMonth - 1, 1)
@@ -350,13 +319,10 @@ export const useBookingsData = () => {
           endDate: new Date(endYear, endMonth, 0).toISOString().split("T")[0],
         },
       });
-
       if (response.data.success) {
         alert(
-          `Fetch and sync completed successfully!\nFetched: ${response.data.stats.fetched}\nAdded: ${response.data.stats.added}\nUpdated: ${response.data.stats.updated}`
+          `Fetch and sync completed!\nFetched: ${response.data.stats.fetched}\nAdded: ${response.data.stats.added}\nUpdated: ${response.data.stats.updated}`
         );
-
-        // Refresh data from Firebase
         fetchFromFirebase();
       } else {
         throw new Error(response.data.error || "Fetch and sync failed");
@@ -372,20 +338,15 @@ export const useBookingsData = () => {
   const handleDeduplicate = async () => {
     try {
       setDeduplicating(true);
-
-      // UPDATED: Call your production server endpoint instead of localhost
+      const backendUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:3000"; // Use consistent backendUrl
       const response = await axios.get(
-        "https://booking-9u8u.onrender.com/api/deduplicate-bookings"
+        `${backendUrl}/api/deduplicate-bookings`
       );
-
       if (response.data.success) {
         alert(
-          `Deduplication completed successfully!\n` +
-            `Found ${response.data.stats.duplicateGroups} bookings with duplicates\n` +
-            `Deleted ${response.data.stats.deletedBookings} duplicate entries`
+          `Deduplication completed!\nFound ${response.data.stats.duplicateGroups} groups\nDeleted ${response.data.stats.deletedBookings} entries`
         );
-
-        // Refresh data from Firebase
         fetchFromFirebase();
       } else {
         throw new Error(response.data.error || "Deduplication failed");
@@ -414,103 +375,95 @@ export const useBookingsData = () => {
         "Arrivée",
         "Check-in",
         "Départ",
-        "Nombre de nuits",
-        "Prix de base",
-        "Nom coupon",
-        "Valeur coupon",
-        "Frais de linge",
-        "Promotion long séjour",
+        "Nuits",
+        "Prix Base",
+        "Coupon Nom",
+        "Coupon Val.",
+        "Frais Linge",
+        "Promo Long",
         "Commission",
-        "SPA", // Added SPA column
-        "Liste des extras",
-        "Total des extras",
-        "Prix total",
-        "Prix final sans coupon",
+        "SPA",
+        "Extras Liste",
+        "Extras Total",
+        "Prix Total",
+        "Prix Sans Coupon",
       ],
       ...reportData.map((booking) => {
-        // Process extras using the same logic as ExtrasDetailsSection
         const portalName =
           booking.portalName || booking.channelName || booking.portal;
         const isBookingCom = portalName === "Booking.com";
-
-        // Process and organize extras
         let displayExtras = [];
-
-        // If we have price elements, use those for a consistent display
         if (booking.priceDetails?.priceElements?.length > 0) {
-          const priceElements = booking.priceDetails.priceElements;
           displayExtras = getCleanExtrasFromPriceElements(
-            priceElements,
+            booking.priceDetails.priceElements,
             portalName
           );
-
-          // For Booking.com, remove TVA and taxe de séjour from extras
-          if (isBookingCom) {
+          if (isBookingCom)
             displayExtras = displayExtras.filter(
               (extra) =>
                 !extra.name.includes("TVA") &&
                 !extra.name.toLowerCase().includes("taxe de séjour")
             );
-          }
-        }
-        // Otherwise fall back to the extras array
-        else if (booking.extras?.length > 0) {
+        } else if (booking.extras?.length > 0) {
           displayExtras = booking.extras;
-
-          // For Booking.com, filter out TVA from extras
-          if (isBookingCom) {
+          if (isBookingCom)
             displayExtras = displayExtras.filter(
               (extra) =>
                 !extra.name.includes("TVA") &&
                 !extra.name.toLowerCase().includes("taxe de séjour")
             );
-          }
         }
-
-        // Merge duplicate extras and sort them
         const mergedAndSortedExtras = mergeAndSortExtras(displayExtras);
-
-        // Calculate total
         const extrasTotal = mergedAndSortedExtras.reduce(
           (sum, extra) => sum + parseFloat(extra.amount || 0),
           0
         );
-
-        // Format extras list for Excel
         const extrasList = mergedAndSortedExtras
-          .map((extra) => {
-            const quantity = parseInt(extra.quantity || 1, 10);
-            return quantity > 1 ? `${extra.name} (${quantity}x)` : extra.name;
-          })
+          .map(
+            (extra) =>
+              `${extra.name}${
+                parseInt(extra.quantity || 1, 10) > 1
+                  ? ` (${extra.quantity}x)`
+                  : ""
+              }`
+          )
           .join(", ");
 
-        // Format SPA data for export
-        let spaInfo = "-";
-        if (booking.spaDateTime) {
+        let spaInfoExport = "-";
+        if (booking.spaDateTimeObj && isValid(booking.spaDateTimeObj)) {
+          // Use spaDateTimeObj
           try {
-            // Handle different timestamp formats
-            const date =
-              typeof booking.spaDateTime.toDate === "function"
-                ? booking.spaDateTime.toDate()
-                : booking.spaDateTime.seconds !== undefined
-                ? new Date(booking.spaDateTime.seconds * 1000)
-                : new Date(booking.spaDateTime);
-
-            spaInfo = date.toLocaleString("fr-BE", {
+            spaInfoExport = booking.spaDateTimeObj.toLocaleString("fr-BE", {
               dateStyle: "short",
               timeStyle: "short",
             });
           } catch (e) {
-            spaInfo = "Date programmée";
+            spaInfoExport = "Date programmée (err format)";
           }
         } else if (booking.spaBookingPreference === "later") {
-          spaInfo = "À programmer";
+          spaInfoExport = "À programmer";
+        } else if (booking.spaBookingPreference === "scheduled") {
+          // If pref is scheduled but obj is bad
+          spaInfoExport = "Date Programmée Invalide";
         }
+
+        // Ensure arrival/departure dates for export are valid before formatting
+        const arrivalExport =
+          booking.arrivalDateObj && isValid(booking.arrivalDateObj)
+            ? booking.arrivalDateObj.toLocaleDateString("fr-FR")
+            : booking.checkIn || "N/A"; // Fallback to original string or N/A
+        const departureExport =
+          booking.departureDateObj && isValid(booking.departureDateObj)
+            ? booking.departureDateObj.toLocaleDateString("fr-FR")
+            : booking.checkOut || "N/A"; // Fallback to original string or N/A
+        const createdExport = parseBookingDateTime(booking.created); // Parse created date string
 
         return [
           booking.id,
           booking.guest,
-          new Date(booking.created).toLocaleDateString("fr-FR"),
+          createdExport && isValid(createdExport)
+            ? createdExport.toLocaleDateString("fr-FR")
+            : booking.created,
           booking.portal,
           booking.property || "",
           booking.email || "",
@@ -518,80 +471,71 @@ export const useBookingsData = () => {
           booking.address || "",
           booking.adults,
           booking.children,
-          new Date(booking.checkIn).toLocaleDateString("fr-FR"),
+          arrivalExport,
           booking.arrivalTime || "",
-          new Date(booking.checkOut).toLocaleDateString("fr-FR"),
+          departureExport,
           booking.nights,
           booking.priceDetails?.basePrice || 0,
           booking.priceDetails?.promoCode?.name || "",
           booking.priceDetails?.promoCode?.amount || "",
-          booking.priceDetails?.linenFee || "",
-          booking.priceDetails?.longStayDiscount || "",
-          booking.commission || "",
-          spaInfo, // Add SPA info to the export
+          booking.priceDetails?.linenFee || 0, // Ensure numeric
+          booking.priceDetails?.longStayDiscount || 0, // Ensure numeric
+          booking.commission || 0, // Ensure numeric
+          spaInfoExport,
           extrasList || "",
           extrasTotal || 0,
           booking.price,
-          // Calculate price without coupon discount: final price + coupon amount
           parseFloat(booking.price || 0) +
             parseFloat(booking.priceDetails?.promoCode?.amount || 0),
         ];
       }),
     ];
-
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(wsData);
-
     const colWidths = [
-      { wch: 15 }, // ID de réservation
-      { wch: 25 }, // Client
-      { wch: 20 }, // Création de la réservation
-      { wch: 20 }, // Portail de réservation
-      { wch: 25 }, // Nom du logement
-      { wch: 30 }, // Email du client
-      { wch: 20 }, // Téléphone du client
-      { wch: 35 }, // Adresse du client
-      { wch: 15 }, // Nombre d'adulte
-      { wch: 15 }, // Nombre d'enfant
-      { wch: 15 }, // Arrivée
-      { wch: 15 }, // Check-in
-      { wch: 15 }, // Départ
-      { wch: 15 }, // Nombre de nuits
-      { wch: 15 }, // Prix de base
-      { wch: 20 }, // Nom du coupon
-      { wch: 15 }, // Valeur du coupon
-      { wch: 15 }, // Frais de linge
-      { wch: 20 }, // Promotion de long séjour
-      { wch: 15 }, // Commission
-      { wch: 25 }, // SPA (added)
-      { wch: 50 }, // Liste des extras
-      { wch: 15 }, // Total des extras
-      { wch: 15 }, // Prix total de la chambre
-      { wch: 18 }, // Prix final sans coupon
+      { wch: 15 },
+      { wch: 25 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 25 },
+      { wch: 30 },
+      { wch: 20 },
+      { wch: 35 },
+      { wch: 10 },
+      { wch: 10 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 10 },
+      { wch: 15 },
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 25 },
+      { wch: 50 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 18 },
     ];
-
     ws["!cols"] = colWidths;
-
-    // Apply currency formatting to numeric columns
-    const priceColumns = [14, 16, 17, 18, 19, 21, 22, 23]; // Updated indices due to SPA column
+    const priceColumns = [14, 16, 17, 18, 19, 22, 23, 24]; // Adjusted for SPA column
     priceColumns.forEach((col) => {
       const range = XLSX.utils.decode_range(ws["!ref"]);
       for (let row = 1; row <= range.e.r; row++) {
-        // Start from row 1 (skip header)
         const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
-        if (ws[cellRef] && typeof ws[cellRef].v === "number") {
-          ws[cellRef].z = "0.00 €"; // Apply Euro currency format
-        }
+        if (ws[cellRef] && typeof ws[cellRef].v === "number")
+          ws[cellRef].z = "#,##0.00 €";
       }
     });
-
     XLSX.utils.book_append_sheet(wb, ws, "Rapport Réservations");
-
-    const startDate = `${startYear}-${String(startMonth).padStart(2, "0")}`;
-    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}`;
-    const fileName = `rapport-reservations_${startDate}_${endDate}.xlsx`;
-
-    XLSX.writeFile(wb, fileName);
+    const startDateStr = `${startYear}-${String(startMonth).padStart(2, "0")}`;
+    const endDateStr = `${endYear}-${String(endMonth).padStart(2, "0")}`;
+    XLSX.writeFile(
+      wb,
+      `rapport-reservations_${startDateStr}_${endDateStr}.xlsx`
+    );
   };
 
   return {

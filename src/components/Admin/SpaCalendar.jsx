@@ -88,15 +88,16 @@ const SpaCalendar = () => {
     return bookings
       .filter(
         (booking) =>
-          booking.spaDateTimeObj &&
+          booking.spaDateTimeObj && // << USE THIS (should be a Date object or null)
+          isDateValid(booking.spaDateTimeObj) && // << ADD VALIDITY CHECK
           isSameDay(
-            startOfDay(booking.spaDateTimeObj),
+            startOfDay(booking.spaDateTimeObj), // spaDateTimeObj is already a Date
             startOfDay(selectedDate)
           )
       )
       .sort(
         (a, b) =>
-          (a.spaDateTimeObj?.getTime() || 0) -
+          (a.spaDateTimeObj?.getTime() || 0) - // spaDateTimeObj is already a Date
           (b.spaDateTimeObj?.getTime() || 0)
       );
   }, [bookings, selectedDate]);
@@ -106,8 +107,16 @@ const SpaCalendar = () => {
     return bookings
       .filter((b) => b.needsScheduling)
       .sort((a, b) => {
-        let arrivalA = a.arrivalDateObj || new Date(0);
-        let arrivalB = b.arrivalDateObj || new Date(0);
+        const arrivalA = a.arrivalDateObj || new Date(0); // arrivalDateObj should be a Date
+        const arrivalB = b.arrivalDateObj || new Date(0); // arrivalDateObj should be a Date
+
+        // Ensure isValid (or your alias isDateValid) is used
+        if (!isDateValid(arrivalA) || !isDateValid(arrivalB)) {
+          if (!isDateValid(arrivalA) && isDateValid(arrivalB)) return 1;
+          if (isDateValid(arrivalA) && !isDateValid(arrivalB)) return -1;
+          // Fallback to property comparison if dates are problematic or equal
+          return a.property?.localeCompare(b.property || "") || 0;
+        }
         if (arrivalA.getTime() - arrivalB.getTime() !== 0)
           return arrivalA.getTime() - arrivalB.getTime();
         return a.property?.localeCompare(b.property || "") || 0;
@@ -796,11 +805,13 @@ const SpaCalendar = () => {
           {selectedBooking && (
             <div className="p-2 mb-3 text-sm text-center text-blue-700 border border-blue-300 rounded bg-blue-50">
               Sélectionnez une date entre le{" "}
-              {selectedBooking.arrivalDateObj
+              {selectedBooking.arrivalDateObj &&
+              isDateValid(selectedBooking.arrivalDateObj)
                 ? format(selectedBooking.arrivalDateObj, "dd/MM")
                 : "?"}{" "}
               et le{" "}
-              {selectedBooking.departureDateObj
+              {selectedBooking.departureDateObj &&
+              isDateValid(selectedBooking.departureDateObj)
                 ? format(selectedBooking.departureDateObj, "dd/MM")
                 : "?"}{" "}
               pour{" "}

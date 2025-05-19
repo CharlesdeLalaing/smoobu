@@ -1,148 +1,152 @@
+      
 // File: src/components/Admin/SpaDetailsSection.jsx
 import React from "react";
-// Import necessary date-fns functions
-import { format } from "date-fns"; // Need format for creating the specific string
-import { fr } from "date-fns/locale"; // Need the locale for formatting
+import { format, isValid } from "date-fns"; // ENSURE isValid IS IMPORTED
+import { fr } from "date-fns/locale";
 
-// Import utility function for parsing dates
-import { parseBookingDateTime } from "../../../spa/spaCalendarUtils"
+// No need to import parseBookingDateTime here if we consistently rely on ...Obj fields
+// from the useBookingsForMonth hook (or wherever bookings are processed).
 
 const SpaDetailsSection = ({ booking }) => {
-  console.log("SpaDetailsSection rendering for booking:", booking?.id);
-  console.log("SpaDetailsSection booking data:", booking);
-  // Check if booking has any SPA information
-  // Check for hasSpaTreatment flag first, as it's the explicit indicator
-  const hasSpaInfo =
-    booking.spaInfo?.hasSpaTreatment ||
-    booking.spaBookingPreference ||
-    booking.spaDateTime;
+  // console.log("SpaDetailsSection rendering for booking:", booking?.id); // For debugging
+  // console.log("SpaDetailsSection booking data:", booking); // For debugging
 
-  if (!hasSpaInfo) {
-    console.log("SpaDetailsSection: No SPA info detected, returning null.");
-    return null;
+  // Handle cases where the booking prop might not be provided
+  if (!booking) {
+    return (
+      <div className="p-4 bg-white border rounded-md shadow-sm">
+        <h2 className="mb-3 text-sm font-bold text-gray-700">
+          Informations SPA
+        </h2>
+        <p className="text-sm text-gray-500">
+          Données de réservation non disponibles.
+        </p>
+      </div>
+    );
   }
 
-  // Determine booking status
+  // Determine if there's any SPA-related information to display
+  // booking.spaDateTimeObj will be a Date object if a SPA time is set and parsed
+  const hasSpaIndication =
+    booking.spaInfo?.hasSpaTreatment || // Explicit flag from spaInfo
+    booking.spaBookingPreference ||     // Any preference is set
+    (booking.spaDateTimeObj && isValid(booking.spaDateTimeObj)); // A valid parsed SPA date exists
+
+  if (!hasSpaIndication) {
+    // console.log("SpaDetailsSection: No SPA indication detected, returning null or minimal info.");
+    // You could optionally return a "No SPA service for this booking" message if preferred over null
+    return null; 
+  }
+
   const getBookingStatus = () => {
+    // booking.spaDateTimeObj should be a Date object or null
+    // booking.spaBookingPreference is a string like "later", "scheduled", "none"
+
     if (booking.spaBookingPreference === "later") {
       return {
         status: "to_be_scheduled",
-        label: "À programmer avec le client", // Use French directly as per your example
+        label: "À programmer avec le client",
         color: "yellow",
       };
     } else if (
       booking.spaBookingPreference === "scheduled" &&
-      booking.spaDateTime
+      booking.spaDateTimeObj &&
+      isValid(booking.spaDateTimeObj)
     ) {
-      // Explicitly check preference is 'scheduled' AND there's a time
       return {
         status: "scheduled",
-        label: "Programmé", // Use French directly
+        label: "Programmé",
         color: "green",
       };
     } else if (
       booking.spaBookingPreference === "none" &&
-      !booking.spaDateTime
+      (!booking.spaDateTimeObj || !isValid(booking.spaDateTimeObj)) // No valid SPA date
     ) {
-      // Explicitly handle 'none' preference
+      // Explicitly 'none' and no valid date set
       return {
         status: "none",
-        label: "Pas de SPA", // Use French directly
+        label: "Pas de SPA",
         color: "gray",
       };
-    } else if (booking.spaDateTime) {
-      // Fallback for old data where preference might be missing but time exists
+    } else if (booking.spaDateTimeObj && isValid(booking.spaDateTimeObj)) {
+      // A valid SPA date exists, but preference might be missing or not 'scheduled'
       console.warn(
-        "SpaDetailsSection: Booking has spaDateTime but preference is not 'scheduled'. Assuming scheduled.",
-        booking.id
+        `SpaDetailsSection (getBookingStatus): Booking ID ${booking.id || 'N/A'} has a valid spaDateTimeObj but spaBookingPreference is '${booking.spaBookingPreference || 'missing'}'. Displaying as 'Programmé'.`
       );
       return {
-        status: "scheduled",
-        label: "Programmé (Préférence Manquante)",
+        status: "scheduled", // Treat as scheduled if a valid date is there
+        label: "Programmé (Vérifier Préférence)",
         color: "green",
       };
-    } else {
-      // Catch any other case
+    } else if (
+        booking.spaBookingPreference === "scheduled" && 
+        (!booking.spaDateTimeObj || !isValid(booking.spaDateTimeObj))
+    ) {
+        // It's supposed to be scheduled, but the date is invalid or missing
+        console.warn(
+            `SpaDetailsSection (getBookingStatus): Booking ID ${booking.id || 'N/A'} is 'scheduled' but spaDateTimeObj is invalid or missing.`
+          );
+        return {
+            status: "error_scheduled_date_invalid",
+            label: "Programmé (Date Invalide)",
+            color: "red", // Use red for errors
+        };
+    }
+     else {
+      // Fallback for any other unhandled combination
+    //   console.log(
+    //     `SpaDetailsSection (getBookingStatus): Unknown SPA status for Booking ID ${booking.id || 'N/A'}. Preference: ${booking.spaBookingPreference}, spaDateTimeObj valid: ${booking.spaDateTimeObj ? isValid(booking.spaDateTimeObj) : 'N/A'}`
+    //   );
       return {
         status: "unknown",
-        label: "Statut SPA inconnu", // Use French directly
+        label: "Statut SPA inconnu",
         color: "gray",
       };
     }
   };
 
   const bookingStatus = getBookingStatus();
-  console.log("SpaDetailsSection booking status:", bookingStatus);
+  // console.log(`SpaDetailsSection booking status for ID ${booking.id}:`, bookingStatus); // For debugging
 
-  // Format the date and time range if available
   const getFormattedDateTimeRange = () => {
-    // Use the parsed date objects stored by the bookings hook if available,
-    // otherwise, use the utility function to parse the raw fields.
-    const startTime =
-      booking.spaDateTimeObj || parseBookingDateTime(booking.spaDateTime);
-    const endTime =
-      booking.spaEndDateTimeObj || parseBookingDateTime(booking.spaEndDateTime);
+    // booking.spaDateTimeObj and booking.spaEndDateTimeObj should be Date objects or null
+    const startTime = booking.spaDateTimeObj;
+    const endTime = booking.spaEndDateTimeObj;
 
-    console.log("SpaDetailsSection: Formatting date time range", {
-      rawStart: booking.spaDateTime,
-      rawEnd: booking.spaEndDateTime,
-      parsedStart: startTime,
-      parsedEnd: endTime,
-    });
-
-    if (startTime && !isNaN(startTime.getTime())) {
+    if (startTime && isValid(startTime)) {
       let formattedString = format(startTime, "EEEE d MMMM yyyy", {
         locale: fr,
-      }); // Start with full date and day
+      });
 
-      if (endTime && !isNaN(endTime.getTime())) {
-        // If end time is valid, append the time range HH:mm - HH:mm
-        // Ensure end time is not before start time (basic check)
+      if (endTime && isValid(endTime)) {
         if (endTime.getTime() >= startTime.getTime()) {
           formattedString += ` de ${format(startTime, "HH:mm", {
             locale: fr,
           })} à ${format(endTime, "HH:mm", { locale: fr })}`;
         } else {
-          // Handle invalid case where end time is before start time
-          console.warn(
-            "SpaDetailsSection: spaEndDateTime is before spaDateTime for booking:",
-            booking.id,
-            { startTime, endTime }
-          );
+          // console.warn(`SpaDetailsSection (getFormattedDateTimeRange): spaEndDateTimeObj is before spaDateTimeObj for booking ID: ${booking.id || 'N/A'}`);
           formattedString += ` à ${format(startTime, "HH:mm", {
             locale: fr,
           })} (Heure de fin invalide)`;
         }
       } else {
-        // If start time is valid but end time is missing or invalid, just show the start time
-        console.warn(
-          "SpaDetailsSection: spaEndDateTime is missing or invalid for booking:",
-          booking.id
-        );
+        // console.warn(`SpaDetailsSection (getFormattedDateTimeRange): spaEndDateTimeObj is missing or invalid for booking ID: ${booking.id || 'N/A'}. EndTime value:`, endTime);
         formattedString += ` à ${format(startTime, "HH:mm", {
           locale: fr,
         })} (Heure de fin manquante)`;
       }
-
-      console.log("SpaDetailsSection: Formatted string:", formattedString);
       return formattedString;
     } else {
-      // If start time is missing or invalid
-      console.warn(
-        "SpaDetailsSection: spaDateTime is missing or invalid for booking:",
-        booking.id
-      );
+      // console.warn(`SpaDetailsSection (getFormattedDateTimeRange): spaDateTimeObj is missing or invalid for booking ID: ${booking.id || 'N/A'}. StartTime value:`, startTime);
       return "Date/Heure programmée manquante ou invalide";
     }
   };
 
-  // We only need the formatted string if the status is 'scheduled'
+  // We only need the formatted string if the status is 'scheduled' (and date is valid)
   const formattedDateTimeRange =
     bookingStatus.status === "scheduled" ? getFormattedDateTimeRange() : null;
-  console.log(
-    "SpaDetailsSection formattedDateTimeRange:",
-    formattedDateTimeRange
-  );
+  // console.log(`SpaDetailsSection formattedDateTimeRange for ID ${booking.id}:`, formattedDateTimeRange); // For debugging
+
 
   return (
     <div className="p-4 bg-white border rounded-md shadow-sm">
@@ -158,7 +162,9 @@ const SpaDetailsSection = ({ booking }) => {
                   ? "bg-green-100 text-green-800"
                   : bookingStatus.color === "yellow"
                   ? "bg-yellow-100 text-yellow-800"
-                  : "bg-gray-100 text-gray-800"
+                  : bookingStatus.color === "red" // For error status
+                  ? "bg-red-100 text-red-800"
+                  : "bg-gray-100 text-gray-800" // Default/gray
               }`}
           >
             {bookingStatus.label}
@@ -182,33 +188,36 @@ const SpaDetailsSection = ({ booking }) => {
                 <div className="flex flex-wrap gap-1 mt-1">
                   {booking.spaSlots.map((slot, index) => (
                     <span
-                      key={index} // Using index as key is generally okay for static lists derived from props
+                      key={index}
                       className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full"
                     >
-                      {slot}{" "}
-                      {/* This is the HH:mm string from the spaSlots array */}
+                      {slot} {/* This is the HH:mm string from the spaSlots array */}
                     </span>
                   ))}
                 </div>
               </div>
             )}
           </div>
-        ) : // Content for 'to_be_scheduled', 'unknown', 'none' statuses
-        bookingStatus.status === "to_be_scheduled" ||
-          bookingStatus.status === "none" ? (
+        ) : bookingStatus.status === "error_scheduled_date_invalid" ? (
+            // Specific UI for when it's scheduled but the date is bad
+            <div className="p-3 border border-red-200 rounded-md bg-red-50">
+                <p className="text-sm text-red-800">
+                    La date de SPA programmée est invalide ou manquante dans les données. Veuillez vérifier cette réservation.
+                </p>
+            </div>
+        ) : bookingStatus.status === "to_be_scheduled" || bookingStatus.status === "none" ? (
           <div
             className={`p-3 border rounded-md ${
               bookingStatus.color === "yellow"
                 ? "border-yellow-200 bg-yellow-50"
-                : "border-gray-200 bg-gray-50"
+                : "border-gray-200 bg-gray-50" // For 'none' status
             }`}
           >
-            {/* Message changes slightly based on yellow/gray status color */}
             <p
               className={`text-sm ${
                 bookingStatus.color === "yellow"
                   ? "text-yellow-800"
-                  : "text-gray-800"
+                  : "text-gray-800" // For 'none' status
               }`}
             >
               {bookingStatus.status === "to_be_scheduled"
@@ -222,10 +231,10 @@ const SpaDetailsSection = ({ booking }) => {
             )}
           </div>
         ) : (
-          // Fallback message for 'unknown' status
+          // Fallback message for 'unknown' status (and any other unhandled ones)
           <div className="p-3 border border-gray-200 rounded-md bg-gray-50">
             <p className="text-sm text-gray-800">
-              Statut SPA non géré ou données incomplètes pour cette réservation.
+              Statut SPA non géré ou données SPA incomplètes pour cette réservation.
             </p>
           </div>
         )}
@@ -235,3 +244,5 @@ const SpaDetailsSection = ({ booking }) => {
 };
 
 export default SpaDetailsSection;
+
+    

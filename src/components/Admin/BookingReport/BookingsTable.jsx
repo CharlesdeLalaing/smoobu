@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import BookingDetails from "./BookingsDetails";
+import {isValid} from "date-fns";
 import { formatDate, formatPrice, getPortalName } from "../../utils/formatters";
 import { calculateBookingTotal } from "./BookingsDetails";
 
@@ -189,40 +190,47 @@ const BookingsTable = ({
 };
 
 const formatSpaInfo = (booking) => {
+  if (!booking) {
+    return "-"; // Handle case where booking object itself might be undefined or null
+  }
+
   if (booking.spaBookingPreference === "later") {
     return (
       <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
         À programmer
       </span>
     );
-  } else if (booking.spaDateTime) {
-    try {
-      // Handle different timestamp formats
-      const date =
-        typeof booking.spaDateTime.toDate === "function"
-          ? booking.spaDateTime.toDate()
-          : booking.spaDateTime.seconds !== undefined
-          ? new Date(booking.spaDateTime.seconds * 1000)
-          : new Date(booking.spaDateTime);
-
-      return (
-        <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
-          {date.toLocaleString("fr-BE", {
-            dateStyle: "short",
-            timeStyle: "short",
-          })}
-        </span>
-      );
-    } catch (e) {
-      console.error("Error formatting date in table:", e);
-      return (
-        <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
-          Programmé
-        </span>
-      );
-    }
   }
 
+  // booking.spaDateTimeObj should be a JavaScript Date object (or null)
+  // after being processed by useBookingsForMonth
+  if (booking.spaDateTimeObj && isValid(booking.spaDateTimeObj)) {
+    return (
+      <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+        {booking.spaDateTimeObj.toLocaleString("fr-BE", {
+          // Using fr-BE as in your original code
+          dateStyle: "short", // e.g., 05/09/2025
+          timeStyle: "short", // e.g., 19:00
+        })}
+      </span>
+    );
+  } else if (booking.spaBookingPreference === "scheduled") {
+    // This case means it's marked as 'scheduled' but the spaDateTimeObj is either
+    // missing, null, or an invalid Date object.
+    console.warn(
+      `formatSpaInfo: spaDateTimeObj is invalid or missing for a "scheduled" booking. ID: ${
+        booking.id || "N/A"
+      }`,
+      booking.spaDateTimeObj // Log the problematic value
+    );
+    return (
+      <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-800 bg-red-100 rounded-full">
+        Date SPA Invalide
+      </span>
+    );
+  }
+
+  // Default return if no specific SPA status applies (e.g., preference is 'none' or data is incomplete)
   return "-";
 };
 
