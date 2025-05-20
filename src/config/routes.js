@@ -35,5 +35,11 @@ export const ROUTES = {
       en: 'https://fermedebasseilles.be/en/news-press/',
       fr: 'https://fermedebasseilles.be/info-presse/',
       nl: 'https://fermedebasseilles.be/nl/info-pers/'
+    },
+    // New entry will go here
+    giftCard: {
+      fr: 'https://fermedebasseilles.be/bon-cadeau/',
+      en: 'https://fermedebasseilles.be/en/gift-voucher/',
+      nl: 'https://fermedebasseilles.be/nl/cadeaubon/'
     }
-  };
+};

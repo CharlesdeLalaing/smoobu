@@ -177,20 +177,28 @@ export const HeaderSection = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-              <a href="#" className="hover:text-gray-200">
+              <a href="https://www.facebook.com/fermedebasseilles" className="hover:text-gray-200">
                 <img src={Facebook} alt="facebook" className="h-[18px] w-[18px]" />
               </a>
-              <a href="#" className="hover:text-gray-200">
+              <a href="https://www.instagram.com/fermedebasseilles/" className="hover:text-gray-200">
                 <img src={Insta} alt="instagram" className="h-[18px] w-[18px]" />
               </a>
-              <a href="#" className="hover:text-gray-200">
+              <a href="https://www.tiktok.com/@ferme_de_basseilles?_t=8nCCAbYndrs&_r=1" className="hover:text-gray-200">
                 <img src={Tiktok} alt="tiktok" className="h-[18px] w-[18px]" />
               </a>
             </div>
 
-            <button className="bg-[#d3b574] text-black p-[10px] font-light text-[12px] whitespace-nowrap">
+                 
+  <a
+              href={ROUTES.giftCard[currentLanguage]}
+              className="bg-[#d3b574] text-black p-[10px] font-light text-[12px] whitespace-nowrap rounded hover:bg-opacity-90"
+              target="_blank" // Opens in a new tab
+              rel="noopener noreferrer" // Security best practice for target="_blank"
+            >
               {t("header.buttons.giftCard")}
-            </button>
+            </a>
+
+    
           </div>
         </div>
       </div>
