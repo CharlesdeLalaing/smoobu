@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import LongBird from "../../assets/GlobalImg/long_bird.webp"; // Adjust path as needed
 import SpaScheduler from "../spa/SpaScheduler"; // Adjust path as needed
 import { useSpaSettings } from "../spa/useSpaCalendarData"; // Adjust path as needed
-import { extraCategories } from "../extraCategories"; // Adjust path as needed - used by ALL_DRINK_ITEMS_MAP
+import { extraCategories } from "../extraCategories"; // Adjust path as needed
 import FreeDrinksSelection from "./FreeDrinksSelection"; // Adjust path as needed
 
 // Ensure extraCategories is fully defined if DRINK_OFFER_CONFIG is in the same scope and uses it.
@@ -18,7 +18,7 @@ const ALL_DRINK_ITEMS_MAP = extraCategories.boissons.items.reduce(
 
 const DRINK_OFFER_CONFIG = {
   WINE_OFFER_1: {
-    key: "WINE_OFFER_1", // This key is used to link from an instance back to this config
+    key: "WINE_OFFER_1",
     titleKey: "extras.drinks.wineOfferTitle",
     defaultTitle: "Choix de Vin Inclus (1 bouteille)",
     triggeringExtras: [
@@ -42,7 +42,7 @@ const DRINK_OFFER_CONFIG = {
         defaultName: "Terre Charlot (blanc)",
       },
     ],
-    maxSelection: 1, // Max wine bottles PER ACTIVATION of this offer by a triggeringExtra
+    maxSelection: 1,
     type: "wine_choice",
   },
   SOFTS_BEERS_OFFER_1: {
@@ -58,8 +58,8 @@ const DRINK_OFFER_CONFIG = {
         .filter((item) => item.typeKey === "extras.drinkTypes.beer")
         .map((item) => item.id),
     },
-    itemsPerUnit: 2, // Each unit of a triggeringExtra grants this many items
-    itemsPerSupplementaryPerson: 1, // Each supplementary person for a triggeringExtra grants this many
+    itemsPerUnit: 2,
+    itemsPerSupplementaryPerson: 1,
     type: "soft_beer_choice",
   },
 };
@@ -83,12 +83,17 @@ export const InfoSupSection = ({
   handleApplyCoupon,
   selectedExtras,
   handleSpaScheduleChange,
-  spaValidationError,
+  spaValidationError, // Received from useBookingForm
+  drinkValidationError, // <<<< NEW PROP: Received from useBookingForm
   selectedFreeDrinks,
   handleFreeDrinkChange,
-  getPaidExtraName, // Expected from useBookingForm
+  getPaidExtraName, // Received from useBookingForm
 }) => {
   const { t } = useTranslation();
+  console.log(
+    "[InfoSupSection] Received drinkValidationError prop:",
+    drinkValidationError
+  );
   const [couponInput, setCouponInput] = useState("");
   const [localCouponError, setLocalCouponError] = useState(null);
   const [mainActiveTab, setMainActiveTab] = useState("");
@@ -106,76 +111,28 @@ export const InfoSupSection = ({
   }, [selectedExtras]);
   const shouldShowSpaSection = isSpaSelected;
 
-  // --- Log selectedExtras and getPaidExtraName ---
-  console.log(
-    "[InfoSupSection] selectedExtras received:",
-    JSON.stringify(selectedExtras, null, 2)
-  );
-  console.log(
-    "[InfoSupSection] typeof getPaidExtraName:",
-    typeof getPaidExtraName
-  );
-  // --- End Log ---
-
   const activeDrinkOfferInstanceList = useMemo(() => {
     const instances = [];
-    // Add more detailed logging inside this useMemo if needed
-    console.log(
-      "[InfoSupSection useMemo] Recalculating activeDrinkOfferInstanceList. selectedExtras:",
-      selectedExtras
-    );
-
-    if (!selectedExtras || !DRINK_OFFER_CONFIG || !getPaidExtraName) {
-      console.log(
-        "[InfoSupSection useMemo] Aborting instance generation: missing selectedExtras, DRINK_OFFER_CONFIG, or getPaidExtraName."
-      );
-      return instances; // Empty array
-    }
-
+    if (!selectedExtras || !DRINK_OFFER_CONFIG || !getPaidExtraName)
+      return instances;
     Object.entries(selectedExtras).forEach(([paidExtraId, quantity]) => {
-      console.log(
-        `[InfoSupSection useMemo] Checking paidExtraId: ${paidExtraId}, quantity: ${quantity}`
-      );
       if (quantity > 0 && !paidExtraId.endsWith("-extra")) {
         Object.values(DRINK_OFFER_CONFIG).forEach((offerConfig) => {
-          console.log(
-            `[InfoSupSection useMemo]   Checking against offerConfig.key: ${offerConfig.key}`
-          );
           if (offerConfig.triggeringExtras.includes(paidExtraId)) {
-            console.log(
-              `[InfoSupSection useMemo]     MATCH! ${paidExtraId} triggers ${offerConfig.key}.`
-            );
-            const instance = {
+            instances.push({
               instanceId: `${paidExtraId}-${offerConfig.key}`,
               paidExtraId: paidExtraId,
-              paidExtraName: getPaidExtraName(paidExtraId), // Call the prop
+              paidExtraName: getPaidExtraName(paidExtraId),
               offerConfigKey: offerConfig.key,
-            };
-            console.log(
-              "[InfoSupSection useMemo]       Generated instance:",
-              instance
-            );
-            instances.push(instance);
+            });
           }
         });
       }
     });
-    console.log(
-      "[InfoSupSection useMemo] Final activeDrinkOfferInstanceList:",
-      instances
-    );
     return instances;
-  }, [selectedExtras, getPaidExtraName]); // Dependencies: selectedExtras and getPaidExtraName
+  }, [selectedExtras, getPaidExtraName]);
 
   const shouldShowDrinksSection = activeDrinkOfferInstanceList.length > 0;
-
-  // --- Log shouldShowDrinksSection ---
-  console.log(
-    "[InfoSupSection] shouldShowDrinksSection:",
-    shouldShowDrinksSection,
-    "Instance list length:",
-    activeDrinkOfferInstanceList.length
-  );
 
   useEffect(() => {
     if (shouldShowSpaSection) {
@@ -191,7 +148,6 @@ export const InfoSupSection = ({
       )
         setMainActiveTab("drinks");
     } else setMainActiveTab("");
-
     if (
       mainActiveTab === "spa" &&
       !shouldShowSpaSection &&
@@ -245,7 +201,6 @@ export const InfoSupSection = ({
   );
 
   const handleChooseNonAlcoholicLaterChange = (instanceId, isChecked) => {
-    // Takes instanceId now
     handleFreeDrinkChange(instanceId, {
       type: "CHOOSE_NON_ALCOHOLIC_LATER",
       value: isChecked,
@@ -355,7 +310,7 @@ export const InfoSupSection = ({
                     : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
                 }`}
               >
-                {t("extras.drinks.tabTitle", "Choix boissons incluses")}
+                {t("extras.drinks.tabTitle")}
               </button>
             )}
           </div>
@@ -407,7 +362,19 @@ export const InfoSupSection = ({
         {/* Drinks Section Content */}
         {mainActiveTab === "drinks" && shouldShowDrinksSection && (
           <div>
-            {/* Drink Offer Sub-Tabs (Render if more than one active offer instance) */}
+            {/* <<<< DISPLAY DRINK VALIDATION ERROR >>>> */}
+            {drinkValidationError && (
+              <div
+                id="drink-validation-error"
+                className="p-2 mb-3 text-sm text-red-700 bg-red-100 border border-red-300 rounded-md"
+                role="alert"
+              >
+                {drinkValidationError}
+              </div>
+            )}
+            {/* <<<< END DISPLAY DRINK VALIDATION ERROR >>>> */}
+
+            {/* Drink Offer Sub-Tabs */}
             {activeDrinkOfferInstanceList.length > 1 && (
               <div className="flex flex-wrap items-end -mb-px">
                 {activeDrinkOfferInstanceList.map((instance) => (
@@ -450,12 +417,7 @@ export const InfoSupSection = ({
                 .map((instance) => {
                   const offerConfig =
                     DRINK_OFFER_CONFIG[instance.offerConfigKey];
-                  if (!offerConfig) {
-                    console.warn(
-                      `InfoSupSection: Could not find offerConfig for key ${instance.offerConfigKey} from instance ${instance.instanceId}`
-                    );
-                    return null;
-                  }
+                  if (!offerConfig) return null;
 
                   const currentInstanceDrinkData =
                     selectedFreeDrinks?.[instance.instanceId];
@@ -503,20 +465,9 @@ export const InfoSupSection = ({
                       <FreeDrinksSelection
                         offerKey={instance.offerConfigKey}
                         currentOfferDataForDisplay={currentInstanceDrinkData}
-                        onFreeDrinkChange={(payload) => {
-                          // <<< THIS IS THE WRAPPED HANDLER
-                          console.log(
-                            `[InfoSupSection] Calling handleFreeDrinkChange for instanceId: ${instance.instanceId}, with payload:`,
-                            payload
-                          );
-                          if (typeof handleFreeDrinkChange === "function") {
-                            handleFreeDrinkChange(instance.instanceId, payload);
-                          } else {
-                            console.error(
-                              "[InfoSupSection] Main handleFreeDrinkChange prop is NOT a function!"
-                            );
-                          }
-                        }}
+                        onFreeDrinkChange={(payload) =>
+                          handleFreeDrinkChange(instance.instanceId, payload)
+                        }
                         disabled={
                           offerConfig.type === "wine_choice" &&
                           isChoosingNonAlcoholicLater
@@ -534,7 +485,7 @@ export const InfoSupSection = ({
                                   instance.instanceId,
                                   e.target.checked
                                 )
-                              } // Use instanceId
+                              }
                               className="w-4 h-4 mr-2 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:ring-offset-1 focus:ring-offset-white"
                             />
                             {t(
@@ -657,6 +608,5 @@ export const InfoSupSection = ({
   );
 };
 
-// It's good practice to export these here if they are defined here and used by other modules like useBookingForm.
-// If they are in a central constants.js, then components would import from there.
+// Export constants if they are defined in this file and used elsewhere
 export { ALL_DRINK_ITEMS_MAP, DRINK_OFFER_CONFIG };

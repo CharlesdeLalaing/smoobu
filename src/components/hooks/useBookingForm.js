@@ -80,7 +80,7 @@ export const useBookingForm = () => {
     spaDateTime: null,
     spaBookingPreference: null,
     spaEndDateTime: null, // Ensure this is handled if SpaScheduler provides it
-    spaSlots: null,      // Ensure this is handled if SpaScheduler provides it
+    spaSlots: null, // Ensure this is handled if SpaScheduler provides it
     conditions: false,
     selectedFreeDrinks: {}, // Keyed by instanceId: "paidExtraId-offerConfigKey"
   });
@@ -102,29 +102,42 @@ export const useBookingForm = () => {
   const [coupon, setCoupon] = useState(""); // For the input field value in InfoSupSection
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState(null); // For errors related to coupon application
+  const [drinkValidationError, setDrinkValidationError] = useState("");
 
   // --- Helper function defined using useCallback, BEFORE effects/handlers that use it ---
-  const calculateDynamicMaxForInstance = useCallback((paidExtraId, offerConfig, currentSelectedExtras) => {
-    if (!offerConfig || offerConfig.type !== 'soft_beer_choice' || !currentSelectedExtras || typeof offerConfig.itemsPerUnit !== 'number') {
-      return offerConfig?.maxSelection || 0; // For wine or other non-dynamic types
-    }
-    let dynamicMax = 0;
-    const baseQty = currentSelectedExtras[paidExtraId] || 0;
-    if (baseQty > 0) {
-      dynamicMax += baseQty * offerConfig.itemsPerUnit;
-    }
-    const supExtraId = `${paidExtraId}-extra`;
-    const supQty = currentSelectedExtras[supExtraId] || 0;
-    if (supQty > 0) {
-      const itemsPerSup = offerConfig.itemsPerSupplementaryPerson || 1; // Default if not specified
-      dynamicMax += supQty * itemsPerSup;
-    }
-    return dynamicMax;
-  }, []); // Empty dependency array: stable function identity, relies only on arguments.
+  const calculateDynamicMaxForInstance = useCallback(
+    (paidExtraId, offerConfig, currentSelectedExtras) => {
+      if (
+        !offerConfig ||
+        offerConfig.type !== "soft_beer_choice" ||
+        !currentSelectedExtras ||
+        typeof offerConfig.itemsPerUnit !== "number"
+      ) {
+        return offerConfig?.maxSelection || 0; // For wine or other non-dynamic types
+      }
+      let dynamicMax = 0;
+      const baseQty = currentSelectedExtras[paidExtraId] || 0;
+      if (baseQty > 0) {
+        dynamicMax += baseQty * offerConfig.itemsPerUnit;
+      }
+      const supExtraId = `${paidExtraId}-extra`;
+      const supQty = currentSelectedExtras[supExtraId] || 0;
+      if (supQty > 0) {
+        const itemsPerSup = offerConfig.itemsPerSupplementaryPerson || 1; // Default if not specified
+        dynamicMax += supQty * itemsPerSup;
+      }
+      return dynamicMax;
+    },
+    []
+  ); // Empty dependency array: stable function identity, relies only on arguments.
 
   // --- useEffects ---
   useEffect(() => {
-    setFormData((prevData) => (prevData.language !== i18n.language ? { ...prevData, language: i18n.language } : prevData));
+    setFormData((prevData) =>
+      prevData.language !== i18n.language
+        ? { ...prevData, language: i18n.language }
+        : prevData
+    );
   }, [i18n.language]);
 
   useEffect(() => {
@@ -134,79 +147,121 @@ export const useBookingForm = () => {
     }
     // console.log("[useEffect selectedFreeDrinks] Running with selectedExtras:", JSON.parse(JSON.stringify(selectedExtras)));
 
-    setFormData(prevData => {
+    setFormData((prevData) => {
       const newSelectedFreeDrinksState = {};
       const prevSelectedFreeDrinks = prevData.selectedFreeDrinks || {};
       let hasChanged = false;
 
       Object.entries(selectedExtras).forEach(([paidExtraId, quantity]) => {
-        if (quantity > 0 && !paidExtraId.endsWith('-extra')) {
-          Object.values(DRINK_OFFER_CONFIG).forEach(offerConfig => {
+        if (quantity > 0 && !paidExtraId.endsWith("-extra")) {
+          Object.values(DRINK_OFFER_CONFIG).forEach((offerConfig) => {
             if (offerConfig.triggeringExtras.includes(paidExtraId)) {
               const instanceId = `${paidExtraId}-${offerConfig.key}`;
               let currentInstanceData = prevSelectedFreeDrinks[instanceId];
 
               if (!currentInstanceData) {
                 hasChanged = true;
-                if (offerConfig.type === 'wine_choice') currentInstanceData = { selection: null, chooseNonAlcoholicLater: false };
-                else if (offerConfig.type === 'soft_beer_choice') currentInstanceData = {};
+                if (offerConfig.type === "wine_choice")
+                  currentInstanceData = {
+                    selection: null,
+                    chooseNonAlcoholicLater: false,
+                  };
+                else if (offerConfig.type === "soft_beer_choice")
+                  currentInstanceData = {};
                 else currentInstanceData = {};
               }
-              newSelectedFreeDrinksState[instanceId] = JSON.parse(JSON.stringify(currentInstanceData));
+              newSelectedFreeDrinksState[instanceId] = JSON.parse(
+                JSON.stringify(currentInstanceData)
+              );
 
-              if (offerConfig.type === 'soft_beer_choice') {
-                const instanceMax = calculateDynamicMaxForInstance(paidExtraId, offerConfig, selectedExtras);
-                let currentInstanceSelections = newSelectedFreeDrinksState[instanceId] || {};
-                let totalSelectedForInstance = Object.values(currentInstanceSelections).reduce((sum, qty) => sum + Number(qty), 0);
+              if (offerConfig.type === "soft_beer_choice") {
+                const instanceMax = calculateDynamicMaxForInstance(
+                  paidExtraId,
+                  offerConfig,
+                  selectedExtras
+                );
+                let currentInstanceSelections =
+                  newSelectedFreeDrinksState[instanceId] || {};
+                let totalSelectedForInstance = Object.values(
+                  currentInstanceSelections
+                ).reduce((sum, qty) => sum + Number(qty), 0);
 
                 if (totalSelectedForInstance > instanceMax) {
                   hasChanged = true;
                   let overflow = totalSelectedForInstance - instanceMax;
-                  const itemsToAdjust = Object.entries(currentInstanceSelections).sort((a,b) => b[1] - a[1]);
+                  const itemsToAdjust = Object.entries(
+                    currentInstanceSelections
+                  ).sort((a, b) => b[1] - a[1]);
                   for (const [drinkIdToAdjust, qtyToAdjust] of itemsToAdjust) {
                     if (overflow <= 0) break;
                     const reduction = Math.min(qtyToAdjust, overflow);
                     currentInstanceSelections[drinkIdToAdjust] -= reduction;
                     overflow -= reduction;
-                    if (currentInstanceSelections[drinkIdToAdjust] <= 0) delete currentInstanceSelections[drinkIdToAdjust];
+                    if (currentInstanceSelections[drinkIdToAdjust] <= 0)
+                      delete currentInstanceSelections[drinkIdToAdjust];
                   }
-                  newSelectedFreeDrinksState[instanceId] = currentInstanceSelections;
+                  newSelectedFreeDrinksState[instanceId] =
+                    currentInstanceSelections;
                 }
-                if (instanceMax === 0 && Object.keys(currentInstanceSelections).length > 0) {
-                    newSelectedFreeDrinksState[instanceId] = {};
-                    hasChanged = true;
+                if (
+                  instanceMax === 0 &&
+                  Object.keys(currentInstanceSelections).length > 0
+                ) {
+                  newSelectedFreeDrinksState[instanceId] = {};
+                  hasChanged = true;
                 }
               }
             }
           });
         }
       });
-      
-      if (JSON.stringify(prevSelectedFreeDrinks) !== JSON.stringify(newSelectedFreeDrinksState)) {
-          hasChanged = true;
+
+      if (
+        JSON.stringify(prevSelectedFreeDrinks) !==
+        JSON.stringify(newSelectedFreeDrinksState)
+      ) {
+        hasChanged = true;
       }
 
-      return hasChanged ? { ...prevData, selectedFreeDrinks: newSelectedFreeDrinksState } : prevData;
+      return hasChanged
+        ? { ...prevData, selectedFreeDrinks: newSelectedFreeDrinksState }
+        : prevData;
     });
   }, [selectedExtras, calculateDynamicMaxForInstance]);
-
 
   // --- Event Handlers & Logic Functions ---
   const calculateGuestFees = (adults, children, settings) => {
     if (!settings) return 0;
     const totalGuests = (parseInt(adults) || 0) + (parseInt(children) || 0);
-    const extraGuests = Math.max(0, totalGuests - (settings.startingAtGuest || 2));
+    const extraGuests = Math.max(
+      0,
+      totalGuests - (settings.startingAtGuest || 2)
+    );
     return extraGuests * (settings.extraGuestsPerNight || 0);
   };
 
   const validateCouponPeriod = (couponData, arrival, departure) => {
     if (!arrival || !departure) return false;
-    let validityStart = couponData.validityStartDate?.toDate ? couponData.validityStartDate.toDate() : (couponData.validityStartDate ? new Date(couponData.validityStartDate) : null);
-    let validityEnd = couponData.validityEndDate?.toDate ? couponData.validityEndDate.toDate() : (couponData.validityEndDate ? new Date(couponData.validityEndDate) : null);
+    let validityStart = couponData.validityStartDate?.toDate
+      ? couponData.validityStartDate.toDate()
+      : couponData.validityStartDate
+      ? new Date(couponData.validityStartDate)
+      : null;
+    let validityEnd = couponData.validityEndDate?.toDate
+      ? couponData.validityEndDate.toDate()
+      : couponData.validityEndDate
+      ? new Date(couponData.validityEndDate)
+      : null;
     if (!validityStart || !validityEnd) return true;
     const bookingStart = new Date(arrival);
     const bookingEnd = new Date(departure);
-    if (isNaN(validityStart.getTime()) || isNaN(validityEnd.getTime()) || isNaN(bookingStart.getTime()) || isNaN(bookingEnd.getTime())) return false;
+    if (
+      isNaN(validityStart.getTime()) ||
+      isNaN(validityEnd.getTime()) ||
+      isNaN(bookingStart.getTime()) ||
+      isNaN(bookingEnd.getTime())
+    )
+      return false;
     return bookingStart <= validityEnd && bookingEnd >= validityStart;
   };
 
@@ -217,8 +272,20 @@ export const useBookingForm = () => {
     if (name === "arrivalDate" || name === "departureDate") {
       setShowPriceDetails(false);
       if (appliedCoupon) {
-        const newDates = { arrivalDate: name === "arrivalDate" ? val : formData.arrivalDate, departureDate: name === "departureDate" ? val : formData.departureDate };
-        if (newDates.arrivalDate && newDates.departureDate && !validateCouponPeriod(appliedCoupon, newDates.arrivalDate, newDates.departureDate)) {
+        const newDates = {
+          arrivalDate: name === "arrivalDate" ? val : formData.arrivalDate,
+          departureDate:
+            name === "departureDate" ? val : formData.departureDate,
+        };
+        if (
+          newDates.arrivalDate &&
+          newDates.departureDate &&
+          !validateCouponPeriod(
+            appliedCoupon,
+            newDates.arrivalDate,
+            newDates.departureDate
+          )
+        ) {
           setAppliedCoupon(null);
           setCouponError(t("booking.coupon.errors.noLongerValidForDates"));
         }
@@ -237,10 +304,20 @@ export const useBookingForm = () => {
       return updatedExtras;
     });
     if (SPA_ITEM_IDS.includes(extraId)) {
-      const anySpaStillSelected = SPA_ITEM_IDS.some(id => (selectedExtras[id] > 0 && id !== extraId) || (id === extraId && quantity > 0));
+      const anySpaStillSelected = SPA_ITEM_IDS.some(
+        (id) =>
+          (selectedExtras[id] > 0 && id !== extraId) ||
+          (id === extraId && quantity > 0)
+      );
       if (!anySpaStillSelected) {
         setSpaValidationError("");
-        setFormData(prev => ({ ...prev, spaDateTime: null, spaBookingPreference: null, spaEndDateTime: null, spaSlots: null }));
+        setFormData((prev) => ({
+          ...prev,
+          spaDateTime: null,
+          spaBookingPreference: null,
+          spaEndDateTime: null,
+          spaSlots: null,
+        }));
       }
     }
   };
@@ -251,26 +328,36 @@ export const useBookingForm = () => {
       .filter(([_, quantity]) => quantity > 0)
       .forEach(([extraId, quantity]) => {
         const isExtraPerson = extraId.endsWith("-extra");
-        const baseExtraId = isExtraPerson ? extraId.replace("-extra", "") : extraId;
-        const extraDetails = Object.values(extraCategories).flatMap((cat) => cat.items).find((item) => item.id === baseExtraId);
+        const baseExtraId = isExtraPerson
+          ? extraId.replace("-extra", "")
+          : extraId;
+        const extraDetails = Object.values(extraCategories)
+          .flatMap((cat) => cat.items)
+          .find((item) => item.id === baseExtraId);
         if (!extraDetails) return;
         if (isExtraPerson) {
           const baseExtra = extrasMap.get(baseExtraId);
           if (baseExtra) {
             baseExtra.extraPersonQuantity = quantity;
-            baseExtra.extraPersonAmount = (extraDetails.extraPersonPrice || 0) * quantity;
+            baseExtra.extraPersonAmount =
+              (extraDetails.extraPersonPrice || 0) * quantity;
           }
         } else {
           extrasMap.set(baseExtraId, {
-            type: "addon", name: t(extraDetails.name, extraDetails.name), amount: (extraDetails.price || 0) * quantity,
-            quantity: quantity, currencyCode: "EUR", extraPersonPrice: extraDetails.extraPersonPrice || 0,
-            extraPersonQuantity: 0, extraPersonAmount: 0,
+            type: "addon",
+            name: t(extraDetails.name, extraDetails.name),
+            amount: (extraDetails.price || 0) * quantity,
+            quantity: quantity,
+            currencyCode: "EUR",
+            extraPersonPrice: extraDetails.extraPersonPrice || 0,
+            extraPersonQuantity: 0,
+            extraPersonAmount: 0,
           });
         }
       });
     return Array.from(extrasMap.values());
   };
-  
+
   const handleFreeDrinkChange = useCallback(
     (instanceId, payload) => {
       console.log(
@@ -733,15 +820,29 @@ export const useBookingForm = () => {
   };
 
   const isStepValid = useCallback(() => {
+    // console.log(`[isStepValid] Checking step: ${currentStep}`);
+    // console.log(`[isStepValid] formData.selectedFreeDrinks:`, JSON.stringify(formData.selectedFreeDrinks, null, 2));
+    // console.log(`[isStepValid] selectedExtras:`, JSON.stringify(selectedExtras, null, 2));
+
+    let isSpaValid = true;
+    let areDrinksValid = true;
+
     switch (currentStep) {
-      case 3:
-        return (
+      case 3: // Contact Details Step
+        // Clear errors from previous steps when moving to/validating step 3
+        setSpaValidationError("");
+        setDrinkValidationError("");
+
+        const isValidContact =
           formData.firstName &&
           formData.lastName &&
           formData.email &&
-          formData.conditions
-        );
-      case 2:
+          formData.conditions;
+        // Add more checks if needed (e.g., phone format using a regex)
+        return isValidContact;
+
+      case 2: // Extras & Supplementary Info (SPA, Drinks) Step
+        // --- SPA Validation (existing logic) ---
         const spaPackageSelected = SPA_ITEM_IDS.some(
           (id) => selectedExtras && selectedExtras[id] > 0
         );
@@ -749,37 +850,148 @@ export const useBookingForm = () => {
           const spaSelectionMade =
             formData.spaDateTime || formData.spaBookingPreference === "later";
           if (!spaSelectionMade) {
-            setSpaValidationError(t("extras.spa.selectTimeOrBookLater"));
-            return false;
+            setSpaValidationError(
+              t(
+                "extras.spa.selectTimeOrBookLater",
+                "Veuillez sélectionner une date/heure pour le SPA ou choisir 'Réserver plus tard'."
+              )
+            );
+            isSpaValid = false; // Mark SPA as invalid
           } else {
-            setSpaValidationError(""); // Clear error if selection is made
+            setSpaValidationError("");
+            isSpaValid = true;
           }
         } else {
-          setSpaValidationError(""); // Clear error if no SPA package is selected
+          setSpaValidationError(""); // No SPA package selected, so no SPA error
+          isSpaValid = true;
         }
-        return true; // Step 2 is always valid if SPA check passes or is not applicable
-      case 1:
-        // For step 1, typically date and room selection are primary.
-        // This might be handled by disabling "Next" button until these are met.
-        // For explicit validation here:
-        // const roomSelected = !!formData.apartmentId;
-        // const datesSelected = !!startDate && !!endDate;
-        // if (!roomSelected) setError("Veuillez sélectionner une chambre.");
-        // if (!datesSelected) setDateError("Veuillez sélectionner les dates.");
-        // return roomSelected && datesSelected;
-        return true; // Assuming these are handled by UI enabling/disabling next button
+        // --- End SPA Validation ---
+
+        // --- Drink Selection Validation ---
+        let incompleteDrinkOffers = [];
+        if (
+          formData.selectedFreeDrinks &&
+          DRINK_OFFER_CONFIG &&
+          ALL_DRINK_ITEMS_MAP &&
+          Object.keys(formData.selectedFreeDrinks).length > 0
+        ) {
+          // Iterate over active drink offer instances implied by selectedFreeDrinks keys
+          Object.keys(formData.selectedFreeDrinks).forEach((instanceId) => {
+            const instanceData = formData.selectedFreeDrinks[instanceId];
+            const parts = instanceId.split("-");
+            if (parts.length < 2) {
+              console.warn("[isStepValid] Malformed instanceId:", instanceId);
+              return; // Skip malformed instanceId
+            }
+            const offerConfigKey = parts.pop();
+            const paidExtraId = parts.join("-");
+            const offerConfig = DRINK_OFFER_CONFIG[offerConfigKey];
+
+            if (!offerConfig) {
+              console.warn(
+                "[isStepValid] No offerConfig for key:",
+                offerConfigKey
+              );
+              return; // Skip if no offer config
+            }
+
+            const paidExtraDisplayName = getPaidExtraNameFromCategories(
+              paidExtraId,
+              t
+            );
+
+            if (offerConfig.type === "wine_choice") {
+              if (
+                instanceData &&
+                !instanceData.chooseNonAlcoholicLater &&
+                !instanceData.selection
+              ) {
+                incompleteDrinkOffers.push(paidExtraDisplayName);
+              }
+            } else if (offerConfig.type === "soft_beer_choice") {
+              // calculateDynamicMaxForInstance needs selectedExtras from the hook's scope
+              const dynamicMaxForThisInstance = calculateDynamicMaxForInstance(
+                paidExtraId,
+                offerConfig,
+                selectedExtras
+              );
+              const currentSelectedCount = Object.values(
+                instanceData || {}
+              ).reduce((sum, qty) => sum + Number(qty), 0);
+
+              if (
+                dynamicMaxForThisInstance > 0 &&
+                currentSelectedCount < dynamicMaxForThisInstance
+              ) {
+                incompleteDrinkOffers.push(
+                  `${paidExtraDisplayName} (${t(
+                    "extras.drinks.needsMoreSelections",
+                    `encore ${
+                      dynamicMaxForThisInstance - currentSelectedCount
+                    } à choisir`
+                  )})`
+                );
+              }
+            }
+          });
+        }
+
+        if (incompleteDrinkOffers.length > 0) {
+          const errorMsg =
+            t(
+              "extras.drinks.validation.incomplete",
+              "Veuillez compléter votre sélection de boissons pour : "
+            ) + incompleteDrinkOffers.join(", ");
+          console.log("[isStepValid] Setting drinkValidationError:", errorMsg); // <<<< ADD THIS
+          setDrinkValidationError(errorMsg);
+          areDrinksValid = false;
+        } else {
+          console.log("[isStepValid] Clearing drinkValidationError."); // <<<< ADD THIS
+          setDrinkValidationError("");
+          areDrinksValid = true;
+        }
+        // --- End Drink Selection Validation ---
+
+        return isSpaValid && areDrinksValid; // Step 2 is valid if both SPA and Drinks pass
+
+      case 1: // Room/Date Selection Step
+        // Clear errors from other steps when on step 1
+        setSpaValidationError("");
+        setDrinkValidationError("");
+
+        const roomSelected = !!formData.apartmentId;
+        const datesSelected = !!startDate && !!endDate;
+
+        // Example of how you might enforce selection for step 1:
+        // if (!roomSelected) {
+        //   setError(t("booking.errors.selectRoom", "Veuillez sélectionner une chambre."));
+        //   return false;
+        // }
+        // if (!datesSelected) {
+        //   setDateError(t("booking.errors.selectDates", "Veuillez sélectionner les dates d'arrivée et de départ."));
+        //   return false;
+        // }
+        // setError(""); // Clear general error if conditions met for step 1
+        // setDateError(""); // Clear date error
+
+        return true; // Modify this based on your actual validation needs for step 1
+
       default:
         return false;
     }
   }, [
     currentStep,
-    formData,
+    formData, // formData.firstName, .lastName, .email, .conditions, .spaDateTime, .spaBookingPreference, .selectedFreeDrinks, .apartmentId
     selectedExtras,
     startDate,
     endDate,
     t,
-    setSpaValidationError,
-  ]); // Added setSpaValidationError to dependencies
+    setSpaValidationError, // Added setter
+    setDrinkValidationError, // Added setter
+    // setError, setDateError, // Add if used for step 1 validation errors
+    calculateDynamicMaxForInstance, // Added helper
+    // SPA_ITEM_IDS, DRINK_OFFER_CONFIG, ALL_DRINK_ITEMS_MAP are stable constants from outer scope
+  ]);
 
   const nextStep = () => {
     if (isStepValid()) {
@@ -817,6 +1029,7 @@ export const useBookingForm = () => {
     couponError,
     selectedCategory,
     spaValidationError,
+    drinkValidationError,
     setSpaValidationError,
     handleChange,
     handleExtraChange,
@@ -840,6 +1053,6 @@ export const useBookingForm = () => {
     setShowPayment,
     handleSpaScheduleChange,
     getPaidExtraName: (paidExtraId) =>
-    getPaidExtraNameFromCategories(paidExtraId, t),
+      getPaidExtraNameFromCategories(paidExtraId, t),
   };
 };

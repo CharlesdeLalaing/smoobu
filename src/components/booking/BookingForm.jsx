@@ -40,6 +40,7 @@ const BookingForm = () => {
     appliedCoupon,
     selectedCategory,
     spaValidationError,
+    drinkValidationError,
     getPaidExtraName,
     setSelectedCategory,
     handleChange,
@@ -467,6 +468,7 @@ const BookingForm = () => {
     spaValidationError,
     selectedFreeDrinks: formData.selectedFreeDrinks, // Explicitly pass this
     handleFreeDrinkChange, // Pass this handler
+    drinkValidationError: drinkValidationError,
     getPaidExtraName: getPaidExtraName,
   };
 
