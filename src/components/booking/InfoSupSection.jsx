@@ -84,16 +84,12 @@ export const InfoSupSection = ({
   selectedExtras,
   handleSpaScheduleChange,
   spaValidationError, // Received from useBookingForm
-  drinkValidationError, // <<<< NEW PROP: Received from useBookingForm
+  drinkValidationError, // Received from useBookingForm
   selectedFreeDrinks,
   handleFreeDrinkChange,
   getPaidExtraName, // Received from useBookingForm
 }) => {
   const { t } = useTranslation();
-  console.log(
-    "[InfoSupSection] Received drinkValidationError prop:",
-    drinkValidationError
-  );
   const [couponInput, setCouponInput] = useState("");
   const [localCouponError, setLocalCouponError] = useState(null);
   const [mainActiveTab, setMainActiveTab] = useState("");
@@ -291,26 +287,46 @@ export const InfoSupSection = ({
               <button
                 type="button"
                 onClick={() => setMainActiveTab("spa")}
-                className={`py-2 px-4 text-sm font-medium focus:outline-none transition-colors duration-150 ease-in-out ${
-                  mainActiveTab === "spa"
-                    ? "text-[#668E73] border-b-2 border-[#668E73]"
-                    : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
-                }`}
+                className={`py-2 px-4 text-sm font-medium focus:outline-none transition-colors duration-150 ease-in-out 
+                            ${
+                              mainActiveTab === "spa"
+                                ? "text-[#668E73] border-b-2 border-[#668E73]"
+                                : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
+                            }
+                            ${
+                              spaValidationError
+                                ? "text-red-600 !border-red-500 font-semibold"
+                                : ""
+                            } 
+                          `}
               >
                 {t("extras.spa.scheduleTitle")}
+                {spaValidationError && (
+                  <span className="ml-1 text-red-500">*</span>
+                )}
               </button>
             )}
             {shouldShowDrinksSection && (
               <button
                 type="button"
                 onClick={() => setMainActiveTab("drinks")}
-                className={`py-2 px-4 text-sm font-medium focus:outline-none transition-colors duration-150 ease-in-out ${
-                  mainActiveTab === "drinks"
-                    ? "text-[#668E73] border-b-2 border-[#668E73]"
-                    : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
-                }`}
+                className={`py-2 px-4 text-sm font-medium focus:outline-none transition-colors duration-150 ease-in-out 
+                            ${
+                              mainActiveTab === "drinks"
+                                ? "text-[#668E73] border-b-2 border-[#668E73]"
+                                : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
+                            }
+                            ${
+                              drinkValidationError
+                                ? "text-red-600 !border-red-500 font-semibold"
+                                : ""
+                            }
+                          `}
               >
-                {t("extras.drinks.tabTitle")}
+                {t("extras.drinks.tabTitle", "Choisir les boissons incluses")}
+                {drinkValidationError && (
+                  <span className="ml-1 text-red-500">*</span>
+                )}
               </button>
             )}
           </div>
@@ -362,7 +378,6 @@ export const InfoSupSection = ({
         {/* Drinks Section Content */}
         {mainActiveTab === "drinks" && shouldShowDrinksSection && (
           <div>
-            {/* <<<< DISPLAY DRINK VALIDATION ERROR >>>> */}
             {drinkValidationError && (
               <div
                 id="drink-validation-error"
@@ -372,7 +387,6 @@ export const InfoSupSection = ({
                 {drinkValidationError}
               </div>
             )}
-            {/* <<<< END DISPLAY DRINK VALIDATION ERROR >>>> */}
 
             {/* Drink Offer Sub-Tabs */}
             {activeDrinkOfferInstanceList.length > 1 && (
@@ -608,5 +622,4 @@ export const InfoSupSection = ({
   );
 };
 
-// Export constants if they are defined in this file and used elsewhere
 export { ALL_DRINK_ITEMS_MAP, DRINK_OFFER_CONFIG };
