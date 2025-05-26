@@ -109,9 +109,73 @@ const SpaDetailsSection = ({ booking }) => {
   // console.log(`SpaDetailsSection booking status for ID ${booking.id}:`, bookingStatus); // For debugging
 
   const getFormattedDateTimeRange = () => {
-    // booking.spaDateTimeObj and booking.spaEndDateTimeObj should be Date objects or null
+    if (!booking) {
+      console.warn(
+        "getFormattedDateTimeRange called without a booking object."
+      );
+      return "Informations de date indisponibles";
+    }
+
+    // These should be Date objects or null, populated by your data fetching hooks
+    // (useBookingsForMonth or useBookingsData)
     const startTime = booking.spaDateTimeObj;
     const endTime = booking.spaEndDateTimeObj;
+
+    // --- DETAILED LOGGING for the specific problematic booking ---
+    // Replace "0QuPIsh53w00kiBINavp" with the actual Firestore ID of the booking
+    // if 'booking.id' in your component refers to smoobuId or something else.
+    // Assuming booking.firestoreId holds the Firestore document ID.
+    const bookingIdentifierForLog = booking.firestoreId || booking.id;
+
+    if (bookingIdentifierForLog === "0QuPIsh53w00kiBINavp") {
+      console.log(
+        `--- Debugging getFormattedDateTimeRange for Booking ID: ${bookingIdentifierForLog} ---`
+      );
+      console.log(
+        "   Raw booking.spaDateTime (from prop):",
+        JSON.stringify(booking.spaDateTime)
+      );
+      console.log(
+        "   Raw booking.spaEndDateTime (from prop):",
+        JSON.stringify(booking.spaEndDateTime)
+      );
+      console.log(
+        "   Processed startTime (booking.spaDateTimeObj):",
+        startTime
+      );
+      console.log(
+        "     Is startTime a Date instance?",
+        startTime instanceof Date
+      );
+      console.log(
+        "     Is startTime valid (date-fns isValid)?",
+        startTime ? isValid(startTime) : "N/A (startTime is null/undefined)"
+      );
+      if (startTime && isValid(startTime)) {
+        console.log("     startTime.toString():", startTime.toString());
+        console.log(
+          "     Formatted startTime for display (HH:mm):",
+          format(startTime, "HH:mm", { locale: fr })
+        );
+      }
+      console.log("   Processed endTime (booking.spaEndDateTimeObj):", endTime);
+      console.log("     Is endTime a Date instance?", endTime instanceof Date);
+      console.log(
+        "     Is endTime valid (date-fns isValid)?",
+        endTime ? isValid(endTime) : "N/A (endTime is null/undefined)"
+      );
+      if (endTime && isValid(endTime)) {
+        console.log("     endTime.toString():", endTime.toString());
+        console.log(
+          "     Formatted endTime for display (HH:mm):",
+          format(endTime, "HH:mm", { locale: fr })
+        );
+      }
+      console.log(
+        `--- End Debugging for Booking ID: ${bookingIdentifierForLog} ---`
+      );
+    }
+    // --- END DETAILED LOGGING ---
 
     if (startTime && isValid(startTime)) {
       let formattedString = format(startTime, "EEEE d MMMM yyyy", {
@@ -119,28 +183,39 @@ const SpaDetailsSection = ({ booking }) => {
       });
 
       if (endTime && isValid(endTime)) {
+        // Ensure end time is not before start time
         if (endTime.getTime() >= startTime.getTime()) {
           formattedString += ` de ${format(startTime, "HH:mm", {
+            // This should use startTime
             locale: fr,
-          })} à ${format(endTime, "HH:mm", { locale: fr })}`;
+          })} à ${format(endTime, "HH:mm", {
+            // This should use endTime
+            locale: fr,
+          })}`;
         } else {
-          // console.warn(`SpaDetailsSection (getFormattedDateTimeRange): spaEndDateTimeObj is before spaDateTimeObj for booking ID: ${booking.id || 'N/A'}`);
+          // This case should ideally not happen if data is consistent
+          console.warn(
+            `SpaDetailsSection (getFormattedDateTimeRange): spaEndDateTimeObj is before spaDateTimeObj for booking ID: ${bookingIdentifierForLog}`
+          );
           formattedString += ` à ${format(startTime, "HH:mm", {
             locale: fr,
           })} (Heure de fin invalide)`;
         }
       } else {
-        // console.warn(`SpaDetailsSection (getFormattedDateTimeRange): spaEndDateTimeObj is missing or invalid for booking ID: ${booking.id || 'N/A'}. EndTime value:`, endTime);
+        // If start time is valid but end time is missing or invalid
+        // console.warn(`SpaDetailsSection (getFormattedDateTimeRange): spaEndDateTimeObj is missing or invalid for booking ID: ${bookingIdentifierForLog}. EndTime value:`, endTime);
         formattedString += ` à ${format(startTime, "HH:mm", {
           locale: fr,
         })} (Heure de fin manquante)`;
       }
       return formattedString;
     } else {
-      // console.warn(`SpaDetailsSection (getFormattedDateTimeRange): spaDateTimeObj is missing or invalid for booking ID: ${booking.id || 'N/A'}. StartTime value:`, startTime);
+      // If start time itself is missing or invalid
+      // console.warn(`SpaDetailsSection (getFormattedDateTimeRange): spaDateTimeObj is missing or invalid for booking ID: ${bookingIdentifierForLog}. StartTime value:`, startTime);
       return "Date/Heure programmée manquante ou invalide";
     }
   };
+
 
   // We only need the formatted string if the status is 'scheduled' (and date is valid)
   const formattedDateTimeRange =

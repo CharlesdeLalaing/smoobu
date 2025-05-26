@@ -1,5 +1,5 @@
 import React from "react";
-import DatePicker from "react-datepicker";
+import DatePicker, {registerLocale} from "react-datepicker";
 import { Listbox } from "@headlessui/react";
 import { useTranslation } from "react-i18next";
 import "./datepicker-custom.css";
@@ -9,6 +9,40 @@ import { adultes, childrenOptions } from "../utils/constants";
 import Bird from "../../assets/GlobalImg/bird.webp";
 import { CheckCircleIcon, XCircleIcon, UserIcon } from "@heroicons/react/20/solid";
 import { isRoomAvailable } from "../hooks/roomUtils";
+
+import { fr as frLocale } from "date-fns/locale/fr";
+import { enUS as enUSLocale } from "date-fns/locale/en-US";
+import { nl as nlLocale } from "date-fns/locale/nl";
+
+
+try {
+  registerLocale("fr", frLocale);
+  registerLocale("en-US", enUSLocale);
+  registerLocale("nl", nlLocale);
+} catch (error) {
+  console.warn(
+    "react-datepicker locales might have been already registered:",
+    error
+  );
+}
+
+const getDatePickerLocaleObjectInternal = (langString) => {
+  if (typeof langString !== "string") {
+    return frLocale;
+  }
+  const baseLang = langString.split("-")[0].toLowerCase();
+  switch (baseLang) {
+    case "fr":
+      return frLocale;
+    case "en":
+      return enUSLocale;
+    case "nl":
+      return nlLocale;
+    default:
+      return frLocale;
+  }
+};
+
 
 export const SearchSection = ({
   formData,
@@ -30,6 +64,11 @@ export const SearchSection = ({
     e.preventDefault(); // Prevent form refresh
     handleCheckAvailability();
   };
+
+  const datePickerLocaleObject = React.useMemo(() => {
+    const lang = i18n.language;
+    return getDatePickerLocaleObjectInternal(lang);
+  }, [i18n.language]);
 
   const handleDateChange = (date, isStart) => {
     // Pass null as currentViewMonth since this is a different calendar widget
@@ -66,7 +105,7 @@ export const SearchSection = ({
               startDate={startDate}
               endDate={endDate}
               minDate={new Date().setHours(24, 0, 0, 0)}
-              locale="fr"
+              locale={datePickerLocaleObject}
               dateFormat="dd/MM/yyyy"
               placeholderText={t("search.selectDate")}
               className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"

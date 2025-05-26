@@ -59,6 +59,7 @@ const BookingForm = () => {
     setFormData,
     handleApplyCoupon,
     handleSpaScheduleChange,
+    handleFreeDrinkChange,
   } = useBookingForm();
 
   const { t } = useTranslation();
@@ -463,6 +464,8 @@ const BookingForm = () => {
     selectedExtras,
     handleSpaScheduleChange,
     spaValidationError,
+    selectedFreeDrinks: formData.selectedFreeDrinks, // Explicitly passing
+    handleFreeDrinkChange: handleFreeDrinkChange,
   };
 
   const contactSectionProps = {

@@ -23,7 +23,7 @@ import { fr } from "date-fns/locale";
 
 
 
-const formatDateForDisplay = (date, locale = "en-US") => {
+const formatDateForDisplay = (date, locale = "fr-BE") => {
   if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
     console.warn("formatDateForDisplay: Invalid date input", date);
     return "";
@@ -109,7 +109,7 @@ const SpaScheduler = ({
   spaSettings, // Expecting Date object or undefined (Booking departure date - should be memoized by parent)
 }) => {
   const { t, i18n } = useTranslation();
-  const currentLocale = i18n.language || "en-US";
+  const currentLocale = i18n.language || "fr-BE";
   const selectionMode = "double"; // Hardcoded as per requirement
   const arrivalDayEffectiveStartTime = spaSettings?.startTime || "09:00"; 
 

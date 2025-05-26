@@ -10,7 +10,7 @@ import {
 } from "../../Admin/BookingReport/utils/extrasUtils.js"; // Verify this path
 
 
-import { parseBookingDateTime } from "../../spa/spaCalendarUtils.jsx";
+import { parseBookingDateTime } from "../../spa/spaCalendarUtils.js";
 
 
 import { parseISO, isValid } from "date-fns"; 
@@ -49,10 +49,11 @@ export const useBookingsData = () => {
   }, [startYear, startMonth, endYear, endMonth]);
 
   const processBookingData = (bookingInput, bookingMap) => {
-    // bookingInput is an object from Firestore with its Firestore doc ID as 'id'
+    // bookingInput is an object from Firestore, enriched with its Firestore doc ID as 'id'
+    // by the calling code in fetchFromFirebase
     try {
       const {
-        id, // Firestore document ID
+        id, // This is the Firestore document ID
         smoobuId,
         smoobuReservationId,
         firstName,
@@ -67,8 +68,8 @@ export const useBookingsData = () => {
         country,
         adults,
         children,
-        arrivalDate,
-        departureDate,
+        arrivalDate, // Expected as "YYYY-MM-DD" string
+        departureDate, // Expected as "YYYY-MM-DD" string
         checkInTime,
         checkOutTime,
         nights,
@@ -95,11 +96,11 @@ export const useBookingsData = () => {
         createdAt,
         updatedAt,
         lastSyncedAt,
-        // Raw SPA fields from Firestore
+        // Raw SPA fields from Firestore (could be Timestamp objects or plain { _seconds, _nanoseconds } objects)
         spaDateTime,
         spaEndDateTime,
         spaBookingPreference,
-        spaInfo,
+        spaInfo, // This object itself might contain nested date-like structures
         spaSlots,
       } = bookingInput;
 
@@ -107,22 +108,93 @@ export const useBookingsData = () => {
       const arrivalDateObj = arrivalDate ? parseISO(arrivalDate) : null;
       const departureDateObj = departureDate ? parseISO(departureDate) : null;
 
-      const spaDateTimeObj = parseBookingDateTime(spaDateTime);
-      const spaEndDateTimeObj = parseBookingDateTime(spaEndDateTime);
+      const rawSpaDateTimeFromInput = spaDateTime;
+      const rawSpaEndDateTimeFromInput = spaEndDateTime;
+
+      const tempSpaDateTimeObj = parseBookingDateTime(rawSpaDateTimeFromInput);
+      const tempSpaEndDateTimeObj = parseBookingDateTime(
+        rawSpaEndDateTimeFromInput
+      );
+
+      const createdDateObj = parseBookingDateTime(createdAt); // Also parse createdAt if used as Date
+      const updatedDateObj = parseBookingDateTime(updatedAt || lastSyncedAt); // And updatedAt/lastSyncedAt
+
+      // --- CRITICAL LOGGING INSIDE useBookingsData.js -> processBookingData ---
+      const bookingIdentifierForLog = id; // Using Firestore doc ID from bookingInput
+
+      if (bookingIdentifierForLog === "0QuPIsh53w00kiBINavp") {
+        console.log(
+          `--- Debugging useBookingsData.js -> processBookingData for Booking ID: ${bookingIdentifierForLog} ---`
+        );
+        console.log(
+          "   Input bookingInput.spaDateTime:",
+          JSON.stringify(rawSpaDateTimeFromInput)
+        );
+        // parseBookingDateTime should log its own internal steps if those logs are still active
+        console.log(
+          "   Output of parseBookingDateTime for spaDateTime (tempSpaDateTimeObj):",
+          tempSpaDateTimeObj
+        );
+        console.log(
+          "     Is tempSpaDateTimeObj a Date instance?",
+          tempSpaDateTimeObj instanceof Date
+        );
+        console.log(
+          "     Is tempSpaDateTimeObj valid (date-fns isValid)?",
+          tempSpaDateTimeObj
+            ? isValid(tempSpaDateTimeObj)
+            : "N/A (value is null/undefined)"
+        );
+        if (tempSpaDateTimeObj && isValid(tempSpaDateTimeObj)) {
+          console.log(
+            "     tempSpaDateTimeObj.toString():",
+            tempSpaDateTimeObj.toString()
+          );
+        }
+
+        console.log(
+          "   Input bookingInput.spaEndDateTime:",
+          JSON.stringify(rawSpaEndDateTimeFromInput)
+        );
+        console.log(
+          "   Output of parseBookingDateTime for spaEndDateTime (tempSpaEndDateTimeObj):",
+          tempSpaEndDateTimeObj
+        );
+        console.log(
+          "     Is tempSpaEndDateTimeObj a Date instance?",
+          tempSpaEndDateTimeObj instanceof Date
+        );
+        console.log(
+          "     Is tempSpaEndDateTimeObj valid (date-fns isValid)?",
+          tempSpaEndDateTimeObj
+            ? isValid(tempSpaEndDateTimeObj)
+            : "N/A (value is null/undefined)"
+        );
+        if (tempSpaEndDateTimeObj && isValid(tempSpaEndDateTimeObj)) {
+          console.log(
+            "     tempSpaEndDateTimeObj.toString():",
+            tempSpaEndDateTimeObj.toString()
+          );
+        }
+        console.log(
+          `--- End Debugging useBookingsData.js for Booking ID: ${bookingIdentifierForLog} ---`
+        );
+      }
+      // --- END CRITICAL LOGGING ---
 
       let spaInfoProcessed = null;
       if (spaInfo) {
         spaInfoProcessed = {
           ...spaInfo,
+          // Ensure nested dates within spaInfo are also parsed if they exist and are used
           scheduledDateTimeObj: parseBookingDateTime(spaInfo.scheduledDateTime),
           endDateTimeObj: parseBookingDateTime(spaInfo.endDateTime),
         };
       }
-      // --- END PARSE DATES ---
 
       const formattedBooking = {
-        id: smoobuId || smoobuReservationId || id, // Smoobu ID is primary, fallback to Firestore ID
-        firestoreId: id, // Keep Firestore document ID
+        id: smoobuId || smoobuReservationId || id, // Prefer Smoobu ID for report, fallback to Firestore ID
+        firestoreId: id, // Explicitly store Firestore document ID
         guest: guestName || `${firstName || ""} ${lastName || ""}`.trim(),
         email: email || "",
         phone: phone || "",
@@ -133,7 +205,7 @@ export const useBookingsData = () => {
           }`.trim(),
         adults: Number(adults) || 0,
         children: Number(children) || 0,
-        checkIn: arrivalDate, // Keep original string for basic display if needed
+        checkIn: arrivalDate, // Keep original string for display or simple cases
         arrivalTime: checkInTime || "",
         checkOut: departureDate, // Keep original string
         departureTime: checkOutTime || "",
@@ -148,65 +220,53 @@ export const useBookingsData = () => {
         commission: Number(commission) || 0,
         extras: extras || [],
         priceDetails: priceDetails || {},
-        coupon: appliedCoupon || couponApplied || null,
-        created: createdAt || new Date().toISOString(), // Fallback for created
-        updated: updatedAt || lastSyncedAt || new Date().toISOString(), // Fallback for updated
+        coupon: appliedCoupon || couponApplied || null, // Keep the more detailed coupon object if available
+        created: createdAt, // Keep original string
+        updated: updatedAt || lastSyncedAt, // Keep original string
 
-        // --- ADD/OVERWRITE WITH PARSED DATE OBJECTS ---
+        // --- ADD/OVERWRITE WITH PARSED JAVASCRIPT DATE OBJECTS ---
         arrivalDateObj:
           arrivalDateObj && isValid(arrivalDateObj) ? arrivalDateObj : null,
         departureDateObj:
           departureDateObj && isValid(departureDateObj)
             ? departureDateObj
             : null,
-        spaDateTimeObj: spaDateTimeObj, // This is now a Date object or null
-        spaEndDateTimeObj: spaEndDateTimeObj, // This is now a Date object or null
+        spaDateTimeObj: tempSpaDateTimeObj, // Assign the parsed object
+        spaEndDateTimeObj: tempSpaEndDateTimeObj, // Assign the parsed object
+        createdDateObj:
+          createdDateObj && isValid(createdDateObj) ? createdDateObj : null,
+        updatedDateObj:
+          updatedDateObj && isValid(updatedDateObj) ? updatedDateObj : null,
 
-        // Store original raw SPA fields if needed for any reason, but prefer ...Obj
-        spaDateTime: spaDateTime, // Raw original value
-        spaEndDateTime: spaEndDateTime, // Raw original value
+        // Keep original raw SPA fields as well, in case they are needed for some other logic
+        // though the ...Obj versions should be prioritized for date operations.
+        spaDateTime: rawSpaDateTimeFromInput,
+        spaEndDateTime: rawSpaEndDateTimeFromInput,
         spaBookingPreference: spaBookingPreference,
-        spaInfo: spaInfoProcessed, // spaInfo with its own ...Obj dates
+        spaInfo: spaInfoProcessed, // Use the version of spaInfo that has its own dates parsed
         spaSlots: spaSlots,
 
         hasSpaBooking: !!(
-          spaDateTimeObj ||
+          tempSpaDateTimeObj ||
           spaBookingPreference ||
           spaInfoProcessed?.hasSpaTreatment
         ),
       };
 
-      // Optional detailed logging for the specific problematic booking
-      if (
-        formattedBooking.id === "97475833" ||
-        (spaDateTime &&
-          typeof spaDateTime === "object" &&
-          spaDateTime._seconds === 1747746000)
-      ) {
-        console.log(
-          `useBookingsData -> processBookingData (FINAL for ID: ${formattedBooking.id}):`
-        );
-        console.log(
-          `   Formatted spaDateTimeObj:`,
-          formattedBooking.spaDateTimeObj
-        );
-        console.log(
-          `   Is Formatted spaDateTimeObj valid:`,
-          formattedBooking.spaDateTimeObj
-            ? isValid(formattedBooking.spaDateTimeObj)
-            : "N/A"
-        );
-      }
-
       bookingMap.set(formattedBooking.id, formattedBooking);
-      // No explicit return needed as we are modifying bookingMap by reference
+      // No explicit return is strictly necessary as bookingMap is modified by reference.
+      // However, if other parts of the code expect it, you can return formattedBooking.
+      // For the current structure of fetchFromFirebase, modifying bookingMap is sufficient.
     } catch (error) {
       console.error(
-        "Error processing booking data in useBookingsData:",
+        "Error processing booking data in useBookingsData (booking ID: " +
+          (bookingInput?.id || "N/A") +
+          "):",
         error,
         bookingInput
       );
-      // Optionally, you might want to skip adding this booking to the map or add a flag
+      // Decide how to handle: skip this booking, add it with an error flag, etc.
+      // For now, it just logs and this booking won't be added to the map if an error occurs before map.set.
     }
   };
 
