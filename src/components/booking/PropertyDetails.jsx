@@ -232,7 +232,7 @@ const RoomCard = ({ room, isAvailable }) => {
           : ""
       } ${
         formData.apartmentId === room.id && showOnlySelected
-          ? "h-fit sm:h-[calc(100vh-200px)] overflow-hidden "
+          ? "h-fit sm:h-[calc(100vh-200px)] overflow-y-auto "
           : "h-fit "
       }`}
     >

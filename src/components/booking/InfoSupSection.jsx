@@ -4,12 +4,10 @@ import { useTranslation } from "react-i18next";
 import LongBird from "../../assets/GlobalImg/long_bird.webp"; // Adjust path as needed
 import SpaScheduler from "../spa/SpaScheduler"; // Adjust path as needed
 import { useSpaSettings } from "../spa/useSpaCalendarData"; // Adjust path as needed
-import { extraCategories } from "../extraCategories"; // Adjust path as needed
+import { extraCategories } from "../extraCategories"; // Adjust path as needed - used by ALL_DRINK_ITEMS_MAP
 import FreeDrinksSelection from "./FreeDrinksSelection"; // Adjust path as needed
 
-// Define DRINK_OFFER_CONFIG and ALL_DRINK_ITEMS_MAP here or import them.
-// For this example, defining them here. Ensure extraCategories is fully defined if it's in the same scope.
-
+// Ensure extraCategories is fully defined if DRINK_OFFER_CONFIG is in the same scope and uses it.
 const ALL_DRINK_ITEMS_MAP = extraCategories.boissons.items.reduce(
   (acc, item) => {
     acc[item.id] = item;
@@ -20,7 +18,7 @@ const ALL_DRINK_ITEMS_MAP = extraCategories.boissons.items.reduce(
 
 const DRINK_OFFER_CONFIG = {
   WINE_OFFER_1: {
-    key: "WINE_OFFER_1",
+    key: "WINE_OFFER_1", // This key is used to link from an instance back to this config
     titleKey: "extras.drinks.wineOfferTitle",
     defaultTitle: "Choix de Vin Inclus (1 bouteille)",
     triggeringExtras: [
@@ -44,13 +42,13 @@ const DRINK_OFFER_CONFIG = {
         defaultName: "Terre Charlot (blanc)",
       },
     ],
-    maxSelection: 1,
+    maxSelection: 1, // Max wine bottles PER ACTIVATION of this offer by a triggeringExtra
     type: "wine_choice",
   },
   SOFTS_BEERS_OFFER_1: {
     key: "SOFTS_BEERS_OFFER_1",
     titleKey: "extras.drinks.softBeerOfferTitle",
-    defaultTitle: "Choix de Boissons (2 incluses - Softs ou Bières)",
+    defaultTitle: "Choix de Boissons",
     triggeringExtras: ["formulePancheApero"],
     categories: {
       softs: extraCategories.boissons.items
@@ -60,7 +58,8 @@ const DRINK_OFFER_CONFIG = {
         .filter((item) => item.typeKey === "extras.drinkTypes.beer")
         .map((item) => item.id),
     },
-    maxTotal: 2,
+    itemsPerUnit: 2, // Each unit of a triggeringExtra grants this many items
+    itemsPerSupplementaryPerson: 1, // Each supplementary person for a triggeringExtra grants this many
     type: "soft_beer_choice",
   },
 };
@@ -79,19 +78,22 @@ const SPA_ITEM_IDS = [
 
 export const InfoSupSection = ({
   formData,
-  handleChange, // General handler for inputs like 'notice'
+  handleChange,
   appliedCoupon,
   handleApplyCoupon,
-  selectedExtras, // Map of selected paid extra IDs and quantities
+  selectedExtras,
   handleSpaScheduleChange,
   spaValidationError,
-  selectedFreeDrinks, // This is formData.selectedFreeDrinks
+  selectedFreeDrinks,
   handleFreeDrinkChange,
+  getPaidExtraName, // Expected from useBookingForm
 }) => {
   const { t } = useTranslation();
-  const [couponInput, setCouponInput] = useState(""); // Local state for the coupon input field value
-  const [localCouponError, setLocalCouponError] = useState(null); // Local state for coupon validation errors
-  const [activeTab, setActiveTab] = useState(""); // 'spa' or 'drinks'
+  const [couponInput, setCouponInput] = useState("");
+  const [localCouponError, setLocalCouponError] = useState(null);
+  const [mainActiveTab, setMainActiveTab] = useState("");
+  const [activeDrinkOfferInstanceId, setActiveDrinkOfferInstanceId] =
+    useState("");
 
   const {
     spaSettings,
@@ -104,89 +106,163 @@ export const InfoSupSection = ({
   }, [selectedExtras]);
   const shouldShowSpaSection = isSpaSelected;
 
-  const activeDrinkOffersDetails = useMemo(() => {
-    if (!selectedExtras || !DRINK_OFFER_CONFIG) return [];
-    // Filter DRINK_OFFER_CONFIG to get only offers triggered by current selectedExtras
-    return Object.values(DRINK_OFFER_CONFIG).filter((offer) =>
-      offer.triggeringExtras.some((id) => selectedExtras[id] > 0)
+  // --- Log selectedExtras and getPaidExtraName ---
+  console.log(
+    "[InfoSupSection] selectedExtras received:",
+    JSON.stringify(selectedExtras, null, 2)
+  );
+  console.log(
+    "[InfoSupSection] typeof getPaidExtraName:",
+    typeof getPaidExtraName
+  );
+  // --- End Log ---
+
+  const activeDrinkOfferInstanceList = useMemo(() => {
+    const instances = [];
+    // Add more detailed logging inside this useMemo if needed
+    console.log(
+      "[InfoSupSection useMemo] Recalculating activeDrinkOfferInstanceList. selectedExtras:",
+      selectedExtras
     );
-  }, [selectedExtras]); // Dependency: selectedExtras
 
-  const shouldShowDrinksSection = activeDrinkOffersDetails.length > 0;
+    if (!selectedExtras || !DRINK_OFFER_CONFIG || !getPaidExtraName) {
+      console.log(
+        "[InfoSupSection useMemo] Aborting instance generation: missing selectedExtras, DRINK_OFFER_CONFIG, or getPaidExtraName."
+      );
+      return instances; // Empty array
+    }
 
-  // Effect to manage active tab based on available sections
+    Object.entries(selectedExtras).forEach(([paidExtraId, quantity]) => {
+      console.log(
+        `[InfoSupSection useMemo] Checking paidExtraId: ${paidExtraId}, quantity: ${quantity}`
+      );
+      if (quantity > 0 && !paidExtraId.endsWith("-extra")) {
+        Object.values(DRINK_OFFER_CONFIG).forEach((offerConfig) => {
+          console.log(
+            `[InfoSupSection useMemo]   Checking against offerConfig.key: ${offerConfig.key}`
+          );
+          if (offerConfig.triggeringExtras.includes(paidExtraId)) {
+            console.log(
+              `[InfoSupSection useMemo]     MATCH! ${paidExtraId} triggers ${offerConfig.key}.`
+            );
+            const instance = {
+              instanceId: `${paidExtraId}-${offerConfig.key}`,
+              paidExtraId: paidExtraId,
+              paidExtraName: getPaidExtraName(paidExtraId), // Call the prop
+              offerConfigKey: offerConfig.key,
+            };
+            console.log(
+              "[InfoSupSection useMemo]       Generated instance:",
+              instance
+            );
+            instances.push(instance);
+          }
+        });
+      }
+    });
+    console.log(
+      "[InfoSupSection useMemo] Final activeDrinkOfferInstanceList:",
+      instances
+    );
+    return instances;
+  }, [selectedExtras, getPaidExtraName]); // Dependencies: selectedExtras and getPaidExtraName
+
+  const shouldShowDrinksSection = activeDrinkOfferInstanceList.length > 0;
+
+  // --- Log shouldShowDrinksSection ---
+  console.log(
+    "[InfoSupSection] shouldShowDrinksSection:",
+    shouldShowDrinksSection,
+    "Instance list length:",
+    activeDrinkOfferInstanceList.length
+  );
+
   useEffect(() => {
     if (shouldShowSpaSection) {
       if (
-        activeTab === "" ||
-        (activeTab === "drinks" && !shouldShowDrinksSection)
-      ) {
-        setActiveTab("spa");
-      }
+        mainActiveTab === "" ||
+        (mainActiveTab === "drinks" && !shouldShowDrinksSection)
+      )
+        setMainActiveTab("spa");
     } else if (shouldShowDrinksSection) {
-      if (activeTab === "" || (activeTab === "spa" && !shouldShowSpaSection)) {
-        setActiveTab("drinks");
-      }
-    } else {
-      setActiveTab(""); // No tabs to show if neither section is available
-    }
-    // If current activeTab's section becomes unavailable, switch if the other is available
+      if (
+        mainActiveTab === "" ||
+        (mainActiveTab === "spa" && !shouldShowSpaSection)
+      )
+        setMainActiveTab("drinks");
+    } else setMainActiveTab("");
+
     if (
-      activeTab === "spa" &&
+      mainActiveTab === "spa" &&
       !shouldShowSpaSection &&
       shouldShowDrinksSection
-    ) {
-      setActiveTab("drinks");
-    } else if (
-      activeTab === "drinks" &&
+    )
+      setMainActiveTab("drinks");
+    else if (
+      mainActiveTab === "drinks" &&
       !shouldShowDrinksSection &&
       shouldShowSpaSection
-    ) {
-      setActiveTab("spa");
-    } else if (
-      activeTab !== "" &&
+    )
+      setMainActiveTab("spa");
+    else if (
+      mainActiveTab !== "" &&
       !shouldShowSpaSection &&
       !shouldShowDrinksSection
-    ) {
-      // If active tab was set but both sections became unavailable
-      setActiveTab("");
+    )
+      setMainActiveTab("");
+  }, [shouldShowSpaSection, shouldShowDrinksSection, mainActiveTab]);
+
+  useEffect(() => {
+    if (mainActiveTab === "drinks" && shouldShowDrinksSection) {
+      if (activeDrinkOfferInstanceList.length > 0) {
+        const currentSubTabStillActive = activeDrinkOfferInstanceList.some(
+          (instance) => instance.instanceId === activeDrinkOfferInstanceId
+        );
+        if (!activeDrinkOfferInstanceId || !currentSubTabStillActive) {
+          setActiveDrinkOfferInstanceId(
+            activeDrinkOfferInstanceList[0].instanceId
+          );
+        }
+      } else {
+        setActiveDrinkOfferInstanceId("");
+      }
     }
-  }, [shouldShowSpaSection, shouldShowDrinksSection, activeTab]);
+  }, [
+    mainActiveTab,
+    shouldShowDrinksSection,
+    activeDrinkOfferInstanceList,
+    activeDrinkOfferInstanceId,
+  ]);
 
-  const spaMinDate = useMemo(() => {
-    return formData.arrivalDate && typeof formData.arrivalDate === "string"
-      ? new Date(formData.arrivalDate)
-      : undefined;
-  }, [formData.arrivalDate]);
+  const spaMinDate = useMemo(
+    () => (formData.arrivalDate ? new Date(formData.arrivalDate) : undefined),
+    [formData.arrivalDate]
+  );
+  const spaMaxDate = useMemo(
+    () =>
+      formData.departureDate ? new Date(formData.departureDate) : undefined,
+    [formData.departureDate]
+  );
 
-  const spaMaxDate = useMemo(() => {
-    return formData.departureDate && typeof formData.departureDate === "string"
-      ? new Date(formData.departureDate)
-      : undefined;
-  }, [formData.departureDate]);
-
-  // Handler for the "Choose Non-Alcoholic Later" checkbox
-  const handleChooseNonAlcoholicLaterChange = (offerKey, isChecked) => {
-    handleFreeDrinkChange(offerKey, {
+  const handleChooseNonAlcoholicLaterChange = (instanceId, isChecked) => {
+    // Takes instanceId now
+    handleFreeDrinkChange(instanceId, {
       type: "CHOOSE_NON_ALCOHOLIC_LATER",
       value: isChecked,
     });
   };
 
   const onApplyCouponClick = async () => {
-    if (appliedCoupon) return; // Already applied
+    if (appliedCoupon) return;
     if (!couponInput) {
       setLocalCouponError(t("booking.coupon.errors.enterCode"));
       return;
     }
-    setLocalCouponError(null); // Clear previous error
-
+    setLocalCouponError(null);
     try {
       if (handleApplyCoupon) {
-        // Ensure the prop is passed from useBookingForm
-        const result = await handleApplyCoupon(couponInput); // Call the main handler
+        const result = await handleApplyCoupon(couponInput);
         if (result?.error) {
-          // Map error codes to translated messages
           switch (result.error) {
             case "inactive":
               setLocalCouponError(t("booking.coupon.errors.inactive"));
@@ -223,72 +299,70 @@ export const InfoSupSection = ({
               );
           }
         } else {
-          setLocalCouponError(null); // Clear error on success
-          setCouponInput(""); // Clear input field on successful application
+          setLocalCouponError(null);
+          setCouponInput("");
         }
       } else {
         console.warn("handleApplyCoupon prop is missing in InfoSupSection");
-        setLocalCouponError(t("errors.generic")); // Generic error if handler is missing
+        setLocalCouponError(t("errors.generic"));
       }
     } catch (error) {
       console.error(
         "Error during coupon application call in InfoSupSection:",
         error
       );
-      setLocalCouponError(t("booking.coupon.errors.invalid")); // Fallback error
+      setLocalCouponError(t("booking.coupon.errors.invalid"));
     }
   };
 
   return (
     <div className="relative w-full mt-6 space-y-8">
-      {/* Background Bird Image */}
       <div
-        className="absolute top-0 right-0 z-0 hidden w-64 h-64 pointer-events-none md:block" // Adjusted for visibility
+        className="absolute top-0 right-0 z-0 hidden w-64 h-64 pointer-events-none md:block"
         style={{
           backgroundImage: `url(${LongBird})`,
           backgroundPosition: "bottom right",
           backgroundRepeat: "no-repeat",
-          backgroundSize: "contain", // Or "250px auto"
+          backgroundSize: "contain",
           opacity: 0.1,
         }}
         aria-hidden="true"
       />
-
       <div className="relative z-10">
-        {/* Tab Navigation */}
+        {/* Main Tab Navigation */}
         {(shouldShowSpaSection || shouldShowDrinksSection) && (
           <div className="flex flex-wrap justify-start mb-4 border-b border-gray-300">
             {shouldShowSpaSection && (
               <button
                 type="button"
-                onClick={() => setActiveTab("spa")}
-                className={`py-2 px-4 text-sm font-medium focus:outline-none ${
-                  activeTab === "spa"
+                onClick={() => setMainActiveTab("spa")}
+                className={`py-2 px-4 text-sm font-medium focus:outline-none transition-colors duration-150 ease-in-out ${
+                  mainActiveTab === "spa"
                     ? "text-[#668E73] border-b-2 border-[#668E73]"
                     : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
                 }`}
               >
-                {t("extras.spa.scheduleTitle", "Planifier votre séance SPA")}
+                {t("extras.spa.scheduleTitle")}
               </button>
             )}
             {shouldShowDrinksSection && (
               <button
                 type="button"
-                onClick={() => setActiveTab("drinks")}
-                className={`py-2 px-4 text-sm font-medium focus:outline-none ${
-                  activeTab === "drinks"
+                onClick={() => setMainActiveTab("drinks")}
+                className={`py-2 px-4 text-sm font-medium focus:outline-none transition-colors duration-150 ease-in-out ${
+                  mainActiveTab === "drinks"
                     ? "text-[#668E73] border-b-2 border-[#668E73]"
                     : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
                 }`}
               >
-                {t("extras.drinks.tabTitle", "Boissons Incluses")}
+                {t("extras.drinks.tabTitle", "Choix boissons incluses")}
               </button>
             )}
           </div>
         )}
 
         {/* SPA Section Content */}
-        {activeTab === "spa" && shouldShowSpaSection && (
+        {mainActiveTab === "spa" && shouldShowSpaSection && (
           <>
             {spaValidationError && (
               <div
@@ -331,69 +405,161 @@ export const InfoSupSection = ({
         )}
 
         {/* Drinks Section Content */}
-        {activeTab === "drinks" && shouldShowDrinksSection && (
-          <div className="space-y-8">
-            {activeDrinkOffersDetails.map((offerConfig) => {
-              const offerKey = offerConfig.key;
-              const currentOfferDrinkData = selectedFreeDrinks?.[offerKey];
-
-              let isChoosingNonAlcoholicLaterForThisOffer = false;
-              if (offerConfig.type === "wine_choice" && currentOfferDrinkData) {
-                isChoosingNonAlcoholicLaterForThisOffer =
-                  currentOfferDrinkData.chooseNonAlcoholicLater || false;
-              }
-
-              return (
-                <div
-                  key={offerKey}
-                  className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm"
-                >
-                  <FreeDrinksSelection
-                    offerKey={offerKey}
-                    currentOfferDataForDisplay={currentOfferDrinkData}
-                    onFreeDrinkChange={handleFreeDrinkChange}
-                    disabled={
-                      offerConfig.type === "wine_choice" &&
-                      isChoosingNonAlcoholicLaterForThisOffer
+        {mainActiveTab === "drinks" && shouldShowDrinksSection && (
+          <div>
+            {/* Drink Offer Sub-Tabs (Render if more than one active offer instance) */}
+            {activeDrinkOfferInstanceList.length > 1 && (
+              <div className="flex flex-wrap items-end -mb-px">
+                {activeDrinkOfferInstanceList.map((instance) => (
+                  <button
+                    key={instance.instanceId}
+                    type="button"
+                    onClick={() =>
+                      setActiveDrinkOfferInstanceId(instance.instanceId)
                     }
-                  />
-                  {offerConfig.type === "wine_choice" && (
-                    <div className="pl-1 mt-4">
-                      <label className="flex items-center text-sm text-gray-700 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={isChoosingNonAlcoholicLaterForThisOffer}
-                          onChange={(e) =>
-                            handleChooseNonAlcoholicLaterChange(
-                              offerKey,
-                              e.target.checked
-                            )
-                          }
-                          className="w-4 h-4 mr-2 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:ring-offset-1 focus:ring-offset-white"
-                        />
-                        {t(
-                          "extras.drinks.chooseNonAlcoholicLater",
-                          "Préfère une boisson non-alcoolisée (à voir avec l'hôte)"
-                        )}
-                      </label>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            {!activeDrinkOffersDetails.length && (
-              <p className="text-sm text-gray-500">
-                {t(
-                  "extras.drinks.noOffer",
-                  "Aucune offre de boisson incluse pour les options sélectionnées."
-                )}
-              </p>
+                    className={`py-2 px-3 text-xs sm:text-sm font-medium focus:outline-none rounded-t-md mr-1 border-l border-t border-r transition-colors duration-150 ease-in-out ${
+                      activeDrinkOfferInstanceId === instance.instanceId
+                        ? "bg-white text-[#668E73] border-gray-300 shadow-sm"
+                        : "bg-gray-100 text-gray-500 hover:text-gray-700 hover:bg-gray-200 border-transparent"
+                    }`}
+                    aria-pressed={
+                      activeDrinkOfferInstanceId === instance.instanceId
+                    }
+                  >
+                    {instance.paidExtraName.substring(0, 25) +
+                      (instance.paidExtraName.length > 25 ? "..." : "")}
+                  </button>
+                ))}
+              </div>
             )}
+
+            {/* Content for the Active Drink Offer Instance */}
+            <div
+              className={`${
+                activeDrinkOfferInstanceList.length > 1
+                  ? "p-4 bg-white border border-gray-300 rounded-b-md rounded-tr-md shadow-sm"
+                  : "space-y-8"
+              }`}
+            >
+              {activeDrinkOfferInstanceList
+                .filter(
+                  (instance) =>
+                    activeDrinkOfferInstanceList.length === 1 ||
+                    instance.instanceId === activeDrinkOfferInstanceId
+                )
+                .map((instance) => {
+                  const offerConfig =
+                    DRINK_OFFER_CONFIG[instance.offerConfigKey];
+                  if (!offerConfig) {
+                    console.warn(
+                      `InfoSupSection: Could not find offerConfig for key ${instance.offerConfigKey} from instance ${instance.instanceId}`
+                    );
+                    return null;
+                  }
+
+                  const currentInstanceDrinkData =
+                    selectedFreeDrinks?.[instance.instanceId];
+                  let isChoosingNonAlcoholicLater = false;
+                  let currentCalculatedMaxTotal;
+
+                  if (offerConfig.type === "wine_choice") {
+                    isChoosingNonAlcoholicLater =
+                      currentInstanceDrinkData?.chooseNonAlcoholicLater ||
+                      false;
+                    currentCalculatedMaxTotal = offerConfig.maxSelection || 1;
+                  } else if (
+                    offerConfig.type === "soft_beer_choice" &&
+                    typeof offerConfig.itemsPerUnit === "number"
+                  ) {
+                    currentCalculatedMaxTotal = 0;
+                    if (
+                      selectedExtras &&
+                      selectedExtras[instance.paidExtraId] > 0
+                    ) {
+                      currentCalculatedMaxTotal +=
+                        selectedExtras[instance.paidExtraId] *
+                        offerConfig.itemsPerUnit;
+                    }
+                    const supExtraId = `${instance.paidExtraId}-extra`;
+                    if (selectedExtras && selectedExtras[supExtraId] > 0) {
+                      const itemsPerSup =
+                        offerConfig.itemsPerSupplementaryPerson || 1;
+                      currentCalculatedMaxTotal +=
+                        selectedExtras[supExtraId] * itemsPerSup;
+                    }
+                  } else {
+                    currentCalculatedMaxTotal = 0;
+                  }
+
+                  return (
+                    <div
+                      key={instance.instanceId}
+                      className={`${
+                        activeDrinkOfferInstanceList.length > 1
+                          ? ""
+                          : "p-4 border border-gray-200 rounded-lg shadow-sm bg-white"
+                      }`}
+                    >
+                      <FreeDrinksSelection
+                        offerKey={instance.offerConfigKey}
+                        currentOfferDataForDisplay={currentInstanceDrinkData}
+                        onFreeDrinkChange={(payload) => {
+                          // <<< THIS IS THE WRAPPED HANDLER
+                          console.log(
+                            `[InfoSupSection] Calling handleFreeDrinkChange for instanceId: ${instance.instanceId}, with payload:`,
+                            payload
+                          );
+                          if (typeof handleFreeDrinkChange === "function") {
+                            handleFreeDrinkChange(instance.instanceId, payload);
+                          } else {
+                            console.error(
+                              "[InfoSupSection] Main handleFreeDrinkChange prop is NOT a function!"
+                            );
+                          }
+                        }}
+                        disabled={
+                          offerConfig.type === "wine_choice" &&
+                          isChoosingNonAlcoholicLater
+                        }
+                        dynamicMaxTotalForOffer={currentCalculatedMaxTotal}
+                      />
+                      {offerConfig.type === "wine_choice" && (
+                        <div className="pl-1 mt-4">
+                          <label className="flex items-center text-sm text-gray-700 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={isChoosingNonAlcoholicLater}
+                              onChange={(e) =>
+                                handleChooseNonAlcoholicLaterChange(
+                                  instance.instanceId,
+                                  e.target.checked
+                                )
+                              } // Use instanceId
+                              className="w-4 h-4 mr-2 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:ring-offset-1 focus:ring-offset-white"
+                            />
+                            {t(
+                              "extras.drinks.chooseNonAlcoholicLater",
+                              "Préfère une boisson non-alcoolisée (à voir avec l'hôte)"
+                            )}
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              {activeDrinkOfferInstanceList.length === 0 && (
+                <p className="p-4 text-sm text-gray-500">
+                  {t(
+                    "extras.drinks.noOffer",
+                    "Aucune offre de boisson n'est active avec les options sélectionnées."
+                  )}
+                </p>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Message if no tabs are active or available after initial load */}
-        {activeTab === "" &&
+        {mainActiveTab === "" &&
           (shouldShowSpaSection || shouldShowDrinksSection) && (
             <div className="pt-2 pb-2 mt-2 mb-2 text-sm text-gray-500">
               {t(
@@ -402,20 +568,16 @@ export const InfoSupSection = ({
               )}
             </div>
           )}
-        {activeTab === "" &&
+        {mainActiveTab === "" &&
           !shouldShowSpaSection &&
           !shouldShowDrinksSection && (
             <div className="pt-2 pb-2 mt-2 mb-2 text-sm text-gray-500">
-              {/* This space can be used for a general message if no extras needing tabs are selected */}
+              {/* Placeholder if no tabs are relevant */}
             </div>
           )}
 
-        {/* Coupon and Owner Message Sections - always potentially visible */}
         <div className="pt-6 space-y-6">
-          {/* Coupon Section */}
           <div>
-            {" "}
-            {/* This div wrapping the coupon might be from my previous suggestion, can be kept or removed if it causes issues */}
             <label
               htmlFor="couponInput"
               className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1"
@@ -423,37 +585,32 @@ export const InfoSupSection = ({
               {t("extras.infoSup.promoCode.label")}
             </label>
             <div className="flex items-start gap-4">
-              {" "}
-              {/* Original flex container */}
               <div className="flex-grow">
                 <input
                   id="couponInput"
                   type="text"
-                  value={couponInput} // Use local state couponInput
+                  value={couponInput}
                   onChange={(e) => {
                     setCouponInput(e.target.value);
-                    setLocalCouponError(null); // Clear error on typing
+                    setLocalCouponError(null);
                   }}
                   disabled={appliedCoupon !== null}
                   placeholder={t("extras.infoSup.promoCode.placeholder")}
                   className={`block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2 ${
-                    localCouponError ? "border-red-500" : "" // Use localCouponError
+                    localCouponError ? "border-red-500" : ""
                   } ${appliedCoupon ? "bg-gray-100" : ""}`}
                 />
                 <div className="h-5 mt-1">
-                  {" "}
-                  {/* Original height for error message */}
-                  {localCouponError && ( // Use localCouponError
+                  {localCouponError && (
                     <p className="text-sm text-red-500">{localCouponError}</p>
                   )}
                 </div>
               </div>
               <button
                 type="button"
-                onClick={onApplyCouponClick} // Use the renamed click handler
+                onClick={onApplyCouponClick}
                 disabled={appliedCoupon !== null}
                 className={`h-12 px-6 rounded shadow-sm text-[16px] font-medium text-white ${
-                  // Original classes
                   appliedCoupon
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-[#668E73] hover:bg-opacity-90"
@@ -462,40 +619,36 @@ export const InfoSupSection = ({
                 {t("extras.infoSup.promoCode.button")}
               </button>
             </div>
-            {appliedCoupon &&
-              !localCouponError && ( // Use localCouponError
-                <div className="mt-2">
-                  <p className="text-sm text-green-600">
-                    {t("extras.infoSup.promoCode.appliedStart")}{" "}
-                    <strong>{appliedCoupon.code}</strong>
-                    {appliedCoupon.type === "percentage" &&
-                    appliedCoupon.percentageValue
-                      ? ` (${appliedCoupon.percentageValue}%) `
-                      : appliedCoupon.type === "fixed" && appliedCoupon.discount
-                      ? ` (-${appliedCoupon.discount.toFixed(2)}${t(
-                          "currencySymbol",
-                          "€"
-                        )}) `
-                      : " "}
-                    {t("extras.infoSup.promoCode.appliedEnd")}
-                  </p>
-                </div>
-              )}
+            {appliedCoupon && !localCouponError && (
+              <div className="mt-2">
+                <p className="text-sm text-green-600">
+                  {t("extras.infoSup.promoCode.appliedStart")}{" "}
+                  <strong>{appliedCoupon.code}</strong>
+                  {appliedCoupon.type === "percentage" &&
+                  appliedCoupon.percentageValue
+                    ? ` (${appliedCoupon.percentageValue}%) `
+                    : appliedCoupon.type === "fixed" && appliedCoupon.discount
+                    ? ` (-${appliedCoupon.discount.toFixed(2)}${t(
+                        "currencySymbol",
+                        "€"
+                      )}) `
+                    : " "}
+                  {t("extras.infoSup.promoCode.appliedEnd")}
+                </p>
+              </div>
+            )}
           </div>
-          {/* End of Coupon Section */}
-
-          {/* Owner Message Section */}
           <div>
             <label className="block text-[14px] md:text-[16px] font-medium text-[#9a9a9a] mb-1">
               {t("extras.infoSup.ownerMessage.label")}
             </label>
             <textarea
-              name="notice" // Make sure this name matches a key in formData if using general handleChange
+              name="notice"
               value={formData.notice}
-              onChange={handleChange} // General handleChange from useBookingForm
+              onChange={handleChange}
               rows="3"
               placeholder={t("extras.infoSup.ownerMessage.placeholder")}
-              className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] ... "
+              className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white p-2"
             />
           </div>
         </div>
@@ -504,6 +657,6 @@ export const InfoSupSection = ({
   );
 };
 
-// Export DRINK_OFFER_CONFIG and ALL_DRINK_ITEMS_MAP if they are defined in this file
-// and needed by useBookingForm.js or other components.
+// It's good practice to export these here if they are defined here and used by other modules like useBookingForm.
+// If they are in a central constants.js, then components would import from there.
 export { ALL_DRINK_ITEMS_MAP, DRINK_OFFER_CONFIG };

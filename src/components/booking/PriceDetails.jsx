@@ -4,9 +4,24 @@ import { useTranslation } from "react-i18next";
 import { extraCategories } from "../extraCategories"; // Adjust path as needed
 
 // Import ALL_DRINK_ITEMS_MAP and DRINK_OFFER_CONFIG.
-// This path assumes they are exported from InfoSupSection.js or a shared constants file
-// accessible from this location.
 import { ALL_DRINK_ITEMS_MAP, DRINK_OFFER_CONFIG } from "./InfoSupSection"; // Adjust path if necessary
+
+// Helper to get paid extra name (used for prefixing free drink entitlements)
+// This assumes paid extra items in extraCategories have their 'name' property as the translation key.
+const getPaidExtraDisplayName = (paidExtraId, tFunction) => {
+  if (!extraCategories) return paidExtraId;
+  for (const categoryKey in extraCategories) {
+    const category = extraCategories[categoryKey];
+    if (category && category.items) {
+      const item = category.items.find((i) => i.id === paidExtraId);
+      if (item) {
+        // Assumes item.name is the translation key for the paid extra's display name
+        return item.name ? tFunction(item.name, paidExtraId) : paidExtraId;
+      }
+    }
+  }
+  return paidExtraId;
+};
 
 export const PriceDetails = ({
   priceDetails, // Price details from Smoobu/availability check
@@ -33,49 +48,46 @@ export const PriceDetails = ({
     (parseInt(formData?.adults) || 0) + (parseInt(formData?.children) || 0);
   const extraGuests = Math.max(
     0,
-    totalGuests - (priceDetails.settings.startingAtGuest || 2) // Default to 2 if not set
+    totalGuests - (priceDetails.settings.startingAtGuest || 2)
   );
   const totalGuestFees =
-    extraGuests * (priceDetails.settings.extraGuestsPerNight || 0); // Default to 0 if not set
+    extraGuests * (priceDetails.settings.extraGuestsPerNight || 0);
 
-  // --- Calculate Selected PAID Extras Details ---
   const selectedPaidExtrasDetails = Object.entries(selectedExtras || {})
-    .filter(([_, quantity]) => quantity > 0) // Only include extras with quantity > 0
+    .filter(([_, quantity]) => quantity > 0)
     .map(([extraId, quantity]) => {
       const isExtraPerson = extraId.endsWith("-extra");
       const baseExtraId = isExtraPerson
         ? extraId.replace("-extra", "")
         : extraId;
-
-      const extra = Object.values(extraCategories)
-        .flatMap((category) => category.items)
-        .find((item) => item.id === baseExtraId);
-
-      if (!extra) return null;
-
+      const extraItem = Object.values(extraCategories)
+        .flatMap((cat) => cat.items)
+        .find((item) => item.id === baseExtraId); // Renamed to extraItem
+      if (!extraItem) return null;
+      // Assume extraItem.name is the translation key for paid extras
+      const extraDisplayName = extraItem.name
+        ? t(extraItem.name, baseExtraId)
+        : baseExtraId;
       return {
-        id: extraId, // Use the original extraId for a unique key for React's map
+        id: extraId,
         name: isExtraPerson
-          ? `${t(extra.name, extra.name)} - ${t(
-              "priceDetails.additionalPerson",
-              "Pers. suppl."
-            )}`
-          : t(extra.name, extra.name),
+          ? `${extraDisplayName} - ${t("priceDetails.additionalPerson")}`
+          : extraDisplayName,
         quantity: quantity,
-        price: isExtraPerson ? extra.extraPersonPrice : extra.price,
+        price: isExtraPerson ? extraItem.extraPersonPrice : extraItem.price,
         total:
-          (isExtraPerson ? extra.extraPersonPrice : extra.price) * quantity,
+          (isExtraPerson ? extraItem.extraPersonPrice : extraItem.price) *
+          quantity,
       };
     })
-    .filter(Boolean); // Remove any null entries if an extra was not found
-
-  // Calculate total for PAID extras
+    .filter(Boolean);
   const paidExtrasTotal = selectedPaidExtrasDetails.reduce(
     (sum, extra) => sum + extra.total,
     0
   );
+  // --- End Paid Extras ---
 
-  // --- Prepare Selected FREE Drinks for Display ---
+  // --- Prepare Selected FREE Drinks for Display (with refined name resolution) ---
   const selectedFreeDrinksDetails = [];
   if (
     formData?.selectedFreeDrinks &&
@@ -85,86 +97,105 @@ export const PriceDetails = ({
     Object.keys(DRINK_OFFER_CONFIG).length > 0
   ) {
     Object.entries(formData.selectedFreeDrinks).forEach(
-      ([offerKey, offerSpecificData]) => {
-        const offerConfig = DRINK_OFFER_CONFIG[offerKey];
+      ([instanceId, instanceSpecificData]) => {
+        const parts = instanceId.split("-");
+        if (parts.length < 2) {
+          /* ... console.warn ... */ return;
+        }
+        const offerConfigKey = parts.pop();
+        const paidExtraId = parts.join("-");
+        const offerConfig = DRINK_OFFER_CONFIG[offerConfigKey];
 
-        if (!offerConfig || !offerSpecificData) return;
+        if (!offerConfig || !instanceSpecificData) {
+          /* ... console.warn ... */ return;
+        }
+
+        const grantingPaidExtraDisplayName = getPaidExtraDisplayName(
+          paidExtraId,
+          t
+        );
 
         if (offerConfig.type === "wine_choice") {
-          if (offerSpecificData.chooseNonAlcoholicLater) {
+          if (instanceSpecificData.chooseNonAlcoholicLater) {
             selectedFreeDrinksDetails.push({
-              id: `${offerKey}-nonAlcoholicLater`,
-              name: `${t(offerConfig.titleKey, offerConfig.defaultTitle)}: ${t(
+              id: `${instanceId}-later`,
+              // Display Granting Extra Name + "Chosen Later" status
+              name: `${grantingPaidExtraDisplayName}: ${t(
                 "priceDetails.nonAlcoholicChosenLater",
                 "Option non-alcoolisée (à voir avec l'hôte)"
               )}`,
               quantity: 1,
               isFree: true,
             });
-          } else if (offerSpecificData.selection) {
-            const wineId = offerSpecificData.selection;
+          } else if (instanceSpecificData.selection) {
+            const wineId = instanceSpecificData.selection;
             const drinkItem = ALL_DRINK_ITEMS_MAP[wineId];
             if (drinkItem) {
               let resolvedDrinkName;
               if (drinkItem.nameKey) {
-                // Attempt to translate using nameKey, provide drinkItem.name as a fallback if translation key not found
                 resolvedDrinkName = t(
                   drinkItem.nameKey,
-                  drinkItem.name || "Vin sélectionné"
+                  drinkItem.name || wineId
                 );
-                // If t() returns the key itself (meaning no translation found for nameKey), and drinkItem.name exists, prefer drinkItem.name
-                if (resolvedDrinkName === drinkItem.nameKey && drinkItem.name) {
+                if (
+                  resolvedDrinkName === drinkItem.nameKey &&
+                  drinkItem.name &&
+                  !drinkItem.name.includes(".")
+                )
                   resolvedDrinkName = drinkItem.name;
-                }
+                else if (resolvedDrinkName === drinkItem.nameKey)
+                  resolvedDrinkName = wineId;
+              } else if (drinkItem.name) {
+                resolvedDrinkName = t(drinkItem.name, drinkItem.name); // Handles literal names or keys
               } else {
-                // If no nameKey, use the direct name property, or a generic fallback
-                resolvedDrinkName =
-                  drinkItem.name ||
-                  t("priceDetails.selectedWine", "Vin sélectionné");
+                resolvedDrinkName = wineId;
               }
 
               selectedFreeDrinksDetails.push({
-                id: `${offerKey}-${wineId}`,
-                name: `${t(
-                  offerConfig.titleKey,
-                  offerConfig.defaultTitle
-                )}: ${resolvedDrinkName}`,
+                id: `${instanceId}-${wineId}`,
+                // === MODIFIED NAME: Granting Extra Name + Actual Wine Name ===
+                name: `${grantingPaidExtraDisplayName}: ${resolvedDrinkName}`,
                 quantity: 1,
                 isFree: true,
               });
             }
           }
         } else if (offerConfig.type === "soft_beer_choice") {
-          Object.entries(offerSpecificData).forEach(([drinkId, quantity]) => {
-            if (quantity > 0) {
-              const drinkItem = ALL_DRINK_ITEMS_MAP[drinkId];
-              if (drinkItem) {
-                let resolvedDrinkName;
-                if (drinkItem.nameKey) {
-                  resolvedDrinkName = t(
-                    drinkItem.nameKey,
-                    drinkItem.name || "Boisson sélectionnée"
-                  );
-                  if (
-                    resolvedDrinkName === drinkItem.nameKey &&
-                    drinkItem.name
-                  ) {
-                    resolvedDrinkName = drinkItem.name;
+          Object.entries(instanceSpecificData).forEach(
+            ([drinkId, quantity]) => {
+              if (quantity > 0) {
+                const drinkItem = ALL_DRINK_ITEMS_MAP[drinkId];
+                if (drinkItem) {
+                  let resolvedDrinkName;
+                  if (drinkItem.nameKey) {
+                    resolvedDrinkName = t(
+                      drinkItem.nameKey,
+                      drinkItem.name || drinkId
+                    );
+                    if (
+                      resolvedDrinkName === drinkItem.nameKey &&
+                      drinkItem.name &&
+                      !drinkItem.name.includes(".")
+                    )
+                      resolvedDrinkName = drinkItem.name;
+                    else if (resolvedDrinkName === drinkItem.nameKey)
+                      resolvedDrinkName = drinkId;
+                  } else if (drinkItem.name) {
+                    resolvedDrinkName = t(drinkItem.name, drinkItem.name);
+                  } else {
+                    resolvedDrinkName = drinkId;
                   }
-                } else {
-                  resolvedDrinkName =
-                    drinkItem.name ||
-                    t("priceDetails.selectedDrink", "Boisson sélectionnée");
+                  selectedFreeDrinksDetails.push({
+                    id: `${instanceId}-${drinkId}-${quantity}`,
+                    // === MODIFIED NAME: Granting Extra Name + Actual Soft/Beer Name ===
+                    name: `${grantingPaidExtraDisplayName}: ${resolvedDrinkName}`,
+                    quantity: quantity,
+                    isFree: true,
+                  });
                 }
-                selectedFreeDrinksDetails.push({
-                  id: `${offerKey}-${drinkId}-${quantity}`,
-                  name: `${resolvedDrinkName}`,
-                  quantity: quantity,
-                  isFree: true,
-                });
               }
             }
-          });
+          );
         }
       }
     );
@@ -247,7 +278,8 @@ export const PriceDetails = ({
                 className="flex items-center justify-between py-1 text-green-600"
               >
                 <span>
-                  {drink.name}
+                  {drink.name}{" "}
+                  {/* This name now includes the granting extra and specific drink */}
                   {drink.quantity > 1 ? ` (${drink.quantity}x)` : ""}
                 </span>
                 <span className="font-medium">

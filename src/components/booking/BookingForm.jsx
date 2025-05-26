@@ -40,6 +40,7 @@ const BookingForm = () => {
     appliedCoupon,
     selectedCategory,
     spaValidationError,
+    getPaidExtraName,
     setSelectedCategory,
     handleChange,
     handleExtraChange,
@@ -458,14 +459,15 @@ const BookingForm = () => {
 
   const infoSupSectionProps = {
     formData,
-    handleChange,
+    handleChange, // Make sure handleChange is also destructured from useBookingForm if needed
     appliedCoupon,
     handleApplyCoupon,
     selectedExtras,
     handleSpaScheduleChange,
     spaValidationError,
-    selectedFreeDrinks: formData.selectedFreeDrinks, // Explicitly passing
-    handleFreeDrinkChange: handleFreeDrinkChange,
+    selectedFreeDrinks: formData.selectedFreeDrinks, // Explicitly pass this
+    handleFreeDrinkChange, // Pass this handler
+    getPaidExtraName: getPaidExtraName,
   };
 
   const contactSectionProps = {

@@ -1,47 +1,63 @@
 // src/components/hooks/useBookingForm.js
-
 import { useState, useCallback, useEffect } from "react";
-import { api } from "../utils/api";
+import { api } from "../utils/api"; // Ensure this path is correct
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../../firebase"; // Adjust the import path as needed
-import { extraCategories } from "../extraCategories";
+import { db } from "../../firebase"; // Ensure this path is correct
+import { extraCategories } from "../extraCategories"; // Ensure this path is correct
 import { useNavigate } from "react-router-dom";
-// roomsData import was commented out in your provided code, keeping it that way.
-// import { roomsData } from "../hooks/roomsData";
 import { useTranslation } from "react-i18next";
 
-// Assuming DRINK_OFFER_CONFIG and ALL_DRINK_ITEMS_MAP are exported from InfoSupSection.js
-// Adjust this path if they are in a different shared constants file.
-// e.g., if InfoSupSection.js is in src/components/booking/InfoSupSection.js
-// and useBookingForm.js is in src/components/hooks/useBookingForm.js
-// then the relative path would be '../booking/InfoSupSection'
-import {
-  DRINK_OFFER_CONFIG,
-  ALL_DRINK_ITEMS_MAP,
-} from "../booking/InfoSupSection";
+// Assuming DRINK_OFFER_CONFIG and ALL_DRINK_ITEMS_MAP are correctly exported
+// from InfoSupSection.js or a shared constants file.
+import { DRINK_OFFER_CONFIG, ALL_DRINK_ITEMS_MAP } from "../booking/InfoSupSection"; // Adjust path
 
-// Define constants outside the hook if they don't depend on props/state
 const SPA_ITEM_IDS = [
-  "formuleSpa",
-  "formuleSpaBottle",
-  "packEssentiel",
-  "packDetenteGourmet",
-  "packRomantiqueGourmet",
-  "packRacletteDetente",
-  "packRacletteRomantique",
-  "packBbqDetente",
-  "packBbqRomantique",
+  "formuleSpa", "formuleSpaBottle", "packEssentiel", "packDetenteGourmet",
+  "packRomantiqueGourmet", "packRacletteDetente", "packRacletteRomantique",
+  "packBbqDetente", "packBbqRomantique",
 ];
 
-// Start the hook definition
+// Helper for extra name - defined outside the hook
+const getPaidExtraNameFromCategories = (paidExtraId, tFunction) => {
+  // console.log(`[getPaidExtraName] Called for paidExtraId: "${paidExtraId}"`);
+  if (!extraCategories) {
+    console.warn("[getPaidExtraName] extraCategories not available.");
+    return paidExtraId; // Fallback to ID
+  }
+
+  for (const categoryKey in extraCategories) {
+    const category = extraCategories[categoryKey];
+    if (category && category.items) {
+      const item = category.items.find((i) => i.id === paidExtraId);
+      if (item) {
+        // console.log(`[getPaidExtraName] Found item for "${paidExtraId}":`, item);
+        if (item.name) {
+          // Check if item.name (the translation key) exists
+          // Directly try to translate item.name.
+          // tFunction will return item.name itself if the key is not found in translations.
+          const translatedName = tFunction(item.name, paidExtraId); // Provide paidExtraId as fallback for t()
+          // console.log(`[getPaidExtraName] Translating item.name (as key) "${item.name}". Result: "${translatedName}"`);
+          return translatedName;
+        }
+        // console.log(`[getPaidExtraName] No item.name found for "${paidExtraId}", falling back to ID.`);
+        return paidExtraId; // Fallback if item.name is missing
+      }
+    }
+  }
+  // console.log(`[getPaidExtraName] Item with ID "${paidExtraId}" not found in extraCategories.`);
+  return paidExtraId; // Fallback if item not found
+};
+
+
 export const useBookingForm = () => {
-  // --- State Definitions ---
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+
+  // --- State Definitions ---
   const [formData, setFormData] = useState({
     arrivalDate: "",
     departureDate: "",
-    channelId: 2323525, // Example Channel ID
+    channelId: 2323525,
     apartmentId: "",
     arrivalTime: "",
     departureTime: "",
@@ -52,118 +68,145 @@ export const useBookingForm = () => {
     notice: "",
     adults: 1,
     children: 0,
-    price: "", // This will be dynamically calculated
-    priceStatus: 1, // Example status
-    deposit: 0, // Example deposit
-    depositStatus: 1, // Example status
+    price: "",
+    priceStatus: 1,
+    deposit: 0,
+    depositStatus: 1,
     language: i18n.language,
     street: "",
     postalCode: "",
     location: "",
     country: "",
     spaDateTime: null,
-    spaBookingPreference: null, // 'later' or 'scheduled'
-    // spaEndDateTime and spaSlots are handled by handleSpaScheduleChange if SpaScheduler provides them
+    spaBookingPreference: null,
+    spaEndDateTime: null, // Ensure this is handled if SpaScheduler provides it
+    spaSlots: null,      // Ensure this is handled if SpaScheduler provides it
     conditions: false,
-    selectedFreeDrinks: {}, // For storing selected free drinks
+    selectedFreeDrinks: {}, // Keyed by instanceId: "paidExtraId-offerConfigKey"
   });
   const [currentStep, setCurrentStep] = useState(1);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [isAvailable, setIsAvailable] = useState(false); // Availability from Smoobu
+  const [isAvailable, setIsAvailable] = useState(false);
   const [showPriceDetails, setShowPriceDetails] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [showPayment, setShowPayment] = useState(false);
   const [dateError, setDateError] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("packs"); // For extras section
-  const [priceDetails, setPriceDetails] = useState(null); // From Smoobu getPrice
-  const [clientSecret, setClientSecret] = useState(""); // For Stripe
-  const [selectedExtras, setSelectedExtras] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState("packs");
+  const [priceDetails, setPriceDetails] = useState(null);
+  const [clientSecret, setClientSecret] = useState("");
+  const [selectedExtras, setSelectedExtras] = useState({}); // Separate state for paid extras
   const [spaValidationError, setSpaValidationError] = useState("");
-  const [startDate, setStartDate] = useState(null); // For date picker
-  const [endDate, setEndDate] = useState(null); // For date picker
-  const [coupon, setCoupon] = useState(""); // Input field for coupon code
-  const [appliedCoupon, setAppliedCoupon] = useState(null); // The successfully applied coupon object
-  const [couponError, setCouponError] = useState(null); // Error message for coupon input
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [coupon, setCoupon] = useState(""); // For the input field value in InfoSupSection
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState(null); // For errors related to coupon application
 
+  // --- Helper function defined using useCallback, BEFORE effects/handlers that use it ---
+  const calculateDynamicMaxForInstance = useCallback((paidExtraId, offerConfig, currentSelectedExtras) => {
+    if (!offerConfig || offerConfig.type !== 'soft_beer_choice' || !currentSelectedExtras || typeof offerConfig.itemsPerUnit !== 'number') {
+      return offerConfig?.maxSelection || 0; // For wine or other non-dynamic types
+    }
+    let dynamicMax = 0;
+    const baseQty = currentSelectedExtras[paidExtraId] || 0;
+    if (baseQty > 0) {
+      dynamicMax += baseQty * offerConfig.itemsPerUnit;
+    }
+    const supExtraId = `${paidExtraId}-extra`;
+    const supQty = currentSelectedExtras[supExtraId] || 0;
+    if (supQty > 0) {
+      const itemsPerSup = offerConfig.itemsPerSupplementaryPerson || 1; // Default if not specified
+      dynamicMax += supQty * itemsPerSup;
+    }
+    return dynamicMax;
+  }, []); // Empty dependency array: stable function identity, relies only on arguments.
+
+  // --- useEffects ---
   useEffect(() => {
-    setFormData((prevData) => {
-      if (prevData.language !== i18n.language) {
-        return { ...prevData, language: i18n.language };
-      }
-      return prevData;
-    });
+    setFormData((prevData) => (prevData.language !== i18n.language ? { ...prevData, language: i18n.language } : prevData));
   }, [i18n.language]);
 
-  // Effect to clear free drink selections if triggering extras are removed
   useEffect(() => {
-    if (!DRINK_OFFER_CONFIG || Object.keys(DRINK_OFFER_CONFIG).length === 0) {
-      // console.warn("DRINK_OFFER_CONFIG is not available or empty in useBookingForm useEffect for clearing free drinks.");
+    if (!DRINK_OFFER_CONFIG || !selectedExtras) {
+      // console.log("[useEffect selectedFreeDrinks] Skipping: No DRINK_OFFER_CONFIG or selectedExtras");
       return;
     }
+    // console.log("[useEffect selectedFreeDrinks] Running with selectedExtras:", JSON.parse(JSON.stringify(selectedExtras)));
 
-    const activeOfferKeys = Object.values(DRINK_OFFER_CONFIG)
-      .filter((offer) =>
-        offer.triggeringExtras.some((id) => selectedExtras[id] > 0)
-      )
-      .map((offer) => offer.key);
+    setFormData(prevData => {
+      const newSelectedFreeDrinksState = {};
+      const prevSelectedFreeDrinks = prevData.selectedFreeDrinks || {};
+      let hasChanged = false;
 
-    setFormData((prevData) => {
-      const currentSelectedFreeDrinks = prevData.selectedFreeDrinks || {};
-      const newSelectedFreeDrinks = { ...currentSelectedFreeDrinks };
-      let changed = false;
+      Object.entries(selectedExtras).forEach(([paidExtraId, quantity]) => {
+        if (quantity > 0 && !paidExtraId.endsWith('-extra')) {
+          Object.values(DRINK_OFFER_CONFIG).forEach(offerConfig => {
+            if (offerConfig.triggeringExtras.includes(paidExtraId)) {
+              const instanceId = `${paidExtraId}-${offerConfig.key}`;
+              let currentInstanceData = prevSelectedFreeDrinks[instanceId];
 
-      Object.keys(currentSelectedFreeDrinks).forEach((offerKey) => {
-        if (!activeOfferKeys.includes(offerKey)) {
-          delete newSelectedFreeDrinks[offerKey];
-          changed = true;
+              if (!currentInstanceData) {
+                hasChanged = true;
+                if (offerConfig.type === 'wine_choice') currentInstanceData = { selection: null, chooseNonAlcoholicLater: false };
+                else if (offerConfig.type === 'soft_beer_choice') currentInstanceData = {};
+                else currentInstanceData = {};
+              }
+              newSelectedFreeDrinksState[instanceId] = JSON.parse(JSON.stringify(currentInstanceData));
+
+              if (offerConfig.type === 'soft_beer_choice') {
+                const instanceMax = calculateDynamicMaxForInstance(paidExtraId, offerConfig, selectedExtras);
+                let currentInstanceSelections = newSelectedFreeDrinksState[instanceId] || {};
+                let totalSelectedForInstance = Object.values(currentInstanceSelections).reduce((sum, qty) => sum + Number(qty), 0);
+
+                if (totalSelectedForInstance > instanceMax) {
+                  hasChanged = true;
+                  let overflow = totalSelectedForInstance - instanceMax;
+                  const itemsToAdjust = Object.entries(currentInstanceSelections).sort((a,b) => b[1] - a[1]);
+                  for (const [drinkIdToAdjust, qtyToAdjust] of itemsToAdjust) {
+                    if (overflow <= 0) break;
+                    const reduction = Math.min(qtyToAdjust, overflow);
+                    currentInstanceSelections[drinkIdToAdjust] -= reduction;
+                    overflow -= reduction;
+                    if (currentInstanceSelections[drinkIdToAdjust] <= 0) delete currentInstanceSelections[drinkIdToAdjust];
+                  }
+                  newSelectedFreeDrinksState[instanceId] = currentInstanceSelections;
+                }
+                if (instanceMax === 0 && Object.keys(currentInstanceSelections).length > 0) {
+                    newSelectedFreeDrinksState[instanceId] = {};
+                    hasChanged = true;
+                }
+              }
+            }
+          });
         }
       });
+      
+      if (JSON.stringify(prevSelectedFreeDrinks) !== JSON.stringify(newSelectedFreeDrinksState)) {
+          hasChanged = true;
+      }
 
-      return changed
-        ? { ...prevData, selectedFreeDrinks: newSelectedFreeDrinks }
-        : prevData;
+      return hasChanged ? { ...prevData, selectedFreeDrinks: newSelectedFreeDrinksState } : prevData;
     });
-  }, [selectedExtras]); // DRINK_OFFER_CONFIG is stable due to import
+  }, [selectedExtras, calculateDynamicMaxForInstance]);
 
+
+  // --- Event Handlers & Logic Functions ---
   const calculateGuestFees = (adults, children, settings) => {
     if (!settings) return 0;
     const totalGuests = (parseInt(adults) || 0) + (parseInt(children) || 0);
-    const extraGuests = Math.max(
-      0,
-      totalGuests - (settings.startingAtGuest || 2)
-    );
+    const extraGuests = Math.max(0, totalGuests - (settings.startingAtGuest || 2));
     return extraGuests * (settings.extraGuestsPerNight || 0);
   };
 
   const validateCouponPeriod = (couponData, arrival, departure) => {
-    if (!arrival || !departure) {
-      // console.warn("validateCouponPeriod: Missing arrival or departure date.");
-      return false;
-    }
-    let validityStart = null;
-    if (couponData?.validityStartDate) {
-      validityStart = couponData.validityStartDate.toDate
-        ? couponData.validityStartDate.toDate()
-        : new Date(couponData.validityStartDate);
-    }
-    let validityEnd = null;
-    if (couponData?.validityEndDate) {
-      validityEnd = couponData.validityEndDate.toDate
-        ? couponData.validityEndDate.toDate()
-        : new Date(couponData.validityEndDate);
-    }
-    if (!validityStart || !validityEnd) return true; // No period defined, considered valid
+    if (!arrival || !departure) return false;
+    let validityStart = couponData.validityStartDate?.toDate ? couponData.validityStartDate.toDate() : (couponData.validityStartDate ? new Date(couponData.validityStartDate) : null);
+    let validityEnd = couponData.validityEndDate?.toDate ? couponData.validityEndDate.toDate() : (couponData.validityEndDate ? new Date(couponData.validityEndDate) : null);
+    if (!validityStart || !validityEnd) return true;
     const bookingStart = new Date(arrival);
     const bookingEnd = new Date(departure);
-    if (
-      isNaN(validityStart.getTime()) ||
-      isNaN(validityEnd.getTime()) ||
-      isNaN(bookingStart.getTime()) ||
-      isNaN(bookingEnd.getTime())
-    ) {
-      return false;
-    }
+    if (isNaN(validityStart.getTime()) || isNaN(validityEnd.getTime()) || isNaN(bookingStart.getTime()) || isNaN(bookingEnd.getTime())) return false;
     return bookingStart <= validityEnd && bookingEnd >= validityStart;
   };
 
@@ -174,62 +217,30 @@ export const useBookingForm = () => {
     if (name === "arrivalDate" || name === "departureDate") {
       setShowPriceDetails(false);
       if (appliedCoupon) {
-        const newDates = {
-          arrivalDate: name === "arrivalDate" ? val : formData.arrivalDate,
-          departureDate:
-            name === "departureDate" ? val : formData.departureDate,
-        };
-        if (
-          newDates.arrivalDate &&
-          newDates.departureDate &&
-          !validateCouponPeriod(
-            appliedCoupon,
-            newDates.arrivalDate,
-            newDates.departureDate
-          )
-        ) {
+        const newDates = { arrivalDate: name === "arrivalDate" ? val : formData.arrivalDate, departureDate: name === "departureDate" ? val : formData.departureDate };
+        if (newDates.arrivalDate && newDates.departureDate && !validateCouponPeriod(appliedCoupon, newDates.arrivalDate, newDates.departureDate)) {
           setAppliedCoupon(null);
-          setCouponError(
-            t(
-              "booking.coupon.errors.noLongerValidForDates",
-              "Le code promo n'est plus valable pour ces dates."
-            )
-          );
+          setCouponError(t("booking.coupon.errors.noLongerValidForDates"));
         }
       }
     }
   };
 
   const handleExtraChange = (extraId, quantity) => {
-    if (quantity < 0) return; // Quantity cannot be negative
+    if (quantity < 0) return;
     setSelectedExtras((prev) => {
       const updatedExtras = { ...prev, [extraId]: quantity };
-      // If main extra quantity is zero, also zero out its -extra counterpart
       if (!extraId.endsWith("-extra") && quantity === 0) {
         const extraPersonId = `${extraId}-extra`;
-        if (prev[extraPersonId]) {
-          updatedExtras[extraPersonId] = 0;
-        }
+        if (prev[extraPersonId]) updatedExtras[extraPersonId] = 0;
       }
       return updatedExtras;
     });
-    // Clear SPA validation error if a SPA extra affecting validation is changed
     if (SPA_ITEM_IDS.includes(extraId)) {
-      const anySpaStillSelected = SPA_ITEM_IDS.some(
-        (id) =>
-          (selectedExtras[id] > 0 && id !== extraId) ||
-          (id === extraId && quantity > 0)
-      );
+      const anySpaStillSelected = SPA_ITEM_IDS.some(id => (selectedExtras[id] > 0 && id !== extraId) || (id === extraId && quantity > 0));
       if (!anySpaStillSelected) {
         setSpaValidationError("");
-        // Also reset SPA selection in formData if no SPA item is selected anymore
-        setFormData((prev) => ({
-          ...prev,
-          spaDateTime: null,
-          spaBookingPreference: null,
-          spaEndDateTime: null, // if you use this
-          spaSlots: null, // if you use this
-        }));
+        setFormData(prev => ({ ...prev, spaDateTime: null, spaBookingPreference: null, spaEndDateTime: null, spaSlots: null }));
       }
     }
   };
@@ -240,155 +251,133 @@ export const useBookingForm = () => {
       .filter(([_, quantity]) => quantity > 0)
       .forEach(([extraId, quantity]) => {
         const isExtraPerson = extraId.endsWith("-extra");
-        const baseExtraId = isExtraPerson
-          ? extraId.replace("-extra", "")
-          : extraId;
-        const extraDetails = Object.values(extraCategories)
-          .flatMap((cat) => cat.items)
-          .find((item) => item.id === baseExtraId);
+        const baseExtraId = isExtraPerson ? extraId.replace("-extra", "") : extraId;
+        const extraDetails = Object.values(extraCategories).flatMap((cat) => cat.items).find((item) => item.id === baseExtraId);
         if (!extraDetails) return;
-
         if (isExtraPerson) {
           const baseExtra = extrasMap.get(baseExtraId);
           if (baseExtra) {
             baseExtra.extraPersonQuantity = quantity;
-            baseExtra.extraPersonAmount =
-              (extraDetails.extraPersonPrice || 0) * quantity;
+            baseExtra.extraPersonAmount = (extraDetails.extraPersonPrice || 0) * quantity;
           }
         } else {
           extrasMap.set(baseExtraId, {
-            type: "addon", // Smoobu expects this type for extras
-            name: t(extraDetails.name, extraDetails.name), // Translate if name is a key, else use name directly
-            amount: (extraDetails.price || 0) * quantity,
-            quantity: quantity,
-            currencyCode: "EUR", // Or your default currency
-            // Fields for potential extra person pricing for this main extra
-            extraPersonPrice: extraDetails.extraPersonPrice || 0,
-            extraPersonQuantity: 0, // Will be updated if -extra variant exists
-            extraPersonAmount: 0, // Will be updated if -extra variant exists
+            type: "addon", name: t(extraDetails.name, extraDetails.name), amount: (extraDetails.price || 0) * quantity,
+            quantity: quantity, currencyCode: "EUR", extraPersonPrice: extraDetails.extraPersonPrice || 0,
+            extraPersonQuantity: 0, extraPersonAmount: 0,
           });
         }
       });
     return Array.from(extrasMap.values());
   };
-
-  const handleFreeDrinkChange = useCallback((offerKey, payload) => {
-    // console.log(`useBookingForm: handleFreeDrinkChange - offerKey: ${offerKey}, payload:`, payload);
-
-    // Guard clause: Ensure DRINK_OFFER_CONFIG is available.
-    // This should be imported or defined in a scope accessible to useBookingForm.
-    if (!DRINK_OFFER_CONFIG) {
-      console.error(
-        "useBookingForm: DRINK_OFFER_CONFIG is not available in handleFreeDrinkChange."
+  
+  const handleFreeDrinkChange = useCallback(
+    (instanceId, payload) => {
+      console.log(
+        `[useBookingForm] handleFreeDrinkChange ENTERED. instanceId: "${instanceId}", payload:`,
+        JSON.stringify(payload, null, 2)
       );
-      return;
-    }
 
-    setFormData((prevData) => {
-      // Clone the existing selectedFreeDrinks or initialize if it doesn't exist
-      const newSelectedFreeDrinks = { ...(prevData.selectedFreeDrinks || {}) };
-      const offerConfig = DRINK_OFFER_CONFIG[offerKey];
-
-      // Guard clause: If no config for the offer key, return previous data
-      if (!offerConfig) {
-        console.warn(
-          `useBookingForm: No configuration found for drink offer key: ${offerKey}`
+      if (!DRINK_OFFER_CONFIG || !instanceId) {
+        console.error(
+          "[useBookingForm] handleFreeDrinkChange: Missing DRINK_OFFER_CONFIG or instanceId."
         );
-        return prevData;
+        return;
+      }
+      // ... (parsing instanceId to get paidExtraId and offerConfigKey) ...
+      const parts = instanceId.split("-");
+      if (parts.length < 2) {
+        console.error("Malformed instanceId:", instanceId);
+        return;
+      }
+      const offerConfigKey = parts.pop();
+      const paidExtraId = parts.join("-");
+      const offerConfig = DRINK_OFFER_CONFIG[offerConfigKey];
+      if (!offerConfig) {
+        /* ... error handling ... */ return;
       }
 
-      // Ensure the entry for the current offerKey exists in newSelectedFreeDrinks with the correct initial structure
-      // This is important if an offer becomes active and this is the first interaction with it.
-      if (!newSelectedFreeDrinks[offerKey]) {
-        if (offerConfig.type === "wine_choice") {
-          newSelectedFreeDrinks[offerKey] = {
-            selection: null,
-            chooseNonAlcoholicLater: false,
-          };
-        } else if (offerConfig.type === "soft_beer_choice") {
-          newSelectedFreeDrinks[offerKey] = {}; // For softs/beers, it's an object of { drinkId: quantity }
-        } else {
-          // Should not happen if DRINK_OFFER_CONFIG is well-defined
-          console.warn(
-            `useBookingForm: Unknown offer type for offerKey: ${offerKey}`
+      setFormData((prevData) => {
+        console.log(
+          `[useBookingForm] setFormData for instanceId "${instanceId}". Prev selectedFreeDrinks:`,
+          JSON.stringify(prevData.selectedFreeDrinks, null, 2)
+        );
+        const newSelectedFreeDrinks = JSON.parse(
+          JSON.stringify(prevData.selectedFreeDrinks || {})
+        );
+
+        // Initialize instance if it doesn't exist (should be rare now with useEffect)
+        if (!newSelectedFreeDrinks[instanceId]) {
+          console.log(
+            `[useBookingForm] Initializing new instance data for ${instanceId}`
           );
-          return prevData;
+          if (offerConfig.type === "wine_choice")
+            newSelectedFreeDrinks[instanceId] = {
+              selection: null,
+              chooseNonAlcoholicLater: false,
+            };
+          else if (offerConfig.type === "soft_beer_choice")
+            newSelectedFreeDrinks[instanceId] = {};
         }
-      }
 
-      // Get the current state for the specific offer being changed
-      let currentOfferState = newSelectedFreeDrinks[offerKey];
+        let currentInstanceData = newSelectedFreeDrinks[instanceId]; // This should now be an object
 
-      // --- Logic for Wine Offers ---
-      if (offerConfig.type === "wine_choice") {
-        // Ensure currentOfferState for wine has the expected structure
-        let wineOfferData = {
-          selection: null,
-          chooseNonAlcoholicLater: false,
-          ...(currentOfferState || {}), // Spread existing state or default
-        };
-
-        if (payload.type === "CHOOSE_NON_ALCOHOLIC_LATER") {
-          // User toggled the "choose non-alcoholic later" checkbox
-          // Expected payload: { type: 'CHOOSE_NON_ALCOHOLIC_LATER', value: boolean }
-          wineOfferData.chooseNonAlcoholicLater = payload.value;
-          if (payload.value === true) {
-            // If they choose "later", clear any existing wine selection for this offer
-            wineOfferData.selection = null;
+        if (offerConfig.type === "wine_choice") {
+          let wineData = {
+            ...(currentInstanceData || {
+              selection: null,
+              chooseNonAlcoholicLater: false,
+            }),
+          };
+          if (payload.type === "CHOOSE_NON_ALCOHOLIC_LATER") {
+            wineData.chooseNonAlcoholicLater = payload.value;
+            if (payload.value) wineData.selection = null;
+          } else if (payload.selectedWineId !== undefined) {
+            wineData.selection = payload.selectedWineId;
+            wineData.chooseNonAlcoholicLater = false;
           }
-        } else if (payload.selectedWineId !== undefined) {
-          // User selected a specific wine (or cleared it by passing null)
-          // Expected payload: { selectedWineId: 'wine_id_string' or null }
-          wineOfferData.selection = payload.selectedWineId;
-          // If a wine is actively selected, they are not choosing "non-alcoholic later"
-          wineOfferData.chooseNonAlcoholicLater = false;
-        }
-        newSelectedFreeDrinks[offerKey] = wineOfferData;
-
-        // --- Logic for Soft/Beer Offers ---
-      } else if (offerConfig.type === "soft_beer_choice") {
-        // currentOfferState for soft/beer is an object like { drink_id: quantity }
-        let softBeerSelections = { ...(currentOfferState || {}) }; // Ensure it's an object
-
-        // Expected payload for soft/beer: { drinkId: 'drink_id_string', newQuantity: number }
-        const { drinkId, newQuantity } = payload;
-
-        if (drinkId !== undefined && typeof newQuantity === "number") {
-          let totalSelectedForThisOffer = 0;
-          // Calculate current total quantity for this offer, excluding the item being changed
-          Object.keys(softBeerSelections).forEach((id) => {
-            if (id !== drinkId) {
-              totalSelectedForThisOffer += softBeerSelections[id];
+          newSelectedFreeDrinks[instanceId] = wineData;
+        } else if (offerConfig.type === "soft_beer_choice") {
+          let softBeerSelections = { ...(currentInstanceData || {}) };
+          const { drinkId, newQuantity } = payload;
+          if (drinkId !== undefined && typeof newQuantity === "number") {
+            const instanceMax = calculateDynamicMaxForInstance(
+              paidExtraId,
+              offerConfig,
+              selectedExtras
+            );
+            let totalSelectedForInstance = 0;
+            Object.keys(softBeerSelections).forEach((id) => {
+              if (id !== drinkId)
+                totalSelectedForInstance += Number(softBeerSelections[id]);
+            });
+            let cappedNewQuantity = newQuantity;
+            if (newQuantity > 0) {
+              if (totalSelectedForInstance + newQuantity > instanceMax) {
+                cappedNewQuantity = Math.max(
+                  0,
+                  instanceMax - totalSelectedForInstance
+                );
+              }
             }
-          });
-
-          if (newQuantity > 0) {
-            // Check against the offer's maxTotal
-            if (
-              totalSelectedForThisOffer + newQuantity <=
-              offerConfig.maxTotal
-            ) {
-              softBeerSelections[drinkId] = newQuantity;
-            } else {
-              // If exceeding max, set to the remaining allowed quantity (can be 0)
-              softBeerSelections[drinkId] = Math.max(
-                0,
-                offerConfig.maxTotal - totalSelectedForThisOffer
-              );
-            }
-          } else {
-            // If newQuantity is 0 or less, remove the drink from selections
-            delete softBeerSelections[drinkId];
+            if (cappedNewQuantity > 0)
+              softBeerSelections[drinkId] = cappedNewQuantity;
+            else delete softBeerSelections[drinkId];
           }
+          newSelectedFreeDrinks[instanceId] = softBeerSelections;
         }
-        newSelectedFreeDrinks[offerKey] = softBeerSelections;
-      }
 
-      // Return the updated formData
-      return { ...prevData, selectedFreeDrinks: newSelectedFreeDrinks };
-    });
-  }, []); // Empty dependency array because DRINK_OFFER_CONFIG is a stable import
-  // and setFormData from useState is guaranteed to be stable.
+        if (
+          JSON.stringify(prevData.selectedFreeDrinks[instanceId]) !==
+          JSON.stringify(newSelectedFreeDrinks[instanceId])
+        ) {
+          return { ...prevData, selectedFreeDrinks: newSelectedFreeDrinks };
+        }
+        return prevData;
+      });
+    },
+    [selectedExtras, calculateDynamicMaxForInstance]
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -850,5 +839,7 @@ export const useBookingForm = () => {
     setShowPriceDetails,
     setShowPayment,
     handleSpaScheduleChange,
+    getPaidExtraName: (paidExtraId) =>
+    getPaidExtraNameFromCategories(paidExtraId, t),
   };
 };
