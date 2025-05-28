@@ -3,6 +3,285 @@ import { format as formatFn, addMinutes } from "date-fns";
 import { fr, enUS, nl } from "date-fns/locale";
 
 // Helper to get date-fns locale for email
+const emailTexts = {
+  fr: {
+    subject: "Confirmation de réservation - Ferme de Basseilles",
+    greeting: "Cher/Chère {{guestName}},",
+    confirmationMessage:
+      "Merci pour votre réservation ! Voici les détails de votre séjour :",
+    stayDetails: "Détails du séjour",
+    arrival: "Arrivée",
+    departure: "Départ",
+    travelers: "Voyageurs",
+    adults: "adultes",
+    children: "enfants",
+    spaScheduledTitle: "Votre séance SPA",
+    spaScheduledFormat: "{{date}} de {{startTime}} à {{endTime}}",
+    spaScheduleLaterTitle: "Programmation de votre séance SPA",
+    spaScheduleLaterInstruction:
+      "Pour planifier votre séance SPA, veuillez nous contacter par email ou téléphone.",
+    spaContactEmail: "fermedebasseilles@gmail.com",
+    spaContactPhone: "+32 475 20 16 19",
+    spaScheduleLaterPriority:
+      "Note : Les créneaux sont attribués selon le principe du premier arrivé, premier servi.",
+    priceDetails: "Détails des prix",
+    basePrice: "Prix de base",
+    guestFees: "Frais pour {{persons}} personnes supplémentaires",
+    longStayDiscount: "Réduction long séjour ({{percentage}}%)", // Assuming you might want to show percentage
+    promoCode: "Code promo ({{code}})",
+    paidExtrasTitle: "Extras Payants",
+    freeDrinksTitle: "Boissons Offertes",
+    nonAlcoholicChoiceTitle: "Choix de Boisson Non-Alcoolisée",
+    nonAlcoholicChoiceInstruction:
+      "Pour votre offre '{{grantor}}', vous avez choisi de sélectionner une boisson non-alcoolisée ultérieurement. Veuillez nous contacter pour préciser votre choix :",
+    nonAlcoholicChoiceContact: "Contactez-nous pour votre choix",
+    total: "Total",
+    contactInfo: "Vos coordonnées",
+    phone: "Téléphone",
+    closing: "Nous avons hâte de vous accueillir !",
+    team: "L'équipe de la Ferme de Basseilles",
+    addressTitle: "Adresse de la propriété",
+    propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), Belgique",
+    viewOnMap: "Voir sur la carte",
+    included: "Inclus",
+    extrasCatalog: {
+      "extras.categories.packs": "Nos Paquets Thématiques",
+      "extras.categories.formulesRepas": "Nos Formules Repas",
+      "extras.categories.spa": "Notre Espace Bien-être",
+      "extras.categories.formulesDecouverte": "Nos Formules Découverte",
+      "extras.categories.meals": "Plats Traiteur de la Ferme de Bossimé",
+      "extras.categories.boissons": "Notre Sélection de Boissons",
+      "extras.packs.essential.name": "L'essentiel (pour 2)",
+      "extras.packs.relaxGourmet.name": "Le détente gourmet (pour 2)",
+      "extras.packs.racletteRelax.name": "La raclette en détente (pour 2)",
+      "extras.packs.romanticGourmet.name": "Le romantique gourmet (pour 2)",
+      "extras.packs.racletteRomantic.name": "La raclette romantique (pour 2)",
+      "extras.packs.bbqRelax.name": "Le barbecue détente (pour 2)",
+      "extras.packs.bbqRomantic.name": "Le romantique barbecue (pour 2)",
+      "extras.formulesDecouverte.passion.name": "Formule passion (pour 2)",
+      "extras.formulesDecouverte.birthday.name":
+        "Formule anniversaire (pour 2)",
+      "extras.spa.basic.name": "Formule SPA (2 pers)",
+      "extras.spa.withBottle.name": "Formule SPA + bouteille (2 pers)",
+      "extras.meals.meatballsLiege.name": "Boulettes de viande sauce liégeoise",
+      "extras.meals.meatballsTomato.name": "Boulette de viande sauce tomate",
+      "extras.meals.waterzooi.name": "Waterzooi de volaille",
+      "extras.meals.chiliVeg.name": "Chili végétarien",
+      "extras.meals.carrotSoup.name": "Velouté de carotte et cumin",
+      "extras.formulesRepas.breakfast.name": "Formule petit-déjeuner (2 pers)",
+      "extras.formulesRepas.gourmet.name": "Formule gourmet (2 pers)",
+      "extras.formulesRepas.raclette.name": "Formule raclette (2 pers)",
+      "extras.formulesRepas.barbecue.name": "Formule barbecue (2 pers)",
+      "extras.formulesRepas.apero.name": "Formule planche apéro (2 pers)",
+      "drinkNames.brutBioul": "Brut de Bioul",
+      "drinkNames.cortilBarco": "Cortil Barco (rouge)",
+      "drinkNames.terreCharlot": "Terre Charlot (blanc)",
+      "drinkNames.bruneCondroz": "Brune du Condroz",
+      "drinkNames.ambreeCondroz": "Ambrée du Condroz",
+      "drinkNames.tripleCondroz": "Triple du Condroz",
+      "drinkNames.blancheCondroz": "Blanche du Condroz",
+      "drinkNames.appleJuice": "Jus de pomme « Pom d'Happy »",
+      "drinkNames.ritchieLemonRasp": "Ritchie Citron/Framboise",
+      "drinkNames.ritchieOrangeVan": "Ritchie Orange/Vanille",
+      "drinkNames.ritchieCola": "Ritchie Cola",
+      "drinkNames.ritchieColaZero": "Ritchie Cola Zéro",
+      "extras.drinks.wineOfferTitle": "Choix de Vin Inclus (1 bouteille)",
+      "extras.drinks.softBeerOfferTitle": "Choix de Boissons Incluses",
+      "priceDetails.nonAlcoholicChosenLater":
+        "Option non-alcoolisée (choix ultérieur avec l'hôte)",
+      "extras.drinks.chooseNonAlcoholicLater":
+        "Préfère une boisson non-alcoolisée (à voir avec l'hôte)", // You might not need this if priceDetails.nonAlcoholicChosenLater covers it
+      "extras.additionalPerson": "Personne supplémentaire",
+      "priceDetails.promoCode.generic": "Code Promo",
+      "priceDetails.giftVoucher": "Chèque Cadeau",
+      "priceDetails.longStayDiscount": "Réduction long séjour",
+    },
+  },
+  en: {
+    subject: "Booking Confirmation - Ferme de Basseilles",
+    greeting: "Dear {{guestName}},",
+    confirmationMessage:
+      "Thank you for your booking! Here are your stay details:",
+    stayDetails: "Stay Details",
+    arrival: "Arrival",
+    departure: "Departure",
+    travelers: "Travelers",
+    adults: "adults",
+    children: "children",
+    spaScheduledTitle: "Your SPA Session",
+    spaScheduledFormat: "{{date}} from {{startTime}} to {{endTime}}",
+    spaScheduleLaterTitle: "SPA Session Scheduling",
+    spaScheduleLaterInstruction:
+      "To schedule your SPA session, please contact us by email or phone:",
+    spaContactEmail: "fermedebasseilles@gmail.com",
+    spaContactPhone: "+32 475 20 16 19",
+    spaScheduleLaterPriority:
+      "Note: Slots are assigned on a first-come, first-served basis.",
+    priceDetails: "Price Details",
+    basePrice: "Base Price",
+    guestFees: "Fee for {{persons}} extra persons",
+    longStayDiscount: "Long stay discount ({{percentage}}%)",
+    promoCode: "Promo code ({{code}})",
+    paidExtrasTitle: "Paid Extras",
+    freeDrinksTitle: "Complimentary Drinks",
+    nonAlcoholicChoiceTitle: "Non-Alcoholic Drink Choice",
+    nonAlcoholicChoiceInstruction:
+      "For your '{{grantor}}' offer, you've chosen to select a non-alcoholic beverage later. Please contact us to specify your choice:",
+    nonAlcoholicChoiceContact: "Contact us for your choice",
+    total: "Total",
+    contactInfo: "Your Contact Information",
+    phone: "Phone",
+    closing: "We look forward to welcoming you!",
+    team: "The Ferme de Basseilles Team",
+    addressTitle: "Property Address",
+    propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), Belgium",
+    viewOnMap: "View on Map",
+    included: "Included",
+    extrasCatalog: {
+      "extras.categories.packs": "Our Thematic Packs",
+      "extras.categories.formulesRepas": "Our Meal Formulas",
+      "extras.categories.spa": "Our Wellness Area",
+      "extras.categories.formulesDecouverte": "Our Discovery Formulas",
+      "extras.categories.meals": "Catered Dishes from Ferme de Bossimé",
+      "extras.categories.boissons": "Our Drink Selection",
+      "extras.packs.essential.name": "The Essential (for 2)",
+      "extras.packs.relaxGourmet.name": "Gourmet Relaxation (for 2)",
+      "extras.packs.racletteRelax.name": "Raclette Relaxation (for 2)",
+      "extras.packs.romanticGourmet.name": "Romantic Gourmet (for 2)",
+      "extras.packs.racletteRomantic.name": "Romantic Raclette (for 2)",
+      "extras.packs.bbqRelax.name": "BBQ Relaxation (for 2)",
+      "extras.packs.bbqRomantic.name": "Romantic BBQ (for 2)",
+      "extras.formulesDecouverte.passion.name": "Passion Formula (for 2)",
+      "extras.formulesDecouverte.birthday.name": "Birthday Formula (2 ppl)",
+      "extras.spa.basic.name": "SPA Formula (2 ppl)",
+      "extras.spa.withBottle.name": "SPA Formula + Bottle (2 ppl)",
+      "extras.meals.meatballsLiege.name": "Liege Style Meatballs",
+      "extras.meals.meatballsTomato.name": "Meatballs in Tomato Sauce",
+      "extras.meals.waterzooi.name": "Chicken Waterzooi",
+      "extras.meals.chiliVeg.name": "Vegetarian Chili",
+      "extras.meals.carrotSoup.name": "Carrot and Cumin Soup",
+      "extras.formulesRepas.breakfast.name": "Breakfast Formula (2 ppl)",
+      "extras.formulesRepas.gourmet.name": "Gourmet Formula (2 ppl)",
+      "extras.formulesRepas.raclette.name": "Raclette Formula (2 ppl)",
+      "extras.formulesRepas.barbecue.name": "Barbecue Formula (2 ppl)",
+      "extras.formulesRepas.apero.name": "Aperitif Platter Formula (2 ppl)",
+      "drinkNames.brutBioul": "Brut de Bioul (Sparkling)",
+      "drinkNames.cortilBarco": "Cortil Barco (Red Wine)",
+      "drinkNames.terreCharlot": "Terre Charlot (White Wine)",
+      "drinkNames.bruneCondroz": "Brune du Condroz (Beer)",
+      "drinkNames.ambreeCondroz": "Ambrée du Condroz (Beer)",
+      "drinkNames.tripleCondroz": "Triple du Condroz (Beer)",
+      "drinkNames.blancheCondroz": "Blanche du Condroz (Beer)",
+      "drinkNames.appleJuice": 'Apple Juice "Pom d\'Happy"',
+      "drinkNames.ritchieLemonRasp": "Ritchie Lemon/Raspberry",
+      "drinkNames.ritchieOrangeVan": "Ritchie Orange/Vanilla",
+      "drinkNames.ritchieCola": "Ritchie Cola",
+      "drinkNames.ritchieColaZero": "Ritchie Cola Zero",
+      "extras.drinks.wineOfferTitle": "Included Wine Choice (1 bottle)",
+      "extras.drinks.softBeerOfferTitle": "Included Drinks Choice",
+      "priceDetails.nonAlcoholicChosenLater":
+        "Non-alcoholic option (to be arranged with host)",
+      "extras.drinks.chooseNonAlcoholicLater":
+        "Prefers a non-alcoholic drink (to discuss with host)",
+      "extras.additionalPerson": "Additional Person",
+      "priceDetails.promoCode.generic": "Promo Code",
+      "priceDetails.giftVoucher": "Gift Voucher",
+      "priceDetails.longStayDiscount": "Long Stay Discount",
+    },
+  },
+  nl: {
+    subject: "Boekingsbevestiging - Ferme de Basseilles",
+    greeting: "Beste {{guestName}},",
+    confirmationMessage:
+      "Bedankt voor uw boeking! Hier zijn de details van uw verblijf:",
+    stayDetails: "Verblijfsdetails",
+    arrival: "Aankomst",
+    departure: "Vertrek",
+    travelers: "Reizigers",
+    adults: "volwassenen",
+    children: "kinderen",
+    spaScheduledTitle: "Uw SPA-sessie",
+    spaScheduledFormat: "{{date}} van {{startTime}} tot {{endTime}}",
+    spaScheduleLaterTitle: "Planning SPA-sessie",
+    spaScheduleLaterInstruction:
+      "Om uw SPA-sessie te plannen, neem contact met ons op via e-mail of telefoon:",
+    spaContactEmail: "fermedebasseilles@gmail.com",
+    spaContactPhone: "+32 475 20 16 19",
+    spaScheduleLaterPriority:
+      "Let op: Tijdsloten worden toegewezen op basis van wie het eerst komt, het eerst maalt.",
+    priceDetails: "Prijsdetails",
+    basePrice: "Basisprijs",
+    guestFees: "Kosten voor {{persons}} extra personen",
+    longStayDiscount: "Korting voor lang verblijf ({{percentage}}%)",
+    promoCode: "Promotiecode({{code}})",
+    paidExtrasTitle: "Betaalde Extra's",
+    freeDrinksTitle: "Gratis Dranken",
+    nonAlcoholicChoiceTitle: "Keuze Niet-Alcoholische Drank",
+    nonAlcoholicChoiceInstruction:
+      "Voor uw '{{grantor}}' aanbod heeft u gekozen om later een niet-alcoholische drank te selecteren. Neem contact met ons op om uw keuze door te geven:",
+    nonAlcoholicChoiceContact: "Neem contact op voor uw keuze",
+    total: "Totaal",
+    contactInfo: "Uw contactgegevens",
+    phone: "Telefoon",
+    closing: "We kijken ernaar uit u te mogen verwelkomen!",
+    team: "Het team van Ferme de Basseilles",
+    addressTitle: "Adres van de accommodatie",
+    propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), België",
+    viewOnMap: "Bekijk op kaart",
+    included: "Inbegrepen",
+    extrasCatalog: {
+      "extras.categories.packs": "Onze Thematische Pakketten",
+      "extras.categories.formulesRepas": "Onze Maaltijdformules",
+      "extras.categories.spa": "Onze Wellnessruimte",
+      "extras.categories.formulesDecouverte": "Onze Ontdekkingsformules",
+      "extras.categories.meals": "Traiteurmaaltijden van Ferme de Bossimé",
+      "extras.categories.boissons": "Onze Drankselectie",
+      "extras.packs.essential.name": "Het Essentiële (voor 2)",
+      "extras.packs.relaxGourmet.name": "Gourmet Ontspanning (voor 2)",
+      "extras.packs.racletteRelax.name": "Raclette Ontspanning (voor 2)",
+      "extras.packs.romanticGourmet.name": "Romantisch Gourmet (voor 2)",
+      "extras.packs.racletteRomantic.name": "Romantische Raclette (voor 2)",
+      "extras.packs.bbqRelax.name": "BBQ Ontspanning (voor 2)",
+      "extras.packs.bbqRomantic.name": "Romantische BBQ (voor 2)",
+      "extras.formulesDecouverte.passion.name": "Passie Formule (voor 2)",
+      "extras.formulesDecouverte.birthday.name": "Verjaardagsformule (2 pers.)",
+      "extras.spa.basic.name": "SPA Formule (2 pers.)",
+      "extras.spa.withBottle.name": "SPA Formule + fles (2 pers.)",
+      "extras.meals.meatballsLiege.name": "Luikse Gehaktballen",
+      "extras.meals.meatballsTomato.name": "Gehaktballen in Tomatensaus",
+      "extras.meals.waterzooi.name": "Kippenwaterzooi",
+      "extras.meals.chiliVeg.name": "Vegetarische Chili",
+      "extras.meals.carrotSoup.name": "Wortel- en Komijnsoep",
+      "extras.formulesRepas.breakfast.name": "Ontbijtformule (2 pers.)",
+      "extras.formulesRepas.gourmet.name": "Gourmet Formule (2 pers.)",
+      "extras.formulesRepas.raclette.name": "Raclette Formule (2 pers.)",
+      "extras.formulesRepas.barbecue.name": "Barbecue Formule (2 pers.)",
+      "extras.formulesRepas.apero.name": "Aperitiefplank Formule (2 pers.)",
+      "drinkNames.brutBioul": "Brut de Bioul (Mousserend)",
+      "drinkNames.cortilBarco": "Cortil Barco (Rode Wijn)",
+      "drinkNames.terreCharlot": "Terre Charlot (Witte Wijn)",
+      "drinkNames.bruneCondroz": "Brune du Condroz (Bier)",
+      "drinkNames.ambreeCondroz": "Ambrée du Condroz (Bier)",
+      "drinkNames.tripleCondroz": "Triple du Condroz (Bier)",
+      "drinkNames.blancheCondroz": "Blanche du Condroz (Bier)",
+      "drinkNames.appleJuice": 'Appelsap "Pom d\'Happy"',
+      "drinkNames.ritchieLemonRasp": "Ritchie Citroen/Framboos",
+      "drinkNames.ritchieOrangeVan": "Ritchie Sinaasappel/Vanille",
+      "drinkNames.ritchieCola": "Ritchie Cola",
+      "drinkNames.ritchieColaZero": "Ritchie Cola Zero",
+      "extras.drinks.wineOfferTitle": "Inbegrepen Wijnkeuze (1 fles)",
+      "extras.drinks.softBeerOfferTitle": "Inbegrepen Drankkeuze",
+      "priceDetails.nonAlcoholicChosenLater":
+        "Niet-alcoholische optie",
+      "extras.drinks.chooseNonAlcoholicLater":
+        "Verkiest een niet-alcoholische drank (te bespreken met gastheer/vrouw)",
+      "extras.additionalPerson": "Extra Persoon",
+      "priceDetails.promoCode.generic": "Promocode",
+      "priceDetails.giftVoucher": "Cadeaubon",
+      "priceDetails.longStayDiscount": "Korting Lang Verblijf",
+    },
+  },
+};
 const getEmailDateFnLocale = (lang = "fr") => {
   const baseLang = lang.split("-")[0];
   switch (baseLang) {
@@ -17,7 +296,7 @@ const getEmailDateFnLocale = (lang = "fr") => {
   }
 };
 
-// Robust date conversion for Firestore Timestamps or ISO strings
+// Robust date conversion (remains the same)
 const getJsDateForEmail = (dateValue) => {
   if (!dateValue) return null;
   try {
@@ -47,6 +326,7 @@ const getJsDateForEmail = (dateValue) => {
   }
 };
 
+// Format date for email (remains the same)
 const formatDateForEmail = (dateInput, lang = "fr") => {
   const date = getJsDateForEmail(dateInput);
   if (!date) return "N/A";
@@ -59,135 +339,20 @@ const formatDateForEmail = (dateInput, lang = "fr") => {
   }
 };
 
-// Simple Email Text Translation Store (Expand this as needed)
-// ADD new keys for free drinks and non-alcoholic choice.
-const emailTexts = {
-  fr: {
-    subject: "Confirmation de réservation - Ferme de Basseilles",
-    greeting: "Cher/Chère {{guestName}},",
-    confirmationMessage:
-      "Merci pour votre réservation ! Voici les détails de votre séjour :",
-    stayDetails: "Détails du séjour",
-    arrival: "Arrivée",
-    departure: "Départ",
-    travelers: "Voyageurs",
-    adults: "adultes",
-    children: "enfants",
-    spaScheduledTitle: "Votre séance SPA",
-    spaScheduledFormat: "{{date}} de {{startTime}} à {{endTime}}",
-    spaScheduleLaterTitle: "Programmation de votre séance SPA",
-    spaScheduleLaterInstruction:
-      "Pour planifier votre séance SPA, veuillez nous contacter par email ou téléphone.",
-    spaContactEmail: "fermedebasseilles@gmail.com",
-    spaContactPhone: "+32 475 20 16 19",
-    spaScheduleLaterPriority:
-      "Note : Les créneaux sont attribués selon le principe du premier arrivé, premier servi.",
-    priceDetails: "Détails des prix",
-    basePrice: "Prix de base",
-    guestFees: "Frais pour {{persons}} personnes supplémentaires",
-    longStayDiscount: "Réduction long séjour ({{percentage}}%)",
-    promoCode: "Code promo ({{code}})",
-    extras: "Extras Payants", // Changed from "Extras" to be specific
-    freeDrinksTitle: "Boissons Offertes", // NEW
-    nonAlcoholicChoiceTitle: "Choix de Boisson Non-Alcoolisée", // NEW
-    nonAlcoholicChoiceInstruction:
-      "Pour votre offre '{{grantor}}', vous avez choisi de sélectionner une boisson non-alcoolisée ultérieurement. Veuillez nous contacter pour préciser votre choix :", // NEW
-    nonAlcoholicChoiceContact: "Contactez-nous pour votre choix", // NEW
-    total: "Total",
-    contactInfo: "Vos coordonnées",
-    phone: "Téléphone",
-    closing: "Nous avons hâte de vous accueillir !",
-    team: "L'équipe de la Ferme de Basseilles",
-    addressTitle: "Adresse de la propriété",
-    propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), Belgique",
-    viewOnMap: "Voir sur la carte",
-    included: "Inclus", // NEW - For free drinks price column
-  },
-  en: {
-    subject: "Booking Confirmation - Ferme de Basseilles",
-    greeting: "Dear {{guestName}},",
-    confirmationMessage:
-      "Thank you for your booking! Here are your stay details:",
-    stayDetails: "Stay Details",
-    arrival: "Arrival",
-    departure: "Departure",
-    travelers: "Travelers",
-    adults: "adults",
-    children: "children",
-    spaScheduledTitle: "Your SPA Session",
-    spaScheduledFormat: "{{date}} from {{startTime}} to {{endTime}}",
-    spaScheduleLaterTitle: "SPA Session Scheduling",
-    spaScheduleLaterInstruction:
-      "To schedule your SPA session, please contact us by email or phone:",
-    spaContactEmail: "fermedebasseilles@gmail.com",
-    spaContactPhone: "+32 475 20 16 19",
-    spaScheduleLaterPriority:
-      "Note: Slots are assigned on a first-come, first-served basis.",
-    priceDetails: "Price Details",
-    basePrice: "Base Price",
-    guestFees: "Fee for {{persons}} extra persons",
-    longStayDiscount: "Long stay discount ({{percentage}}%)",
-    promoCode: "Promo code ({{code}})",
-    extras: "Paid Extras", // Changed
-    freeDrinksTitle: "Complimentary Drinks", // NEW
-    nonAlcoholicChoiceTitle: "Non-Alcoholic Drink Choice", // NEW
-    nonAlcoholicChoiceInstruction:
-      "For your '{{grantor}}' offer, you've chosen to select a non-alcoholic beverage later. Please contact us to specify your choice:", // NEW
-    nonAlcoholicChoiceContact: "Contact us for your choice", // NEW
-    total: "Total",
-    contactInfo: "Your Contact Information",
-    phone: "Phone",
-    closing: "We look forward to welcoming you!",
-    team: "The Ferme de Basseilles Team",
-    addressTitle: "Property Address",
-    propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), Belgium",
-    viewOnMap: "View on Map",
-    included: "Included", // NEW
-  },
-  nl: {
-    subject: "Boekingsbevestiging - Ferme de Basseilles",
-    greeting: "Beste {{guestName}},",
-    confirmationMessage:
-      "Bedankt voor uw boeking! Hier zijn de details van uw verblijf:",
-    stayDetails: "Verblijfsdetails",
-    arrival: "Aankomst",
-    departure: "Vertrek",
-    travelers: "Reizigers",
-    adults: "volwassenen",
-    children: "kinderen",
-    spaScheduledTitle: "Uw SPA-sessie",
-    spaScheduledFormat: "{{date}} van {{startTime}} tot {{endTime}}",
-    spaScheduleLaterTitle: "Planning SPA-sessie",
-    spaScheduleLaterInstruction:
-      "Om uw SPA-sessie te plannen, neem contact met ons op via e-mail of telefoon:",
-    spaContactEmail: "fermedebasseilles@gmail.com",
-    spaContactPhone: "+32 475 20 16 19",
-    spaScheduleLaterPriority:
-      "Let op: Tijdsloten worden toegewezen op basis van wie het eerst komt, het eerst maalt.",
-    priceDetails: "Prijsdetails",
-    basePrice: "Basisprijs",
-    guestFees: "Kosten voor {{persons}} extra personen",
-    longStayDiscount: "Korting voor lang verblijf ({{percentage}}%)",
-    promoCode: "Promotiecode({{code}})",
-    extras: "Betaalde Extra's", // Changed
-    freeDrinksTitle: "Gratis Dranken", // NEW
-    nonAlcoholicChoiceTitle: "Keuze Niet-Alcoholische Drank", // NEW
-    nonAlcoholicChoiceInstruction:
-      "Voor uw '{{grantor}}' aanbod heeft u gekozen om later een niet-alcoholische drank te selecteren. Neem contact met ons op om uw keuze door te geven:", // NEW
-    nonAlcoholicChoiceContact: "Neem contact op voor uw keuze", // NEW
-    total: "Totaal",
-    contactInfo: "Uw contactgegevens",
-    phone: "Telefoon",
-    closing: "We kijken ernaar uit u te mogen verwelkomen!",
-    team: "Het team van Ferme de Basseilles",
-    addressTitle: "Adres van de accommodatie",
-    propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), België",
-    viewOnMap: "Bekijk op kaart",
-    included: "Inbegrepen", // NEW
-  },
+// Helper function to get translated name from emailTexts.extrasCatalog (remains the same)
+const getTranslatedName = (key, lang, fallbackNameIfKeyMissing = null) => {
+  const currentLang = lang?.split("-")[0] || "fr";
+  // Assumes emailTexts is globally available in this file's scope or imported
+  const T_static = emailTexts[currentLang] || emailTexts.fr;
+  const catalog = T_static.extrasCatalog || emailTexts.fr.extrasCatalog || {};
+
+  if (key === null || typeof key === "undefined") {
+    return fallbackNameIfKeyMissing || "";
+  }
+  return catalog[key] || fallbackNameIfKeyMissing || key;
 };
 
-// You'll need your SPA_ITEM_IDS constant here or imported
+// SPA Item IDs (remains the same)
 const SPA_ITEM_IDS = [
   "formuleSpa",
   "formuleSpaBottle",
@@ -200,26 +365,17 @@ const SPA_ITEM_IDS = [
   "packBbqRomantique",
 ];
 
-const renderEmailExtraName = (extraName, lang, T_override = null) => {
-  // `extraName` is assumed to be the final display string from bookingDoc.
-  // No complex translation logic needed here if prepareBookingDocument did its job.
-  return (
-    extraName ||
-    (T_override || emailTexts[lang] || emailTexts.fr).extras ||
-    "Extra"
-  );
-};
-
 export const sendBookingConfirmation = async (bookingData) => {
   const lang = bookingData.language?.split("-")[0] || "fr";
-  const T = emailTexts[lang] || emailTexts.fr;
-  const brandColor = "#668E73"; // Your brand green
+  // Assumes emailTexts is globally available in this file's scope or imported
+  const T = emailTexts[lang] || emailTexts.fr; // T for static email phrases
+  const brandColor = "#668E73";
 
+  // --- SPA Section HTML Generation ---
   let spaSectionHtml = "";
-  // ... (existing spaSectionHtml logic - this seems fine) ...
   const hasSpaExtra = bookingData.extras?.some((extra) =>
-    SPA_ITEM_IDS.includes(extra.id || extra.smoobuId)
-  ); // Check extra.id OR extra.smoobuId if that's what you have
+    SPA_ITEM_IDS.includes(extra.id)
+  );
   const isSpaPreferenceSet =
     bookingData.spaBookingPreference &&
     bookingData.spaBookingPreference !== "none";
@@ -234,15 +390,13 @@ export const sendBookingConfirmation = async (bookingData) => {
         bookingData.spaInfo.scheduledDateTime
       );
       let spaEndJsDate = getJsDateForEmail(bookingData.spaInfo.endDateTime);
-
-      // Fallback for spaEndJsDate if not directly available but calculable
+      // Fallback logic for spaEndJsDate
       if (
         !spaEndJsDate &&
         spaStartJsDate &&
         bookingData.spaInfo?.slots?.length > 0 &&
         bookingData.priceDetailsSnapshot?.spaSettings?.slotDurationMinutes
       ) {
-        // Using priceDetailsSnapshot.spaSettings as per one of your earlier files. Adjust if spaSettings is elsewhere in bookingDoc.
         const totalDuration =
           bookingData.spaInfo.slots.length *
           bookingData.priceDetailsSnapshot.spaSettings.slotDurationMinutes;
@@ -255,7 +409,6 @@ export const sendBookingConfirmation = async (bookingData) => {
         typeof bookingData.spaSlotDuration === "number" &&
         bookingData.spaSlotDuration > 0
       ) {
-        // Fallback if spaSlotDuration is directly on bookingData
         spaEndJsDate = addMinutes(spaStartJsDate, bookingData.spaSlotDuration);
       }
 
@@ -274,11 +427,7 @@ export const sendBookingConfirmation = async (bookingData) => {
           .replace("{{date}}", `<strong>${datePart}</strong>`)
           .replace("{{startTime}}", `<strong>${startTimePart}</strong>`)
           .replace("{{endTime}}", `<strong>${endTimePart}</strong>`);
-        spaSectionHtml = `
-          <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;">
-            <h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.spaScheduledTitle}</h3>
-            <p style="margin: 0; font-size: 0.95em; color: #333;">${spaTimeText}</p>
-          </div>`;
+        spaSectionHtml = `<div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;"><h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.spaScheduledTitle}</h3><p style="margin: 0; font-size: 0.95em; color: #333;">${spaTimeText}</p></div>`;
       } else if (spaStartJsDate) {
         // Only start time available
         const emailLocale = getEmailDateFnLocale(lang);
@@ -288,37 +437,26 @@ export const sendBookingConfirmation = async (bookingData) => {
         const startTimePart = formatFn(spaStartJsDate, "HH:mm", {
           locale: emailLocale,
         });
-        spaSectionHtml = `
-          <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;">
-            <h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.spaScheduledTitle}</h3>
-            <p style="margin: 0; font-size: 0.95em; color: #333;">Date: <strong>${datePart}</strong>, Heure: <strong>${startTimePart}</strong> (Fin non spécifiée)</p>
-          </div>`;
+        spaSectionHtml = `<div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;"><h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.spaScheduledTitle}</h3><p style="margin: 0; font-size: 0.95em; color: #333;">Date: <strong>${datePart}</strong>, Heure: <strong>${startTimePart}</strong> (Fin non spécifiée)</p></div>`;
       }
     } else if (bookingData.spaBookingPreference === "later") {
-      spaSectionHtml = `
-        <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;">
-          <h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${
+      spaSectionHtml = `<div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;"><h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${
         T.spaScheduleLaterTitle
-      }</h3>
-          <p style="margin: 5px 0; font-size: 0.95em; color: #333;">${
-            T.spaScheduleLaterInstruction
-          }</p>
-          <p style="margin: 5px 0; font-size: 0.95em;">
-            <a href="mailto:${
-              T.spaContactEmail
-            }" style="color: ${brandColor}; text-decoration: none;">${
+      }</h3><p style="margin: 5px 0; font-size: 0.95em; color: #333;">${
+        T.spaScheduleLaterInstruction
+      }</p><p style="margin: 5px 0; font-size: 0.95em;"><a href="mailto:${
         T.spaContactEmail
-      }</a>
-            ${T.spaContactPhone ? ` / ${T.spaContactPhone}` : ""}
-          </p>
-          <p style="margin-top: 10px; font-size: 0.85em; color: #555;">${
-            T.spaScheduleLaterPriority
-          }</p>
-        </div>`;
+      }" style="color: ${brandColor}; text-decoration: none;">${
+        T.spaContactEmail
+      }</a>${
+        T.spaContactPhone ? ` / ${T.spaContactPhone}` : ""
+      }</p><p style="margin-top: 10px; font-size: 0.85em; color: #555;">${
+        T.spaScheduleLaterPriority
+      }</p></div>`;
     }
   }
 
-  // --- NEW: Generate HTML for Free Drinks ---
+  // --- Free Drinks HTML Generation ---
   let freeDrinksHtml = "";
   if (
     bookingData.processedFreeDrinks &&
@@ -326,84 +464,96 @@ export const sendBookingConfirmation = async (bookingData) => {
   ) {
     freeDrinksHtml += `<h3 style="font-size: 1em; color: #4A5568; margin-top:15px; margin-bottom:5px;">${T.freeDrinksTitle}</h3>`;
     bookingData.processedFreeDrinks.forEach((drink) => {
-      // drink.name is already prepared by prepareBookingDocument (e.g., "Package: Drink Name")
-      freeDrinksHtml += `
-        <p class="extra-item" style="color: #228B22;">${drink.name} (x${
+      const translatedGrantorName = getTranslatedName(
+        drink.grantorNameKeyForClient,
+        lang,
+        drink.paidExtraGrantor
+      ); // fallback to paidExtraGrantor (French name from DB)
+      let translatedDrinkOrChoiceName;
+      if (drink.chooseNonAlcoholicLater) {
+        translatedDrinkOrChoiceName = getTranslatedName(
+          drink.choiceNameKeyForClient,
+          lang,
+          drink.drinkDetails
+        ); // fallback to drinkDetails (French name from DB)
+      } else {
+        translatedDrinkOrChoiceName = getTranslatedName(
+          drink.drinkNameKeyForClient,
+          lang,
+          drink.drinkDetails
+        ); // fallback to drinkDetails (French name from DB)
+      }
+      const displayDrinkName = `${translatedGrantorName}: ${translatedDrinkOrChoiceName}`;
+      freeDrinksHtml += `<p class="extra-item" style="color: #228B22;">${displayDrinkName} (x${
         drink.quantity || 1
-      })
-          <span style="float:right;">${T.included}</span>
-        </p>`;
+      }) <span style="float:right;">${T.included}</span></p>`;
     });
   }
 
-  // --- NEW: Generate HTML for Non-Alcoholic Choice Later ---
+  // --- Non-Alcoholic Choice HTML Generation ---
   let nonAlcoholicChoiceHtml = "";
   if (
     bookingData.freeDrinkInfo?.needsNonAlcoholicChoice &&
     bookingData.freeDrinkInfo.nonAlcoholicChoiceGrantors?.length > 0
   ) {
-    nonAlcoholicChoiceHtml = `
-      <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #fff9e6;">
-        <h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.nonAlcoholicChoiceTitle}</h3>`;
-
-    // Loop through grantors to display individual instructions if needed, or a general one
-    bookingData.freeDrinkInfo.nonAlcoholicChoiceGrantors.forEach((grantor) => {
+    nonAlcoholicChoiceHtml = `<div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #fff9e6;"><h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.nonAlcoholicChoiceTitle}</h3>`;
+    const translatedGrantorsForInstruction =
+      bookingData.freeDrinkInfo.nonAlcoholicChoiceGrantors.map(
+        (grantorKey) => getTranslatedName(grantorKey, lang, grantorKey) // Fallback to the key itself if translation missing
+      );
+    translatedGrantorsForInstruction.forEach((translatedGrantor) => {
       nonAlcoholicChoiceHtml += `<p style="margin: 5px 0; font-size: 0.95em; color: #333;">${T.nonAlcoholicChoiceInstruction.replace(
         "{{grantor}}",
-        `<strong>${grantor}</strong>` // This line correctly personalizes the instruction per grantor
+        `<strong>${translatedGrantor}</strong>`
       )}</p>`;
     });
-
-    // Prepare variables for the mailto link to keep it cleaner
+    // Mailto link details
     const guestNameForMailto = encodeURIComponent(
       bookingData.guestName ||
         `${bookingData.firstName} ${bookingData.lastName}`
     );
     const bookingIdForMailto = encodeURIComponent(
       bookingData.smoobuId || bookingData.id || ""
-    ); // Use Smoobu ID if available, else Firestore ID
+    );
     const arrivalDateForMailto = encodeURIComponent(
       formatDateForEmail(bookingData.arrivalDate, lang)
     );
     const departureDateForMailto = encodeURIComponent(
       formatDateForEmail(bookingData.departureDate, lang)
     );
+    const joinerWord =
+      lang === "fr" ? " et " : lang === "nl" ? " en " : " and ";
     const grantorsStringForMailto = encodeURIComponent(
-      bookingData.freeDrinkInfo.nonAlcoholicChoiceGrantors.join(" et ")
-    ); // "Package A et Package B"
+      translatedGrantorsForInstruction.join(joinerWord)
+    );
 
     const emailSubjectNonAlcoholic = encodeURIComponent(
-      // Use a generic subject or one from T if you add it
-      `Choix boisson non-alcoolisée - Réservation ${bookingIdForMailto}`
+      `Non-alcoholic choice - Booking ${bookingIdForMailto}`
     );
     const emailBodyNonAlcoholic = encodeURIComponent(
-      `Bonjour,\n\nConcernant ma réservation (Réf: ${bookingIdForMailto}) du ${arrivalDateForMailto} au ${departureDateForMailto} pour ${guestNameForMailto}.\n\n` +
-        `Pour l'offre de boisson incluse avec ${grantorsStringForMailto}, je souhaiterais une option non-alcoolisée.\n\n` +
-        `Merci de me faire savoir les options disponibles. \n\nCordialement,\n${guestNameForMailto}`
+      `Hello,\n\nRegarding my booking (Ref: ${bookingIdForMailto}) from ${arrivalDateForMailto} to ${departureDateForMailto} for ${guestNameForMailto}.\n\n` +
+        `For the included drink offer with ${grantorsStringForMailto}, I would like a non-alcoholic option.\n\n` +
+        `Please let me know the available options.\n\nRegards,\n${guestNameForMailto}`
     );
-
-    // Add the contact information line with mailto and tel links
-    nonAlcoholicChoiceHtml += `
-        <p style="margin: 10px 0 5px 0; font-size: 0.95em;">
-          ${T.nonAlcoholicChoiceContact}: <a href="mailto:${
+    nonAlcoholicChoiceHtml += `<p style="margin: 10px 0 5px 0; font-size: 0.95em;">${
+      T.nonAlcoholicChoiceContact
+    }: <a href="mailto:${
       T.spaContactEmail
     }?subject=${emailSubjectNonAlcoholic}&body=${emailBodyNonAlcoholic}" style="color: ${brandColor}; text-decoration: none;">${
       T.spaContactEmail
-    }</a>
-          ${
+    }</a>${
+      T.spaContactPhone
+        ? ` / <a href="tel:${T.spaContactPhone.replace(
+            /\s/g,
+            ""
+          )}" style="color: ${brandColor}; text-decoration: none;">${
             T.spaContactPhone
-              ? ` / <a href="tel:${T.spaContactPhone.replace(
-                  /\s/g,
-                  ""
-                )}" style="color: ${brandColor}; text-decoration: none;">${
-                  T.spaContactPhone
-                }</a>`
-              : ""
-          }
-        </p>
-      </div>`; // Close the main div for this section
+          }</a>`
+        : ""
+    }</p></div>`;
   }
 
+  // --- Price and other details for email body ---
   const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     T.propertyAddress
   )}`;
@@ -419,6 +569,7 @@ export const sendBookingConfirmation = async (bookingData) => {
     bookingData.priceBreakdown?.appliedLongStayDiscount || 0;
   const couponDiscountForEmail = bookingData.couponApplied?.discount || 0;
 
+  // --- Main Email HTML Structure ---
   try {
     const emailContent = `
       <!DOCTYPE html>
@@ -480,7 +631,6 @@ export const sendBookingConfirmation = async (bookingData) => {
             ${spaSectionHtml}
             ${nonAlcoholicChoiceHtml} 
 
-
             <div class="section price-details">
               <h2>${T.priceDetails}</h2>
               <p><strong>${T.basePrice}:</strong> ${basePriceForEmail.toFixed(
@@ -510,32 +660,38 @@ export const sendBookingConfirmation = async (bookingData) => {
               
               ${
                 bookingData.extras && bookingData.extras.length > 0
-                  ? `<h3 style="font-size: 1em; color: #4A5568; margin-top:15px; margin-bottom:5px;">${T.extras}</h3>`
+                  ? `<h3 style="font-size: 1em; color: #4A5568; margin-top:15px; margin-bottom:5px;">${T.paidExtrasTitle}</h3>`
                   : ""
               }
               ${(bookingData.extras || [])
-                .map(
-                  (extra) => `
-                <p class="extra-item">${renderEmailExtraName(
-                  extra.name,
-                  lang,
-                  T
-                )} (x${extra.quantity || 1}): ${(extra.amount || 0).toFixed(
-                    2
-                  )} EUR</p>
-                ${
-                  extra.hasExtraPerson && extra.extraPersonAmount > 0
-                    ? `<p class="extra-person-item">${renderEmailExtraName(
-                        extra.extraPersonName,
+                .map((extra) => {
+                  const translatedExtraName = getTranslatedName(
+                    extra.nameKeyForClient,
+                    lang,
+                    extra.name
+                  ); // Use French name from DB as fallback
+                  const translatedExtraPersonName = extra.extraPersonName
+                    ? getTranslatedName(
+                        "extras.additionalPerson",
                         lang,
-                        T
-                      )} (x${extra.extraPersonQuantity || 1}): ${(
-                        extra.extraPersonAmount || 0
-                      ).toFixed(2)} EUR</p>`
-                    : ""
-                }
-              `
-                )
+                        extra.extraPersonName
+                      )
+                    : ""; // Fallback to French name from DB
+                  return `
+                  <p class="extra-item">${translatedExtraName} (x${
+                    extra.quantity || 1
+                  }): ${(extra.amount || 0).toFixed(2)} EUR</p>
+                  ${
+                    extra.hasExtraPerson && extra.extraPersonAmount > 0
+                      ? `<p class="extra-person-item">${translatedExtraPersonName} (x${
+                          extra.extraPersonQuantity || 1
+                        }): ${(extra.extraPersonAmount || 0).toFixed(
+                          2
+                        )} EUR</p>`
+                      : ""
+                  }
+                `;
+                })
                 .join("")}
               
               ${freeDrinksHtml} 
@@ -603,7 +759,7 @@ export const sendBookingConfirmation = async (bookingData) => {
     `;
 
     await transporter.sendMail({
-      from: `Ferme de Basseilles <${process.env.EMAIL_USER}>`, // Ensure EMAIL_USER is set
+      from: `Ferme de Basseilles <${process.env.EMAIL_USER}>`,
       to: bookingData.email,
       subject: T.subject,
       html: emailContent,
@@ -615,7 +771,5 @@ export const sendBookingConfirmation = async (bookingData) => {
     );
   } catch (error) {
     console.error("🟥 Email: Error sending modern confirmation email:", error);
-    // Rethrow or handle as per your application's error strategy
-    // throw error; // if you want the caller (storeBookingInFirebase) to know about it
   }
 };

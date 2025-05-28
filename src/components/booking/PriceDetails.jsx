@@ -270,7 +270,7 @@ export const PriceDetails = ({
         {selectedFreeDrinksDetails.length > 0 && (
           <div className="pt-2 mt-1 border-t border-gray-200">
             <h4 className="mb-1 text-xs font-semibold tracking-wide text-green-700 uppercase">
-              {t("priceDetails.freeDrinksTitle", "Boissons Incluses")}
+              {t("freeDrinksTitle", "Boissons Incluses")}
             </h4>
             {selectedFreeDrinksDetails.map((drink) => (
               <div
