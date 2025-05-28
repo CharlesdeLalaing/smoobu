@@ -1,9 +1,7 @@
 // src/components/booking/FreeDrinksSelection.js
 import React from "react";
 import { useTranslation } from "react-i18next";
-
-// Import from where DRINK_OFFER_CONFIG and ALL_DRINK_ITEMS_MAP are truly located/exported
-import { DRINK_OFFER_CONFIG, ALL_DRINK_ITEMS_MAP } from "../extraCategories"; // Adjust path if necessary
+import { DRINK_OFFER_CONFIG, ALL_DRINK_ITEMS_MAP } from "../extraCategories"; // Adjust path
 
 const FreeQuantitySelector = ({
   drink,
@@ -13,6 +11,8 @@ const FreeQuantitySelector = ({
   overallDisabled,
 }) => {
   const { t } = useTranslation();
+  // Using item.name which is the i18n key for ALL_DRINK_ITEMS_MAP items
+  const drinkDisplayNameForLabel = t(drink.name, drink.defaultName || drink.id);
 
   const handleDecrement = () => {
     if (overallDisabled) return;
@@ -22,7 +22,6 @@ const FreeQuantitySelector = ({
   const handleIncrement = () => {
     if (overallDisabled) return;
     if (!maxReached) {
-      // Only increment if the overall offer limit hasn't been reached
       onQuantityChange(drink.id, quantity + 1);
     }
   };
@@ -34,8 +33,8 @@ const FreeQuantitySelector = ({
         onClick={handleDecrement}
         disabled={overallDisabled || quantity === 0}
         aria-label={t(
-          "quantitySelector.decrement",
-          `Decrement quantity for ${drink.name}`
+          "quantitySelector.decrement", // Assuming you have a generic key for decrement
+          `Decrement quantity for ${drinkDisplayNameForLabel}` // Fallback text
         )}
         className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-[#668E73] text-[#668E73] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#668E73] hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-[#668E73] focus:ring-opacity-50"
       >
@@ -50,10 +49,10 @@ const FreeQuantitySelector = ({
       <button
         type="button"
         onClick={handleIncrement}
-        disabled={overallDisabled || (maxReached && quantity >= 0)} // If max for offer is reached, disable increment
+        disabled={overallDisabled || (maxReached && quantity >= 0)}
         aria-label={t(
-          "quantitySelector.increment",
-          `Increment quantity for ${drink.name}`
+          "quantitySelector.increment", // Assuming you have a generic key for increment
+          `Increment quantity for ${drinkDisplayNameForLabel}` // Fallback text
         )}
         className="w-8 h-8 flex items-center bg-[#668E73] justify-center rounded-full border-2 border-[#668E73] text-white hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#668E73] focus:ring-opacity-50"
       >
@@ -64,35 +63,27 @@ const FreeQuantitySelector = ({
 };
 
 const FreeDrinksSelection = ({
-  offerKey, // This is the offerConfigKey (e.g., WINE_OFFER_1)
-  currentOfferDataForDisplay, // Data for this specific instance from formData.selectedFreeDrinks[instanceId]
-  onFreeDrinkChange, // This is the (payload) => handleFreeDrinkChange(instance.instanceId, payload) from InfoSupSection
-  disabled, // For wine: true if "choose non-alcoholic later" is checked
+  offerKey,
+  currentOfferDataForDisplay,
+  onFreeDrinkChange,
+  disabled,
   dynamicMaxTotalForOffer,
 }) => {
   const { t } = useTranslation();
   const offerConfig = DRINK_OFFER_CONFIG[offerKey];
 
-
-
   if (!offerConfig) {
-    /* ... return null ... */
+    console.warn(
+      `[FreeDrinksSelection] Offer config not found for key: ${offerKey}`
+    );
+    return null;
   }
 
   const handleWineSelection = (wineId) => {
-    if (disabled) {
-      console.log(
-        `[FreeDrinksSelection] Wine selection disabled for ${wineId}`
-      );
-      return;
-    }
+    if (disabled) return;
     const payload = { selectedWineId: wineId };
-    console.log(
-      `[FreeDrinksSelection] handleWineSelection for offerKey ${offerKey}. Payload:`,
-      payload
-    );
     if (typeof onFreeDrinkChange === "function") {
-      onFreeDrinkChange(payload); // onFreeDrinkChange here is already bound with instanceId by InfoSupSection
+      onFreeDrinkChange(payload);
     } else {
       console.error(
         "[FreeDrinksSelection] onFreeDrinkChange is NOT a function in handleWineSelection!"
@@ -102,12 +93,8 @@ const FreeDrinksSelection = ({
 
   const handleSoftBeerQuantityChange = (drinkId, newQuantity) => {
     const payload = { drinkId: drinkId, newQuantity: newQuantity };
-    console.log(
-      `[FreeDrinksSelection] handleSoftBeerQuantityChange for offerKey ${offerKey}. Payload:`,
-      payload
-    );
     if (typeof onFreeDrinkChange === "function") {
-      onFreeDrinkChange(payload); // onFreeDrinkChange here is already bound with instanceId by InfoSupSection
+      onFreeDrinkChange(payload);
     } else {
       console.error(
         "[FreeDrinksSelection] onFreeDrinkChange is NOT a function in handleSoftBeerQuantityChange!"
@@ -133,7 +120,26 @@ const FreeDrinksSelection = ({
         >
           {offerConfig.drinks.map((wineOption) => {
             const drinkDetails = ALL_DRINK_ITEMS_MAP[wineOption.id];
-            if (!drinkDetails) return null;
+            if (!drinkDetails) {
+              console.warn(
+                `[FreeDrinksSelection] Drink details not found for wine ID: ${wineOption.id}`
+              );
+              return null;
+            }
+            // wineOption.nameKey is like "drinkNames.cortilBarco"
+            // drinkDetails.name is also like "drinkNames.cortilBarco" from ALL_DRINK_ITEMS_MAP
+            // drinkDetails.defaultName is English fallback like "Cortil Barco (rouge)"
+            const wineDisplayName = t(
+              wineOption.nameKey,
+              drinkDetails.defaultName ||
+                wineOption.defaultName ||
+                wineOption.id
+            );
+            const wineImageAltText = t(
+              drinkDetails.name,
+              drinkDetails.defaultName || drinkDetails.id
+            );
+
             return (
               <label
                 key={wineOption.id}
@@ -157,7 +163,7 @@ const FreeDrinksSelection = ({
                 {drinkDetails.image && (
                   <img
                     src={drinkDetails.image}
-                    alt={t(drinkDetails.name, drinkDetails.name)}
+                    alt={wineImageAltText}
                     className="object-cover w-12 h-12 ml-3 mr-3 border border-gray-200 rounded-md"
                   />
                 )}
@@ -166,11 +172,7 @@ const FreeDrinksSelection = ({
                     disabled ? "text-gray-500" : "text-gray-800"
                   }`}
                 >
-                  {t(
-                    wineOption.nameKey,
-                    drinkDetails.name || wineOption.defaultName
-                  )}{" "}
-                  {wineOption.subText || ""}
+                  {wineDisplayName} {wineOption.subText || ""}
                 </span>
                 {!disabled && (
                   <span className="ml-auto text-sm font-semibold text-[#668E73]">
@@ -186,18 +188,16 @@ const FreeDrinksSelection = ({
   };
 
   const renderSoftBeerOffer = () => {
-    const selectionsForOffer = currentOfferDataForDisplay || {}; // This is { drinkId: quantity }
+    const selectionsForOffer = currentOfferDataForDisplay || {};
     const totalSelectedCount = Object.values(selectionsForOffer).reduce(
-      (sum, qty) => sum + qty,
+      (sum, qty) => sum + Number(qty),
       0
     );
 
-    // === USE THE DYNAMIC MAX TOTAL PASSED AS PROP ===
     const currentMaxForThisOffer =
       dynamicMaxTotalForOffer !== undefined
         ? dynamicMaxTotalForOffer
-        : offerConfig.maxTotal || 0; // Fallback if dynamicMaxTotalForOffer somehow not passed
-    // === END USE DYNAMIC MAX ===
+        : offerConfig.maxTotal || 0;
 
     const isOverallMaxReached = totalSelectedCount >= currentMaxForThisOffer;
 
@@ -205,26 +205,24 @@ const FreeDrinksSelection = ({
       <div>
         <h3 className="mb-2 font-semibold text-gray-700 text-md">
           {t(offerConfig.titleKey, offerConfig.defaultTitle)}
-          {/* Display the dynamic "up to X items" based on currentMaxForThisOffer */}
+          {/* CORRECTED PART FOR SOFT_BEER_CHOICE LIMIT INFO */}
           {offerConfig.type === "soft_beer_choice" &&
             currentMaxForThisOffer > 0 &&
+            // Using existing keys "extras.drinks.upTo" and "extras.drinks.items"
+            // Assumes "extras.drinks.items" does NOT take a count for pluralization itself,
+            // but is just the word "items" or "articles".
+            // If "extras.drinks.items" *is* a pluralizable key (e.g., item/item_plural),
+            // then it should be t("extras.drinks.items", { count: currentMaxForThisOffer })
             ` (${t(
               "extras.drinks.upTo",
-              "jusqu'à"
-            )} ${currentMaxForThisOffer} ${t(
-              "extras.drinks.items",
-              "articles"
-            )})`}
+              "up to"
+            )} ${currentMaxForThisOffer} ${t("extras.drinks.items", "items")})`}
         </h3>
         <p className="mb-4 text-sm text-gray-500">
-          {t(
-            "extras.drinks.selectedOutOf",
-            "Sélectionné {{count}} de {{max}}",
-            {
-              count: totalSelectedCount,
-              max: currentMaxForThisOffer,
-            }
-          )}
+          {t("extras.drinks.selectedOutOf", `Selected {{count}} of {{max}}`, {
+            count: totalSelectedCount,
+            max: currentMaxForThisOffer,
+          })}
         </p>
         <div className="space-y-4">
           {["softs", "beers"].map(
@@ -242,8 +240,16 @@ const FreeDrinksSelection = ({
                   <div className="space-y-3">
                     {offerConfig.categories[categoryKey].map((drinkId) => {
                       const drink = ALL_DRINK_ITEMS_MAP[drinkId];
-                      if (!drink) return null;
-                      const currentQuantity = selectionsForOffer[drinkId] || 0;
+                      if (!drink) {
+                        console.warn(
+                          `[FreeDrinksSelection] Drink details not found for ID: ${drinkId}`
+                        );
+                        return null;
+                      }
+                      const currentQuantity = Number(
+                        selectionsForOffer[drinkId] || 0
+                      );
+                      // drink.name is the i18n key, e.g., "drinkNames.ritchieColaZero"
                       const itemName = t(
                         drink.name,
                         drink.defaultFrenchName || drink.defaultName || drink.id
@@ -258,7 +264,7 @@ const FreeDrinksSelection = ({
                             {drink.image && (
                               <img
                                 src={drink.image}
-                                alt={itemName}
+                                alt={itemName} // Use translated name
                                 className="object-cover w-12 h-12 mr-4 border border-gray-200 rounded-md"
                               />
                             )}
@@ -276,8 +282,8 @@ const FreeDrinksSelection = ({
                               drink={drink}
                               quantity={currentQuantity}
                               onQuantityChange={handleSoftBeerQuantityChange}
-                              maxReached={isOverallMaxReached} // This now reflects the dynamic limit
-                              overallDisabled={false} // Soft/beer section isn't disabled by the wine "choose later"
+                              maxReached={isOverallMaxReached}
+                              overallDisabled={false}
                             />
                           </div>
                         </div>
@@ -296,7 +302,7 @@ const FreeDrinksSelection = ({
   if (offerConfig.type === "soft_beer_choice") return renderSoftBeerOffer();
 
   console.warn(
-    `FreeDrinksSelection: Unknown offer type "${offerConfig.type}" for offerKey "${offerKey}"`
+    `[FreeDrinksSelection] Unknown offer type "${offerConfig.type}" for offerKey "${offerKey}"`
   );
   return null;
 };

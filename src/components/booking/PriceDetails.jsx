@@ -270,7 +270,7 @@ export const PriceDetails = ({
         {selectedFreeDrinksDetails.length > 0 && (
           <div className="pt-2 mt-1 border-t border-gray-200">
             <h4 className="mb-1 text-xs font-semibold tracking-wide text-green-700 uppercase">
-              {t("freeDrinksTitle", "Boissons Incluses")}
+              {t("freeDrinks", "Boissons Incluses")}
             </h4>
             {selectedFreeDrinksDetails.map((drink) => (
               <div
@@ -297,7 +297,7 @@ export const PriceDetails = ({
           <div className="flex items-center justify-between pt-2 mt-2 font-semibold text-gray-700 border-t border-gray-300">
             <span>
               {t(
-                "priceDetails.subtotalBeforeDiscounts",
+                "priceDetails.subtotal",
                 "Sous-total (avant remises)"
               )}
             </span>

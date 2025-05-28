@@ -22,6 +22,7 @@
           "giftCard": "Gift Card"
         }
       },
+      "freeDrinks" : "Complimentary drinks",
       "drinkNames": {
         "brutBioul": "Brut de Bioul (Sparkling)",
         "cortilBarco": "Cortil Barco (Red)",

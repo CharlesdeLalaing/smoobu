@@ -22,6 +22,7 @@
         "giftCard": "Cadeaubon"
       }
     },
+    "freeDrinks" : "Gratis drankjes",
     "drinkNames": {
       "brutBioul": "Brut de Bioul (Sparkling)",
       "cortilBarco": "Cortil Barco (Rood)",
@@ -384,7 +385,7 @@
       "longStayDiscount": "Korting voor lang verblijf",
       "promoCode": { "fixed": "Kortingscode", "percentage": "Kortingscode" },
       "subtotal": "Subtotaal",
-      "nonAlcoholicChosenLater": "Niet-alcoholische optie (af te stemmen met gastheer/vrouw)",
+      "nonAlcoholicChosenLater": "Niet-alcoholische optie ",
       "totalDiscounts": "Totale kortingen",
       "total": "Totaal",
       "taxesIncluded": "* Totaalprijs inclusief alle belastingen en kosten",

@@ -274,7 +274,7 @@ const emailTexts = {
       "priceDetails.nonAlcoholicChosenLater":
         "Niet-alcoholische optie",
       "extras.drinks.chooseNonAlcoholicLater":
-        "Verkiest een niet-alcoholische drank (te bespreken met gastheer/vrouw)",
+        "Verkiest een niet-alcoholische drank",
       "extras.additionalPerson": "Extra Persoon",
       "priceDetails.promoCode.generic": "Promocode",
       "priceDetails.giftVoucher": "Cadeaubon",
