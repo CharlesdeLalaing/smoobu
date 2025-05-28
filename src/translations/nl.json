@@ -286,7 +286,22 @@
         "ritchieCola": { "description": "Een unieke ambachtelijke cola." },
         "ritchieColaZero": {
           "description": "De suikervrije versie van de ambachtelijke cola."
-        }
+        },
+        "chooseNonAlcoholicLater": "Verkiest een niet-alcoholische drank (te bespreken met de gastheer/vrouw)",
+        "cortilBarcoLabel": "Cortil Barco (rood)",
+        "terreCharlotLabel": "Terre Charlot (wit)",
+        "softBeerOfferTitle": "Keuze van Dranken",
+        "wineOfferTitle": "Inbegrepen Wijnkeuze (1 fles)",
+        "upTo": "tot",
+        "items": "artikelen",
+        "selectedOutOf": "{{count}} van {{max}} geselecteerd",
+        "included": "Inbegrepen",
+        "needsMoreSelections": "nog {{count}} te kiezen",
+        
+        "validation": {
+          "incomplete": "Voltooi alstublieft uw drankselectie voor: "
+        },
+        "tabTitle": "Kies Inbegrepen Dranken"
       },
       "formulesRepas": {
         "breakfast": {
@@ -350,10 +365,12 @@
       "additionalPerson": "Extra persoon",
       "title": "Prijsdetails:",
       "basePrice": "Basisprijs",
+      "giftVoucher": "Cadeaubon",
       "guestFees": "{{count}} extra perso(o)n(en) × {{fee}}€",
       "longStayDiscount": "Korting voor lang verblijf",
       "promoCode": { "fixed": "Kortingscode", "percentage": "Kortingscode" },
       "subtotal": "Subtotaal",
+      "nonAlcoholicChosenLater": "Niet-alcoholische optie (af te stemmen met gastheer/vrouw)",
       "totalDiscounts": "Totale kortingen",
       "total": "Totaal",
       "taxesIncluded": "* Totaalprijs inclusief alle belastingen en kosten",
@@ -435,10 +452,11 @@
           },
           "priceDetails": {
             "title": "Prijsdetails",
-            "basePrice_label": "Basisprijs Verblijf",
+            "basePrice_label": "Basisprijs ",
             "basePrice": "{{price}}€",
             "guestFees_label": "Kosten voor {{extraGuests}} extra persoon/personen",
             "guestFees": "{{amount}}€",
+            "giftVoucher": "Gift card",
             "longStayDiscount_label": "Korting Lang Verblijf",
             "longStayDiscount": "{{percentage}}%",
             "promoCode_label": "Promocode ({{code}})",

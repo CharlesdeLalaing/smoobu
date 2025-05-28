@@ -95,7 +95,15 @@ export const discountSettings = {
 };
 
 export const extrasFrenchNames = {
-  // Packs
+  // Category Titles (from nameKey in extraCategoriesRaw)
+  "extras.categories.packs": "Nos Paquets Thématiques",
+  "extras.categories.formulesRepas": "Nos Formules Repas",
+  "extras.categories.spa": "Notre Espace Bien-être",
+  "extras.categories.formulesDecouverte": "Nos Formules Découverte",
+  "extras.categories.meals": "Plats Traiteur de la Ferme de Bossimé",
+  "extras.categories.boissons": "Notre Sélection de Boissons",
+
+  // Pack Names
   "extras.packs.essential.name": "L'essentiel (pour 2)",
   "extras.packs.relaxGourmet.name": "Le détente gourmet (pour 2)",
   "extras.packs.racletteRelax.name": "La raclette en détente (pour 2)",
@@ -103,27 +111,61 @@ export const extrasFrenchNames = {
   "extras.packs.racletteRomantic.name": "La raclette romantique (pour 2)",
   "extras.packs.bbqRelax.name": "Le barbecue détente (pour 2)",
   "extras.packs.bbqRomantic.name": "Le romantique barbecue (pour 2)",
+
+  // Formule Découverte Names
   "extras.formulesDecouverte.passion.name": "Formule passion (pour 2)",
   "extras.formulesDecouverte.birthday.name": "Formule anniversaire (pour 2)",
 
-  // Spa
+  // SPA Names
   "extras.spa.basic.name": "Formule SPA (2 pers)",
   "extras.spa.withBottle.name": "Formule SPA + bouteille (2 pers)",
 
-  // Meals
+  // Meal Names (Bossimé)
   "extras.meals.meatballsLiege.name": "Boulettes de viande sauce liégeoise",
   "extras.meals.meatballsTomato.name": "Boulette de viande sauce tomate",
   "extras.meals.waterzooi.name": "Waterzooi de volaille",
   "extras.meals.chiliVeg.name": "Chili végétarien",
   "extras.meals.carrotSoup.name": "Velouté de carotte et cumin",
 
-  // Meal Formulas
+  // Meal Formula Names
   "extras.formulesRepas.breakfast.name": "Formule petit-déjeuner (2 pers)",
   "extras.formulesRepas.gourmet.name": "Formule gourmet (2 pers)",
   "extras.formulesRepas.raclette.name": "Formule raclette (2 pers)",
   "extras.formulesRepas.bbq.name": "Formule barbecue (2 pers)",
   "extras.formulesRepas.apero.name": "Formule planche apéro (2 pers)",
 
-  // Additional Person translation
+  // Drink Item Names (using the "drinkNames." prefix as an example convention)
+  "drinkNames.brutBioul": "Brut de Bioul",
+  "drinkNames.cortilBarco": "Cortil Barco (rouge)",
+  "drinkNames.terreCharlot": "Terre Charlot (blanc)",
+  "drinkNames.bruneCondroz": "Brune du Condroz",
+  "drinkNames.ambreeCondroz": "Ambrée du Condroz",
+  "drinkNames.tripleCondroz": "Triple du Condroz",
+  "drinkNames.blancheCondroz": "Blanche du Condroz",
+  "drinkNames.appleJuice": "Jus de pomme « Pom d'Happy »",
+  "drinkNames.ritchieLemonRasp": "Ritchie Citron/Framboise",
+  "drinkNames.ritchieOrangeVan": "Ritchie Orange/Vanille",
+  "drinkNames.ritchieCola": "Ritchie Cola",
+  "drinkNames.ritchieColaZero": "Ritchie Cola Zéro",
+
+  // Drink Offer Titles (from DRINK_OFFER_CONFIG_RAW.titleKey)
+  "extras.drinks.wineOfferTitle": "Choix de Vin Inclus (1 bouteille)",
+  "extras.drinks.softBeerOfferTitle": "Choix de Boissons Incluses",
+
+  // Specific drink labels for choices (from DRINK_OFFER_CONFIG_RAW.drinks[].nameKey)
+  // These might overlap with drinkNames.* if you use the same key, which is fine.
+  "extras.drinks.cortilBarcoLabel": "Cortil Barco (rouge)", // Often same as drinkNames.cortilBarco
+  "extras.drinks.terreCharlotLabel": "Terre Charlot (blanc)", // Often same as drinkNames.terreCharlot
+
+  // Other drink-related texts
+  "priceDetails.nonAlcoholicChosenLater":
+    "Option non-alcoolisée (choix ultérieur avec l'hôte)",
+  "extras.drinks.chooseNonAlcoholicLater":
+    "Préfère une boisson non-alcoolisée (à voir avec l'hôte)",
+
+  // General / UI
   "extras.additionalPerson": "Personne supplémentaire",
+  "priceDetails.promoCode.generic": "Code Promo",
+  "priceDetails.giftVoucher": "Chèque Cadeau",
+  "priceDetails.longStayDiscount": "Réduction long séjour",
 };

@@ -270,51 +270,65 @@
                 }
             },
             "drinks": {
-                "brutBioul": {
+              "brutBioul": {
                 "description": "This sparkling wine, made with Bronner and Johanniter grapes, offers delicate aromas of white-fleshed fruits."
-                },
-                "cortilBarco": {
+              },
+              "cortilBarco": {
                 "description": "With its red fruit aromas intertwined with mineral and smoky notes, this red wine was made with Cabernet Noir, Pinotin and Cabernet Jura grapes"
-                },
-                "terreCharlot": {
+              },
+              "terreCharlot": {
                 "description": "With its aromas of apricots and passion fruit, and a slight spicy finish, this wine was made with the Solaris grape variety."
-                },
-                "houblondeTriple": {
+              },
+              "houblondeTriple": {
                 "description": "This triple beer will surprise with its floral bouquet of hibiscus and saffron. It stands out by using 3 different hops and 3 different cereals."
-                },
-                "houblondeBlonde": {
+              },
+              "houblondeBlonde": {
                 "description": "This blonde beer, with its roasted cereal flavors, offers a light bitterness and a floral taste identity."
-                },
-                "houblondeWhite": {
+              },
+              "houblondeWhite": {
                 "description": "This white IPA, light and refreshing, offers a gentle bitterness and surprising citrus notes."
-                },
-                "bruneCondroz": {
+              },
+              "bruneCondroz": {
                 "description": "This brown beer, brewed with cocoa beans, offering roundness in the mouth and a slight bitterness."
-                },
-                "tripleCondroz": {
+              },
+              "tripleCondroz": {
                 "description": "The Triple du Condroz delights with its hoppy aromas on the nose, followed by an intense tasting experience typical of triple beers."
-                },
-                "ambreeCondroz": {
+              },
+              "ambreeCondroz": {
                 "description": "This amber beer, with a round and spicy profile, will surprise you with its character and pronounced bitterness."
-                },
-                "blancheCondroz": {
+              },
+              "blancheCondroz": {
                 "description": "This white beer, with subtle violet aromas on the nose, offers a tangy and fresh experience"
-                },
-                "appleJuice": {
+              },
+              "appleJuice": {
                 "description": "A natural and refreshing apple juice."
-                },
-                "ritchieLemonRasp": {
+              },
+              "ritchieLemonRasp": {
                 "description": "A sparkling drink with lemon and raspberry flavors."
-                },
-                "ritchieOrangeVan": {
+              },
+              "ritchieOrangeVan": {
                 "description": "A refreshing blend of orange and vanilla."
-                },
-                "ritchieCola": {
+              },
+              "ritchieCola": {
                 "description": "A unique artisanal cola."
-                },
-                "ritchieColaZero": {
+              },
+              "ritchieColaZero": {
                 "description": "The sugar-free version of the artisanal cola."
-                }
+              },
+              "chooseNonAlcoholicLater": "Prefers a non-alcoholic beverage (to be discussed with the host)",
+              "cortilBarcoLabel": "Cortil Barco (red)",
+              "terreCharlotLabel": "Terre Charlot (white)",
+              "softBeerOfferTitle": "Choice of Drinks",
+              "wineOfferTitle": "Included Wine Choice (1 bottle)",
+              "upTo": "up to",
+              "items": "items",
+              "selectedOutOf": "Selected {{count}} of {{max}}",
+              "included": "Included",
+              "needsMoreSelections": "{{count}} more to choose",
+              "validation": {
+                "incomplete": "Please complete your drink selection for: "
+              },
+              "tabTitle": "Choose Included Drinks"
             },
             "formulesRepas": {
                 "breakfast": {
@@ -373,22 +387,24 @@
             }
         },
         "priceDetails": {
-            "notAvailable": "Not available",
-            "roomNotAvailable": "Unfortunately, this room is not available for the selected dates.",
-            "additionalPerson": "Additional person",
-            "title": "Price details:",
-            "basePrice": "Base price",
-            "longStayDiscount": "Long stay discount",
-            "guestFees" : "{{count}} extra guest(s) × {{fee}}€",
-            "promoCode": {
-                "fixed": "Promo code",
-                "percentage": "Promo code"
-            },
-            "subtotal": "Subtotal",
-            "totalDiscounts": "Total discounts",
-            "total": "Total",
-            "taxesIncluded": "* Total price including all taxes and fees",
-            "depositRequired": "** Deposit required: {{percentage}}% ({{amount}} EUR)"
+          "notAvailable": "Not available",
+          "roomNotAvailable": "Unfortunately, this room is not available for the selected dates.",
+          "additionalPerson": "Additional person",
+          "title": "Price details:",
+          "basePrice": "Base price",
+          "giftVoucher": "Gift card",
+          "longStayDiscount": "Long stay discount",
+          "guestFees": "{{count}} extra guest(s) × {{fee}}€",
+          "nonAlcoholicChosenLater": "Non-alcoholic option (to be arranged with host)",
+          "promoCode": {
+            "fixed": "Promo code",
+            "percentage": "Promo code"
+          },
+          "subtotal": "Subtotal",
+          "totalDiscounts": "Total discounts",
+          "total": "Total",
+          "taxesIncluded": "* Total price including all taxes and fees",
+          "depositRequired": "** Deposit required: {{percentage}}% ({{amount}} EUR)"
         },
         "propertyDetails": {
             

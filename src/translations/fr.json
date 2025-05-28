@@ -386,6 +386,7 @@
         },
         "subtotal": "Sous-total",
         "totalDiscounts": "Total des réductions",
+        "nonAlcoholicChosenLater": "Option non-alcoolisée (choix ultérieur avec l'hôte)",
         "total": "Total",
         "taxesIncluded": "* Prix total incluant toutes les taxes et frais",
         "depositRequired": "** Acompte requis : {{percentage}}% ({{amount}} EUR)"
@@ -469,7 +470,7 @@
       },
       "priceDetails": {
         "title": "Détails du Prix",
-        "basePrice_label": "Prix de base du séjour",
+        "basePrice_label": "Prix de base",
         "basePrice": "{{price}}€",
         "guestFees_label": "Frais pour {{extraGuests}} personne(s) supplémentaire(s)",
         "guestFees": "{{amount}}€",

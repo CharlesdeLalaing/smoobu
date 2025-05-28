@@ -11,7 +11,7 @@ import {
   ShoppingBagIcon,
   GiftIcon,
   InfoIcon,
-  Wine
+  Wine, // Assuming you meant to use InfoIcon or similar for non-alcoholic, Wine for general drinks
 } from "lucide-react"; // Icons
 
 // Helper to get date-fns locale
@@ -37,28 +37,27 @@ const getJsDate = (dateValue) => {
     if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
       return dateValue;
     }
-    // Handle Firestore Timestamp objects (from client SDK or Admin SDK-like structure)
     if (dateValue && typeof dateValue.toDate === "function") {
+      // Firestore Timestamp (client SDK)
       date = dateValue.toDate();
     } else if (
       dateValue &&
       typeof dateValue === "object" &&
       dateValue._seconds !== undefined
     ) {
+      // Firestore Timestamp (raw object, e.g. from Admin SDK or JSON)
       date = new Date(
         dateValue._seconds * 1000 + (dateValue._nanoseconds || 0) / 1000000
       );
     } else {
-      // Handle ISO strings or other parsable date strings
+      // ISO strings or other parsable date strings
       date = new Date(dateValue);
     }
     if (isNaN(date.getTime())) {
-      // console.warn("getJsDate: Resulted in Invalid Date for input:", dateValue);
       return null;
     }
     return date;
   } catch (e) {
-    // console.error("getJsDate: Error converting to JS Date:", dateValue, e);
     return null;
   }
 };
@@ -69,43 +68,39 @@ const BookingConfirmation = () => {
   const [status, setStatus] = useState("loading");
   const [bookingDetails, setBookingDetails] = useState(null);
   const [searchParams] = useSearchParams();
-  const paymentIntentIdFromUrl = searchParams.get("payment_intent"); // Renamed for clarity
+  const paymentIntentIdFromUrl = searchParams.get("payment_intent");
   const [displayPrice, setDisplayPrice] = useState(null);
   const [priceCalculated, setPriceCalculated] = useState(false);
 
   const currentLocale = i18n.language;
   const currentDateFnsLocale = getDateFnLocale(currentLocale);
 
+  // Effect to load booking details (from localStorage or API)
   useEffect(() => {
     const storedBookingData = localStorage.getItem("bookingData");
     if (storedBookingData) {
       try {
         const parsedData = JSON.parse(storedBookingData);
-        // console.log("BookingConfirmation: Loaded data from localStorage: ", parsedData);
         setBookingDetails(parsedData);
         setStatus("success");
-        localStorage.removeItem("bookingData"); // Crucial to remove after use
+        localStorage.removeItem("bookingData");
       } catch (error) {
         console.error("Error parsing booking data from localStorage:", error);
-        // If localStorage fails, try fetching if paymentIntentIdFromUrl exists
         if (paymentIntentIdFromUrl) {
-          // console.log(`BookingConfirmation: localStorage parse failed, attempting to fetch for PI: ${paymentIntentIdFromUrl}`);
           fetchBookingDetails(paymentIntentIdFromUrl);
         } else {
           setStatus("error");
         }
       }
     } else if (paymentIntentIdFromUrl) {
-      // console.log(`BookingConfirmation: No localStorage data, attempting to fetch for PI: ${paymentIntentIdFromUrl}`);
       fetchBookingDetails(paymentIntentIdFromUrl);
     } else {
-      console.error(
-        "Cannot display confirmation: No booking data found in localStorage or paymentIntent in URL."
-      );
+      console.error("Cannot display confirmation: No booking data found.");
       setStatus("error");
     }
-  }, [paymentIntentIdFromUrl]); // Dependency is the PI from URL
+  }, [paymentIntentIdFromUrl]); // Only run when paymentIntentIdFromUrl changes
 
+  // Effect to calculate final price once bookingDetails are available
   useEffect(() => {
     if (bookingDetails && !priceCalculated) {
       calculateAndSetFinalPrice(bookingDetails);
@@ -113,8 +108,23 @@ const BookingConfirmation = () => {
     }
   }, [bookingDetails, priceCalculated]);
 
+  // Effect to set i18next language based on bookingDetails.language
+  useEffect(() => {
+    if (bookingDetails?.language && i18n.language !== bookingDetails.language) {
+      i18n.changeLanguage(bookingDetails.language);
+    }
+  }, [bookingDetails, i18n]);
+
   const calculateAndSetFinalPrice = (data) => {
     if (!data) return;
+    // Prefer finalPayableAmount from priceBreakdown if available (most accurate)
+    if (
+      data.priceBreakdown?.finalPayableAmount !== undefined &&
+      !isNaN(parseFloat(data.priceBreakdown.finalPayableAmount))
+    ) {
+      setDisplayPrice(parseFloat(data.priceBreakdown.finalPayableAmount));
+      return;
+    }
     if (
       data.price !== null &&
       data.price !== undefined &&
@@ -123,7 +133,6 @@ const BookingConfirmation = () => {
       setDisplayPrice(parseFloat(data.price));
       return;
     }
-    // Fallback calculation if data.price is not directly usable
     const basePrice = parseFloat(
       data.priceBreakdown?.roomBasePrice ||
         data.basePrice ||
@@ -161,12 +170,10 @@ const BookingConfirmation = () => {
 
   const fetchBookingDetails = async (paymentIntentId) => {
     let attempts = 0;
-    const maxAttempts = 7; // Increased attempts slightly
-    const retryDelay = 3000; // Increased retry delay
+    const maxAttempts = 7;
+    const retryDelay = 3000;
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
     const attemptFetch = async () => {
-      // console.log(`BookingConfirmation: Attempting to fetch for PI: ${paymentIntentId} (Attempt: ${attempts + 1})`);
       try {
         const response = await fetch(
           `${API_URL}/api/bookings/${paymentIntentId}`,
@@ -178,13 +185,9 @@ const BookingConfirmation = () => {
         if (response.status === 404) {
           attempts++;
           if (attempts < maxAttempts) {
-            // console.log(`BookingConfirmation: Booking not found (attempt ${attempts}), retrying...`);
             setTimeout(attemptFetch, retryDelay);
             return;
           } else {
-            console.error(
-              `BookingConfirmation: Booking not found after ${maxAttempts} attempts for PI: ${paymentIntentId}`
-            );
             throw new Error(
               t(
                 "bookingConfirmation.error.notFound",
@@ -195,9 +198,6 @@ const BookingConfirmation = () => {
         }
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(
-            `BookingConfirmation: Fetch failed - Status ${response.status}, Body: ${errorText}`
-          );
           throw new Error(
             `${t(
               "bookingConfirmation.error.fetchFailed",
@@ -207,10 +207,8 @@ const BookingConfirmation = () => {
         }
         const data = await response.json();
         if (data.error) {
-          console.error("BookingConfirmation: API returned error:", data.error);
           throw new Error(data.error);
         }
-        // console.log("BookingConfirmation: Successfully fetched booking details from API:", data);
         setBookingDetails(data);
         setStatus("success");
       } catch (error) {
@@ -222,10 +220,9 @@ const BookingConfirmation = () => {
           attempts < maxAttempts - 1 &&
           error.message.includes(t("bookingConfirmation.error.notFound"))
         ) {
-          // If it's a 404 and we haven't exhausted retries, the retry is handled by the 404 block.
-          // This 'else' path is more for other types of errors or final failure.
+          // Retry is handled by the 404 block
         } else {
-          setStatus("error"); // Set to error on final attempt or non-404 error
+          setStatus("error");
         }
       }
     };
@@ -257,30 +254,32 @@ const BookingConfirmation = () => {
     if (dateObj) {
       try {
         return formatFn(dateObj, "HH:mm", { locale: currentDateFnsLocale });
-      } catch (e) {
-        /* console.error("Error formatting dateObj as time:", timeStringOrDate, e); */
-      }
+      } catch (e) {}
     }
     if (
       typeof timeStringOrDate === "string" &&
       /^\d{2}:\d{2}$/.test(timeStringOrDate)
-    ) {
+    )
       return timeStringOrDate;
-    }
     return "-";
   };
 
-  const renderExtraName = (extra) => {
-    if (!extra?.name) return t("bookingConfirmation.unknownExtra", "Extra");
-    // Assuming extra.name is already translated if it was a key, by prepareBookingDocument
-    return extra.name;
+  // renderExtraName will now use nameKeyForClient for translation
+  const renderPaidExtraName = (extra) => {
+    // 'extra.name' is the French fallback, 'extra.nameKeyForClient' is the primary i18n key
+    // 'extra.originalClientName' could be another fallback if keys are totally missing
+    return t(
+      extra.nameKeyForClient,
+      extra.name ||
+        extra.originalClientName ||
+        t("bookingConfirmation.unknownExtra", "Extra")
+    );
   };
 
   const formatPrice = (price) => {
     if (price === null || price === undefined || isNaN(parseFloat(price)))
       return "0.00";
-    const numberPrice = parseFloat(price);
-    return numberPrice.toFixed(2);
+    return parseFloat(price).toFixed(2);
   };
 
   const calculateExtraGuests = () => {
@@ -289,15 +288,15 @@ const BookingConfirmation = () => {
       (parseInt(bookingDetails.adults) || 0) +
       (parseInt(bookingDetails.children) || 0);
     const startingGuests =
-      bookingDetails.priceBreakdown?.settings?.startingAtGuest || // From prepareBookingDocument
-      bookingDetails.priceDetailsSnapshot?.settings?.startingAtGuest || // From frontend state
-      2; // Default
+      bookingDetails.priceBreakdown?.settings?.startingAtGuest ||
+      bookingDetails.priceDetailsSnapshot?.settings?.startingAtGuest ||
+      2;
     return Math.max(0, totalGuests - Number(startingGuests));
   };
 
   if (status === "loading") {
     return (
-      <div
+      /* ... loading spinner JSX ... */ <div
         className="container"
         style={{
           minHeight: "100vh",
@@ -316,10 +315,9 @@ const BookingConfirmation = () => {
       </div>
     );
   }
-
   if (status === "error" || !bookingDetails) {
     return (
-      <div
+      /* ... error display JSX ... */ <div
         className="container"
         style={{
           minHeight: "100vh",
@@ -335,7 +333,7 @@ const BookingConfirmation = () => {
           <p className="mb-4">
             {t(
               "bookingConfirmation.error.message",
-              "Une erreur est survenue lors de la récupération des détails de votre réservation. Veuillez vérifier votre e-mail de confirmation ou nous contacter directement."
+              "Une erreur est survenue..."
             )}
           </p>
           <button onClick={() => navigate("/")} className="button-primary">
@@ -349,31 +347,28 @@ const BookingConfirmation = () => {
     );
   }
 
-  // SPA Time Display Logic
   const needsSpaScheduling = bookingDetails.spaBookingPreference === "later";
   const scheduledSpaTime =
-    bookingDetails.spaDateTime &&
+    (bookingDetails.spaDateTime || bookingDetails.spaInfo?.scheduledDateTime) &&
     bookingDetails.spaBookingPreference === "scheduled";
   let spaTimeDisplay = t("errors.invalidTime", "Heure invalide");
 
   if (scheduledSpaTime) {
-    const spaDateTimeFromDetails =
+    const spaDateTimeForDisplay =
       bookingDetails.spaDateTime || bookingDetails.spaInfo?.scheduledDateTime;
-    const spaEndDateTimeFromDetails =
+    const spaEndDateTimeForDisplay =
       bookingDetails.spaEndDateTime || bookingDetails.spaInfo?.endDateTime;
-
-    const startTimeObj = getJsDate(spaDateTimeFromDetails);
-    let endTimeObj = spaEndDateTimeFromDetails
-      ? getJsDate(spaEndDateTimeFromDetails)
+    const startTimeObj = getJsDate(spaDateTimeForDisplay);
+    let endTimeObj = spaEndDateTimeForDisplay
+      ? getJsDate(spaEndDateTimeForDisplay)
       : null;
 
     if (startTimeObj) {
       if (!endTimeObj) {
-        let actualSlotDurationMinutes = 120; // Default duration
-        const spaSettingsForDuration =
+        let actualSlotDurationMinutes = 120;
+        const spaSettingsForCalc =
           bookingDetails.spaSettings ||
           bookingDetails.priceDetailsSnapshot?.spaSettings;
-
         if (
           bookingDetails.spaSlotDuration &&
           typeof bookingDetails.spaSlotDuration === "number" &&
@@ -382,19 +377,16 @@ const BookingConfirmation = () => {
           actualSlotDurationMinutes = bookingDetails.spaSlotDuration;
         } else if (
           bookingDetails.spaInfo?.slots?.length > 0 &&
-          spaSettingsForDuration?.slotDurationMinutes
+          spaSettingsForCalc?.slotDurationMinutes
         ) {
           actualSlotDurationMinutes =
             bookingDetails.spaInfo.slots.length *
-            spaSettingsForDuration.slotDurationMinutes;
+            spaSettingsForCalc.slotDurationMinutes;
         }
-        if (actualSlotDurationMinutes > 0) {
+        if (actualSlotDurationMinutes > 0)
           try {
             endTimeObj = addMinutes(startTimeObj, actualSlotDurationMinutes);
-          } catch (e) {
-            console.error("Error calculating SPA end time from duration:", e);
-          }
-        }
+          } catch (e) {}
       }
       try {
         const startTimeString = formatFn(startTimeObj, "HH:mm", {
@@ -403,22 +395,18 @@ const BookingConfirmation = () => {
         const endTimeString = endTimeObj
           ? formatFn(endTimeObj, "HH:mm", { locale: currentDateFnsLocale })
           : null;
-        if (startTimeString && endTimeString) {
+        if (startTimeString && endTimeString)
           spaTimeDisplay = `${startTimeString} - ${endTimeString}`;
-        } else if (startTimeString) {
+        else if (startTimeString)
           spaTimeDisplay = `${startTimeString} (Durée non spécifiée)`;
-        }
-      } catch (e) {
-        console.error("Error formatting SPA times for display:", e);
-      }
+      } catch (e) {}
     }
   }
 
-  // Free Drinks "Choose Later" Logic
   const needsNonAlcoholicChoice =
     bookingDetails.freeDrinkInfo?.needsNonAlcoholicChoice === true;
-  const nonAlcoholicChoiceGrantors =
-    bookingDetails.freeDrinkInfo?.nonAlcoholicChoiceGrantors || [];
+  const nonAlcoholicChoiceGrantorKeys =
+    bookingDetails.freeDrinkInfo?.nonAlcoholicChoiceGrantors || []; // Expecting keys
 
   return (
     <div
@@ -491,7 +479,7 @@ const BookingConfirmation = () => {
               </strong>{" "}
               {bookingDetails.adults}{" "}
               {t("bookingConfirmation.adults", "adulte(s)")}
-              {bookingDetails.children > 0
+              {parseInt(bookingDetails.children || 0) > 0
                 ? `, ${bookingDetails.children} ${t(
                     "bookingConfirmation.children",
                     "enfant(s)"
@@ -506,8 +494,7 @@ const BookingConfirmation = () => {
                 />
                 <span className="font-semibold">
                   {t(
-                    "bookingConfirmation.success.sections.spaTime.scheduledTitle",
-                    "Séance SPA:"
+                    "bookingConfirmation.success.sections.spaTime.scheduledTitle"
                   )}
                 </span>{" "}
                 {formatDate(
@@ -527,8 +514,7 @@ const BookingConfirmation = () => {
             <p>
               <strong className="font-medium">
                 {t(
-                  "bookingConfirmation.success.sections.guestDetails.fullName_label",
-                  "Nom complet:"
+                  "bookingConfirmation.success.sections.guestDetails.fullName_label"
                 )}
               </strong>{" "}
               {bookingDetails.guestName ||
@@ -537,8 +523,7 @@ const BookingConfirmation = () => {
             <p>
               <strong className="font-medium">
                 {t(
-                  "bookingConfirmation.success.sections.guestDetails.email_label",
-                  "Email:"
+                  "bookingConfirmation.success.sections.guestDetails.email_label"
                 )}
               </strong>{" "}
               {bookingDetails.email}
@@ -547,8 +532,7 @@ const BookingConfirmation = () => {
               <p>
                 <strong className="font-medium">
                   {t(
-                    "bookingConfirmation.success.sections.guestDetails.phone_label",
-                    "Téléphone:"
+                    "bookingConfirmation.success.sections.guestDetails.phone_label"
                   )}
                 </strong>{" "}
                 {bookingDetails.phone}
@@ -556,7 +540,7 @@ const BookingConfirmation = () => {
             )}
           </div>
 
-          {/* Price Details - Including Paid Extras AND Free Drinks */}
+          {/* Price Details Card */}
           <div className="details-card">
             <h2 className="titleConfirmation">
               {t("bookingConfirmation.success.sections.priceDetails.title")}
@@ -564,8 +548,7 @@ const BookingConfirmation = () => {
             <p className="text-sm item-line">
               <span>
                 {t(
-                  "bookingConfirmation.success.sections.priceDetails.basePrice_label",
-                  "Prix de base du séjour "
+                  "bookingConfirmation.success.sections.priceDetails.basePrice_label"
                 )}
               </span>
               <span className="price-value">
@@ -586,7 +569,7 @@ const BookingConfirmation = () => {
                 <span>
                   {t(
                     "bookingConfirmation.success.sections.priceDetails.guestFees_label",
-                    `Frais pour ${calculateExtraGuests()} pers. suppl.`
+                    { extraGuests: calculateExtraGuests() }
                   )}
                 </span>
                 <span className="price-value">
@@ -607,23 +590,21 @@ const BookingConfirmation = () => {
                     size={18}
                     className="inline-block mr-2 text-brandColor"
                   />
-                  {t(
-                    "bookingConfirmation.success.sections.paidExtras.title",
-                    "Extras Payants"
-                  )}
+                  {t("bookingConfirmation.success.sections.paidExtras.title")}
                 </h3>
                 {bookingDetails.extras.map((extra, index) => {
+                  const displayName = t(extra.nameKeyForClient, extra.name); // Use key, fallback to French name
                   const hasExtraPerson =
                     extra.extraPersonQuantity > 0 &&
                     parseFloat(extra.extraPersonAmount || 0) > 0;
                   return (
                     <div
-                      key={`paid-extra-${index}-${extra.id || index}`}
+                      key={`paid-extra-confirm-${extra.id || index}`}
                       className="mb-1"
                     >
                       <p className="text-sm item-line">
                         <span>
-                          {renderExtraName(extra)} (x{extra.quantity || 1})
+                          {displayName} (x{extra.quantity || 1})
                         </span>
                         <span className="price-value">
                           {formatPrice(extra.amount)}€
@@ -631,9 +612,7 @@ const BookingConfirmation = () => {
                       </p>
                       {hasExtraPerson && (
                         <p className="block text-xs text-gray-600 pl-7 sub-item-line">
-                          {" "}
-                          {/* Increased pl for more indent */}
-                          {`↳ ${t("extras.additionalPerson", "pers. sup.")} x${
+                          {`↳ ${t("extras.additionalPerson")} x${
                             extra.extraPersonQuantity
                           } : ${formatPrice(extra.extraPersonAmount)}€`}
                         </p>
@@ -653,21 +632,40 @@ const BookingConfirmation = () => {
                       size={18}
                       className="inline-block mr-2 text-green-600"
                     />
-                    {t(
-                      "bookingConfirmation.success.sections.freeDrinks.title",
-                      "Boissons Offertes"
-                    )}
+                    {t("bookingConfirmation.success.sections.freeDrinks.title")}
                   </h3>
-                  {bookingDetails.processedFreeDrinks.map((drink, index) => (
-                    <p
-                      key={drink.id || `free-drink-${index}-${drink.name}`}
-                      className="text-sm item-line text-green-600 mb-0.5"
-                    >
-                      <span>
-                        {drink.name} (x{drink.quantity})
-                      </span>
-                    </p>
-                  ))}
+                  {bookingDetails.processedFreeDrinks.map((drink, index) => {
+                    const grantorText = t(
+                      drink.grantorNameKeyForClient,
+                      drink.paidExtraGrantor
+                    ); // Grantor fallback is French
+                    let choiceOrDrinkText;
+                    if (drink.chooseNonAlcoholicLater) {
+                      choiceOrDrinkText = t(
+                        drink.choiceNameKeyForClient,
+                        drink.drinkDetails
+                      ); // drink.drinkDetails is French fallback
+                    } else {
+                      choiceOrDrinkText = t(
+                        drink.drinkNameKeyForClient,
+                        drink.drinkDetails
+                      ); // drink.drinkDetails is French fallback
+                    }
+                    const displayName = `${grantorText}: ${choiceOrDrinkText}`;
+                    return (
+                      <p
+                        key={drink.id || `free-drink-confirm-${index}`}
+                        className="text-sm item-line text-green-600 mb-0.5"
+                      >
+                        <span>
+                          {displayName} (x{drink.quantity})
+                        </span>
+                        <span className="font-semibold price-value">
+                          {t("bookingConfirmation.included")}
+                        </span>
+                      </p>
+                    );
+                  })}
                 </div>
               )}
 
@@ -678,8 +676,7 @@ const BookingConfirmation = () => {
               <p className="mt-3 text-sm text-orange-600 discount-text item-line">
                 <span>
                   {t(
-                    "bookingConfirmation.success.sections.priceDetails.longStayDiscount_label",
-                    "Réduction long séjour"
+                    "bookingConfirmation.success.sections.priceDetails.longStayDiscount_label"
                   )}
                   {bookingDetails.priceDetailsSnapshot?.settings
                     ?.lengthOfStayDiscount?.discountPercentage ||
@@ -708,9 +705,10 @@ const BookingConfirmation = () => {
                   <span>
                     {t(
                       "bookingConfirmation.success.sections.priceDetails.promoCode_label",
-                      `Code Promo (${bookingDetails.couponApplied.code})`
+                      { code: bookingDetails.couponApplied.code }
                     )}
-                    {bookingDetails.couponApplied.type === "percentage"
+                    {bookingDetails.couponApplied.type === "percentage" &&
+                    bookingDetails.couponApplied.percentageValue
                       ? ` (${bookingDetails.couponApplied.percentageValue}%)`
                       : ""}
                   </span>
@@ -725,7 +723,7 @@ const BookingConfirmation = () => {
               <p className="total-text item-line">
                 <span>
                   {t(
-                    "bookingConfirmation.success.sections.priceDetails.total_label",
+                    "bookingConfirmation.success.sections.priceDetails.total_label"
                   )}
                 </span>
                 <span className="price-value">
@@ -770,19 +768,28 @@ const BookingConfirmation = () => {
                   "bookingConfirmation.success.sections.spaTime.scheduleLaterInstruction"
                 )}
               </p>
-              <p className="mb-1 text-sm font-semibold text-green-600 contact-line">
+              <p className="mb-1 text-sm font-semibold contact-line">
                 <a
-                  href={`mailto:${t(
-                    "emailDefaults.spaContactEmail",
-                    "fermedebasseilles@gmail.com"
-                  )}`}
+                  href={`mailto:${t("emailDefaults.spaContactEmail")}`}
                   className="text-brandColor hover:underline"
                 >
-                  {t(
-                    "emailDefaults.spaContactEmail",
-                    "fermedebasseilles@gmail.com"
-                  )}
+                  {t("emailDefaults.spaContactEmail")}
                 </a>
+                {t("emailDefaults.spaContactPhone") && (
+                  <>
+                    {" "}
+                    /{" "}
+                    <a
+                      href={`tel:${t("emailDefaults.spaContactPhone").replace(
+                        /\s/g,
+                        ""
+                      )}`}
+                      className="text-brandColor hover:underline"
+                    >
+                      {t("emailDefaults.spaContactPhone")}
+                    </a>
+                  </>
+                )}
               </p>
               <p className="text-xs text-gray-600">
                 {t(
@@ -793,79 +800,89 @@ const BookingConfirmation = () => {
           )}
 
           {/* Non-Alcoholic Drink Choice Later Section */}
-          {needsNonAlcoholicChoice && nonAlcoholicChoiceGrantors.length > 0 && (
-            <div className="details-card non-alcoholic-choice-later-card">
-              <h2 className="flex items-center titleConfirmation non-alcoholic-title">
-                <Wine
-                  size={18}
-                  className="inline-block mr-2 text-orange-500"
-                />
-                {t(
-                  "bookingConfirmation.success.sections.nonAlcoholicChoice.title"
-                )}
-              </h2>
-              {nonAlcoholicChoiceGrantors.map((grantor, index) => {
-                // 1. Get the translated template string
-                const instructionTemplate = t(
-                  "bookingConfirmation.success.sections.nonAlcoholicChoice.instructionFor"
-                );
-
-                // 2. Split the template by our placeholder
-                const parts = instructionTemplate.split("__GRANTOR_NAME__");
-
-                return (
-                  <p key={`na-instr-${index}`} className="mb-1 text-sm">
-                    {/* 3. Reconstruct with the bolded grantor */}
-                    {parts[0]} {/* Text before placeholder */}
-                    <strong>{grantor}</strong> {/* The bolded grantor name */}
-                    {parts[1]} {/* Text after placeholder (if any) */}
-                  </p>
-                );
-              })}
-              <p className="mb-1 text-sm font-semibold text-green-600 contact-line">
-                <a
-                  href={`mailto:${t(
-                    "emailDefaults.spaContactEmail",
-                    "fermedebasseilles@gmail.com"
-                  )}?subject=${encodeURIComponent(
-                    t(
-                      "bookingConfirmation.emailSubjects.nonAlcoholicChoice",
-                      "Choix boisson non-alcoolisée - Réservation"
-                    ) + ` ${bookingDetails.smoobuId || bookingDetails.id || ""}`
-                  )}&body=${encodeURIComponent(
-                    t(
-                      "bookingConfirmation.emailBodies.nonAlcoholicChoice",
-                      `Bonjour,\n\nConcernant ma réservation (Réf: ${
-                        bookingDetails.smoobuId || bookingDetails.id || ""
-                      }), pour l'offre ${nonAlcoholicChoiceGrantors.join(
-                        " et "
-                      )}, je souhaiterais préciser mon choix de boisson non-alcoolisée.\n\nMerci,\n${
-                        bookingDetails.firstName
-                      } ${bookingDetails.lastName}`,
-                      {
+          {needsNonAlcoholicChoice &&
+            nonAlcoholicChoiceGrantorKeys.length > 0 && (
+              <div className="details-card non-alcoholic-choice-later-card">
+                <h2 className="flex items-center titleConfirmation non-alcoholic-title">
+                  <InfoIcon
+                    size={18}
+                    className="inline-block mr-2 text-orange-500"
+                  />{" "}
+                  {/* Changed Wine to InfoIcon for neutrality */}
+                  {t(
+                    "bookingConfirmation.success.sections.nonAlcoholicChoice.title"
+                  )}
+                </h2>
+                {nonAlcoholicChoiceGrantorKeys.map((grantorKey, index) => {
+                  const translatedGrantor = t(
+                    grantorKey,
+                    grantorKey
+                      .substring(grantorKey.lastIndexOf(".") + 1)
+                      .replace(/_/g, " ")
+                  ); // Fallback: last part of key
+                  const instructionTemplate = t(
+                    "bookingConfirmation.success.sections.nonAlcoholicChoice.instructionFor"
+                  );
+                  const parts = instructionTemplate.split("__GRANTOR_NAME__");
+                  return (
+                    <p
+                      key={`na-instr-confirm-${index}`}
+                      className="mb-1 text-sm"
+                    >
+                      {parts[0]}
+                      <strong>{translatedGrantor}</strong>
+                      {parts[1]}
+                    </p>
+                  );
+                })}
+                <p className="mb-1 text-sm font-semibold contact-line">
+                  <a
+                    href={`mailto:${t(
+                      "emailDefaults.spaContactEmail"
+                    )}?subject=${encodeURIComponent(
+                      t(
+                        "bookingConfirmation.emailSubjects.nonAlcoholicChoice"
+                      ) +
+                        ` ${bookingDetails.smoobuId || bookingDetails.id || ""}`
+                    )}&body=${encodeURIComponent(
+                      t("bookingConfirmation.emailBodies.nonAlcoholicChoice", {
                         bookingId:
                           bookingDetails.smoobuId || bookingDetails.id || "",
-                        grantors: nonAlcoholicChoiceGrantors.join(" et "),
+                        grantors: nonAlcoholicChoiceGrantorKeys
+                          .map((key) =>
+                            t(key, key.substring(key.lastIndexOf(".") + 1))
+                          )
+                          .join(" et "),
                         guestName: `${bookingDetails.firstName} ${bookingDetails.lastName}`,
-                      }
-                    )
-                  )}`}
-                  className="text-brandColor hover:underline"
-                >
-                  {t(
-                    "emailDefaults.spaContactEmail",
-                    "fermedebasseilles@gmail.com"
+                      })
+                    )}`}
+                    className="text-brandColor hover:underline"
+                  >
+                    {t("emailDefaults.spaContactEmail")}
+                  </a>
+                  {t("emailDefaults.spaContactPhone") && (
+                    <>
+                      {" "}
+                      /{" "}
+                      <a
+                        href={`tel:${t("emailDefaults.spaContactPhone").replace(
+                          /\s/g,
+                          ""
+                        )}`}
+                        className="text-brandColor hover:underline"
+                      >
+                        {t("emailDefaults.spaContactPhone")}
+                      </a>
+                    </>
                   )}
-                </a>
-
-              </p>
-              <p className="text-xs text-gray-600">
-                {t(
-                  "bookingConfirmation.success.sections.nonAlcoholicChoice.contactPrompt"
-                )}
-              </p>
-            </div>
-          )}
+                </p>
+                <p className="text-xs text-gray-600">
+                  {t(
+                    "bookingConfirmation.success.sections.nonAlcoholicChoice.contactPrompt"
+                  )}
+                </p>
+              </div>
+            )}
         </div>{" "}
         {/* End of grid */}
         <div className="actions">

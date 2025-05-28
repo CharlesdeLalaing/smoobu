@@ -1,23 +1,23 @@
-// src/config/extraCategoriesData.js
-
-// NO ACTUAL IMAGE IMPORTS HERE (e.g., import essentiel from '...')
-
 export const extraCategoriesRaw = {
   packs: {
-    nameKey: "extras.categories.packs",
+    nameKey: "extras.categories.packs", // Key for the category title itself
     items: [
       {
         id: "packEssentiel",
-        name: "extras.packs.essential.name",
+        name: "extras.packs.essential.name", // i18n key
+        defaultName: "The Essential (for 2)",
+        defaultFrenchName: "L'essentiel (pour 2)",
         descriptionKey: "extras.packs.essential.description",
         price: 85,
         extraPersonPrice: 20,
-        imageIdentifier: "essentiel", // Use identifier
+        imageIdentifier: "essentiel",
         typeKey: "extras.types.pack",
       },
       {
         id: "packDetenteGourmet",
         name: "extras.packs.relaxGourmet.name",
+        defaultName: "Gourmet Relaxation (for 2)",
+        defaultFrenchName: "Le détente gourmet (pour 2)",
         descriptionKey: "extras.packs.relaxGourmet.description",
         price: 150,
         extraPersonPrice: 40,
@@ -27,6 +27,8 @@ export const extraCategoriesRaw = {
       {
         id: "packRomantiqueGourmet",
         name: "extras.packs.romanticGourmet.name",
+        defaultName: "Romantic Gourmet (for 2)",
+        defaultFrenchName: "Le romantique gourmet (pour 2)",
         descriptionKey: "extras.packs.romanticGourmet.description",
         price: 170,
         extraPersonPrice: 40,
@@ -36,6 +38,8 @@ export const extraCategoriesRaw = {
       {
         id: "packRacletteDetente",
         name: "extras.packs.racletteRelax.name",
+        defaultName: "Raclette Relaxation (for 2)",
+        defaultFrenchName: "La raclette en détente (pour 2)",
         descriptionKey: "extras.packs.racletteRelax.description",
         price: 150,
         extraPersonPrice: 40,
@@ -45,6 +49,8 @@ export const extraCategoriesRaw = {
       {
         id: "packRacletteRomantique",
         name: "extras.packs.racletteRomantic.name",
+        defaultName: "Romantic Raclette (for 2)",
+        defaultFrenchName: "La raclette romantique (pour 2)",
         descriptionKey: "extras.packs.racletteRomantic.description",
         price: 170,
         extraPersonPrice: 40,
@@ -54,6 +60,8 @@ export const extraCategoriesRaw = {
       {
         id: "packBbqDetente",
         name: "extras.packs.bbqRelax.name",
+        defaultName: "BBQ Relaxation (for 2)",
+        defaultFrenchName: "Le barbecue détente (pour 2)",
         descriptionKey: "extras.packs.bbqRelax.description",
         price: 150,
         extraPersonPrice: 40,
@@ -63,6 +71,8 @@ export const extraCategoriesRaw = {
       {
         id: "packBbqRomantique",
         name: "extras.packs.bbqRomantic.name",
+        defaultName: "Romantic BBQ (for 2)",
+        defaultFrenchName: "Le romantique barbecue (pour 2)",
         descriptionKey: "extras.packs.bbqRomantic.description",
         price: 170,
         extraPersonPrice: 40,
@@ -77,6 +87,8 @@ export const extraCategoriesRaw = {
       {
         id: "formulePetitDej",
         name: "extras.formulesRepas.breakfast.name",
+        defaultName: "Breakfast Formula (2 ppl)",
+        defaultFrenchName: "Formule petit-déjeuner (2 pers)",
         descriptionKey: "extras.formulesRepas.breakfast.description",
         price: 35,
         extraPersonPrice: 10,
@@ -86,6 +98,8 @@ export const extraCategoriesRaw = {
       {
         id: "formuleGourmet",
         name: "extras.formulesRepas.gourmet.name",
+        defaultName: "Gourmet Formula (2 ppl)",
+        defaultFrenchName: "Formule gourmet (2 pers)",
         descriptionKey: "extras.formulesRepas.gourmet.description",
         price: 85,
         extraPersonPrice: 20,
@@ -95,6 +109,8 @@ export const extraCategoriesRaw = {
       {
         id: "formulePancheApero",
         name: "extras.formulesRepas.apero.name",
+        defaultName: "Aperitif Platter Formula (2 ppl)",
+        defaultFrenchName: "Formule planche apéro (2 pers)",
         descriptionKey: "extras.formulesRepas.apero.description",
         price: 30,
         imageIdentifier: "plancheapero",
@@ -103,6 +119,8 @@ export const extraCategoriesRaw = {
       {
         id: "formuleRaclette",
         name: "extras.formulesRepas.raclette.name",
+        defaultName: "Raclette Formula (2 ppl)",
+        defaultFrenchName: "Formule raclette (2 pers)",
         descriptionKey: "extras.formulesRepas.raclette.description",
         price: 85,
         extraPersonPrice: 20,
@@ -112,10 +130,12 @@ export const extraCategoriesRaw = {
       {
         id: "formuleBarbecue",
         name: "extras.formulesRepas.barbecue.name",
+        defaultName: "Barbecue Formula (2 ppl)",
+        defaultFrenchName: "Formule barbecue (2 pers)",
         descriptionKey: "extras.formulesRepas.barbecue.description",
         price: 85,
         extraPersonPrice: 20,
-        imageIdentifier: "babrecue", // or "barbecue" if you change identifier
+        imageIdentifier: "babrecue",
         typeKey: "extras.types.formula",
       },
     ],
@@ -126,6 +146,8 @@ export const extraCategoriesRaw = {
       {
         id: "formuleSpa",
         name: "extras.spa.basic.name",
+        defaultName: "SPA Formula (2 ppl)",
+        defaultFrenchName: "Formule SPA (2 pers)",
         descriptionKey: "extras.spa.basic.description",
         price: 50,
         extraPersonPrice: 10,
@@ -135,6 +157,8 @@ export const extraCategoriesRaw = {
       {
         id: "formuleSpaBottle",
         name: "extras.spa.withBottle.name",
+        defaultName: "SPA Formula + Bottle (2 ppl)",
+        defaultFrenchName: "Formule SPA + bouteille (2 pers)",
         descriptionKey: "extras.spa.withBottle.description",
         price: 90,
         imageIdentifier: "spabouteille",
@@ -148,6 +172,8 @@ export const extraCategoriesRaw = {
       {
         id: "packPassion",
         name: "extras.formulesDecouverte.passion.name",
+        defaultName: "Passion Formula (for 2)",
+        defaultFrenchName: "Formule passion (pour 2)",
         descriptionKey: "extras.formulesDecouverte.passion.description",
         price: 50,
         imageIdentifier: "passion",
@@ -156,6 +182,8 @@ export const extraCategoriesRaw = {
       {
         id: "packAnniversaire",
         name: "extras.formulesDecouverte.birthday.name",
+        defaultName: "Birthday Formula (2 ppl)",
+        defaultFrenchName: "Formule anniversaire (pour 2)",
         descriptionKey: "extras.formulesDecouverte.birthday.description",
         price: 55,
         extraPersonPrice: 5,
@@ -170,6 +198,8 @@ export const extraCategoriesRaw = {
       {
         id: "meatballsLiege",
         name: "extras.meals.meatballsLiege.name",
+        defaultName: "Liege Style Meatballs",
+        defaultFrenchName: "Boulettes de viande sauce liégeoise",
         descriptionKey: "extras.meals.meatballsLiege.description",
         price: 15,
         imageIdentifier: "bouletteLiege",
@@ -178,6 +208,8 @@ export const extraCategoriesRaw = {
       {
         id: "meatballsTomato",
         name: "extras.meals.meatballsTomato.name",
+        defaultName: "Meatballs in Tomato Sauce",
+        defaultFrenchName: "Boulette de viande sauce tomate",
         descriptionKey: "extras.meals.meatballsTomato.description",
         price: 15,
         imageIdentifier: "bouletteTomate",
@@ -186,6 +218,8 @@ export const extraCategoriesRaw = {
       {
         id: "waterzooi",
         name: "extras.meals.waterzooi.name",
+        defaultName: "Chicken Waterzooi",
+        defaultFrenchName: "Waterzooi de volaille",
         descriptionKey: "extras.meals.waterzooi.description",
         price: 15,
         imageIdentifier: "waterzooi",
@@ -194,6 +228,8 @@ export const extraCategoriesRaw = {
       {
         id: "chiliVeg",
         name: "extras.meals.chiliVeg.name",
+        defaultName: "Vegetarian Chili",
+        defaultFrenchName: "Chili végétarien",
         descriptionKey: "extras.meals.chiliVeg.description",
         price: 15,
         imageIdentifier: "chiliVeg",
@@ -202,6 +238,8 @@ export const extraCategoriesRaw = {
       {
         id: "carrotSoup",
         name: "extras.meals.carrotSoup.name",
+        defaultName: "Carrot and Cumin Soup",
+        defaultFrenchName: "Velouté de carotte et cumin",
         descriptionKey: "extras.meals.carrotSoup.description",
         price: 5,
         imageIdentifier: "veloute",
@@ -214,7 +252,9 @@ export const extraCategoriesRaw = {
     items: [
       {
         id: "brutBioul",
-        name: "Brut de Bioul",
+        name: "drinkNames.brutBioul", // i18n Key
+        defaultName: "Brut de Bioul (Sparkling)",
+        defaultFrenchName: "Brut de Bioul",
         descriptionKey: "extras.drinks.brutBioul.description",
         price: 50,
         imageIdentifier: "brutBioul",
@@ -222,7 +262,9 @@ export const extraCategoriesRaw = {
       },
       {
         id: "cortilBarco",
-        name: "Cortil Barco",
+        name: "drinkNames.cortilBarco", // i18n Key
+        defaultName: "Cortil Barco (Red Wine)",
+        defaultFrenchName: "Cortil Barco (rouge)",
         descriptionKey: "extras.drinks.cortilBarco.description",
         price: 30,
         imageIdentifier: "cortilBarco",
@@ -230,7 +272,9 @@ export const extraCategoriesRaw = {
       },
       {
         id: "terreCharlot",
-        name: "Terre Charlot",
+        name: "drinkNames.terreCharlot", // i18n Key
+        defaultName: "Terre Charlot (White Wine)",
+        defaultFrenchName: "Terre Charlot (blanc)",
         descriptionKey: "extras.drinks.terreCharlot.description",
         price: 30,
         imageIdentifier: "terreCharlot",
@@ -238,7 +282,9 @@ export const extraCategoriesRaw = {
       },
       {
         id: "bruneCondroz",
-        name: "Brune du Condroz",
+        name: "drinkNames.bruneCondroz", // i18n Key
+        defaultName: "Brune du Condroz (Beer)",
+        defaultFrenchName: "Brune du Condroz",
         descriptionKey: "extras.drinks.bruneCondroz.description",
         price: 4,
         imageIdentifier: "bruneCondroz",
@@ -246,7 +292,9 @@ export const extraCategoriesRaw = {
       },
       {
         id: "ambreeCondroz",
-        name: "Ambrée du Condroz",
+        name: "drinkNames.ambreeCondroz", // i18n Key
+        defaultName: "Ambrée du Condroz (Beer)",
+        defaultFrenchName: "Ambrée du Condroz",
         descriptionKey: "extras.drinks.ambreeCondroz.description",
         price: 4,
         imageIdentifier: "ambreeCondroz",
@@ -254,7 +302,9 @@ export const extraCategoriesRaw = {
       },
       {
         id: "tripleCondroz",
-        name: "Triple du Condroz",
+        name: "drinkNames.tripleCondroz", // i18n Key
+        defaultName: "Triple du Condroz (Beer)",
+        defaultFrenchName: "Triple du Condroz",
         descriptionKey: "extras.drinks.tripleCondroz.description",
         price: 4,
         imageIdentifier: "tripleCondroz",
@@ -262,7 +312,9 @@ export const extraCategoriesRaw = {
       },
       {
         id: "blancheCondroz",
-        name: "Blanche du Condroz",
+        name: "drinkNames.blancheCondroz", // i18n Key
+        defaultName: "Blanche du Condroz (Beer)",
+        defaultFrenchName: "Blanche du Condroz",
         descriptionKey: "extras.drinks.blancheCondroz.description",
         price: 4,
         imageIdentifier: "blancheCondroz",
@@ -270,7 +322,9 @@ export const extraCategoriesRaw = {
       },
       {
         id: "appleJuice",
-        name: 'Jus de pomme « Pom d"Happy »',
+        name: "drinkNames.appleJuice", // i18n Key
+        defaultName: 'Apple Juice "Pom d\'Happy"',
+        defaultFrenchName: "Jus de pomme « Pom d'Happy »",
         descriptionKey: "extras.drinks.appleJuice.description",
         price: 3,
         imageIdentifier: "pomHappy",
@@ -278,7 +332,9 @@ export const extraCategoriesRaw = {
       },
       {
         id: "ritchieLemonRasp",
-        name: "Ritchie Citron/Framboise",
+        name: "drinkNames.ritchieLemonRasp", // i18n Key
+        defaultName: "Ritchie Lemon/Raspberry",
+        defaultFrenchName: "Ritchie Citron/Framboise",
         descriptionKey: "extras.drinks.ritchieLemonRasp.description",
         price: 3,
         imageIdentifier: "ritchieCitronFramboise",
@@ -286,15 +342,19 @@ export const extraCategoriesRaw = {
       },
       {
         id: "ritchieOrangeVan",
-        name: "Ritchie Orange/Vanille",
+        name: "drinkNames.ritchieOrangeVan", // i18n Key
+        defaultName: "Ritchie Orange/Vanilla",
+        defaultFrenchName: "Ritchie Orange/Vanille",
         descriptionKey: "extras.drinks.ritchieOrangeVan.description",
         price: 3,
-        imageIdentifier: "ritchieOrange", // Assuming identifier is 'ritchieOrange'
+        imageIdentifier: "ritchieOrange",
         typeKey: "extras.drinkTypes.soft",
       },
       {
         id: "ritchieCola",
-        name: "Ritchie Cola",
+        name: "drinkNames.ritchieCola", // i18n Key
+        defaultName: "Ritchie Cola",
+        defaultFrenchName: "Ritchie Cola",
         descriptionKey: "extras.drinks.ritchieCola.description",
         price: 3,
         imageIdentifier: "ritchieCola",
@@ -302,10 +362,12 @@ export const extraCategoriesRaw = {
       },
       {
         id: "ritchieColaZero",
-        name: "Ritchie Cola Zéro",
+        name: "drinkNames.ritchieColaZero", // i18n Key
+        defaultName: "Ritchie Cola Zero",
+        defaultFrenchName: "Ritchie Cola Zéro",
         descriptionKey: "extras.drinks.ritchieColaZero.description",
         price: 3,
-        imageIdentifier: "ritchieColaZero", // Assuming identifier is 'ritchieColaZero'
+        imageIdentifier: "ritchieColaZero",
         typeKey: "extras.drinkTypes.soft",
       },
     ],
@@ -314,7 +376,7 @@ export const extraCategoriesRaw = {
 
 export const ALL_DRINK_ITEMS_MAP_RAW = extraCategoriesRaw.boissons.items.reduce(
   (acc, item) => {
-    acc[item.id] = item;
+    acc[item.id] = item; // item now contains 'name' as i18n key, and default names
     return acc;
   },
   {}
@@ -323,8 +385,8 @@ export const ALL_DRINK_ITEMS_MAP_RAW = extraCategoriesRaw.boissons.items.reduce(
 export const DRINK_OFFER_CONFIG_RAW = {
   WINE_OFFER_1: {
     key: "WINE_OFFER_1",
-    titleKey: "extras.drinks.wineOfferTitle",
-    defaultTitle: "Choix de Vin Inclus (1 bouteille)",
+    titleKey: "extras.drinks.wineOfferTitle", // This is an i18n key for the offer title
+    defaultTitle: "Choix de Vin Inclus (1 bouteille)", // Fallback French title
     triggeringExtras: [
       "formuleGourmet",
       "formuleRaclette",
@@ -335,14 +397,15 @@ export const DRINK_OFFER_CONFIG_RAW = {
       "packBbqDetente",
     ],
     drinks: [
+      // For radio button display on client - these nameKeys should match individual drink keys
       {
         id: "cortilBarco",
-        nameKey: "extras.drinks.cortilBarcoLabel",
+        nameKey: "drinkNames.cortilBarco",
         defaultName: "Cortil Barco (rouge)",
       },
       {
         id: "terreCharlot",
-        nameKey: "extras.drinks.terreCharlotLabel",
+        nameKey: "drinkNames.terreCharlot",
         defaultName: "Terre Charlot (blanc)",
       },
     ],
@@ -369,17 +432,21 @@ export const DRINK_OFFER_CONFIG_RAW = {
 };
 
 export const getExtraByIdRaw = (id) => {
-  for (const category of Object.values(extraCategoriesRaw)) {
+  if (!id) return null;
+  for (const categoryKey in extraCategoriesRaw) {
+    const category = extraCategoriesRaw[categoryKey];
     if (category.items && Array.isArray(category.items)) {
-      const item = category.items.find((item) => item.id === id);
+      const item = category.items.find(
+        (item) => String(item.id) === String(id)
+      );
       if (item) return item;
     }
   }
   return null;
 };
 
-// This helper can still use getExtraByIdRaw as price is not image dependent
 export const calculateExtrasTotalRaw = (selectedExtras) => {
+  /* ... as before ... */
   if (!selectedExtras || typeof selectedExtras !== "object") return 0;
   return Object.entries(selectedExtras).reduce((total, [extraId, quantity]) => {
     const extra = getExtraByIdRaw(extraId);
