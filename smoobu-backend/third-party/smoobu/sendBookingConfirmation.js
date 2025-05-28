@@ -1,5 +1,3 @@
-// File: third-party/smoobu/sendBookingConfirmation.js
-
 import { transporter } from "../../config/nodemailer.js";
 import { format as formatFn, addMinutes } from "date-fns";
 import { fr, enUS, nl } from "date-fns/locale";
@@ -41,8 +39,10 @@ const getJsDateForEmail = (dateValue) => {
     }
     const d = new Date(dateValue);
     if (!isNaN(d.getTime())) return d;
+    console.warn("[EmailUtil] Could not parse date:", dateValue);
     return null;
   } catch (e) {
+    console.error("[EmailUtil] Error parsing date:", dateValue, e);
     return null;
   }
 };
@@ -59,17 +59,8 @@ const formatDateForEmail = (dateInput, lang = "fr") => {
   }
 };
 
-const formatTimeForEmail = (dateInput, lang = "fr") => {
-  const date = getJsDateForEmail(dateInput);
-  if (!date) return "N/A";
-  try {
-    return formatFn(date, "HH:mm", { locale: getEmailDateFnLocale(lang) });
-  } catch (e) {
-    return "N/A";
-  }
-};
-
 // Simple Email Text Translation Store (Expand this as needed)
+// ADD new keys for free drinks and non-alcoholic choice.
 const emailTexts = {
   fr: {
     subject: "Confirmation de réservation - Ferme de Basseilles",
@@ -88,7 +79,7 @@ const emailTexts = {
     spaScheduleLaterInstruction:
       "Pour planifier votre séance SPA, veuillez nous contacter par email ou téléphone.",
     spaContactEmail: "fermedebasseilles@gmail.com",
-    spaContactPhone: "+32 475 20 16 19", // Add phone if applicable
+    spaContactPhone: "+32 475 20 16 19",
     spaScheduleLaterPriority:
       "Note : Les créneaux sont attribués selon le principe du premier arrivé, premier servi.",
     priceDetails: "Détails des prix",
@@ -96,18 +87,23 @@ const emailTexts = {
     guestFees: "Frais pour {{persons}} personnes supplémentaires",
     longStayDiscount: "Réduction long séjour ({{percentage}}%)",
     promoCode: "Code promo ({{code}})",
-    extras: "Extras",
+    extras: "Extras Payants", // Changed from "Extras" to be specific
+    freeDrinksTitle: "Boissons Offertes", // NEW
+    nonAlcoholicChoiceTitle: "Choix de Boisson Non-Alcoolisée", // NEW
+    nonAlcoholicChoiceInstruction:
+      "Pour votre offre '{{grantor}}', vous avez choisi de sélectionner une boisson non-alcoolisée ultérieurement. Veuillez nous contacter pour préciser votre choix :", // NEW
+    nonAlcoholicChoiceContact: "Contactez-nous pour votre choix", // NEW
     total: "Total",
     contactInfo: "Vos coordonnées",
     phone: "Téléphone",
     closing: "Nous avons hâte de vous accueillir !",
     team: "L'équipe de la Ferme de Basseilles",
     addressTitle: "Adresse de la propriété",
-    propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), Belgique", // Add your actual address
+    propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), Belgique",
     viewOnMap: "Voir sur la carte",
+    included: "Inclus", // NEW - For free drinks price column
   },
   en: {
-    // Example, fill out completely
     subject: "Booking Confirmation - Ferme de Basseilles",
     greeting: "Dear {{guestName}},",
     confirmationMessage:
@@ -129,10 +125,15 @@ const emailTexts = {
       "Note: Slots are assigned on a first-come, first-served basis.",
     priceDetails: "Price Details",
     basePrice: "Base Price",
-    guestFees: "Fee for {{persons}} extra persons", // Or similar
+    guestFees: "Fee for {{persons}} extra persons",
     longStayDiscount: "Long stay discount ({{percentage}}%)",
     promoCode: "Promo code ({{code}})",
-    extras: "Extras",
+    extras: "Paid Extras", // Changed
+    freeDrinksTitle: "Complimentary Drinks", // NEW
+    nonAlcoholicChoiceTitle: "Non-Alcoholic Drink Choice", // NEW
+    nonAlcoholicChoiceInstruction:
+      "For your '{{grantor}}' offer, you've chosen to select a non-alcoholic beverage later. Please contact us to specify your choice:", // NEW
+    nonAlcoholicChoiceContact: "Contact us for your choice", // NEW
     total: "Total",
     contactInfo: "Your Contact Information",
     phone: "Phone",
@@ -141,9 +142,9 @@ const emailTexts = {
     addressTitle: "Property Address",
     propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), Belgium",
     viewOnMap: "View on Map",
+    included: "Included", // NEW
   },
   nl: {
-    // Example, fill out completely
     subject: "Boekingsbevestiging - Ferme de Basseilles",
     greeting: "Beste {{guestName}},",
     confirmationMessage:
@@ -161,14 +162,19 @@ const emailTexts = {
       "Om uw SPA-sessie te plannen, neem contact met ons op via e-mail of telefoon:",
     spaContactEmail: "fermedebasseilles@gmail.com",
     spaContactPhone: "+32 475 20 16 19",
-    guestFees: "Kosten voor {{persons}} extra personen", // Or similar
-    longStayDiscount: "Korting voor lang verblijf ({{percentage}}%)",
-    promoCode: "Promotiecode({{code}})",
     spaScheduleLaterPriority:
       "Let op: Tijdsloten worden toegewezen op basis van wie het eerst komt, het eerst maalt.",
     priceDetails: "Prijsdetails",
     basePrice: "Basisprijs",
-    extras: "Extra's",
+    guestFees: "Kosten voor {{persons}} extra personen",
+    longStayDiscount: "Korting voor lang verblijf ({{percentage}}%)",
+    promoCode: "Promotiecode({{code}})",
+    extras: "Betaalde Extra's", // Changed
+    freeDrinksTitle: "Gratis Dranken", // NEW
+    nonAlcoholicChoiceTitle: "Keuze Niet-Alcoholische Drank", // NEW
+    nonAlcoholicChoiceInstruction:
+      "Voor uw '{{grantor}}' aanbod heeft u gekozen om later een niet-alcoholische drank te selecteren. Neem contact met ons op om uw keuze door te geven:", // NEW
+    nonAlcoholicChoiceContact: "Neem contact op voor uw keuze", // NEW
     total: "Totaal",
     contactInfo: "Uw contactgegevens",
     phone: "Telefoon",
@@ -177,6 +183,7 @@ const emailTexts = {
     addressTitle: "Adres van de accommodatie",
     propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), België",
     viewOnMap: "Bekijk op kaart",
+    included: "Inbegrepen", // NEW
   },
 };
 
@@ -193,27 +200,14 @@ const SPA_ITEM_IDS = [
   "packBbqRomantique",
 ];
 
-const renderEmailExtraName = (extraNameKey, lang) => {
-  const T = emailTexts[lang] || emailTexts.fr;
-  if (!extraNameKey) return T.extras || "Extra"; // Fallback to generic "Extras"
-
-  // Simple direct lookup for flat keys, or adapt for dot notation if needed
-  // This assumes your extra names are simple keys within the language object (e.g., T[extraNameKey])
-  // or you have a nested structure like T.extras_category_item_name
-  // For this example, let's assume extraNameKey IS the full i18n key e.g. "extras.packs.essential.name"
-  const path = extraNameKey.split(".");
-  let current = T;
-  for (let i = 0; i < path.length; i++) {
-    if (current[path[i]] === undefined) {
-      // Fallback: try to make the key itself more readable
-      const readableKey = path[path.length - 1]
-        .replace(/([A-Z])/g, " $1")
-        .replace(/^./, (str) => str.toUpperCase());
-      return readableKey || extraNameKey;
-    }
-    current = current[path[i]];
-  }
-  return typeof current === "string" ? current : extraNameKey;
+const renderEmailExtraName = (extraName, lang, T_override = null) => {
+  // `extraName` is assumed to be the final display string from bookingDoc.
+  // No complex translation logic needed here if prepareBookingDocument did its job.
+  return (
+    extraName ||
+    (T_override || emailTexts[lang] || emailTexts.fr).extras ||
+    "Extra"
+  );
 };
 
 export const sendBookingConfirmation = async (bookingData) => {
@@ -222,9 +216,10 @@ export const sendBookingConfirmation = async (bookingData) => {
   const brandColor = "#668E73"; // Your brand green
 
   let spaSectionHtml = "";
+  // ... (existing spaSectionHtml logic - this seems fine) ...
   const hasSpaExtra = bookingData.extras?.some((extra) =>
-    SPA_ITEM_IDS.includes(extra.id)
-  );
+    SPA_ITEM_IDS.includes(extra.id || extra.smoobuId)
+  ); // Check extra.id OR extra.smoobuId if that's what you have
   const isSpaPreferenceSet =
     bookingData.spaBookingPreference &&
     bookingData.spaBookingPreference !== "none";
@@ -240,40 +235,63 @@ export const sendBookingConfirmation = async (bookingData) => {
       );
       let spaEndJsDate = getJsDateForEmail(bookingData.spaInfo.endDateTime);
 
+      // Fallback for spaEndJsDate if not directly available but calculable
       if (
         !spaEndJsDate &&
         spaStartJsDate &&
-        bookingData.spaInfo.slots?.length > 0 &&
-        bookingData.spaSettings?.slotDurationMinutes
+        bookingData.spaInfo?.slots?.length > 0 &&
+        bookingData.priceDetailsSnapshot?.spaSettings?.slotDurationMinutes
       ) {
+        // Using priceDetailsSnapshot.spaSettings as per one of your earlier files. Adjust if spaSettings is elsewhere in bookingDoc.
         const totalDuration =
           bookingData.spaInfo.slots.length *
-          bookingData.spaSettings.slotDurationMinutes;
+          bookingData.priceDetailsSnapshot.spaSettings.slotDurationMinutes;
         if (totalDuration > 0)
           spaEndJsDate = addMinutes(spaStartJsDate, totalDuration);
+      } else if (
+        !spaEndJsDate &&
+        spaStartJsDate &&
+        bookingData.spaSlotDuration &&
+        typeof bookingData.spaSlotDuration === "number" &&
+        bookingData.spaSlotDuration > 0
+      ) {
+        // Fallback if spaSlotDuration is directly on bookingData
+        spaEndJsDate = addMinutes(spaStartJsDate, bookingData.spaSlotDuration);
       }
 
       if (spaStartJsDate && spaEndJsDate) {
         const emailLocale = getEmailDateFnLocale(lang);
         const datePart = formatFn(spaStartJsDate, "PPPP", {
           locale: emailLocale,
-        }); // PPPP for full date
+        });
         const startTimePart = formatFn(spaStartJsDate, "HH:mm", {
           locale: emailLocale,
         });
         const endTimePart = formatFn(spaEndJsDate, "HH:mm", {
           locale: emailLocale,
         });
-
         const spaTimeText = T.spaScheduledFormat
           .replace("{{date}}", `<strong>${datePart}</strong>`)
           .replace("{{startTime}}", `<strong>${startTimePart}</strong>`)
           .replace("{{endTime}}", `<strong>${endTimePart}</strong>`);
-
         spaSectionHtml = `
           <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;">
             <h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.spaScheduledTitle}</h3>
             <p style="margin: 0; font-size: 0.95em; color: #333;">${spaTimeText}</p>
+          </div>`;
+      } else if (spaStartJsDate) {
+        // Only start time available
+        const emailLocale = getEmailDateFnLocale(lang);
+        const datePart = formatFn(spaStartJsDate, "PPPP", {
+          locale: emailLocale,
+        });
+        const startTimePart = formatFn(spaStartJsDate, "HH:mm", {
+          locale: emailLocale,
+        });
+        spaSectionHtml = `
+          <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;">
+            <h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.spaScheduledTitle}</h3>
+            <p style="margin: 0; font-size: 0.95em; color: #333;">Date: <strong>${datePart}</strong>, Heure: <strong>${startTimePart}</strong> (Fin non spécifiée)</p>
           </div>`;
       }
     } else if (bookingData.spaBookingPreference === "later") {
@@ -300,9 +318,106 @@ export const sendBookingConfirmation = async (bookingData) => {
     }
   }
 
+  // --- NEW: Generate HTML for Free Drinks ---
+  let freeDrinksHtml = "";
+  if (
+    bookingData.processedFreeDrinks &&
+    bookingData.processedFreeDrinks.length > 0
+  ) {
+    freeDrinksHtml += `<h3 style="font-size: 1em; color: #4A5568; margin-top:15px; margin-bottom:5px;">${T.freeDrinksTitle}</h3>`;
+    bookingData.processedFreeDrinks.forEach((drink) => {
+      // drink.name is already prepared by prepareBookingDocument (e.g., "Package: Drink Name")
+      freeDrinksHtml += `
+        <p class="extra-item" style="color: #228B22;">${drink.name} (x${
+        drink.quantity || 1
+      })
+          <span style="float:right;">${T.included}</span>
+        </p>`;
+    });
+  }
+
+  // --- NEW: Generate HTML for Non-Alcoholic Choice Later ---
+  let nonAlcoholicChoiceHtml = "";
+  if (
+    bookingData.freeDrinkInfo?.needsNonAlcoholicChoice &&
+    bookingData.freeDrinkInfo.nonAlcoholicChoiceGrantors?.length > 0
+  ) {
+    nonAlcoholicChoiceHtml = `
+      <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #fff9e6;"> {/* Light yellow background for emphasis */}
+        <h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.nonAlcoholicChoiceTitle}</h3>`;
+
+    // Loop through grantors to display individual instructions if needed, or a general one
+    bookingData.freeDrinkInfo.nonAlcoholicChoiceGrantors.forEach((grantor) => {
+      nonAlcoholicChoiceHtml += `<p style="margin: 5px 0; font-size: 0.95em; color: #333;">${T.nonAlcoholicChoiceInstruction.replace(
+        "{{grantor}}",
+        `<strong>${grantor}</strong>` // This line correctly personalizes the instruction per grantor
+      )}</p>`;
+    });
+
+    // Prepare variables for the mailto link to keep it cleaner
+    const guestNameForMailto = encodeURIComponent(
+      bookingData.guestName ||
+        `${bookingData.firstName} ${bookingData.lastName}`
+    );
+    const bookingIdForMailto = encodeURIComponent(
+      bookingData.smoobuId || bookingData.id || ""
+    ); // Use Smoobu ID if available, else Firestore ID
+    const arrivalDateForMailto = encodeURIComponent(
+      formatDateForEmail(bookingData.arrivalDate, lang)
+    );
+    const departureDateForMailto = encodeURIComponent(
+      formatDateForEmail(bookingData.departureDate, lang)
+    );
+    const grantorsStringForMailto = encodeURIComponent(
+      bookingData.freeDrinkInfo.nonAlcoholicChoiceGrantors.join(" et ")
+    ); // "Package A et Package B"
+
+    const emailSubjectNonAlcoholic = encodeURIComponent(
+      // Use a generic subject or one from T if you add it
+      `Choix boisson non-alcoolisée - Réservation ${bookingIdForMailto}`
+    );
+    const emailBodyNonAlcoholic = encodeURIComponent(
+      `Bonjour,\n\nConcernant ma réservation (Réf: ${bookingIdForMailto}) du ${arrivalDateForMailto} au ${departureDateForMailto} pour ${guestNameForMailto}.\n\n` +
+        `Pour l'offre de boisson incluse avec ${grantorsStringForMailto}, je souhaiterais une option non-alcoolisée.\n\n` +
+        `Merci de me faire savoir les options disponibles. \n\nCordialement,\n${guestNameForMailto}`
+    );
+
+    // Add the contact information line with mailto and tel links
+    nonAlcoholicChoiceHtml += `
+        <p style="margin: 10px 0 5px 0; font-size: 0.95em;">
+          ${T.nonAlcoholicChoiceContact}: <a href="mailto:${
+      T.spaContactEmail
+    }?subject=${emailSubjectNonAlcoholic}&body=${emailBodyNonAlcoholic}" style="color: ${brandColor}; text-decoration: none;">${
+      T.spaContactEmail
+    }</a>
+          ${
+            T.spaContactPhone
+              ? ` / <a href="tel:${T.spaContactPhone.replace(
+                  /\s/g,
+                  ""
+                )}" style="color: ${brandColor}; text-decoration: none;">${
+                  T.spaContactPhone
+                }</a>`
+              : ""
+          }
+        </p>
+      </div>`; // Close the main div for this section
+  }
+
   const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     T.propertyAddress
   )}`;
+  const finalPrice =
+    bookingData.priceBreakdown?.finalPayableAmount || bookingData.price || 0;
+  const basePriceForEmail =
+    bookingData.priceBreakdown?.roomBasePrice || bookingData.basePrice || 0;
+  const guestFeesForEmail =
+    bookingData.priceBreakdown?.calculatedGuestFees ||
+    bookingData.guestFees ||
+    0;
+  const longStayDiscountForEmail =
+    bookingData.priceBreakdown?.appliedLongStayDiscount || 0;
+  const couponDiscountForEmail = bookingData.couponApplied?.discount || 0;
 
   try {
     const emailContent = `
@@ -330,8 +445,6 @@ export const sendBookingConfirmation = async (bookingData) => {
           .footer a { color: ${brandColor}; text-decoration: none; }
           .extra-item { margin-left: 15px; font-size: 0.9em; }
           .extra-person-item { margin-left: 30px; font-size: 0.8em; color: #555; }
-          .spa-section { margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;}
-          .spa-section h3 { margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;}
         </style>
       </head>
       <body>
@@ -356,7 +469,7 @@ export const sendBookingConfirmation = async (bookingData) => {
               <p><strong>${T.departure}:</strong> ${formatDateForEmail(
       bookingData.departureDate,
       lang
-    )}</p>
+    )} ${bookingData.departureTime ? `à ${bookingData.departureTime}` : ""}</p>
               <p><strong>${T.travelers}:</strong> ${bookingData.adults} ${
       T.adults
     }${
@@ -365,24 +478,33 @@ export const sendBookingConfirmation = async (bookingData) => {
             </div>
 
             ${spaSectionHtml}
+            ${nonAlcoholicChoiceHtml} 
+
 
             <div class="section price-details">
               <h2>${T.priceDetails}</h2>
-              <p><strong>${T.basePrice}:</strong> ${
-      bookingData.basePrice ? bookingData.basePrice.toFixed(2) : "0.00"
-    } EUR</p>
+              <p><strong>${T.basePrice}:</strong> ${basePriceForEmail.toFixed(
+      2
+    )} EUR</p>
               ${
-                bookingData.guestFees > 0
+                guestFeesForEmail > 0
                   ? `<p><strong>${T.guestFees.replace(
                       "{{persons}}",
-                      Math.max(
-                        0,
-                        (parseInt(bookingData.adults) || 0) +
-                          (parseInt(bookingData.children) || 0) -
-                          (bookingData.priceDetails?.settings
-                            ?.startingAtGuest || 2)
+                      String(
+                        Math.max(
+                          0,
+                          (Number(bookingData.adults) || 0) +
+                            (Number(bookingData.children) || 0) -
+                            Number(
+                              bookingData.priceDetailsSnapshot?.settings
+                                ?.startingAtGuest ||
+                                bookingData.priceBreakdown?.settings
+                                  ?.startingAtGuest ||
+                                2
+                            )
+                        )
                       )
-                    )}:</strong> ${bookingData.guestFees.toFixed(2)} EUR</p>`
+                    )}:</strong> ${guestFeesForEmail.toFixed(2)} EUR</p>`
                   : ""
               }
               
@@ -396,16 +518,18 @@ export const sendBookingConfirmation = async (bookingData) => {
                   (extra) => `
                 <p class="extra-item">${renderEmailExtraName(
                   extra.name,
-                  lang
-                )} (x${extra.quantity}): ${(extra.amount || 0).toFixed(
+                  lang,
+                  T
+                )} (x${extra.quantity || 1}): ${(extra.amount || 0).toFixed(
                     2
                   )} EUR</p>
                 ${
-                  extra.extraPersonQuantity > 0
+                  extra.hasExtraPerson && extra.extraPersonAmount > 0
                     ? `<p class="extra-person-item">${renderEmailExtraName(
-                        extra.extraPersonNameKey || "extras.additionalPerson",
-                        lang
-                      )} (x${extra.extraPersonQuantity}): ${(
+                        extra.extraPersonName,
+                        lang,
+                        T
+                      )} (x${extra.extraPersonQuantity || 1}): ${(
                         extra.extraPersonAmount || 0
                       ).toFixed(2)} EUR</p>`
                     : ""
@@ -414,19 +538,24 @@ export const sendBookingConfirmation = async (bookingData) => {
                 )
                 .join("")}
               
+              ${freeDrinksHtml} 
+
               ${
-                bookingData.priceDetails?.longStayDiscount > 0
+                longStayDiscountForEmail > 0
                   ? `<p style="color: #228B22;">${T.longStayDiscount.replace(
                       "{{percentage}}",
-                      bookingData.priceDetails.settings?.lengthOfStayDiscount
-                        ?.discountPercentage || ""
-                    )}: -${bookingData.priceDetails.longStayDiscount.toFixed(
-                      2
-                    )} EUR</p>`
+                      String(
+                        bookingData.priceDetailsSnapshot?.settings
+                          ?.lengthOfStayDiscount?.discountPercentage ||
+                          bookingData.priceBreakdown?.settings
+                            ?.lengthOfStayDiscount?.discountPercentage ||
+                          ""
+                      )
+                    )}: -${longStayDiscountForEmail.toFixed(2)} EUR</p>`
                   : ""
               }
               ${
-                bookingData.couponApplied
+                bookingData.couponApplied && couponDiscountForEmail > 0
                   ? `<p style="color: #228B22;">${T.promoCode.replace(
                       "{{code}}",
                       bookingData.couponApplied.code
@@ -434,14 +563,13 @@ export const sendBookingConfirmation = async (bookingData) => {
                       bookingData.couponApplied.type === "percentage"
                         ? `(${bookingData.couponApplied.percentageValue}%)`
                         : ""
-                    }: -${(bookingData.couponApplied.discount || 0).toFixed(
-                      2
-                    )} EUR</p>`
+                    }: -${couponDiscountForEmail.toFixed(2)} EUR</p>`
                   : ""
               }
-              <p class="total-price">${T.total}: ${
-      bookingData.price ? bookingData.price.toFixed(2) : "0.00"
-    } EUR</p>
+              
+              <p class="total-price">${T.total}: ${finalPrice.toFixed(
+      2
+    )} EUR</p>
             </div>
 
             <div class="section">
@@ -475,17 +603,19 @@ export const sendBookingConfirmation = async (bookingData) => {
     `;
 
     await transporter.sendMail({
-      from: `Ferme de Basseilles <${process.env.EMAIL_USER}>`,
+      from: `Ferme de Basseilles <${process.env.EMAIL_USER}>`, // Ensure EMAIL_USER is set
       to: bookingData.email,
       subject: T.subject,
       html: emailContent,
     });
 
     console.log(
-      "Modern confirmation email sent successfully to:",
+      "🟩 Email: Modern confirmation email sent successfully to:",
       bookingData.email
     );
   } catch (error) {
-    console.error("Error sending modern confirmation email:", error);
+    console.error("🟥 Email: Error sending modern confirmation email:", error);
+    // Rethrow or handle as per your application's error strategy
+    // throw error; // if you want the caller (storeBookingInFirebase) to know about it
   }
 };

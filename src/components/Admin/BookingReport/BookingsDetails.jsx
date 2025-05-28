@@ -6,6 +6,7 @@ import BookingInfoSection from "./sections/BookingInfoSection.jsx";
 import PriceDetailsSection from "./sections/PriceDetailsSection.jsx";
 import ExtrasDetailsSection from "./sections/ExtrasDetailsSection.jsx";
 import SpaDetailsSection from "./sections/SpaDetailsSection.jsx";
+import FreeDrinksDetailsSection from "./sections/FreeDrinksDetailsSection.jsx";
 import { mergeAndSortExtras, getCleanExtrasFromPriceElements } from "./utils/extrasUtils.js";
 
 /**
@@ -157,6 +158,15 @@ const BookingDetails = ({ booking }) => {
                 Aucune réservation SPA pour ce séjour
               </p>
             </div>
+          </div>
+        )}
+
+        {(booking.processedFreeDrinks?.length > 0 ||
+          booking.freeDrinkInfo?.needsNonAlcoholicChoice) && (
+          <div className="md:col-span-2 lg:col-span-4">
+            {" "}
+            {/* Takes full width on medium and large */}
+            <FreeDrinksDetailsSection booking={booking} />
           </div>
         )}
       </div>

@@ -1,150 +1,218 @@
+// src/api/webhook/index.js (or your main webhook file)
+
 import { validateWebhook } from "./validate-webhook.js";
 import { createSmoobuReservation } from "./create-smoobu-reservation.js";
 import {
   addBasePriceToReservation,
   addGuestFeesToReservation,
-  addExtrasToReservation,
+  addExtrasToReservation, // For PAID extras from bookingDoc.extras
   addDiscountsToReservation,
 } from "./add-price-elements.js";
 import { storeBookingInFirebase } from "./store-booking.js";
 import { updateCouponUsage } from "./update-coupon-usage.js";
-import { wait } from "../../../helpers/wait.js";
+import { wait } from "../../../helpers/wait.js"; // Ensure this helper exists
 
-// Keep track of the pending bookings
-let pendingBookings = new Map();
+// Manage pendingBookings:
+// If create-payment-intent.js is in a separate module/process, this Map won't be shared.
+// You'll need a more robust shared store (e.g., Redis, temporary Firestore collection).
+// For now, assuming it's accessible if in the same process.
+export let pendingBookings = new Map(); // Export if create-payment-intent needs to set it.
 
 export const handleWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   const apiKey = process.env.SMOOBU_API_KEY;
 
-  // Step 1: Validate the webhook
-  const { valid, event, error } = await validateWebhook(
-    req,
-    sig,
-    webhookSecret
+  if (!webhookSecret || !apiKey) {
+    console.error(
+      "🟥 Webhook Error: Missing STRIPE_WEBHOOK_SECRET or SMOOBU_API_KEY in environment variables."
+    );
+    return res.status(500).send("Webhook configuration error.");
+  }
+
+  const {
+    valid,
+    event,
+    error: validationError,
+  } = await validateWebhook(req, sig, webhookSecret);
+  if (!valid) {
+    console.error("🟥 Webhook validation failed:", validationError);
+    return res.status(400).send(`Webhook Error: ${validationError}`);
+  }
+
+  if (event.type !== "payment_intent.succeeded") {
+    console.log(`ℹ️ Webhook: Received event type ${event.type}, ignoring.`);
+    return res.json({
+      received: true,
+      processed: false,
+      reason: "Event type not payment_intent.succeeded",
+    });
+  }
+
+  const paymentIntent = event.data.object;
+  console.log(
+    `🟩 Webhook: Processing payment_intent.succeeded: ${paymentIntent.id}`
   );
 
-  if (!valid) {
-    console.error("🟥 Webhook validation failed:", error);
-    return res.status(400).send(`Webhook Error: ${error}`);
+  const bookingReference = paymentIntent.metadata.bookingReference;
+  if (!bookingReference) {
+    console.error(
+      "🟥 Webhook Error: payment_intent.succeeded missing bookingReference in metadata.",
+      paymentIntent.metadata
+    );
+    return res
+      .status(400)
+      .send("Missing bookingReference in payment intent metadata.");
   }
 
-  // Only handle payment_intent.succeeded events
-  if (event.type !== "payment_intent.succeeded") {
-    return res.json({ received: true });
+  const bookingData = pendingBookings.get(bookingReference);
+  if (!bookingData) {
+    console.warn(
+      `⚠️ Webhook: No pending booking data found for reference: ${bookingReference}. May have already been processed or cleared.`
+    );
+    return res
+      .status(200)
+      .json({
+        received: true,
+        processed: false,
+        reason: `No pending data for ${bookingReference}`,
+      });
   }
+  console.log(
+    `🟩 Webhook: Retrieved pending booking data for reference: ${bookingReference}`
+  );
+
+  let reservationId; // To store Smoobu reservation ID for potential cleanup on error
 
   try {
-    const paymentIntent = event.data.object;
-
-    const bookingReference = paymentIntent.metadata.bookingReference;
-
-    const bookingData = pendingBookings.get(bookingReference);
-
-    if (!bookingData) {
-      console.error("No booking data found for reference:", bookingReference);
-      return res.status(400).send("No booking data found");
-    }
-
     // Step 2: Create reservation in Smoobu
-    const {
-      success: reservationSuccess,
-      reservationId,
-      error: reservationError,
-    } = await createSmoobuReservation(bookingData);
-
-    if (!reservationSuccess) {
+    const smoobuResult = await createSmoobuReservation(bookingData, apiKey);
+    if (!smoobuResult.success || !smoobuResult.reservationId) {
       console.error(
-        "🟥 Failed to create Smoobu reservation:",
-        reservationError
+        `🟥 Smoobu: Failed to create reservation for ${bookingReference}:`,
+        smoobuResult.error
       );
-      return res.status(500).send("Failed to create Smoobu reservation");
+      return res
+        .status(500)
+        .send(`Failed to create Smoobu reservation: ${smoobuResult.error}`);
     }
-
-    // Step 3: Store booking in Firebase
-    const { success: storageSuccess, error: storageError } =
-      await storeBookingInFirebase(bookingData, paymentIntent, reservationId);
-
-    if (!storageSuccess) {
-      console.error("🟥 Failed to store booking in Firebase:", storageError);
-      return res.status(500).send("Failed to store booking in Firebase");
-    }
-
-    await wait(2000);
-
-    // Step 4: Add price elements to Smoobu
-    // 4.1: Add base price
-    const { success: basePriceSuccess } = await addBasePriceToReservation(
-      reservationId,
-      bookingData.basePrice,
-      apiKey
+    reservationId = smoobuResult.reservationId;
+    console.log(
+      `🟩 Smoobu: Reservation ${reservationId} created successfully for ${bookingReference}.`
     );
 
-    if (!basePriceSuccess) {
-      console.error("🟥 Failed to add base price to Smoobu");
-    }
+    // Step 3: Store booking in Firebase (this calls prepareBookingDocument internally)
+    const {
+      success: storageSuccess,
+      error: storageError,
+      bookingDoc,
+    } = await storeBookingInFirebase(bookingData, paymentIntent, reservationId);
 
-    await wait(1000);
-
-    // 4.2: Add guest fees if present
-    if (bookingData.guestFees > 0) {
-      const { success: guestFeesSuccess } = await addGuestFeesToReservation(
-        reservationId,
-        bookingData,
-        apiKey
+    if (!storageSuccess || !bookingDoc) {
+      console.error(
+        `🟥 Firebase Store: Failed for ${bookingReference}, SmoobuID ${reservationId}:`,
+        storageError
       );
+      return res
+        .status(500)
+        .send(`Failed to store booking in Firebase: ${storageError}`);
+    }
+    console.log(
+      `🟩 Firebase Store: Booking stored for ${bookingReference}, Firebase Doc ID ${
+        bookingDoc.id || "N/A"
+      }.`
+    );
 
-      if (!guestFeesSuccess) {
-        console.error("🟥 Failed to add guest fees to Smoobu");
-      }
+    await wait(1500); // Short delay
 
+    // Step 4: Add price elements to Smoobu (using data from bookingDoc)
+    console.log(
+      `ℹ️ Smoobu: Adding price elements for reservation ${reservationId}...`
+    );
+
+    // 4.1: Base Price
+    const basePrice =
+      bookingDoc.basePrice || bookingDoc.priceBreakdown?.roomBasePrice;
+    if (basePrice !== undefined && basePrice > 0) {
+      console.log(
+        "🔑 Webhook: API Key before addBasePrice:",
+        apiKey ? `VALID (ends ...${apiKey.slice(-4)})` : "INVALID/MISSING"
+      );
+      await addBasePriceToReservation(reservationId, basePrice, apiKey); // apiKey passed
       await wait(1000);
     }
 
-    // 4.3: Add extras if present
-    if (bookingData.extras?.length > 0) {
-      const { success: extrasSuccess } = await addExtrasToReservation(
-        reservationId,
-        bookingData.extras,
-        apiKey
+    // 4.2: Guest Fees
+    const guestFees =
+      bookingDoc.guestFees || bookingDoc.priceBreakdown?.calculatedGuestFees;
+    if (guestFees !== undefined && guestFees > 0) {
+      console.log(
+        "🔑 Webhook: API Key before addGuestFees:",
+        apiKey ? `VALID (ends ...${apiKey.slice(-4)})` : "INVALID/MISSING"
       );
+      await addGuestFeesToReservation(reservationId, bookingDoc, apiKey); // apiKey passed
+      await wait(1000);
+    }
 
-      if (!extrasSuccess) {
-        console.error("🟥 Failed to add extras to Smoobu");
+    // 4.3: PAID Extras (from bookingDoc.extras)
+    if (bookingDoc.extras && bookingDoc.extras.length > 0) {
+      await addExtrasToReservation(reservationId, bookingDoc.extras, apiKey);
+      await wait(1000);
+    }
+
+    // 4.4: Discounts
+    if (
+      bookingDoc.couponApplied ||
+      bookingDoc.priceBreakdown?.appliedLongStayDiscount > 0
+    ) {
+      await addDiscountsToReservation(reservationId, bookingDoc, apiKey);
+      await wait(1000);
+    }
+
+
+    // Step 5: Update coupon usage
+    if (bookingDoc.couponApplied?.code) {
+      const { success: couponSuccess, error: couponError } =
+        await updateCouponUsage(
+          bookingDoc.couponApplied,
+          reservationId.toString()
+        );
+      if (!couponSuccess) {
+        console.warn(
+          `⚠️ Firebase Coupon: Failed to update usage for coupon ${bookingDoc.couponApplied.code}:`,
+          couponError
+        );
+      } else {
+        console.log(
+          `🟩 Firebase Coupon: Usage updated for ${bookingDoc.couponApplied.code}.`
+        );
       }
     }
 
-    // 4.4: Add discounts
-    const { success: discountsSuccess } = await addDiscountsToReservation(
-      reservationId,
-      bookingData,
-      apiKey
+    // Step 6: Clean up pending booking
+    pendingBookings.delete(bookingReference);
+    console.log(
+      `🟩 Cleanup: Pending booking data for reference ${bookingReference} cleared.`
     );
 
-    if (!discountsSuccess) {
-      console.error("🟥 Failed to add one or more discounts to Smoobu");
-    }
-
-    // Step 5: Update coupon usage in Firebase if present
-    if (bookingData.couponApplied?.code) {
-      const { success: couponSuccess } = await updateCouponUsage(bookingData);
-
-      if (!couponSuccess) {
-        console.error("🟥 Failed to update coupon usage");
-      }
-    }
-
-    // Step 6: Clean up
-    pendingBookings.delete(bookingReference);
-
-    console.log("🟩 Booking process completed successfully");
-    return res.json({ received: true });
+    console.log(
+      `✅ Webhook: Full booking process completed for Smoobu ID ${reservationId}.`
+    );
+    return res.json({
+      received: true,
+      processed: true,
+      message: "Booking processed successfully.",
+    });
   } catch (err) {
-    console.error("🟥 Webhook processing error:", err);
+    console.error(
+      `🟥 Webhook: Unhandled error during processing for ${
+        bookingReference || paymentIntent.id
+      }:`,
+      err.message,
+      err.stack
+    );
+    // Consider what to do with pendingBookings. If it's a transient error, Stripe will retry.
+    // If it's a permanent error with the data, retries won't help.
     return res.status(500).send(`Webhook processing error: ${err.message}`);
   }
 };
-
-// Export pendingBookings to be accessed from outside
-export { pendingBookings };

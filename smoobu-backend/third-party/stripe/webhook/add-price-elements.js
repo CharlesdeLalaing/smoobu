@@ -1,230 +1,458 @@
+// src/api/webhook/add-price-elements.js
 import axios from "axios";
-import { wait } from "../../../helpers/wait.js";
+import { wait } from "../../../helpers/wait.js"; // Ensure this helper exists and works
+// extrasFrenchNames is imported but might not be heavily used if bookingDoc provides final names.
+// It's good to have it available for any static keys if needed.
 import { extrasFrenchNames } from "../../../config/config.js";
 
+// --- Add Base Price ---
 export const addBasePriceToReservation = async (
   reservationId,
-  basePrice,
+  basePrice, // From bookingDoc.basePrice or bookingDoc.priceBreakdown.roomBasePrice
   apiKey
 ) => {
+  if (basePrice === undefined || basePrice === null || basePrice <= 0) {
+    console.log(
+      `ℹ️ Smoobu: No positive base price to add for reservation ${reservationId}. Value: ${basePrice}`
+    );
+    return { success: true, message: "No positive base price to add." };
+  }
   try {
     await axios.post(
       `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
       {
         type: "base",
-        name: "Prix de base",
-        amount: basePrice,
+        name: "Prix de base", // Static French name
+        amount: parseFloat(basePrice.toFixed(2)),
         quantity: 1,
         currencyCode: "EUR",
       },
       {
         headers: {
-          "Api-Key": apiKey || process.env.SMOOBU_API_KEY,
+          "Api-Key": apiKey,
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
         },
       }
     );
+    console.log(
+      `🟩 Smoobu: Base price (${basePrice.toFixed(
+        2
+      )} EUR) added for reservation ${reservationId}.`
+    );
     return { success: true };
   } catch (error) {
-    console.error("🟥 Failed to add base price:", error);
-    return { success: false, error: error.message };
+    const errorMessage =
+      error.response?.data?.message || error.response?.data || error.message;
+    console.error(
+      `🟥 Smoobu: Failed to add base price for reservation ${reservationId}. Error: ${errorMessage}`,
+      error.config?.data
+    );
+    return { success: false, error: errorMessage };
   }
 };
 
+// --- Add Guest Fees ---
 export const addGuestFeesToReservation = async (
   reservationId,
-  bookingData,
+  bookingDoc, // Full bookingDoc
   apiKey
 ) => {
-  if (bookingData.guestFees <= 0) return { success: true };
+  const guestFees = parseFloat(
+    bookingDoc.guestFees || bookingDoc.priceBreakdown?.calculatedGuestFees || 0
+  );
+  if (guestFees <= 0) {
+    console.log(
+      `ℹ️ Smoobu: No guest fees to add for reservation ${reservationId}.`
+    );
+    return { success: true, message: "No guest fees to add." };
+  }
 
   try {
-    const extraGuests = Math.max(
-      0,
-      parseInt(bookingData.adults) +
-        parseInt(bookingData.children) -
-        (bookingData.priceDetails?.settings?.startingAtGuest || 2)
-    );
+    const totalGuests =
+      (Number(bookingDoc.adults) || 0) + (Number(bookingDoc.children) || 0);
+    // Prefer settings from priceDetailsSnapshot if available, then priceBreakdown, then default
+    const startingAtGuestConfig =
+      bookingDoc.priceDetailsSnapshot?.settings?.startingAtGuest ||
+      bookingDoc.priceBreakdown?.settings?.startingAtGuest;
+    const startingAtGuest =
+      startingAtGuestConfig !== undefined ? Number(startingAtGuestConfig) : 2;
+    const extraGuests = Math.max(0, totalGuests - startingAtGuest);
+
+    // Constructing the name directly in French
+    const guestFeeName =
+      extraGuests > 0
+        ? `Frais voyageurs suppl. (${extraGuests} personne${
+            extraGuests > 1 ? "s" : ""
+          })`
+        : "Frais voyageurs"; // Fallback if fee exists but extraGuests is 0 (e.g. per child fee)
 
     await axios.post(
       `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
       {
         type: "addon",
-        name: `Frais supplémentaires (${extraGuests} personne${
-          extraGuests > 1 ? "s" : ""
-        })`,
-        amount: bookingData.guestFees,
+        name: guestFeeName,
+        amount: parseFloat(guestFees.toFixed(2)),
         quantity: 1,
         currencyCode: "EUR",
       },
       {
         headers: {
-          "Api-Key": apiKey || process.env.SMOOBU_API_KEY,
+          "Api-Key": apiKey,
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
         },
       }
     );
+    console.log(
+      `🟩 Smoobu: Guest fees (${guestFees.toFixed(
+        2
+      )} EUR) added for reservation ${reservationId}.`
+    );
     return { success: true };
   } catch (error) {
-    console.error("🟥 Failed to add guest fees:", error);
-    return { success: false, error: error.message };
+    const errorMessage =
+      error.response?.data?.message || error.response?.data || error.message;
+    console.error(
+      `🟥 Smoobu: Failed to add guest fees for reservation ${reservationId}. Error: ${errorMessage}`,
+      error.config?.data
+    );
+    return { success: false, error: errorMessage };
   }
 };
 
-// Update this in your addExtrasToReservation function
-
-export const addExtrasToReservation = async (reservationId, extras, apiKey) => {
-  if (!extras || extras.length === 0) return { success: true };
-
-  try {
-    for (const extra of extras) {
-      let retryCount = 0;
-      const maxRetries = 3;
-
-      while (retryCount < maxRetries) {
-        try {
-          // Get the proper name for the extra
-          let extraName = extra.name;
-          
-          // Check if this is a key that needs translation
-          if (extra.name.startsWith("extras.")) {
-            extraName = extrasFrenchNames[extra.name] || extra.name;
-          }
-          
-          // Skip if it's "personne supplémentaire"
-          if (
-            extraName &&
-            !extraName.toLowerCase().includes("personne supplémentaire")
-          ) {
-            await axios.post(
-              `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-              {
-                type: "addon",
-                name: extraName,
-                amount: extra.amount,
-                quantity: extra.quantity,
-                currencyCode: "EUR",
-              },
-              {
-                headers: {
-                  "Api-Key": apiKey || process.env.SMOOBU_API_KEY,
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-            await wait(1000);
-          }
-
-          // Add the additional person as a separate price element
-          if (extra.extraPersonQuantity > 0 && extra.extraPersonPrice) {
-            const extraPersonName = extrasFrenchNames["extras.additionalPerson"] || "Personne supplémentaire";
-            
-            await axios.post(
-              `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-              {
-                type: "addon",
-                name: `${extraName} - ${extraPersonName}`,
-                amount: extra.extraPersonPrice * extra.extraPersonQuantity,
-                quantity: extra.extraPersonQuantity,
-                currencyCode: "EUR",
-              },
-              {
-                headers: {
-                  "Api-Key": apiKey || process.env.SMOOBU_API_KEY,
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-            await wait(1000);
-          }
-
-          break;
-        } catch (extraError) {
-          retryCount++;
-          if (retryCount === maxRetries) {
-            console.error("🟥 Failed to add extra:", extraError);
-            throw extraError; // Re-throw to be caught by the outer try/catch
-          } else {
-            await wait(2000 * retryCount);
-            continue;
-          }
-        }
-      }
-    }
-    return { success: true };
-  } catch (error) {
-    console.error("🟥 Failed to add extras:", error);
-    return { success: false, error: error.message };
-  }
-};
-
-export const addDiscountsToReservation = async (
+// --- Add PAID Extras ---
+// Assumes `paidExtras` (from `bookingDoc.extras`) contains items where `extra.name`
+// and `extra.extraPersonName` are already the final French display strings.
+export const addExtrasToReservation = async (
   reservationId,
-  bookingData,
+  paidExtras, // This is bookingDoc.extras
   apiKey
 ) => {
-  const results = { coupon: true, longStay: true };
-
-  // Add coupon discount if present
-  if (bookingData.couponApplied) {
-    try {
-      const couponName =
-        bookingData.couponApplied.type === "percentage"
-          ? `Code promo: ${bookingData.couponApplied.code} (-${bookingData.couponApplied.percentageValue}%)`
-          : `Code promo: ${bookingData.couponApplied.code} (-${bookingData.couponApplied.discount}€)`;
-
-      await axios.post(
-        `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-        {
-          type: "discount",
-          name: couponName,
-          amount: -bookingData.couponApplied.discount,
-          quantity: 1,
-          currencyCode: "EUR",
-        },
-        {
-          headers: {
-            "Api-Key": apiKey || process.env.SMOOBU_API_KEY,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      await wait(1000);
-    } catch (couponError) {
-      console.error("🟥 Failed to add coupon discount:", couponError);
-      results.coupon = false;
-    }
+  if (!paidExtras || paidExtras.length === 0) {
+    console.log(
+      `ℹ️ Smoobu: No paid extras to add for reservation ${reservationId}.`
+    );
+    return { success: true };
   }
 
-  // Add long stay discount if present
-  if (bookingData.priceDetails?.discount > 0) {
+  let allSucceeded = true;
+  console.log(
+    `ℹ️ Smoobu: Attempting to add ${paidExtras.length} paid extra item(s)/groups to reservation ${reservationId}.`
+  );
+
+  for (const extra of paidExtras) {
+    // `extra.name` is assumed to be the final French display name from prepareBookingDocument.
+    // `extra.extraPersonName` is also assumed to be the final French display name.
+    let mainExtraAddedSuccessfully = true;
+
+    // Add the main extra item only if it has a positive amount or it's explicitly a zero-cost item being tracked
+    if (extra.amount > 0 || (extra.amount === 0 && extra.quantity > 0)) {
+      try {
+        await axios.post(
+          `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+          {
+            type: "addon",
+            name: (extra.name || "Extra payant").substring(0, 250), // Use pre-set French name
+            amount: parseFloat(extra.amount.toFixed(2)),
+            quantity: Number(extra.quantity || 1),
+            currencyCode: "EUR",
+          },
+          {
+            headers: {
+              "Api-Key": apiKey,
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+            },
+          }
+        );
+        console.log(
+          `  🟩 Smoobu: Added paid extra: "${extra.name}" (Qty: ${
+            extra.quantity
+          }, Amount: ${extra.amount.toFixed(2)}) for ${reservationId}.`
+        );
+        await wait(1000);
+      } catch (error) {
+        const errorMessage =
+          error.response?.data?.message ||
+          error.response?.data ||
+          error.message;
+        console.error(
+          `  🟥 Smoobu: Failed to add paid extra "${extra.name}" for ${reservationId}. Error: ${errorMessage}`,
+          error.config?.data
+        );
+        allSucceeded = false;
+        mainExtraAddedSuccessfully = false;
+      }
+    } else if (extra.amount < 0) {
+      console.warn(
+        `  ⚠️ Smoobu: Paid extra "${extra.name}" has a negative amount ${extra.amount} and was not added as a regular extra. Discounts should be handled separately.`
+      );
+      mainExtraAddedSuccessfully = false; // Don't add associated extra person cost if main item is a discount
+    }
+
+    // Add the additional person amount for THIS extra, if applicable, positive, and main extra was added.
+    if (
+      extra.hasExtraPerson &&
+      extra.extraPersonAmount > 0 &&
+      mainExtraAddedSuccessfully
+    ) {
+      try {
+        // `extra.extraPersonName` is assumed to be "Personne supplémentaire" (French) from prepareBookingDocument
+        const extraPersonDisplayName = `${extra.name} - ${extra.extraPersonName}`;
+        await axios.post(
+          `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+          {
+            type: "addon",
+            name: extraPersonDisplayName.substring(0, 250),
+            amount: parseFloat(extra.extraPersonAmount.toFixed(2)),
+            // Quantity for extra person cost line item:
+            // If extra.extraPersonAmount is a total FOR ALL extra persons of THAT extra, quantity should be 1.
+            // If extra.extraPersonAmount is PER extra person, then quantity should be extra.extraPersonQuantity.
+            // Your `prepareBookingDocument` calculates `extraPersonAmount` as `extraPersonQty * extraPersonPr`.
+            // So, `extra.extraPersonAmount` is already a total. Thus, quantity here should be 1.
+            quantity: 1,
+            currencyCode: "EUR",
+          },
+          {
+            headers: {
+              "Api-Key": apiKey,
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+            },
+          }
+        );
+        console.log(
+          `  🟩 Smoobu: Added extra person cost for "${
+            extra.name
+          }" (Amount: ${extra.extraPersonAmount.toFixed(
+            2
+          )}) for ${reservationId}.`
+        );
+        await wait(1000);
+      } catch (error) {
+        const errorMessage =
+          error.response?.data?.message ||
+          error.response?.data ||
+          error.message;
+        console.error(
+          `  🟥 Smoobu: Failed to add extra person cost for "${extra.name}" for ${reservationId}. Error: ${errorMessage}`,
+          error.config?.data
+        );
+        allSucceeded = false;
+      }
+    }
+  }
+  return { success: allSucceeded };
+};
+
+
+// export const addFreeDrinksToSmoobu = async (
+//   reservationId,
+//   processedFreeDrinks,
+//   apiKey,
+//   index
+// ) => {
+//   if (!processedFreeDrinks || processedFreeDrinks.length === 0) {
+//     console.log(
+//       `ℹ️ Smoobu: No free drinks to add for reservation ${reservationId}.`
+//     );
+//     return { success: true };
+//   }
+
+//   let allSucceeded = true;
+//   console.log(
+//     `ℹ️ Smoobu: Attempting to add ${processedFreeDrinks.length} free drink item(s) to reservation ${reservationId}.`
+//   );
+
+//   for (const drink of processedFreeDrinks) {
+//     const smoobuItemName = `Free Drink ${drink.drinkId || index }`;
+//     const payload = {
+//       type: "addon",
+//       name: smoobuItemName.substring(0, 250),
+//       amount: 0.01,
+//       quantity: Number(drink.quantity || 1),
+//       currencyCode: "EUR",
+//     };
+
+//     try {
+//       console.log(
+//         `  ➡️ Smoobu: Sending free drink payload for ${reservationId}:`,
+//         JSON.stringify(payload)
+//       );
+//       await axios.post(
+//         `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+//         payload,
+//         {
+//           headers: {
+//             "Api-Key": apiKey,
+//             "Content-Type": "application/json",
+//             "Cache-Control": "no-cache",
+//           },
+//         }
+//       );
+//       console.log(
+//         `  🟩 Smoobu: Added free drink: "${smoobuItemName}" (Qty: ${drink.quantity}) for ${reservationId}.`
+//       );
+//       await wait(1000);
+//     } catch (error) {
+//       allSucceeded = false;
+//       console.error(
+//         `  🟥 Smoobu: Failed to add free drink "${smoobuItemName}" for ${reservationId}.`
+//       );
+//       if (error.response) {
+//         // Axios error with a response from the server
+//         console.error("    Smoobu Status:", error.response.status);
+//         console.error(
+//           "    Smoobu Headers:",
+//           JSON.stringify(error.response.headers, null, 2)
+//         );
+//         console.error(
+//           "    Smoobu Data:",
+//           JSON.stringify(error.response.data, null, 2)
+//         ); // THIS IS KEY!
+//       } else if (error.request) {
+//         // The request was made but no response was received
+//         console.error("    Smoobu No Response:", error.request);
+//       } else {
+//         // Something happened in setting up the request that triggered an Error
+//         console.error("    Smoobu Error Message:", error.message);
+//       }
+//       console.error("    Failed Payload:", JSON.stringify(payload, null, 2)); // Log what was sent
+//     }
+//   }
+//   console.log(
+//     `ℹ️ Smoobu: Finished processing free drinks for reservation ${reservationId}. Overall success: ${allSucceeded}`
+//   );
+//   return { success: allSucceeded };
+// };
+
+// --- Add Discounts (Coupon & Long Stay) ---
+// Uses bookingDoc to get couponInfo and longStayDiscountAmount
+export const addDiscountsToReservation = async (
+  reservationId,
+  bookingDoc,
+  apiKey
+) => {
+  let couponSuccess = true;
+  let longStaySuccess = true;
+
+  const couponInfo = bookingDoc.couponApplied; // From bookingDoc
+  const longStayDiscountAmount = parseFloat(
+    bookingDoc.priceBreakdown?.appliedLongStayDiscount || 0
+  ); // From bookingDoc
+
+  // Add coupon discount
+  if (couponInfo && couponInfo.discount > 0) {
     try {
+      // Constructing name directly in French
+      let couponName = `${
+        extrasFrenchNames["priceDetails.promoCode.generic"] || "Code Promo"
+      }: ${couponInfo.code}`;
+      if (couponInfo.type === "percentage" && couponInfo.percentageValue) {
+        couponName += ` (-${couponInfo.percentageValue}%)`;
+      } else {
+        couponName += ` (-${couponInfo.discount.toFixed(2)}€)`;
+      }
+      if (couponInfo.isGiftVoucher) {
+        couponName = `${
+          extrasFrenchNames["priceDetails.giftVoucher"] || "Chèque Cadeau"
+        }: ${couponInfo.code} (-${couponInfo.discount.toFixed(2)}€)`;
+      }
+
       await axios.post(
         `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
         {
           type: "discount",
-          name: `Réduction long séjour (${bookingData.priceDetails.settings.lengthOfStayDiscount.discountPercentage}%)`,
-          amount: -bookingData.priceDetails.discount,
+          name: couponName.substring(0, 250),
+          amount: -parseFloat(couponInfo.discount.toFixed(2)),
           quantity: 1,
           currencyCode: "EUR",
         },
         {
           headers: {
-            "Api-Key": apiKey || process.env.SMOOBU_API_KEY,
+            "Api-Key": apiKey,
             "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
           },
         }
       );
+      console.log(
+        `🟩 Smoobu: Coupon discount (${
+          couponInfo.code
+        }, -${couponInfo.discount.toFixed(2)} EUR) added for ${reservationId}.`
+      );
       await wait(1000);
-    } catch (discountError) {
-      console.error("🟥 Failed to add long stay discountt:", discountError);
-      results.longStay = false;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || error.response?.data || error.message;
+      console.error(
+        `🟥 Smoobu: Failed to add coupon discount (${couponInfo.code}) for ${reservationId}. Error: ${errorMessage}`,
+        error.config?.data
+      );
+      couponSuccess = false;
     }
+  } else {
+    console.log(
+      `ℹ️ Smoobu: No coupon discount to add for reservation ${reservationId}.`
+    );
+  }
+
+  // Add long stay discount
+  if (longStayDiscountAmount > 0) {
+    try {
+      // Constructing name directly in French
+      let longStayName =
+        extrasFrenchNames["priceDetails.longStayDiscount"] ||
+        "Réduction long séjour";
+      const discountSettings =
+        bookingDoc.priceDetailsSnapshot?.settings?.lengthOfStayDiscount ||
+        bookingDoc.priceBreakdown?.settings?.lengthOfStayDiscount; // Check both places
+      if (discountSettings?.discountPercentage) {
+        longStayName += ` (${discountSettings.discountPercentage}%)`;
+      }
+
+      await axios.post(
+        `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
+        {
+          type: "discount",
+          name: longStayName.substring(0, 250),
+          amount: -parseFloat(longStayDiscountAmount.toFixed(2)),
+          quantity: 1,
+          currencyCode: "EUR",
+        },
+        {
+          headers: {
+            "Api-Key": apiKey,
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
+        }
+      );
+      console.log(
+        `🟩 Smoobu: Long stay discount (-${longStayDiscountAmount.toFixed(
+          2
+        )} EUR) added for ${reservationId}.`
+      );
+      await wait(1000);
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || error.response?.data || error.message;
+      console.error(
+        `🟥 Smoobu: Failed to add long stay discount for ${reservationId}. Error: ${errorMessage}`,
+        error.config?.data
+      );
+      longStaySuccess = false;
+    }
+  } else {
+    console.log(
+      `ℹ️ Smoobu: No long stay discount to add for reservation ${reservationId}.`
+    );
   }
 
   return {
-    success: results.coupon && results.longStay,
-    couponSuccess: results.coupon,
-    longStaySuccess: results.longStay,
+    success: couponSuccess && longStaySuccess,
+    couponSuccess: couponSuccess,
+    longStaySuccess: longStaySuccess,
   };
 };

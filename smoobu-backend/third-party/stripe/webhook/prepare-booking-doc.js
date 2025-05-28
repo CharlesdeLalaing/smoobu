@@ -1,7 +1,9 @@
 import { extrasFrenchNames } from "../../../config/config.js";
 import admin from "firebase-admin";
 import { format, parseISO } from "date-fns"; // Add date-fns imports
+import { DRINK_OFFER_CONFIG_RAW, ALL_DRINK_ITEMS_MAP_RAW, extraCategoriesRaw } from "../../../../src/components/extraCategoriesData.js";
 import { fr } from "date-fns/locale";
+
 
 export const prepareBookingDocument = (
   bookingData,
@@ -9,237 +11,280 @@ export const prepareBookingDocument = (
   reservationId
 ) => {
   // Calculate nights
-  const arrivalDate = new Date(bookingData.arrivalDate);
-  const departureDate = new Date(bookingData.departureDate);
+  const arrivalDateObj = new Date(bookingData.arrivalDate);
+  const departureDateObj = new Date(bookingData.departureDate);
   const nights = Math.ceil(
-    (departureDate - arrivalDate) / (1000 * 60 * 60 * 24)
+    (departureDateObj - arrivalDateObj) / (1000 * 60 * 60 * 24)
   );
 
-  // Properly format extras with extraPerson data and translate names
+  // Properly format PAID extras
   const formattedExtras = (bookingData.extras || []).map((extra) => {
-    // Get proper name for the extra
     let extraName = extra.name;
-    if (extra.name.startsWith("extras.")) {
+    if (extra.name && extra.name.startsWith("extras.")) {
       extraName = extrasFrenchNames[extra.name] || extra.name;
     }
-
+    const extraPersonQty = Number(extra.extraPersonQuantity || 0);
+    const extraPersonPr = Number(extra.extraPersonPrice || 0);
+    const calculatedExtraPersonAmount = extraPersonQty * extraPersonPr;
     return {
-      id: Date.now() + Math.floor(Math.random() * 1000), // Generate a temporary ID
-      amount: extra.amount,
+      id: extra.id || Date.now() + Math.floor(Math.random() * 10000) + '-paidExtra',
+      amount: Number(extra.amount || 0),
       currencyCode: extra.currencyCode || "EUR",
       name: extraName,
-      quantity: extra.quantity || 1,
+      quantity: Number(extra.quantity || 1),
       type: extra.type || "addon",
-      extraPersonAmount:
-        extra.extraPersonAmount ||
-        extra.extraPersonPrice * (extra.extraPersonQuantity || 0),
-      extraPersonName:
-        extrasFrenchNames["extras.additionalPerson"] ||
-        "Personne supplémentaire",
-      extraPersonPrice: extra.extraPersonPrice || 0,
-      extraPersonQuantity: extra.extraPersonQuantity || 0,
-      hasExtraPerson: extra.extraPersonQuantity > 0,
+      extraPersonPrice: extraPersonPr,
+      extraPersonQuantity: extraPersonQty,
+      extraPersonAmount: calculatedExtraPersonAmount,
+      extraPersonName: extra.extraPersonName || extrasFrenchNames["extras.additionalPerson"] || "Personne supplémentaire",
+      hasExtraPerson: extraPersonQty > 0,
     };
   });
 
-  // Calculate extras total including extra person amounts
-  const extrasTotal = formattedExtras.reduce((sum, extra) => {
-    const extraAmount = parseFloat(extra.amount) || 0;
-    const extraPersonAmount = parseFloat(extra.extraPersonAmount) || 0;
-    return sum + extraAmount + extraPersonAmount;
+  const paidExtrasTotal = formattedExtras.reduce((sum, extra) => {
+    return sum + (parseFloat(extra.amount) || 0) + (parseFloat(extra.extraPersonAmount) || 0);
   }, 0);
 
-  // Format guest name
-  const guestName = `${bookingData.firstName || ""} ${
-    bookingData.lastName || ""
-  }`.trim();
+  const guestName = `${bookingData.firstName || ""} ${bookingData.lastName || ""}`.trim();
 
-  // Format price elements for Smoobu consistency
-  const priceElements = [
-    // Base price element
-    {
-      id: Date.now() + Math.floor(Math.random() * 1000),
-      amount: bookingData.basePrice,
-      currencyCode: "EUR",
-      name: "Prix de base",
-      quantity: 1,
-      sortOrder: null,
-      tax: null,
-      type: null,
-      priceIncludedInId: null,
-    },
-  ];
+  // --- Process Selected Free Drinks for Firebase Storage ---
+  const processedFreeDrinks = []; // This array IS important for Firebase and your reports
+  if (
+    bookingData.selectedFreeDrinks &&
+    typeof DRINK_OFFER_CONFIG_RAW === "object" &&
+    typeof ALL_DRINK_ITEMS_MAP_RAW === "object" &&
+    typeof extraCategoriesRaw === "object"
+  ) {
+    Object.entries(bookingData.selectedFreeDrinks).forEach(
+      ([instanceId, instanceSpecificData]) => {
+        const parts = instanceId.split("-");
+        if (parts.length < 2) { return; }
+        const offerConfigKey = parts.pop();
+        const paidExtraId = parts.join("-");
+        const offerConfig = DRINK_OFFER_CONFIG_RAW[offerConfigKey];
 
-  // Add guest fees if present
-  if (bookingData.guestFees > 0) {
-    const extraGuests = Math.max(
-      0,
-      parseInt(bookingData.adults) +
-        parseInt(bookingData.children) -
-        (bookingData.priceDetails?.settings?.startingAtGuest || 2)
+        if (!offerConfig || !instanceSpecificData) { return; }
+
+        let grantingPaidExtraDisplayName = paidExtraId;
+        for (const categoryKey in extraCategoriesRaw) {
+          const category = extraCategoriesRaw[categoryKey];
+          if (category && category.items && Array.isArray(category.items)) {
+            const item = category.items.find((i) => i.id === paidExtraId);
+            if (item) {
+              grantingPaidExtraDisplayName = (item.name && extrasFrenchNames[item.name]) || item.name || paidExtraId;
+              break;
+            }
+          }
+        }
+
+        if (offerConfig.type === "wine_choice") {
+          const isChoosingLater = instanceSpecificData.chooseNonAlcoholicLater || false;
+          if (isChoosingLater) {
+            processedFreeDrinks.push({
+              id: `${instanceId}-later`,
+              name: `${grantingPaidExtraDisplayName}: Option non-alcoolisée (choix ultérieur)`,
+              quantity: 1, isFree: true, paidExtraGrantor: grantingPaidExtraDisplayName,
+              offerKey: offerConfigKey, offerType: offerConfig.type,
+              chooseNonAlcoholicLater: true, drinkDetails: "Choix ultérieur non-alcoolisé", drinkId: null,
+            });
+          } else if (instanceSpecificData.selection) {
+            const wineId = instanceSpecificData.selection;
+            const drinkItem = ALL_DRINK_ITEMS_MAP_RAW[wineId];
+            if (drinkItem) {
+              const drinkName = (drinkItem.name && extrasFrenchNames[drinkItem.name]) || drinkItem.name || wineId;
+              processedFreeDrinks.push({
+                id: `${instanceId}-${wineId}`, name: `${grantingPaidExtraDisplayName}: ${drinkName}`,
+                quantity: 1, isFree: true, paidExtraGrantor: grantingPaidExtraDisplayName,
+                offerKey: offerConfigKey, offerType: offerConfig.type,
+                chooseNonAlcoholicLater: false, drinkDetails: drinkName, drinkId: wineId,
+              });
+            }
+          }
+        } else if (offerConfig.type === "soft_beer_choice") {
+          Object.entries(instanceSpecificData).forEach(
+            ([drinkId, quantity]) => {
+              if (Number(quantity) > 0) {
+                const drinkItem = ALL_DRINK_ITEMS_MAP_RAW[drinkId];
+                if (drinkItem) {
+                  const drinkName = (drinkItem.name && extrasFrenchNames[drinkItem.name]) || drinkItem.name || drinkId;
+                  processedFreeDrinks.push({
+                    id: `${instanceId}-${drinkId}-${Number(quantity)}`,
+                    name: `${grantingPaidExtraDisplayName}: ${drinkName}`,
+                    quantity: Number(quantity), isFree: true, paidExtraGrantor: grantingPaidExtraDisplayName,
+                    offerKey: offerConfigKey, offerType: offerConfig.type,
+                    drinkDetails: drinkName, drinkId: drinkId,
+                  });
+                }
+              }
+            }
+          );
+        }
+      }
     );
+  }
 
-    priceElements.push({
-      id: Date.now() + Math.floor(Math.random() * 1000) + 1,
-      amount: bookingData.guestFees,
-      currencyCode: "EUR",
-      name: `Frais supplémentaires (${extraGuests} personne${
-        extraGuests > 1 ? "s" : ""
-      })`,
-      quantity: 1,
-      sortOrder: null,
-      tax: null,
-      type: null,
-      priceIncludedInId: null,
+  // --- REMOVED: `freeDrinksNoticeText` generation block ---
+  // We are no longer creating this text if we are not updating Smoobu's notice.
+
+  // Format price elements for Smoobu (PAID items for Smoobu's /price-elements endpoint)
+  const priceElementsForSmoobu = []; // Initialize as empty
+    priceElementsForSmoobu.push({
+      id: Date.now() + Math.floor(Math.random() * 1000) + "-base",
+      amount: Number(bookingData.priceBreakdown?.roomBasePrice || bookingData.basePrice || 0),
+      currencyCode: "EUR", name: "Prix de base", quantity: 1,
+      sortOrder: null, tax: null, type: "base", priceIncludedInId: null,
+    });
+
+  const guestFees = Number(bookingData.priceBreakdown?.calculatedGuestFees || bookingData.guestFees || 0);
+  if (guestFees > 0) {
+    const totalGuests = (Number(bookingData.adults) || 0) + (Number(bookingData.children) || 0);
+    const startingAtGuestConfig = bookingData.priceDetailsSnapshot?.settings?.startingAtGuest || bookingData.priceBreakdown?.settings?.startingAtGuest;
+    const startingAtGuest = startingAtGuestConfig !== undefined ? Number(startingAtGuestConfig) : 2;
+    const extraGuests = Math.max(0, totalGuests - startingAtGuest);
+    const guestFeeName = extraGuests > 0 ? `Frais voyageurs suppl. (${extraGuests} personne${extraGuests > 1 ? "s" : ""})` : "Frais voyageurs";
+    priceElementsForSmoobu.push({
+      id: Date.now() + Math.floor(Math.random() * 1000) + "-guests",
+      amount: guestFees, currencyCode: "EUR", name: guestFeeName, quantity: 1,
+      sortOrder: null, tax: null, type: "addon", priceIncludedInId: null,
     });
   }
 
-  // Add each extra and its associated extra person as separate price elements
   formattedExtras.forEach((extra) => {
-    // Add main extra
-    priceElements.push({
-      id: Date.now() + Math.floor(Math.random() * 1000) + 2,
-      amount: extra.amount,
-      currencyCode: "EUR",
-      name: extra.name,
-      quantity: extra.quantity,
-      sortOrder: null,
-      tax: null,
-      type: null,
-      priceIncludedInId: null,
-    });
-
-    // Add extra person if present
-    if (extra.extraPersonQuantity > 0) {
-      priceElements.push({
-        id: Date.now() + Math.floor(Math.random() * 1000) + 3,
-        amount: extra.extraPersonAmount,
-        currencyCode: "EUR",
+    if (extra.amount > 0 || (extra.amount === 0 && extra.quantity > 0)) {
+      priceElementsForSmoobu.push({
+        id: extra.id + "-mainItem" || Date.now() + Math.floor(Math.random() * 1000) + '-extraMain',
+        amount: extra.amount, currencyCode: "EUR", name: extra.name,
+        quantity: extra.quantity, sortOrder: null, tax: null, type: "addon", priceIncludedInId: null,
+      });
+    }
+    if (extra.hasExtraPerson && extra.extraPersonAmount > 0) {
+      priceElementsForSmoobu.push({
+        id: extra.id + "-supItem" || Date.now() + Math.floor(Math.random() * 1000) + '-extraSup',
+        amount: extra.extraPersonAmount, currencyCode: "EUR",
         name: `${extra.name} - ${extra.extraPersonName}`,
-        quantity: extra.extraPersonQuantity,
-        sortOrder: null,
-        tax: null,
-        type: null,
-        priceIncludedInId: null,
+        quantity: 1, sortOrder: null, tax: null, type: "addon", priceIncludedInId: null,
       });
     }
   });
 
-  // Add promo code as price element if present
-  if (bookingData.couponApplied) {
-    priceElements.push({
-      id: Date.now() + Math.floor(Math.random() * 1000) + 4,
-      amount: -bookingData.couponApplied.discount,
-      currencyCode: "EUR",
-      name: `Code promo: ${bookingData.couponApplied.code} (-${bookingData.couponApplied.discount}€)`,
-      quantity: 1,
-      sortOrder: null,
-      tax: null,
-      type: null,
-      priceIncludedInId: null,
+  const couponDiscount = Number(bookingData.priceBreakdown?.appliedCouponDiscount || bookingData.couponApplied?.discount || 0);
+  if (couponDiscount > 0 && bookingData.couponApplied) {
+    let couponName = `${extrasFrenchNames["priceDetails.promoCode.generic"] || "Code Promo"}: ${bookingData.couponApplied.code}`;
+    if (bookingData.couponApplied.isGiftVoucher) {
+        couponName = `${extrasFrenchNames["priceDetails.giftVoucher"] || "Chèque Cadeau"}: ${bookingData.couponApplied.code} (-${couponDiscount.toFixed(2)}€)`;
+    } else if (bookingData.couponApplied.type === 'percentage' && bookingData.couponApplied.percentageValue) {
+      couponName += ` (-${bookingData.couponApplied.percentageValue}%)`;
+    } else {
+      couponName += ` (-${couponDiscount.toFixed(2)}€)`;
+    }
+    priceElementsForSmoobu.push({
+      id: Date.now() + Math.floor(Math.random() * 1000) + "-coupon",
+      amount: -couponDiscount, currencyCode: "EUR", name: couponName, quantity: 1,
+      sortOrder: null, tax: null, type: "discount", priceIncludedInId: null,
     });
   }
 
-  // Return the complete booking document
-  return {
-    // Basic booking info
+  const longStayDiscount = Number(bookingData.priceBreakdown?.appliedLongStayDiscount || 0);
+  if (longStayDiscount > 0) {
+    let longStayName = extrasFrenchNames["priceDetails.longStayDiscount"] || "Réduction long séjour";
+    const discountSettings = bookingData.priceDetailsSnapshot?.settings?.lengthOfStayDiscount || bookingData.priceBreakdown?.settings?.lengthOfStayDiscount;
+    if (discountSettings?.discountPercentage) {
+        longStayName += ` (${discountSettings.discountPercentage}%)`;
+    }
+    priceElementsForSmoobu.push({
+      id: Date.now() + Math.floor(Math.random() * 1000) + "-longstay",
+      amount: -longStayDiscount, currencyCode: "EUR", name: longStayName, quantity: 1,
+      sortOrder: null, tax: null, type: "discount", priceIncludedInId: null,
+    });
+  }
+
+  const bookingDocument = {
     smoobuId: reservationId.toString(),
     smoobuReservationId: Number(reservationId),
-    createdAt: bookingData.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    lastSyncedAt: new Date().toISOString(),
-
-    // Customer info
+    createdAt: bookingData.createdAt
+      ? admin.firestore.Timestamp.fromDate(new Date(bookingData.createdAt))
+      : admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    lastSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
     firstName: bookingData.firstName || "",
     lastName: bookingData.lastName || "",
     guestName: guestName,
     email: bookingData.email || "",
     phone: bookingData.phone || "",
-    address: bookingData.address || "",
     street: bookingData.street || "",
     postalCode: bookingData.postalCode || "",
     location: bookingData.location || "",
     country: bookingData.country || "",
-
-    // Reservation details
-    adults: Number(bookingData.adults) || 0,
+    adults: Number(bookingData.adults) || 1,
     children: Number(bookingData.children) || 0,
     arrivalDate: bookingData.arrivalDate,
     departureDate: bookingData.departureDate,
-    arrivalTime: bookingData.arrivalTime || "",
-    departureTime: bookingData.departureTime || "",
+    arrivalTime: bookingData.arrivalTime || "18:30",
+    departureTime: bookingData.departureTime || "10:00",
     checkInTime: bookingData.arrivalTime || "18:30",
-    checkOutTime: "10:00",
+    checkOutTime: bookingData.departureTime || "10:00",
     nights: nights,
-    notice: bookingData.notice || "",
+    notice: bookingData.notice || "", // Original guest notice
 
-    // Property info
-    apartmentId: bookingData.apartmentId,
+    apartmentId: String(bookingData.apartmentId || ""),
     property: getPropertyName(bookingData.apartmentId),
-    channelId: bookingData.channelId,
+    channelId: bookingData.channelId || 0,
     channelName: bookingData.channelId === 2323525 ? "Homepage" : "Unknown",
     portalName: bookingData.channelId === 2323525 ? "Website" : "Unknown",
 
-    // Payment info
-    price: Number(bookingData.totalPriceWithExtras) || 0,
-    basePrice: Number(bookingData.basePrice) || 0,
-    guestFees: Number(bookingData.guestFees) || 0,
-    linenFee: Number(bookingData.linenFee) || 0,
-    commission: Number(bookingData.commission) || 0,
-    deposit: Number(bookingData.deposit) || 0,
-    depositStatus: Number(bookingData.depositStatus) || 1,
-    priceStatus: Number(bookingData.priceStatus) || 1,
+    price: Number(
+      bookingData.priceBreakdown?.finalPayableAmount || bookingData.price || 0
+    ),
+    basePrice: Number(
+      bookingData.priceBreakdown?.roomBasePrice || bookingData.basePrice || 0
+    ),
+    guestFees: guestFees,
+    deposit: Number(bookingData.deposit || 0),
+    depositStatus: Number(bookingData.depositStatus || 1),
+    priceStatus: Number(bookingData.priceStatus || 1),
     paymentIntentId: paymentIntent.id,
     stripePaymentStatus: paymentIntent.status,
 
-    // Extras and pricing details
-    extras: formattedExtras,
-    priceDetails: {
-      basePrice: Number(bookingData.basePrice) || 0,
-      linenFee: Number(bookingData.linenFee) || 0,
-      commission: Number(bookingData.commission) || 0,
-      discount: Number(bookingData.priceDetails?.discount) || 0,
-      longStayDiscount: Number(bookingData.priceDetails?.longStayDiscount) || 0,
-      couponDiscount: Number(bookingData.couponApplied?.discount) || 0,
-      extrasTotal: extrasTotal,
-      finalPrice: Number(bookingData.totalPriceWithExtras) || 0,
-      priceElements: priceElements,
-      promoCode: bookingData.couponApplied
-        ? {
-            amount: Number(bookingData.couponApplied.discount) || 0,
-            code: bookingData.couponApplied.code || "",
-            name: bookingData.couponApplied.code || "",
-            percentageValue: bookingData.couponApplied.percentageValue || null,
-            type: bookingData.couponApplied.type || "fixed",
-          }
-        : null,
-      calculatedDiscounts: {
-        longStay: Number(bookingData.priceDetails?.longStayDiscount) || 0,
-        coupon: Number(bookingData.couponApplied?.discount) || 0,
-      },
-      settings: {
-        extraChildPerNight: 20,
-        extraGuestsPerNight: 20,
-        lengthOfStayDiscount: {
-          discountPercentage:
-            Number(
-              bookingData.priceDetails?.settings?.lengthOfStayDiscount
-                ?.discountPercentage
-            ) || 0,
-          minNights: 2,
-        },
-        maxGuests: 4,
-        startingAtGuest: 2,
-      },
+    extras: formattedExtras, // PAID extras (enhanced)
+    processedFreeDrinks: processedFreeDrinks, // Formatted FREE drinks - THIS IS KEY FOR FIREBASE
+
+    priceBreakdown: {
+      roomBasePrice: Number(
+        bookingData.priceBreakdown?.roomBasePrice || bookingData.basePrice || 0
+      ),
+      calculatedExtrasTotal: paidExtrasTotal,
+      calculatedGuestFees: guestFees,
+      subtotal: Number(
+        bookingData.priceBreakdown?.subtotal ||
+          Number(bookingData.basePrice || 0) + paidExtrasTotal + guestFees
+      ),
+      appliedLongStayDiscount: longStayDiscount,
+      totalAfterLongStayDiscount: Number(
+        bookingData.priceBreakdown?.totalAfterLongStayDiscount || 0
+      ),
+      appliedCouponDiscount: couponDiscount,
+      finalPayableAmount: Number(
+        bookingData.priceBreakdown?.finalPayableAmount || bookingData.price || 0
+      ),
+      priceElementsForSmoobu: priceElementsForSmoobu,
     },
+    priceDetailsSnapshot: bookingData.priceDetailsSnapshot || null,
 
-    // Coupon data
-    appliedCoupon: bookingData.couponApplied || null,
-    couponApplied: bookingData.couponApplied || null,
+    couponApplied: bookingData.couponApplied
+      ? {
+          code: bookingData.couponApplied.code,
+          discount: Number(bookingData.couponApplied.discount || 0),
+          type: bookingData.couponApplied.type,
+          isGiftVoucher: bookingData.couponApplied.isGiftVoucher || false,
+          originalAmount: Number(bookingData.couponApplied.originalAmount || 0),
+          percentageValue: Number(
+            bookingData.couponApplied.percentageValue || 0
+          ),
+        }
+      : null,
 
-    // Required flags
     conditions: bookingData.conditions || true,
-    language: bookingData.language || "en",
+    language: bookingData.language || "fr",
 
     spaDateTime: bookingData.spaDateTime
       ? admin.firestore.Timestamp.fromDate(parseISO(bookingData.spaDateTime))
@@ -249,8 +294,6 @@ export const prepareBookingDocument = (
       : null,
     spaSlots: bookingData.spaSlots || [],
     spaBookingPreference: bookingData.spaBookingPreference || null,
-
-    // Optional: Add a formatted SPA info object for easier display/reporting
     spaInfo:
       bookingData.spaDateTime || bookingData.spaBookingPreference
         ? {
@@ -280,19 +323,40 @@ export const prepareBookingDocument = (
                 : null,
           }
         : null,
+
+    // Updated freeDrinkInfo: `asTextForNotice` is removed as we are not using it for Smoobu notice.
+    // The `items`, `needsNonAlcoholicChoice`, etc., are still useful for Firebase data and potentially emails.
+    freeDrinkInfo:
+      processedFreeDrinks.length > 0
+        ? {
+            hasFreeDrinks: true,
+            items: processedFreeDrinks.map((d) => ({
+              name: d.name,
+              quantity: d.quantity,
+              grantor: d.paidExtraGrantor,
+              details: d.drinkDetails,
+              drinkId: d.drinkId,
+              offerKey: d.offerKey,
+            })),
+            needsNonAlcoholicChoice: processedFreeDrinks.some(
+              (d) => d.chooseNonAlcoholicLater === true
+            ),
+            nonAlcoholicChoiceGrantors: processedFreeDrinks
+              .filter((d) => d.chooseNonAlcoholicLater === true)
+              .map((d) => d.paidExtraGrantor),
+          }
+        : null,
   };
+
+  return bookingDocument;
 };
 
-// Helper function to get property name
 function getPropertyName(apartmentId) {
   const propertyNames = {
-    2565753: "La Cabane du Chêne",
-    1946282: "Le Dôme des Libellules",
-    1644643: "La Bulle du Ruisseau",
-    1946279: "Le Moulin",
-    1946276: "La Chambre de Blé",
-    1946270: "Le Logis",
+    "2565753": "La Cabane du Chêne", "1946282": "Le Dôme des Libellules",
+    "1644643": "La Bulle du Ruisseau", "1946279": "Le Moulin",
+    "1946276": "La Chambre de Blé", "1946270": "Le Logis",
   };
-
-  return propertyNames[apartmentId] || "Unknown Property";
+  return propertyNames[String(apartmentId)] || "Unknown Property";
 }
+

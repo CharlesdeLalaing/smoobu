@@ -3,7 +3,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 
 // Import from where DRINK_OFFER_CONFIG and ALL_DRINK_ITEMS_MAP are truly located/exported
-import { DRINK_OFFER_CONFIG, ALL_DRINK_ITEMS_MAP } from "./InfoSupSection"; // Adjust path if necessary
+import { DRINK_OFFER_CONFIG, ALL_DRINK_ITEMS_MAP } from "../extraCategories"; // Adjust path if necessary
 
 const FreeQuantitySelector = ({
   drink,

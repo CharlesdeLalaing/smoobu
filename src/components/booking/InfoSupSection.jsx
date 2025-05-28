@@ -4,65 +4,13 @@ import { useTranslation } from "react-i18next";
 import LongBird from "../../assets/GlobalImg/long_bird.webp"; // Adjust path as needed
 import SpaScheduler from "../spa/SpaScheduler"; // Adjust path as needed
 import { useSpaSettings } from "../spa/useSpaCalendarData"; // Adjust path as needed
-import { extraCategories } from "../extraCategories"; // Adjust path as needed
+import {
+  extraCategories,
+  ALL_DRINK_ITEMS_MAP,
+  DRINK_OFFER_CONFIG,
+} from "../extraCategories"; // Adjust path as needed
 import FreeDrinksSelection from "./FreeDrinksSelection"; // Adjust path as needed
 
-// Ensure extraCategories is fully defined if DRINK_OFFER_CONFIG is in the same scope and uses it.
-const ALL_DRINK_ITEMS_MAP = extraCategories.boissons.items.reduce(
-  (acc, item) => {
-    acc[item.id] = item;
-    return acc;
-  },
-  {}
-);
-
-const DRINK_OFFER_CONFIG = {
-  WINE_OFFER_1: {
-    key: "WINE_OFFER_1",
-    titleKey: "extras.drinks.wineOfferTitle",
-    defaultTitle: "Choix de Vin Inclus (1 bouteille)",
-    triggeringExtras: [
-      "formuleGourmet",
-      "formuleRaclette",
-      "formuleBarbecue",
-      "packDetenteGourmet",
-      "packRacletteDetente",
-      "packBbqRomantique",
-      "packBbqDetente",
-    ],
-    drinks: [
-      {
-        id: "cortilBarco",
-        nameKey: "extras.drinks.cortilBarcoLabel",
-        defaultName: "Cortil Barco (rouge)",
-      },
-      {
-        id: "terreCharlot",
-        nameKey: "extras.drinks.terreCharlotLabel",
-        defaultName: "Terre Charlot (blanc)",
-      },
-    ],
-    maxSelection: 1,
-    type: "wine_choice",
-  },
-  SOFTS_BEERS_OFFER_1: {
-    key: "SOFTS_BEERS_OFFER_1",
-    titleKey: "extras.drinks.softBeerOfferTitle",
-    defaultTitle: "Choix de Boissons",
-    triggeringExtras: ["formulePancheApero"],
-    categories: {
-      softs: extraCategories.boissons.items
-        .filter((item) => item.typeKey === "extras.drinkTypes.soft")
-        .map((item) => item.id),
-      beers: extraCategories.boissons.items
-        .filter((item) => item.typeKey === "extras.drinkTypes.beer")
-        .map((item) => item.id),
-    },
-    itemsPerUnit: 2,
-    itemsPerSupplementaryPerson: 1,
-    type: "soft_beer_choice",
-  },
-};
 
 const SPA_ITEM_IDS = [
   "formuleSpa",

@@ -39,7 +39,7 @@ const BookingsReport = () => {
     setEndMonth,
     endYear,
     setEndYear,
-    fetchFromFirebase,
+    // fetchFromFirebase,
     handleFetchAndSync,
     handleDeduplicate,
     handleExport,
