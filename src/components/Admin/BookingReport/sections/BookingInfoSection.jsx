@@ -21,7 +21,7 @@ const BookingInfoSection = ({ booking }) => (
       </div>
       <div className="text-sm">
         <span className="block font-medium">Création:</span>
-        {formatDate(booking.created)}
+        {formatDate(booking.createdDateObj)}
       </div>
       <div className="text-sm">
         <span className="block font-medium">Portail:</span>
