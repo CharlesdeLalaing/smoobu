@@ -22,6 +22,20 @@
           "giftCard": "Bon cadeau"
         }
       },
+      "drinkNames": {
+        "brutBioul": "Brut de Bioul (Pétillant)",
+        "cortilBarco": "Cortil Barco (Rouge)",
+        "terreCharlot": "Terre Charlot (Blanc)",
+        "bruneCondroz": "Brune du Condroz",
+        "ambreeCondroz": "Ambrée du Condroz",
+        "tripleCondroz": "Triple du Condroz",
+        "blancheCondroz": "Blanche du Condroz",
+        "appleJuice": "Jus de pomme \"Pom d'Happy\"",
+        "ritchieLemonRasp": "Ritchie Lemon/Raspberry",
+        "ritchieOrangeVan": "Ritchie Orange/Vanilla",
+        "ritchieCola": "Ritchie Cola",
+        "ritchieColaZero": "Ritchie Cola Zero"
+      },
          "calendar": {
       "availability": "Disponibilité",
       "available": "Disponible",
@@ -485,7 +499,7 @@
         "title": "Extras Payants"
       },
       "freeDrinks": {
-        "title": "Boissons Offertes"
+        "title": "Boissons Incluses"
       },
       "nonAlcoholicChoice": {
         "title": "Choix de Boisson Non-Alcoolisée",

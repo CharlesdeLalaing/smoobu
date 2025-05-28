@@ -323,39 +323,66 @@ export const useBookingForm = () => {
   };
 
   const createSelectedExtrasArray = () => {
-    const extrasMap = new Map();
+    const extrasArray = []; // Use an array to build the list
+
+    // Iterate over selectedExtras, which is like: { "packEssentiel": 1, "packEssentiel-extra": 1 }
     Object.entries(selectedExtras)
-      .filter(([_, quantity]) => quantity > 0)
-      .forEach(([extraId, quantity]) => {
-        const isExtraPerson = extraId.endsWith("-extra");
+      .filter(([_, quantity]) => quantity > 0) // Only process extras with quantity > 0
+      .forEach(([itemId, quantity]) => {
+        // itemId is like "packEssentiel" or "packEssentiel-extra"
+
+        const isExtraPerson = itemId.endsWith("-extra");
         const baseExtraId = isExtraPerson
-          ? extraId.replace("-extra", "")
-          : extraId;
-        const extraDetails = Object.values(extraCategories)
+          ? itemId.replace("-extra", "")
+          : itemId;
+
+        // Find the full definition of the extra from your frontend extraCategories
+        // This assumes `extraCategories` is imported and available in this scope.
+        // If not, you might need to pass `extraCategories` to this hook or import it directly.
+        const extraDefinition = Object.values(extraCategories) // `extraCategories` from `../extraCategories`
           .flatMap((cat) => cat.items)
           .find((item) => item.id === baseExtraId);
-        if (!extraDetails) return;
-        if (isExtraPerson) {
-          const baseExtra = extrasMap.get(baseExtraId);
-          if (baseExtra) {
-            baseExtra.extraPersonQuantity = quantity;
-            baseExtra.extraPersonAmount =
-              (extraDetails.extraPersonPrice || 0) * quantity;
-          }
-        } else {
-          extrasMap.set(baseExtraId, {
-            type: "addon",
-            name: t(extraDetails.name, extraDetails.name),
-            amount: (extraDetails.price || 0) * quantity,
-            quantity: quantity,
+
+        if (!extraDefinition) {
+          console.warn(
+            `[useBookingForm - createSelectedExtrasArray] Extra definition not found for base ID: ${baseExtraId}. Skipping this extra.`
+          );
+          return; // Skip if no definition found
+        }
+
+        // Find or create the main entry for this extra in extrasArray
+        let mainExtraEntry = extrasArray.find((e) => e.id === baseExtraId);
+
+        if (!mainExtraEntry) {
+          mainExtraEntry = {
+            id: baseExtraId, // <<< CRITICAL: Canonical String ID
+            name: extraDefinition.name, // <<< CRUCIAL: i18n key (e.g., "extras.packs.essential.name")
+            quantity: 0, // Initialize, will be set below if not extraPerson
+            amount: 0, // Initialize, will be set below
             currencyCode: "EUR",
-            extraPersonPrice: extraDetails.extraPersonPrice || 0,
-            extraPersonQuantity: 0,
-            extraPersonAmount: 0,
-          });
+            extraPersonPrice: extraDefinition.extraPersonPrice || 0, // Unit price for an extra person
+            extraPersonQuantity: 0, // Initialize
+            // extraPersonAmount will be calculated by prepareBookingDocument based on quantity and price
+            type: "addon", // Default type
+          };
+          extrasArray.push(mainExtraEntry);
+        }
+
+        // Update quantities and amounts
+        if (isExtraPerson) {
+          mainExtraEntry.extraPersonQuantity = quantity;
+        } else {
+          // This is the main extra item itself
+          mainExtraEntry.quantity = quantity;
+          mainExtraEntry.amount = (extraDefinition.price || 0) * quantity; // Total amount for the main extra
         }
       });
-    return Array.from(extrasMap.values());
+
+    // Filter out any entries that might have ended up with 0 main quantity AND 0 extra person quantity,
+    // though the initial filter `quantity > 0` should prevent most of these.
+    return extrasArray.filter(
+      (e) => e.quantity > 0 || e.extraPersonQuantity > 0
+    );
   };
 
   const handleFreeDrinkChange = useCallback(
@@ -496,6 +523,10 @@ export const useBookingForm = () => {
 
     try {
       const selectedExtrasArray = createSelectedExtrasArray();
+      console.log(
+        "CLIENT: selectedExtrasArray being sent to backend:",
+        JSON.stringify(selectedExtrasArray, null, 2)
+      );
       const guestFees = calculateGuestFees(
         formData.adults,
         formData.children,

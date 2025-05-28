@@ -770,23 +770,24 @@ const BookingConfirmation = () => {
               </p>
               <p className="mb-1 text-sm font-semibold contact-line">
                 <a
-                  href={`mailto:${t("emailDefaults.spaContactEmail")}`}
+                  href={`mailto:${t(
+                    "bookingConfirmation.emailDefaults.spaContactEmail"
+                  )}`}
                   className="text-brandColor hover:underline"
                 >
-                  {t("emailDefaults.spaContactEmail")}
+                  {t("bookingConfirmation.emailDefaults.spaContactEmail")}
                 </a>
-                {t("emailDefaults.spaContactPhone") && (
+                {t("bookingConfirmation.emailDefaults.spaContactPhone") && (
                   <>
                     {" "}
                     /{" "}
                     <a
-                      href={`tel:${t("emailDefaults.spaContactPhone").replace(
-                        /\s/g,
-                        ""
-                      )}`}
+                      href={`tel:${t(
+                        "bookingConfirmation.emailDefaults.spaContactPhone"
+                      ).replace(/\s/g, "")}`}
                       className="text-brandColor hover:underline"
                     >
-                      {t("emailDefaults.spaContactPhone")}
+                      {t("bookingConfirmation.emailDefaults.spaContactPhone")}
                     </a>
                   </>
                 )}
@@ -804,7 +805,7 @@ const BookingConfirmation = () => {
             nonAlcoholicChoiceGrantorKeys.length > 0 && (
               <div className="details-card non-alcoholic-choice-later-card">
                 <h2 className="flex items-center titleConfirmation non-alcoholic-title">
-                  <InfoIcon
+                  <Wine
                     size={18}
                     className="inline-block mr-2 text-orange-500"
                   />{" "}
@@ -838,7 +839,7 @@ const BookingConfirmation = () => {
                 <p className="mb-1 text-sm font-semibold contact-line">
                   <a
                     href={`mailto:${t(
-                      "emailDefaults.spaContactEmail"
+                      "bookingConfirmation.emailDefaults.spaContactEmail"
                     )}?subject=${encodeURIComponent(
                       t(
                         "bookingConfirmation.emailSubjects.nonAlcoholicChoice"
@@ -858,20 +859,19 @@ const BookingConfirmation = () => {
                     )}`}
                     className="text-brandColor hover:underline"
                   >
-                    {t("emailDefaults.spaContactEmail")}
+                    {t("bookingConfirmation.emailDefaults.spaContactEmail")}
                   </a>
-                  {t("emailDefaults.spaContactPhone") && (
+                  {t("bookingConfirmation.emailDefaults.spaContactPhone") && (
                     <>
                       {" "}
                       /{" "}
                       <a
-                        href={`tel:${t("emailDefaults.spaContactPhone").replace(
-                          /\s/g,
-                          ""
-                        )}`}
+                        href={`tel:${t(
+                          "bookingConfirmation.emailDefaults.spaContactPhone"
+                        ).replace(/\s/g, "")}`}
                         className="text-brandColor hover:underline"
                       >
-                        {t("emailDefaults.spaContactPhone")}
+                        {t("bookingConfirmation.emailDefaults.spaContactPhone")}
                       </a>
                     </>
                   )}

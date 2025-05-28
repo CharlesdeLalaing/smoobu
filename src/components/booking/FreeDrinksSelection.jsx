@@ -73,22 +73,7 @@ const FreeDrinksSelection = ({
   const { t } = useTranslation();
   const offerConfig = DRINK_OFFER_CONFIG[offerKey];
 
-  // --- LOGS AT THE TOP ---
-  console.log(`[FreeDrinksSelection] Rendering for offerKey: ${offerKey}`);
-  console.log(
-    `[FreeDrinksSelection] currentOfferDataForDisplay:`,
-    JSON.stringify(currentOfferDataForDisplay, null, 2)
-  );
-  console.log(
-    `[FreeDrinksSelection] typeof onFreeDrinkChange:`,
-    typeof onFreeDrinkChange
-  );
-  console.log(`[FreeDrinksSelection] disabled:`, disabled);
-  console.log(
-    `[FreeDrinksSelection] dynamicMaxTotalForOffer:`,
-    dynamicMaxTotalForOffer
-  );
-  // --- END LOGS ---
+
 
   if (!offerConfig) {
     /* ... return null ... */
@@ -259,9 +244,10 @@ const FreeDrinksSelection = ({
                       const drink = ALL_DRINK_ITEMS_MAP[drinkId];
                       if (!drink) return null;
                       const currentQuantity = selectionsForOffer[drinkId] || 0;
-                      const itemName = drink.nameKey
-                        ? t(drink.nameKey, drink.name)
-                        : drink.name;
+                      const itemName = t(
+                        drink.name,
+                        drink.defaultFrenchName || drink.defaultName || drink.id
+                      );
 
                       return (
                         <div

@@ -22,6 +22,20 @@
         "giftCard": "Cadeaubon"
       }
     },
+    "drinkNames": {
+      "brutBioul": "Brut de Bioul (Sparkling)",
+      "cortilBarco": "Cortil Barco (Rood)",
+      "terreCharlot": "Terre Charlot (Wit)",
+      "bruneCondroz": "Brune du Condroz",
+      "ambreeCondroz": "Ambrée du Condroz",
+      "tripleCondroz": "Triple du Condroz",
+      "blancheCondroz": "Blanche du Condroz",
+      "appleJuice": "Apple Juice \"Pom d'Happy\"",
+      "ritchieLemonRasp": "Ritchie Lemon/Raspberry",
+      "ritchieOrangeVan": "Ritchie Orange/Vanilla",
+      "ritchieCola": "Ritchie Cola",
+      "ritchieColaZero": "Ritchie Cola Zero"
+    },
     "calendar": {
       "availability": "Beschikbaarheid",
       "available": "Beschikbaar",
@@ -297,7 +311,7 @@
         "selectedOutOf": "{{count}} van {{max}} geselecteerd",
         "included": "Inbegrepen",
         "needsMoreSelections": "nog {{count}} te kiezen",
-        
+
         "validation": {
           "incomplete": "Voltooi alstublieft uw drankselectie voor: "
         },
@@ -506,6 +520,6 @@
       "errors": {
         "generic": "Er is een fout opgetreden bij de betaling"
       }
-    } 
+    }
   } 
 } 

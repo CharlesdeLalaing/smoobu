@@ -252,7 +252,7 @@ export const extraCategoriesRaw = {
     items: [
       {
         id: "brutBioul",
-        name: "drinkNames.brutBioul", // i18n Key
+        name: "drinkNames.brutBioul",
         defaultName: "Brut de Bioul (Sparkling)",
         defaultFrenchName: "Brut de Bioul",
         descriptionKey: "extras.drinks.brutBioul.description",

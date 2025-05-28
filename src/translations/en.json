@@ -1,555 +1,568 @@
 {
     "translation": {
-        "header": {
-            "contact": {
-            "phone": "+32 475 20 16 19",
-            "email": "fermedebasseilies@gmail.com",
-            "address": "Route de Basseilles 1 - 5340 MOZET"
-            },
-            "nav": {
-            "home": "Home",
-            "accommodations": {
-                "title": "Our Accommodations",
-                "unusual": "Unusual Accommodations",
-                "guesthouse": "Guesthouse & B&B"
-            },
-            "extras": "Extras",
-            "activities": "Activities & Partners",
-            "aboutUs": "About Us",
-            "info": "Info & Press"
-            },
-            "buttons": {
-            "giftCard": "Gift Card"
-            }
+      "header": {
+        "contact": {
+          "phone": "+32 475 20 16 19",
+          "email": "fermedebasseilies@gmail.com",
+          "address": "Route de Basseilles 1 - 5340 MOZET"
         },
-          "calendar": {
-      "availability": "Availability",
-      "available": "Available",
-      "unavailable": "Unavailable",
-      "partiallyAvailable": "Check-out only",
-      "partiallyAvailableCheckIn": "Check-in only",
-      "partiallyAvailableCheckOut": "Check-out only",
-      "instructions": "Select your check-in and check-out dates"
-    },
-        "search": {
-            "title": "Select your dates",
-            "arrival": "Arrival",
-            "departure": "Departure",
-            "adults": "Adults",
-            "children": "Children",
-            "search": "Search",
-            "selectDate": "Select a date",
-            "maxGuestsExceeded": "The maximum number of people is {{max}}",
-            "select": "Select",
-            "maxGuestsShort": "max"
-        },
-        "rooms": {
-            "types": {
+        "nav": {
+          "home": "Home",
+          "accommodations": {
+            "title": "Our Accommodations",
             "unusual": "Unusual Accommodations",
             "guesthouse": "Guesthouse & B&B"
-            },
-            "names": {
-            "bulle": "The Bulle du Ruisseau",
-            "cabane": "The Cabane of the Chêne",
-            "dome": "The Dôme des Libellules",
-            "moulin": "The Moulin",
-            "ble": "The Chambre of Blé",
-            "logis": "The Logis"
-            },
-            "descriptions": {
-            "bulle": "Immerse yourself in the soothing intimacy of the Stream Bubble - an unusual cocoon nestled between earth and water, lulled by the song of the stream and the whispers of nature. With its Crusoe armchair and king-size bed, this space offers refined comfort in the heart of nature. Also enjoy the brazier for convivial evenings under the stars, perfect for roasting marshmallows and sharing unforgettable moments. Book now and let yourself be enchanted by the magical serenity of the Stream Bubble.",
-            "cabane": "Discover the Cabane du Chêne - a haven of peace perched 7 metres high in the canopy of a majestic oak tree. Located at the heart of the estate, it offers breathtaking panoramic views over the region. Spread over two floors, the hut has a cosy little lounge, a cosy bedroom and a dry toilet, combining comfort and escape. Take advantage of the large terrace, perched at the top of the tree, to relax in the open air. Below the tree, a small garden with a brazier and BBQ is at your disposal. Book your stay at the Cabane du Chêne now and enjoy a unique experience in the heart of nature.",
-            "dome": "Immerse yourself in the magical intimacy of the Dragonfly Dome – an unusual refuge in the heart of nature, designed for a romantic getaway. Equipped with a heated king-size bed and private terrace, this space offers luxury and serenity. Nestled in a corner of the woods, the isolated site is perfect for a total disconnect. You'll spend an unforgettable night under the stars, lulled by the magic of nature. A bunk bed is available in the small cabin next door, ideal for accommodating children. Also enjoy the brazier-BBQ for convivial evenings. Book now and let yourself be carried away by the tranquility of the Dragonfly Dome.",
-            "moulin": "Immerse yourself in the enchanting atmosphere of the Mill - a romantic studio designed for two people where modern comfort and past charm intertwine. With its queen-size mezzanine bed, a cozy sofa bed that can accommodate children, this space offers you an intimate and comfortable escape. Add to that a fully equipped kitchen for convivial moments. Book now and let yourself be seduced by the irresistible charm of the Mill.",
-            "ble": "Immerse yourself in the intimacy of the Wheat Room - a cozy refuge in the heart of a carefully restored barn. Designed to accommodate two adults and up to two children, this rustic room harmoniously combines old-world charm with modern amenities. Ideal for a romantic getaway or family vacation, book now and let yourself be seduced by the warm atmosphere of the Wheat Room.",
-            "logis": "Immerse yourself in the warm intimacy of the Lodge – a rustic refuge that can accommodate up to 8 guests, perfect for family gatherings or friends' reunions. Nestled in a carefully restored barn, it's an invitation to an authentic escape, where modern comfort meets old-world charm. Book now and let yourself be enchanted by the unique atmosphere of the Lodge."
-            },
-            "features": {
-            "maxGuests": "Max {{value}} people",
-            "maxGuestsWithChildren": "Max {{value}} adults and {{value2}} children",
-            "bedKing": "King size bed and heated mattress",
-            "bedQueen": "1 queen size bed and 1 sofa bed",
-            "bedQueenNoCouch": "1 queen size bed",
-            "bedKingAndSingle": "1 king size bed and 2 single beds",
-            "bedDoubleKing": "2 king size beds and 4 single beds",
-            "pets": "No pets allowed",
-            "dryToilet": "Dry toilet",
-            "bathroom": "One bathroom",
-            "twoBathrooms": "2 bathrooms and 2 toilets",
-            "brazier": "Brazier",
-            "bbq": "Brazier & Barbecue",
-            "heater": "Electric heater",
-            "gasheater": "Gas heater",
-            "kitchen": "Equipped kitchen",
-            "wifi": "WiFi"
-            },
-            "errors": {
-            "fetchFailed": "Failed to fetch rooms"
-            },
-            "loading": "Loading rooms..."
-        },
-        "booking": {
-            "steps": {
-            "extras": "1. Choose extras",
-            "notes": "2. Add notes",
-            "contact": "3. Contact info"
-            },
-            "errors": {
-            "selectDates": "Please select both dates",
-            "noRates": "No rates available for selected dates",
-            "fetchError": "Unable to fetch rates",
-            "waitForPrice": "Please wait for the price calculation before continuing.",
-            "paymentError": "An error occurred while creating the payment",
-            "messageError": "An error occurred",
-            "roomUnavailable": {
-                "title": "This accommodation is not available for the selected dates",
-                "message": "Please select other dates to continue your booking"
-            }
-            },
-            "coupon": {
-            "errors": {
-                "enterCode": "Please enter a promo code",
-                "invalid": "Invalid promo code",
-                "inactive": "This promo code is no longer active",
-                "expired": "This promo code has expired",
-                "alreadyUsed": "This promo code has already been used",
-                "notFound": "Promo code not found",
-                "invalid_dates": "This code is only valid for stays between {{start}} and {{end}}"
-            },
-            "applied": "Promo code {{code}}",
-            "minusZero": "Totals below 0€ will not be accepted for checkout"
-            },
-            "people": {
-            "singular": "person",
-            "plural": "people"
-            },
-            "sections": {
-                "extras": {
-                    "title": "Choose extras",
-                    "top": "Extras selection"
-                }
-            },
-            "messages": {
-                "error": "Error",
-                "success": "Success"
-            },
-            "payment": {
-                "title": "Finalize your payment"
-            }
-        },
-        "contact": {
-            "fields": {
-            "firstName": {
-                "label": "First name*",
-                "placeholder": "First name"
-            },
-            "lastName": {
-                "label": "Last name*",
-                "placeholder": "Last name"
-            },
-            "email": {
-                "label": "Email*",
-                "placeholder": "Email"
-            },
-            "phone": {
-                "label": "Phone",
-                "placeholder": "Phone"
-            },
-            "street": {
-                "label": "Street/number",
-                "placeholder": "Street/number"
-            },
-            "postalCode": {
-                "label": "Postal code",
-                "placeholder": "Postal code"
-            },
-            "city": {
-                "label": "City",
-                "placeholder": "City"
-            },
-            "country": {
-                "label": "Country",
-                "placeholder": "Country"
-            },
-            "checkIn": {
-                "label": "Check-in*"
-            }
-            }
-        },
-        "extras": {
-            "categories": {
-            "packs": "Packages",
-            "formulesRepas": "Meal formulas",
-            "spa": "Spa",
-            "formulesDecouverte": "Discovery formulas",
-            "meals": "Meals from Bossimé",
-            "boissons": "Drinks"
-            },
-        
-            "drinkTypes": {
-            "wine": "Wines",
-            "beer": "Beers",
-            "soft": "Non-alcoholic drinks",
-            "bulles": "Bubbles"
-            },
-            "packs": {
-                "essential": {
-                "name": "The Essential (for 2)",
-                "description": "This pack includes breakfast with sweet/savory sides, juice, coffee and milk as well as 2-hour access to our spa with jacuzzi and sauna"
-                },
-                "relaxGourmet": {
-                "name": "The Gourmet Relaxation (for 2)",
-                "description": "This pack includes a charcuterie and cheese platter, a bottle of wine, a full breakfast and 2 hours access to our spa with jacuzzi and sauna."
-                },
-                "racletteRelax": {
-                "name": "The Relaxing Raclette (for 2)", 
-                "description": "*From November 1st to April 30th* This pack includes an assortment of raclette cheese and fine cold cuts, a bottle of wine, a full breakfast, and 2 hours access to our spa with jacuzzi and sauna."
-                },
-                "romanticGourmet": {
-                "name": "The Romantic Gourmet (for 2)",
-                "description": "This pack includes a charcuterie and cheese platter, a bottle of sparkling wine, a massage oil bottle with petals, as well as a full breakfast and 2 hours access to the spa with jacuzzi and sauna."
-                },
-                "racletteRomantic": {
-                "name": "The Romantic Raclette (for 2)",
-                "description": "*From November 1st to April 30th* This pack includes an assortment of raclette cheese and fine cold cuts, a bottle of sparkling wine, a massage oil bottle with petals, as well as a full breakfast and 2 hours access to the spa with jacuzzi and sauna"
-                },
-                "bbqRomantic": {
-                "name": "The Romantic barbecue (for 2)",
-                "description": "*From 1 April to 30 November* his package includes a barbecue with beef rib steak, chicken and homemade bacon. It also includes fresh side dishes and a bottle of wine, as well as 2 hours' access to the spa with jacuzzi and sauna."
-                },
-                "bbqRelax": {
-                "name": "The Relaxing barbecue (for 2)",
-                "description": "*From 1 April to 30 November* This pack includes an assortment of meats and fresh sides, a bottle of wine, a full breakfast, and 2 hours access to our spa with jacuzzi and sauna."
-                }
-            },
-            "spa": {
-              "basic": {
-                "name": "SPA Package (2 pers)",
-                "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket, bathrobes and slippers."
-              },
-              "withBottle": {
-                "name": "SPA Package + bottle (2 pers)",
-                "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket, bathrobes, slippers, and a bottle of sparkling wine."
-              },
-              "selectDate": "Select a date",
-              "greyedSlotInfoHelpText" : "If the time slot is grayed out, it is available with the previous hour and not with the following hour (as the latter is not available).",
-              "loading": "Loading time slots...",
-              "errorLoadingSettings": "Error loading SPA settings",
-              "datePlaceholderDropdown": "Select a date",
-              "noSlots": "No time slots available for this date",
-              "datePlaceholderNoDates": "No dates available",
-              "checkBookingDates": "Please ensure a date is selected",
-              "selectTwoSlotsNote": "Selection is for two time slots",
-              "selectTime": "Select a time slot",
-              "bookLater": "I want to choose my time slots later",
-              "scheduleTitle": "Schedule your SPA session",
-              "selectTimeOrBookLater": "Please select a date/time for the SPA or choose 'Book later'.",
-              "errorDurationMissing": "Time slot duration is missing from the API",
-              "bookLaterInfo": "In your booking confirmation, you will find the host's email to choose your time slots"
-            },
-            "meals": {
-                "meatballsLiege": {
-                "name": "Liege-style meatballs",
-                "description": "This dish consists of two meatballs in Liege sauce served with homemade mashed potatoes."
-                },
-                "meatballsTomato": {
-                "name": "Meatballs in tomato sauce",
-                "description": "This dish consists of two meatballs in homemade tomato sauce, served with mashed potatoes."
-                },
-                "waterzooi": {
-                "name": "Chicken waterzooi",
-                "description": "This dish consists of a delicious chicken waterzooi, served with baby potatoes."
-                },
-                "chiliVeg": {
-                "name": "Vegetarian chili",
-                "description": "This preparation is a combination of red beans, corn and fresh vegetables, slowly simmered in a tomato sauce flavored with mild spices."
-                },
-                "carrotSoup": {
-                "name": "Carrot and cumin soup",
-                "description": "This combination of flavors offers a simple and delicious taste experience, where the sweetness of carrots meets the spicy warmth of cumin"
-                }
-            },
-            "drinks": {
-              "brutBioul": {
-                "description": "This sparkling wine, made with Bronner and Johanniter grapes, offers delicate aromas of white-fleshed fruits."
-              },
-              "cortilBarco": {
-                "description": "With its red fruit aromas intertwined with mineral and smoky notes, this red wine was made with Cabernet Noir, Pinotin and Cabernet Jura grapes"
-              },
-              "terreCharlot": {
-                "description": "With its aromas of apricots and passion fruit, and a slight spicy finish, this wine was made with the Solaris grape variety."
-              },
-              "houblondeTriple": {
-                "description": "This triple beer will surprise with its floral bouquet of hibiscus and saffron. It stands out by using 3 different hops and 3 different cereals."
-              },
-              "houblondeBlonde": {
-                "description": "This blonde beer, with its roasted cereal flavors, offers a light bitterness and a floral taste identity."
-              },
-              "houblondeWhite": {
-                "description": "This white IPA, light and refreshing, offers a gentle bitterness and surprising citrus notes."
-              },
-              "bruneCondroz": {
-                "description": "This brown beer, brewed with cocoa beans, offering roundness in the mouth and a slight bitterness."
-              },
-              "tripleCondroz": {
-                "description": "The Triple du Condroz delights with its hoppy aromas on the nose, followed by an intense tasting experience typical of triple beers."
-              },
-              "ambreeCondroz": {
-                "description": "This amber beer, with a round and spicy profile, will surprise you with its character and pronounced bitterness."
-              },
-              "blancheCondroz": {
-                "description": "This white beer, with subtle violet aromas on the nose, offers a tangy and fresh experience"
-              },
-              "appleJuice": {
-                "description": "A natural and refreshing apple juice."
-              },
-              "ritchieLemonRasp": {
-                "description": "A sparkling drink with lemon and raspberry flavors."
-              },
-              "ritchieOrangeVan": {
-                "description": "A refreshing blend of orange and vanilla."
-              },
-              "ritchieCola": {
-                "description": "A unique artisanal cola."
-              },
-              "ritchieColaZero": {
-                "description": "The sugar-free version of the artisanal cola."
-              },
-              "chooseNonAlcoholicLater": "Prefers a non-alcoholic beverage (to be discussed with the host)",
-              "cortilBarcoLabel": "Cortil Barco (red)",
-              "terreCharlotLabel": "Terre Charlot (white)",
-              "softBeerOfferTitle": "Choice of Drinks",
-              "wineOfferTitle": "Included Wine Choice (1 bottle)",
-              "upTo": "up to",
-              "items": "items",
-              "selectedOutOf": "Selected {{count}} of {{max}}",
-              "included": "Included",
-              "needsMoreSelections": "{{count}} more to choose",
-              "validation": {
-                "incomplete": "Please complete your drink selection for: "
-              },
-              "tabTitle": "Choose Included Drinks"
-            },
-            "formulesRepas": {
-                "breakfast": {
-                "name": "Breakfast package (2 pers)",
-                "description": "This package includes pastries, baguette, sweet/savory sides, Belgian apple juice, coffee, milk and local yogurts."
-                },
-                "gourmet": {
-                "name": "Gourmet package (2 pers)",
-                "description": "This package includes a platter with cheese, cold cuts, raw vegetables and farm honey. It also includes a bottle of wine."
-                },
-                "raclette": {
-                "name": "Raclette package (2 pers)",
-                "description": "*From November 1st to April 30th* This package includes an assortment of raclette cheese, fine cold cuts, a fresh baguette and a bottle of wine"
-                },
-                "barbecue": {
-                "name": "Barbecue package (2 pers)",
-                "description": "*From 1 April to 30 November* This package includes a barbecue with beef ribeye, chicken and homemade bacon. It also includes fresh sides and a bottle of wine."
-                },
-                "apero": {
-                "name": "Aperitif platter package (2 pers)",
-                "description": "This package includes a platter of local cheese and cold cuts, as well as two beers or soft drinks of your choice."
-                }
-            },
-            "formulesDecouverte": {
-                "passion": {
-                "name": "Passion package",
-                "description": "This package includes candles, red flower petals, a bottle of sparkling wine, and a bottle of massage oil"
-                },
-                "birthday": {
-                "name": "Birthday package (2 pers)",
-                "description": "This package includes festive decoration with balloons, a bottle of sparkling wine and a delicious dessert."
-                }
-            },
-            "additionalPerson": "Additional person",
-            "infoSup": {
-                "ownerMessage": {
-                    "label": "Leave a message for the owner",
-                    "placeholder": "Leave a message for the owner"
-                },
-                "promoCode": {
-                    "label": "Promo code",
-                    "placeholder": "Enter your promo code",
-                    "button": "Apply",
-                    "appliedStart": "Promo code ",
-                    "appliedEnd": "applied ",
-                    "appliedCurrency": "€",
-                    "error": "Invalid promo code"
-                }
-            }
-        },
-        "navigation": {
-            "buttons": {
-            "previous": "Previous",
-            "next": "Next",
-            "confirm": "Confirm"
-            }
-        },
-        "priceDetails": {
-          "notAvailable": "Not available",
-          "roomNotAvailable": "Unfortunately, this room is not available for the selected dates.",
-          "additionalPerson": "Additional person",
-          "title": "Price details:",
-          "basePrice": "Base price",
-          "giftVoucher": "Gift card",
-          "longStayDiscount": "Long stay discount",
-          "guestFees": "{{count}} extra guest(s) × {{fee}}€",
-          "nonAlcoholicChosenLater": "Non-alcoholic option (to be arranged with host)",
-          "promoCode": {
-            "fixed": "Promo code",
-            "percentage": "Promo code"
           },
-          "subtotal": "Subtotal",
-          "totalDiscounts": "Total discounts",
-          "total": "Total",
-          "taxesIncluded": "* Total price including all taxes and fees",
-          "depositRequired": "** Deposit required: {{percentage}}% ({{amount}} EUR)"
+          "extras": "Extras",
+          "activities": "Activities & Partners",
+          "aboutUs": "About Us",
+          "info": "Info & Press"
         },
-        "propertyDetails": {
-            
-            "unavailableDates": "Unavailable dates: ",
-            "roomUnavailable": {
-            "title": "This accommodation is not available for the selected dates",
-            "message": "Please select other dates for this accommodation or check our other options"
-            },
-            "tabs": {
-            "bookingDetails": "Booking details",
-            "roomInfo": "Room information"
-            },
-            "guests": {
-            "singular": "person",
-            "plural": "people"
-            },
-            "selectDatePrompt": "Please select a date",
-            "selectRoom": "Book this room",
-            "unavailableForDates": "Not available for these dates",
-            "loading": "Loading...",
-            "extraGuestFee": "Extra fee of {{fee}}€ per person after {{threshold}} guests ({{count}} extra guest(s))",
-            "capacityExceeded": {
-                "title": "Maximum capacity exceeded",
-                "message": "This room can accommodate a maximum of {{maxGuests}} people (you have selected {{selectedGuests}} people)."
-                },
-            "tooManyGuests": "Too many people for this room"
-        },
-        "terms": {
-            "accept": "I accept the ",
-            "accepted": "Accepted",
-            "generalConditions": "general conditions",
-            "required": "You must accept the general conditions to continue."
-        },
-        "timeSelect": {
-            "arrivalTime": "Arrival time",
-            "placeholder": "Select arrival time"
-        },
-"bookingConfirmation": {
-    "loading": {
-      "title": "Processing your reservation...",
-      "message": "Please wait while we confirm your payment."
-    },
-    "error": {
-      "title": "Error Retrieving Booking Details",
-      "message": "An error occurred while fetching your booking details. Please check your email or contact us directly.",
-      "notFound": "Booking details not found. Please check your email or contact us.",
-      "fetchFailed": "Failed to fetch booking details."
-    },
-    "success": {
-      "title": "Booking Confirmed!",
-      "subtitle": "A confirmation has been sent to {{email}}.",
-      "sections": {
-        "stayDetails": {
-          "title": "Stay Details",
-          "checkIn_label": "Check-in:",
-          "checkIn": "{{date}}",
-          "arrivalTime_label": "Arrival Time:",
-          "arrivalTime": "{{time}}",
-          "checkOut_label": "Check-out:",
-          "checkOut": "{{date}}",
-          "travelers_label": "Travelers:",
-          "travelers": "{{adults}} adult(s)",
-          "travelersWithChildren": "{{adults}} adult(s), {{children}} child(ren)"
-        },
-        "spaTime": {
-          "scheduledTitle": "SPA Session",
-          "scheduleLaterTitle": "Schedule Your SPA Session",
-          "scheduleLaterInstruction": "To schedule your SPA session, please contact us by email or phone:",
-          "scheduleLaterPriority": "Note: Slots are assigned on a first-come, first-served basis."
-        },
-        "guestDetails": {
-          "title": "Guest Information",
-          "fullName_label": "Full Name:",
-          "fullName": "{{firstName}} {{lastName}}",
-          "email_label": "Email:",
-          "email": "{{email}}",
-          "phone_label": "Phone:",
-          "phone": "{{phone}}"
-        },
-        "priceDetails": {
-          "title": "Price Details",
-          "basePrice_label": "Base Stay Price",
-          "basePrice": "{{price}}€",
-          "guestFees_label": "Fee for {{extraGuests}} extra person(s)",
-          "guestFees": "{{amount}}€",
-          "longStayDiscount_label": "Long Stay Discount",
-          "longStayDiscount": "{{percentage}}%",
-          "promoCode_label": "Promo Code ({{code}})",
-          "promoCode": "-{{amount}}€",
-          "total_label": "Total",
-          "total": "{{price}}€"
-        },
-        "paidExtras": {
-          "title": "Paid Extras"
-        },
-        "freeDrinks": {
-          "title": "Complimentary Drinks"
-        },
-        "nonAlcoholicChoice": {
-          "title": "Non-Alcoholic Drink Choice",
-          "instructionFor": "For your '__GRANTOR_NAME__' offer, you have chosen to select a non-alcoholic beverage later. Please contact us by email or phone to specify your choice:",
-          "contactPrompt": "Please contact us soon to make your selection."
-        },
-        "address": {
-          "title": "Property Address"
+        "buttons": {
+          "giftCard": "Gift Card"
         }
       },
-      "buttons": {
-        "backHome": "Back to Home",
-        "print": "Print"
-      }
-    },
-    "adults": "adult(s)",
-    "children": "child(ren)",
-    "included": "Included",
-    "notProvided": "Not provided",
-    "extras": {
-      "additionalPerson": "add. person"
-    },
-    "terms": {
-        "generalConditions": "General Conditions",
-        "accepted": "Accepted"
-    },
-    "errors": {
-        "invalidDate": "Invalid Date",
-        "invalidTime": "Invalid Time"
-    },
-    "emailDefaults": {
-        "spaContactEmail": "fermedebasseilles@gmail.com",
-        "spaContactPhone": " / +32 475 20 16 19"
-    },
-    "emailSubjects": {
-        "nonAlcoholicChoice": "Non-alcoholic drink choice - Booking"
-    },
-    "emailBodies": {
-        "nonAlcoholicChoice": "Hello,\n\nRegarding my booking (Ref: {{bookingId}}), for the {{grantors}} offer, I would like to specify my choice for a non-alcoholic beverage.\n\nThank you,\n{{guestName}}"
-    }
-  },
-        "paymentForm": {
+      "drinkNames": {
+        "brutBioul": "Brut de Bioul (Sparkling)",
+        "cortilBarco": "Cortil Barco (Red)",
+        "terreCharlot": "Terre Charlot (White)",
+        "bruneCondroz": "Brune du Condroz",
+        "ambreeCondroz": "Ambrée du Condroz",
+        "tripleCondroz": "Triple du Condroz",
+        "blancheCondroz": "Blanche du Condroz",
+        "appleJuice": "Apple Juice \"Pom d'Happy\"",
+        "ritchieLemonRasp": "Ritchie Lemon/Raspberry",
+        "ritchieOrangeVan": "Ritchie Orange/Vanilla",
+        "ritchieCola": "Ritchie Cola",
+        "ritchieColaZero": "Ritchie Cola Zero"
+      },
+      "calendar": {
+        "availability": "Availability",
+        "available": "Available",
+        "unavailable": "Unavailable",
+        "partiallyAvailable": "Check-out only",
+        "partiallyAvailableCheckIn": "Check-in only",
+        "partiallyAvailableCheckOut": "Check-out only",
+        "instructions": "Select your check-in and check-out dates"
+      },
+      "search": {
+        "title": "Select your dates",
+        "arrival": "Arrival",
+        "departure": "Departure",
+        "adults": "Adults",
+        "children": "Children",
+        "search": "Search",
+        "selectDate": "Select a date",
+        "maxGuestsExceeded": "The maximum number of people is {{max}}",
+        "select": "Select",
+        "maxGuestsShort": "max"
+      },
+      "rooms": {
+        "types": {
+          "unusual": "Unusual Accommodations",
+          "guesthouse": "Guesthouse & B&B"
+        },
+        "names": {
+          "bulle": "The Bulle du Ruisseau",
+          "cabane": "The Cabane of the Chêne",
+          "dome": "The Dôme des Libellules",
+          "moulin": "The Moulin",
+          "ble": "The Chambre of Blé",
+          "logis": "The Logis"
+        },
+        "descriptions": {
+          "bulle": "Immerse yourself in the soothing intimacy of the Stream Bubble - an unusual cocoon nestled between earth and water, lulled by the song of the stream and the whispers of nature. With its Crusoe armchair and king-size bed, this space offers refined comfort in the heart of nature. Also enjoy the brazier for convivial evenings under the stars, perfect for roasting marshmallows and sharing unforgettable moments. Book now and let yourself be enchanted by the magical serenity of the Stream Bubble.",
+          "cabane": "Discover the Cabane du Chêne - a haven of peace perched 7 metres high in the canopy of a majestic oak tree. Located at the heart of the estate, it offers breathtaking panoramic views over the region. Spread over two floors, the hut has a cosy little lounge, a cosy bedroom and a dry toilet, combining comfort and escape. Take advantage of the large terrace, perched at the top of the tree, to relax in the open air. Below the tree, a small garden with a brazier and BBQ is at your disposal. Book your stay at the Cabane du Chêne now and enjoy a unique experience in the heart of nature.",
+          "dome": "Immerse yourself in the magical intimacy of the Dragonfly Dome – an unusual refuge in the heart of nature, designed for a romantic getaway. Equipped with a heated king-size bed and private terrace, this space offers luxury and serenity. Nestled in a corner of the woods, the isolated site is perfect for a total disconnect. You'll spend an unforgettable night under the stars, lulled by the magic of nature. A bunk bed is available in the small cabin next door, ideal for accommodating children. Also enjoy the brazier-BBQ for convivial evenings. Book now and let yourself be carried away by the tranquility of the Dragonfly Dome.",
+          "moulin": "Immerse yourself in the enchanting atmosphere of the Mill - a romantic studio designed for two people where modern comfort and past charm intertwine. With its queen-size mezzanine bed, a cozy sofa bed that can accommodate children, this space offers you an intimate and comfortable escape. Add to that a fully equipped kitchen for convivial moments. Book now and let yourself be seduced by the irresistible charm of the Mill.",
+          "ble": "Immerse yourself in the intimacy of the Wheat Room - a cozy refuge in the heart of a carefully restored barn. Designed to accommodate two adults and up to two children, this rustic room harmoniously combines old-world charm with modern amenities. Ideal for a romantic getaway or family vacation, book now and let yourself be seduced by the warm atmosphere of the Wheat Room.",
+          "logis": "Immerse yourself in the warm intimacy of the Lodge – a rustic refuge that can accommodate up to 8 guests, perfect for family gatherings or friends' reunions. Nestled in a carefully restored barn, it's an invitation to an authentic escape, where modern comfort meets old-world charm. Book now and let yourself be enchanted by the unique atmosphere of the Lodge."
+        },
+        "features": {
+          "maxGuests": "Max {{value}} people",
+          "maxGuestsWithChildren": "Max {{value}} adults and {{value2}} children",
+          "bedKing": "King size bed and heated mattress",
+          "bedQueen": "1 queen size bed and 1 sofa bed",
+          "bedQueenNoCouch": "1 queen size bed",
+          "bedKingAndSingle": "1 king size bed and 2 single beds",
+          "bedDoubleKing": "2 king size beds and 4 single beds",
+          "pets": "No pets allowed",
+          "dryToilet": "Dry toilet",
+          "bathroom": "One bathroom",
+          "twoBathrooms": "2 bathrooms and 2 toilets",
+          "brazier": "Brazier",
+          "bbq": "Brazier & Barbecue",
+          "heater": "Electric heater",
+          "gasheater": "Gas heater",
+          "kitchen": "Equipped kitchen",
+          "wifi": "WiFi"
+        },
+        "errors": {
+          "fetchFailed": "Failed to fetch rooms"
+        },
+        "loading": "Loading rooms..."
+      },
+      "booking": {
+        "steps": {
+          "extras": "1. Choose extras",
+          "notes": "2. Add notes",
+          "contact": "3. Contact info"
+        },
+        "errors": {
+          "selectDates": "Please select both dates",
+          "noRates": "No rates available for selected dates",
+          "fetchError": "Unable to fetch rates",
+          "waitForPrice": "Please wait for the price calculation before continuing.",
+          "paymentError": "An error occurred while creating the payment",
+          "messageError": "An error occurred",
+          "roomUnavailable": {
+            "title": "This accommodation is not available for the selected dates",
+            "message": "Please select other dates to continue your booking"
+          }
+        },
+        "coupon": {
+          "errors": {
+            "enterCode": "Please enter a promo code",
+            "invalid": "Invalid promo code",
+            "inactive": "This promo code is no longer active",
+            "expired": "This promo code has expired",
+            "alreadyUsed": "This promo code has already been used",
+            "notFound": "Promo code not found",
+            "invalid_dates": "This code is only valid for stays between {{start}} and {{end}}"
+          },
+          "applied": "Promo code {{code}}",
+          "minusZero": "Totals below 0€ will not be accepted for checkout"
+        },
+        "people": {
+          "singular": "person",
+          "plural": "people"
+        },
+        "sections": {
+          "extras": {
+            "title": "Choose extras",
+            "top": "Extras selection"
+          }
+        },
+        "messages": {
+          "error": "Error",
+          "success": "Success"
+        },
+        "payment": {
+          "title": "Finalize your payment"
+        }
+      },
+      "contact": {
+        "fields": {
+          "firstName": {
+            "label": "First name*",
+            "placeholder": "First name"
+          },
+          "lastName": {
+            "label": "Last name*",
+            "placeholder": "Last name"
+          },
+          "email": {
+            "label": "Email*",
+            "placeholder": "Email"
+          },
+          "phone": {
+            "label": "Phone",
+            "placeholder": "Phone"
+          },
+          "street": {
+            "label": "Street/number",
+            "placeholder": "Street/number"
+          },
+          "postalCode": {
+            "label": "Postal code",
+            "placeholder": "Postal code"
+          },
+          "city": {
+            "label": "City",
+            "placeholder": "City"
+          },
+          "country": {
+            "label": "Country",
+            "placeholder": "Country"
+          },
+          "checkIn": {
+            "label": "Check-in*"
+          }
+        }
+      },
+      "extras": {
+        "categories": {
+          "packs": "Packages",
+          "formulesRepas": "Meal formulas",
+          "spa": "Spa",
+          "formulesDecouverte": "Discovery formulas",
+          "meals": "Meals from Bossimé",
+          "boissons": "Drinks"
+        },
+
+        "drinkTypes": {
+          "wine": "Wines",
+          "beer": "Beers",
+          "soft": "Non-alcoholic drinks",
+          "bulles": "Bubbles"
+        },
+        "packs": {
+          "essential": {
+            "name": "The Essential (for 2)",
+            "description": "This pack includes breakfast with sweet/savory sides, juice, coffee and milk as well as 2-hour access to our spa with jacuzzi and sauna"
+          },
+          "relaxGourmet": {
+            "name": "The Gourmet Relaxation (for 2)",
+            "description": "This pack includes a charcuterie and cheese platter, a bottle of wine, a full breakfast and 2 hours access to our spa with jacuzzi and sauna."
+          },
+          "racletteRelax": {
+            "name": "The Relaxing Raclette (for 2)",
+            "description": "*From November 1st to April 30th* This pack includes an assortment of raclette cheese and fine cold cuts, a bottle of wine, a full breakfast, and 2 hours access to our spa with jacuzzi and sauna."
+          },
+          "romanticGourmet": {
+            "name": "The Romantic Gourmet (for 2)",
+            "description": "This pack includes a charcuterie and cheese platter, a bottle of sparkling wine, a massage oil bottle with petals, as well as a full breakfast and 2 hours access to the spa with jacuzzi and sauna."
+          },
+          "racletteRomantic": {
+            "name": "The Romantic Raclette (for 2)",
+            "description": "*From November 1st to April 30th* This pack includes an assortment of raclette cheese and fine cold cuts, a bottle of sparkling wine, a massage oil bottle with petals, as well as a full breakfast and 2 hours access to the spa with jacuzzi and sauna"
+          },
+          "bbqRomantic": {
+            "name": "The Romantic barbecue (for 2)",
+            "description": "*From 1 April to 30 November* his package includes a barbecue with beef rib steak, chicken and homemade bacon. It also includes fresh side dishes and a bottle of wine, as well as 2 hours' access to the spa with jacuzzi and sauna."
+          },
+          "bbqRelax": {
+            "name": "The Relaxing barbecue (for 2)",
+            "description": "*From 1 April to 30 November* This pack includes an assortment of meats and fresh sides, a bottle of wine, a full breakfast, and 2 hours access to our spa with jacuzzi and sauna."
+          }
+        },
+        "spa": {
+          "basic": {
+            "name": "SPA Package (2 pers)",
+            "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket, bathrobes and slippers."
+          },
+          "withBottle": {
+            "name": "SPA Package + bottle (2 pers)",
+            "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket, bathrobes, slippers, and a bottle of sparkling wine."
+          },
+          "selectDate": "Select a date",
+          "greyedSlotInfoHelpText": "If the time slot is grayed out, it is available with the previous hour and not with the following hour (as the latter is not available).",
+          "loading": "Loading time slots...",
+          "errorLoadingSettings": "Error loading SPA settings",
+          "datePlaceholderDropdown": "Select a date",
+          "noSlots": "No time slots available for this date",
+          "datePlaceholderNoDates": "No dates available",
+          "checkBookingDates": "Please ensure a date is selected",
+          "selectTwoSlotsNote": "Selection is for two time slots",
+          "selectTime": "Select a time slot",
+          "bookLater": "I want to choose my time slots later",
+          "scheduleTitle": "Schedule your SPA session",
+          "selectTimeOrBookLater": "Please select a date/time for the SPA or choose 'Book later'.",
+          "errorDurationMissing": "Time slot duration is missing from the API",
+          "bookLaterInfo": "In your booking confirmation, you will find the host's email to choose your time slots"
+        },
+        "meals": {
+          "meatballsLiege": {
+            "name": "Liege-style meatballs",
+            "description": "This dish consists of two meatballs in Liege sauce served with homemade mashed potatoes."
+          },
+          "meatballsTomato": {
+            "name": "Meatballs in tomato sauce",
+            "description": "This dish consists of two meatballs in homemade tomato sauce, served with mashed potatoes."
+          },
+          "waterzooi": {
+            "name": "Chicken waterzooi",
+            "description": "This dish consists of a delicious chicken waterzooi, served with baby potatoes."
+          },
+          "chiliVeg": {
+            "name": "Vegetarian chili",
+            "description": "This preparation is a combination of red beans, corn and fresh vegetables, slowly simmered in a tomato sauce flavored with mild spices."
+          },
+          "carrotSoup": {
+            "name": "Carrot and cumin soup",
+            "description": "This combination of flavors offers a simple and delicious taste experience, where the sweetness of carrots meets the spicy warmth of cumin"
+          }
+        },
+        "drinks": {
+          "brutBioul": {
+            "description": "This sparkling wine, made with Bronner and Johanniter grapes, offers delicate aromas of white-fleshed fruits."
+          },
+          "cortilBarco": {
+            "description": "With its red fruit aromas intertwined with mineral and smoky notes, this red wine was made with Cabernet Noir, Pinotin and Cabernet Jura grapes"
+          },
+          "terreCharlot": {
+            "description": "With its aromas of apricots and passion fruit, and a slight spicy finish, this wine was made with the Solaris grape variety."
+          },
+          "houblondeTriple": {
+            "description": "This triple beer will surprise with its floral bouquet of hibiscus and saffron. It stands out by using 3 different hops and 3 different cereals."
+          },
+          "houblondeBlonde": {
+            "description": "This blonde beer, with its roasted cereal flavors, offers a light bitterness and a floral taste identity."
+          },
+          "houblondeWhite": {
+            "description": "This white IPA, light and refreshing, offers a gentle bitterness and surprising citrus notes."
+          },
+          "bruneCondroz": {
+            "description": "This brown beer, brewed with cocoa beans, offering roundness in the mouth and a slight bitterness."
+          },
+          "tripleCondroz": {
+            "description": "The Triple du Condroz delights with its hoppy aromas on the nose, followed by an intense tasting experience typical of triple beers."
+          },
+          "ambreeCondroz": {
+            "description": "This amber beer, with a round and spicy profile, will surprise you with its character and pronounced bitterness."
+          },
+          "blancheCondroz": {
+            "description": "This white beer, with subtle violet aromas on the nose, offers a tangy and fresh experience"
+          },
+          "appleJuice": {
+            "description": "A natural and refreshing apple juice."
+          },
+          "ritchieLemonRasp": {
+            "description": "A sparkling drink with lemon and raspberry flavors."
+          },
+          "ritchieOrangeVan": {
+            "description": "A refreshing blend of orange and vanilla."
+          },
+          "ritchieCola": {
+            "description": "A unique artisanal cola."
+          },
+          "ritchieColaZero": {
+            "description": "The sugar-free version of the artisanal cola."
+          },
+          "chooseNonAlcoholicLater": "Prefers a non-alcoholic beverage (to be discussed with the host)",
+          "cortilBarcoLabel": "Cortil Barco (red)",
+          "terreCharlotLabel": "Terre Charlot (white)",
+          "softBeerOfferTitle": "Choice of Drinks",
+          "wineOfferTitle": "Included Wine Choice (1 bottle)",
+          "upTo": "up to",
+          "items": "items",
+          "selectedOutOf": "Selected {{count}} of {{max}}",
+          "included": "Included",
+          "needsMoreSelections": "{{count}} more to choose",
+          "validation": {
+            "incomplete": "Please complete your drink selection for: "
+          },
+          "tabTitle": "Choose Included Drinks"
+        },
+        "formulesRepas": {
+          "breakfast": {
+            "name": "Breakfast package (2 pers)",
+            "description": "This package includes pastries, baguette, sweet/savory sides, Belgian apple juice, coffee, milk and local yogurts."
+          },
+          "gourmet": {
+            "name": "Gourmet package (2 pers)",
+            "description": "This package includes a platter with cheese, cold cuts, raw vegetables and farm honey. It also includes a bottle of wine."
+          },
+          "raclette": {
+            "name": "Raclette package (2 pers)",
+            "description": "*From November 1st to April 30th* This package includes an assortment of raclette cheese, fine cold cuts, a fresh baguette and a bottle of wine"
+          },
+          "barbecue": {
+            "name": "Barbecue package (2 pers)",
+            "description": "*From 1 April to 30 November* This package includes a barbecue with beef ribeye, chicken and homemade bacon. It also includes fresh sides and a bottle of wine."
+          },
+          "apero": {
+            "name": "Aperitif platter package (2 pers)",
+            "description": "This package includes a platter of local cheese and cold cuts, as well as two beers or soft drinks of your choice."
+          }
+        },
+        "formulesDecouverte": {
+          "passion": {
+            "name": "Passion package",
+            "description": "This package includes candles, red flower petals, a bottle of sparkling wine, and a bottle of massage oil"
+          },
+          "birthday": {
+            "name": "Birthday package (2 pers)",
+            "description": "This package includes festive decoration with balloons, a bottle of sparkling wine and a delicious dessert."
+          }
+        },
+        "additionalPerson": "Additional person",
+        "infoSup": {
+          "ownerMessage": {
+            "label": "Leave a message for the owner",
+            "placeholder": "Leave a message for the owner"
+          },
+          "promoCode": {
+            "label": "Promo code",
+            "placeholder": "Enter your promo code",
+            "button": "Apply",
+            "appliedStart": "Promo code ",
+            "appliedEnd": "applied ",
+            "appliedCurrency": "€",
+            "error": "Invalid promo code"
+          }
+        }
+      },
+      "navigation": {
+        "buttons": {
+          "previous": "Previous",
+          "next": "Next",
+          "confirm": "Confirm"
+        }
+      },
+      "priceDetails": {
+        "notAvailable": "Not available",
+        "roomNotAvailable": "Unfortunately, this room is not available for the selected dates.",
+        "additionalPerson": "Additional person",
+        "title": "Price details:",
+        "basePrice": "Base price",
+        "giftVoucher": "Gift card",
+        "longStayDiscount": "Long stay discount",
+        "guestFees": "{{count}} extra guest(s) × {{fee}}€",
+        "nonAlcoholicChosenLater": "Non-alcoholic option (to be arranged with host)",
+        "promoCode": {
+          "fixed": "Promo code",
+          "percentage": "Promo code"
+        },
+        "subtotal": "Subtotal",
+        "totalDiscounts": "Total discounts",
+        "total": "Total",
+        "taxesIncluded": "* Total price including all taxes and fees",
+        "depositRequired": "** Deposit required: {{percentage}}% ({{amount}} EUR)"
+      },
+      "propertyDetails": {
+        "unavailableDates": "Unavailable dates: ",
+        "roomUnavailable": {
+          "title": "This accommodation is not available for the selected dates",
+          "message": "Please select other dates for this accommodation or check our other options"
+        },
+        "tabs": {
+          "bookingDetails": "Booking details",
+          "roomInfo": "Room information"
+        },
+        "guests": {
+          "singular": "person",
+          "plural": "people"
+        },
+        "selectDatePrompt": "Please select a date",
+        "selectRoom": "Book this room",
+        "unavailableForDates": "Not available for these dates",
+        "loading": "Loading...",
+        "extraGuestFee": "Extra fee of {{fee}}€ per person after {{threshold}} guests ({{count}} extra guest(s))",
+        "capacityExceeded": {
+          "title": "Maximum capacity exceeded",
+          "message": "This room can accommodate a maximum of {{maxGuests}} people (you have selected {{selectedGuests}} people)."
+        },
+        "tooManyGuests": "Too many people for this room"
+      },
+      "terms": {
+        "accept": "I accept the ",
+        "accepted": "Accepted",
+        "generalConditions": "general conditions",
+        "required": "You must accept the general conditions to continue."
+      },
+      "timeSelect": {
+        "arrivalTime": "Arrival time",
+        "placeholder": "Select arrival time"
+      },
+      "bookingConfirmation": {
+        "loading": {
+          "title": "Processing your reservation...",
+          "message": "Please wait while we confirm your payment."
+        },
+        "error": {
+          "title": "Error Retrieving Booking Details",
+          "message": "An error occurred while fetching your booking details. Please check your email or contact us directly.",
+          "notFound": "Booking details not found. Please check your email or contact us.",
+          "fetchFailed": "Failed to fetch booking details."
+        },
+        "success": {
+          "title": "Booking Confirmed!",
+          "subtitle": "A confirmation has been sent to {{email}}.",
+          "sections": {
+            "stayDetails": {
+              "title": "Stay Details",
+              "checkIn_label": "Check-in:",
+              "checkIn": "{{date}}",
+              "arrivalTime_label": "Arrival Time:",
+              "arrivalTime": "{{time}}",
+              "checkOut_label": "Check-out:",
+              "checkOut": "{{date}}",
+              "travelers_label": "Travelers:",
+              "travelers": "{{adults}} adult(s)",
+              "travelersWithChildren": "{{adults}} adult(s), {{children}} child(ren)"
+            },
+            "spaTime": {
+              "scheduledTitle": "SPA Session",
+              "scheduleLaterTitle": "Schedule Your SPA Session",
+              "scheduleLaterInstruction": "To schedule your SPA session, please contact us by email or phone:",
+              "scheduleLaterPriority": "Note: Slots are assigned on a first-come, first-served basis."
+            },
+            "guestDetails": {
+              "title": "Guest Information",
+              "fullName_label": "Full Name:",
+              "fullName": "{{firstName}} {{lastName}}",
+              "email_label": "Email:",
+              "email": "{{email}}",
+              "phone_label": "Phone:",
+              "phone": "{{phone}}"
+            },
+            "priceDetails": {
+              "title": "Price Details",
+              "basePrice_label": "Base Stay Price",
+              "basePrice": "{{price}}€",
+              "guestFees_label": "Fee for {{extraGuests}} extra person(s)",
+              "guestFees": "{{amount}}€",
+              "longStayDiscount_label": "Long Stay Discount",
+              "longStayDiscount": "{{percentage}}%",
+              "promoCode_label": "Promo Code ({{code}})",
+              "promoCode": "-{{amount}}€",
+              "total_label": "Total",
+              "total": "{{price}}€"
+            },
+            "paidExtras": {
+              "title": "Paid Extras"
+            },
+            "freeDrinks": {
+              "title": "Complimentary Drinks"
+            },
+            "nonAlcoholicChoice": {
+              "title": "Non-Alcoholic Drink Choice",
+              "instructionFor": "For your '__GRANTOR_NAME__' offer, you have chosen to select a non-alcoholic beverage later. Please contact us by email or phone to specify your choice:",
+              "contactPrompt": "Please contact us soon to make your selection."
+            },
+            "address": {
+              "title": "Property Address"
+            }
+          },
+          "buttons": {
+            "backHome": "Back to Home",
+            "print": "Print"
+          }
+        },
+        "adults": "adult(s)",
+        "children": "child(ren)",
+        "included": "Included",
+        "notProvided": "Not provided",
+        "extras": {
+          "additionalPerson": "add. person"
+        },
+        "terms": {
+          "generalConditions": "General Conditions",
+          "accepted": "Accepted"
+        },
+        "errors": {
+          "invalidDate": "Invalid Date",
+          "invalidTime": "Invalid Time"
+        },
+        "emailDefaults": {
+          "spaContactEmail": "fermedebasseilles@gmail.com",
+          "spaContactPhone": " / +32 475 20 16 19"
+        },
+        "emailSubjects": {
+          "nonAlcoholicChoice": "Non-alcoholic drink choice - Booking"
+        },
+        "emailBodies": {
+          "nonAlcoholicChoice": "Hello,\n\nRegarding my booking (Ref: {{bookingId}}), for the {{grantors}} offer, I would like to specify my choice for a non-alcoholic beverage.\n\nThank you,\n{{guestName}}"
+        }
+      },
+      "paymentForm": {
         "notLoaded": "Stripe not loaded yet",
         "processing": "Processing...",
         "payNow": "Pay now",
         "errors": {
-            "generic": "An error occurred during payment"
+          "generic": "An error occurred during payment"
         }
-        }
+      }
     }
 }
