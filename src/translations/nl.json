@@ -443,7 +443,7 @@
             "longStayDiscount": "{{percentage}}%",
             "promoCode_label": "Promocode ({{code}})",
             "promoCode": "-{{amount}}€",
-            "total_label": "Totaalbedrag",
+            "total_label": "Totaal",
             "total": "{{price}}€"
           },
           "paidExtras": { "title": "Betaalde Extra's" },

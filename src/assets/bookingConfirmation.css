@@ -1,149 +1,301 @@
+/* src/assets/bookingConfirmation.css */
+
 /* Root container styling */
 .container {
   padding: 3rem 1rem;
-  background-color: #678D73;
-  min-height: auto;
+  background-color: #678D73; /* Your brand green */
+  min-height: auto; /* Changed from 100vh as it's inside a flex container */
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.icon-container img.icon {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* Background styling for test div */
-.sky-background {
-  background-color: #0ea5e9; /* Tailwind's bg-sky-500 */
+  width: 100%; /* Ensure it takes full width if it's the direct child of body for scrolling */
 }
 
 /* Card container */
 .card {
   width: 100%;
-  max-width: 64rem;
-  padding: 2rem;
-  margin: 0 auto;
+  max-width: 64rem; /* lg:max-w-3xl equivalent more or less */
+  padding: 2rem;   /* p-8 */
+  margin: 2rem auto; /* my-8 on larger screens, auto centers */
   background-color: white;
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-  border-radius: 1rem;
-}
-
-.discount-text {
-  color: #16a34a;
-  font-weight: 600;
-}
-
-.total-section {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.total-text {
-  font-size: 1.25rem;
-  font-weight: 700;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* shadow-xl */
+  border-radius: 1rem; /* rounded-2xl */
 }
 
 /* Flex container for header */
 .header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 3rem;
+  gap: 1.5rem; /* gap-6 */
+  margin-bottom: 2rem; /* mb-8 */
 }
 
-/* Icon background */
+/* Icon background for header logo */
 .icon-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 9rem;
-  height: 9rem;
-  background-color: #d1fae5; /* Tailwind's bg-green-100 */
-  border-radius: 9999px;
+  width: 6rem;  /* w-24 (adjust as needed) */
+  height: 6rem; /* h-24 (adjust as needed) */
+  background-color: #EFFBF4; /* A lighter, more subtle green, or use your existing #d1fae5 */
+  border-radius: 9999px; /* rounded-full */
+  flex-shrink: 0; /* Prevent shrinking if title is long */
 }
 
-/* Icon color */
-.icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  color: #16a34a; /* Tailwind's text-green-600 */
+.icon-container img.icon { /* Target the img tag inside */
+  width: 80%;  /* Adjust to fit well within the circle */
+  height: 80%; /* Adjust to fit well within the circle */
+  object-fit: contain;
 }
 
 /* Title */
 .title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937; /* Tailwind's text-gray-900 */
+  font-size: 1.875rem; /* text-2xl or 3xl depending on preference */
+  font-weight: 700;   /* font-bold */
+  color: #1f2937;     /* text-gray-800 or 900 */
+  line-height: 1.2;
 }
 
 /* Subtitle */
 .subtitle {
-  color: #4b5563; /* Tailwind's text-gray-600 */
+  color: #4b5563; /* text-gray-600 */
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
 }
 
 /* Grid styling */
 .grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
+  grid-template-columns: 1fr; /* Default to 1 column */
+  gap: 1.5rem; /* gap-6 */
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) { /* md breakpoint */
   .grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 columns on md */
   }
 }
 
-.actions {
-    padding-top : 2rem;
-    
+@media (min-width: 1024px) { /* lg breakpoint */
+  .grid {
+    /* If you want 4 columns for the first row items, then SPA/Drinks span full */
+    /* This assumes the specific col-span classes are handled in JSX */
+  }
 }
 
-/* Card styles for details */
+/* Card styles for details sections */
 .details-card {
-  padding: 1.5rem;
+  padding: 1.25rem; /* p-5 */
   background-color: white;
-  border: 1px solid #f3f4f6; /* Tailwind's border-gray-100 */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 1rem;
+  border: 1px solid #e5e7eb; /* border-gray-200 */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px -1px rgba(0, 0, 0, 0.05); /* shadow-md */
+  border-radius: 0.75rem; /* rounded-xl */
 }
 
-/* Title styling for confirmation sections */
+/* Title styling for individual sections within details-card */
 .titleConfirmation {
-  font-size: 1.10rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: #111827; /* Tailwind's text-gray-800 */
+  font-size: 1.125rem; /* text-lg */
+  font-weight: 600;   /* font-semibold */
+  color: #374151;     /* text-gray-700 */
+  margin-bottom: 1rem; /* mb-4 */
+  padding-bottom: 0.5rem; /* pb-2 */
+  border-bottom: 1px solid #e5e7eb; /* border-gray-200 */
+  display: flex; /* For aligning icons with titles */
+  align-items: center;
+}
+
+.titleConfirmation svg { /* Styling for icons next to section titles */
+    margin-right: 0.5rem;
+    /* color: #668e73; /* Default icon color, can be overridden by specific text-brandColor etc. */
+}
+
+
+/* --- NEW/ADJUSTED STYLES FOR PRICE DETAILS SECTION --- */
+.item-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0; /* Increased vertical padding for more space */
+  font-size: 0.9rem;  /* text-sm is 0.875rem, this is slightly larger */
+  line-height: 1.5;
+  border-bottom: 1px dotted #f0f0f0; /* Very light dotted line between items */
+}
+.item-line:last-child {
+    border-bottom: none; /* No border for the last item in a group */
+}
+
+.details-card > .item-line:first-of-type { /* If an item-line is a direct child and first */
+    padding-top: 0;
+}
+.details-card > .item-line:last-of-type {
+    /* border-bottom: none; /* Already handled by item-line:last-child */
+}
+
+
+.price-value {
+  font-weight: 500; /* font-medium */
+  margin-left: 1rem; /* Space before the price */
+  white-space: nowrap; /* Prevent price from wrapping */
+  text-align: right; /* Ensure prices align to the right if items wrap */
+}
+
+/* Sub-sections within Price Details (Paid Extras, Free Drinks) */
+.details-card .sub-section {
+  margin-top: 1.25rem; /* Increased space above sub-sections */
+  padding-top: 0.75rem;
+  /* border-top: 1px solid #e5e7eb; /* Separator line for sub-sections (optional) */
+}
+/* If you want a border only if it's not the first element after title */
+.details-card > *:not(h2) + .sub-section {
+    border-top: 1px solid #f0f0f0;
+}
+
+
+.details-card .sub-section h3 {
+  font-size: 1rem; /* text-base */
+  font-weight: 600; /* font-semibold */
+  margin-bottom: 0.75rem; /* Space below sub-section title */
+  display: flex;
+  align-items: center;
+}
+
+.details-card .sub-section h3 svg {
+  margin-right: 0.5rem;
+  /* Color is handled by Tailwind classes like text-brandColor or text-green-600 */
+}
+
+.sub-item-line { /* For "personne supplémentaire" lines */
+  font-size: 0.8rem;   /* text-xs */
+  padding-left: 1.75rem; /* pl-7 equivalent */
+  color: #4b5563;      /* text-gray-600 */
+  margin-top: 0.1rem;  /* Slight pull up */
+  margin-bottom: 0.35rem;
+  padding-bottom: 0.1rem; /* Small space below */
+  border-bottom: none !important; /* Ensure sub-items don't get item-line's border */
+}
+.sub-item-line .price-value {
+    font-weight: normal;
+}
+
+
+.discount-text {
+  /* color: #16a34a; /* Using Tailwind classes directly in JSX */
+  /* font-weight: 600; /* Using Tailwind classes directly in JSX */
+  margin-top: 0.75rem !important; /* More space above discount lines */
+  border-top: 1px dotted #f0f0f0; /* Separator before discounts */
+}
+.discount-text:first-of-type { /* If it's the first discount after other items */
+    /* border-top: 1px dotted #e0e0e0; */
+}
+
+
+.total-section {
+  margin-top: 1.25rem; /* More space before total */
+  padding-top: 0.75rem;
+  border-top: 1px solid #d1d5db; /* A more solid line before total */
+}
+
+.total-text span:first-child { /* Target "Total à Payer" */
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 700;   /* font-bold */
+    color: #1f2937;
+}
+.total-text .price-value { /* Target the total price value */
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+
+/* SPA & Non-Alcoholic Choice Later Cards */
+.spa-schedule-later-card,
+.non-alcoholic-choice-later-card {
+  /* These cards already have .details-card styles. Add specific overrides if needed. */
+  /* Example: Different background for emphasis */
+}
+
+.non-alcoholic-choice-later-card .titleConfirmation svg {
+    /* color: #f59e0b; /* Tailwind amber-500 - Already applied by text-orange-500 */
+}
+
+.contact-line {
+    margin-bottom: 0.25rem;
+    margin-top: 0.75rem;
+}
+.contact-line a {
+    word-break: break-all; /* Break long emails/links */
+    text-decoration: underline;
+}
+.contact-line a:hover {
+    text-decoration: none;
+}
+
+
+/* Actions section */
+.actions {
+  padding-top: 2rem;
+  margin-top: 1.5rem; /* Add some margin above the buttons */
+  border-top: 1px solid #e5e7eb; /* Separator before buttons */
+  display: flex;
+  justify-content: flex-end; /* Align buttons to the right */
+  gap: 0.75rem; /* Space between buttons */
 }
 
 /* Button styles */
 .button-primary {
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.5rem;
-  background-color: #668e73;
+  padding: 0.6rem 1.5rem; /* Slightly more padding */
+  border-radius: 0.375rem; /* rounded-md */
+  background-color: #668e73; /* Your brand green */
   color: white;
-  margin-right: 1rem;
-  margin-bottom: 1rem;
-  transition: all 0.3s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  /* margin-right: 1rem; Removed, using gap now */
+  /* margin-bottom: 1rem; Removed for flex layout */
+  transition: background-color 0.2s ease-in-out;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: none;
+  cursor: pointer;
 }
-
 .button-primary:hover {
-  background-color: #557e64; /* A slightly darker green for hover effect */
+  background-color: #557862; /* Darker shade */
 }
 
 .button-secondary {
-  padding: 0.5rem 1.5rem;
+  padding: 0.6rem 1.5rem;
   background-color: white;
-  color: #4b5563; /* Tailwind's text-gray-700 */
-  border: 1px solid #d1d5db; /* Tailwind's border-gray-300 */
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  color: #374151; /* text-gray-700 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.375rem; /* rounded-md */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+  cursor: pointer;
+}
+.button-secondary:hover {
+  background-color: #f9fafb; /* bg-gray-50 */
+  border-color: #9ca3af;   /* border-gray-400 */
 }
 
-.button-secondary:hover {
-  background-color: #f9fafb; /* Tailwind's bg-gray-50 */
+/* Spinner (basic) */
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border-left-color: #668e73; /* Your brand color */
+  animation: spin 1s ease infinite;
+  margin: 20px auto;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Card Specifics */
+.error-card {
+    text-align: center;
+}
+.error-card h2 {
+    color: #dc2626; /* Tailwind red-600 */
+    border-bottom: none;
+}
+.error-card p {
+    margin-bottom: 1.5rem;
 }

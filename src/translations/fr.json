@@ -477,7 +477,7 @@
         "longStayDiscount": "{{percentage}}%",
         "promoCode_label": "Code promo ({{code}})",
         "promoCode": "-{{amount}}€",
-        "total_label": "Total à Payer",
+        "total_label": "Total",
         "total": "{{price}}€"
       },
       "paidExtras": {
