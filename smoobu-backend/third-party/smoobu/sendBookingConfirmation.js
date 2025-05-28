@@ -343,7 +343,7 @@ export const sendBookingConfirmation = async (bookingData) => {
     bookingData.freeDrinkInfo.nonAlcoholicChoiceGrantors?.length > 0
   ) {
     nonAlcoholicChoiceHtml = `
-      <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #fff9e6;"> {/* Light yellow background for emphasis */}
+      <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #fff9e6;">
         <h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.nonAlcoholicChoiceTitle}</h3>`;
 
     // Loop through grantors to display individual instructions if needed, or a general one

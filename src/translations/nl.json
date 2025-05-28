@@ -1,28 +1,28 @@
 {
-    "translation": {
-      "header": {
-        "contact": {
-          "phone": "+32 475 20 16 19",
-          "email": "fermedebasseilies@gmail.com",
-          "address": "Route de Basseilles 1 - 5340 MOZET"
-        },
-        "nav": {
-          "home": "Home",
-          "accommodations": {
-            "title": "Onze Accommodaties",
-            "unusual": "Unieke Accommodaties",
-            "guesthouse": "Vakantiehuis & B&B"
-          },
-          "extras": "Extra's",
-          "activities": "Activiteiten & Partners",
-          "aboutUs": "Over Ons",
-          "info": "Info & Pers"
-        },
-        "buttons": {
-          "giftCard": "Cadeaubon"
-        }
+  "translation": {
+    "header": {
+      "contact": {
+        "phone": "+32 475 20 16 19",
+        "email": "fermedebasseilles@gmail.com",
+        "address": "Route de Basseilles 1 - 5340 MOZET"
       },
-          "calendar": {
+      "nav": {
+        "home": "Home",
+        "accommodations": {
+          "title": "Onze Accommodaties",
+          "unusual": "Unieke Accommodaties",
+          "guesthouse": "Vakantiehuis & B&B"
+        },
+        "extras": "Extra's",
+        "activities": "Activiteiten & Partners",
+        "aboutUs": "Over Ons",
+        "info": "Info & Pers"
+      },
+      "buttons": {
+        "giftCard": "Cadeaubon"
+      }
+    },
+    "calendar": {
       "availability": "Beschikbaarheid",
       "available": "Beschikbaar",
       "unavailable": "Niet beschikbaar",
@@ -31,463 +31,463 @@
       "partiallyAvailableCheckOut": "Alleen uitchecken",
       "instructions": "Selecteer uw aankomst- en vertrekdatum"
     },
-      "search": {
-        "title": "Selecteer uw data",
-        "arrival": "Aankomst",
-        "departure": "Vertrek",
-        "adults": "Volwassenen",
-        "children": "Kinderen",
-        "search": "Zoeken",
-        "selectDate": "Selecteer een datum",
-        "selectNumber": "Selecteer een nummer",
-        "maxGuestsExceeded": "Het maximum aantal mensen is {{max}}",
-        "select": "Selecteer",
-        "maxGuestsShort": "max"
+    "search": {
+      "title": "Selecteer uw data",
+      "arrival": "Aankomst",
+      "departure": "Vertrek",
+      "adults": "Volwassenen",
+      "children": "Kinderen",
+      "search": "Zoeken",
+      "selectDate": "Selecteer een datum",
+      "selectNumber": "Selecteer een nummer",
+      "maxGuestsExceeded": "Het maximum aantal mensen is {{max}}",
+      "select": "Selecteer",
+      "maxGuestsShort": "max"
+    },
+    "rooms": {
+      "types": {
+        "unusual": "Unieke Accommodaties",
+        "guesthouse": "Vakantiehuis & B&B"
       },
-      "rooms": {
-        "types": {
-          "unusual": "Unieke Accommodaties",
-          "guesthouse": "Vakantiehuis & B&B"
-        },
-        "names": {
-          "bulle": "De Bulle du Ruisseau",
-          "cabane": "De cabane du Chêne",
-          "dome": "De Dôme des Libellules",
-          "moulin": "De Moulin",
-          "ble": "De Chambre de Blé",
-          "logis": "De Logis"
-        },
-        "descriptions": {
-          "bulle": "Dompel jezelf onder in de rustgevende intimiteit van de Streambubbel - een unieke cocon genesteld tussen aarde en water, gewiegd door het gezang van de beek en de fluisteringen van de natuur. Met zijn Crusoe-fauteuil en kingsize bed biedt deze ruimte verfijnd comfort in het hart van de natuur. Geniet ook van de vuurkorf voor gezellige avonden onder de sterren, perfect voor het roosteren van marshmallows en het delen van onvergetelijke momenten. Boek nu en laat je betoveren door de magische sereniteit van de Streambubbel.",
-          "cabane": "Ontdek de Cabane du Chêne - een oase van rust op 7 meter hoogte in het bladerdak van een majestueuze eik. Gelegen in het hart van het landgoed, biedt het een adembenemend panoramisch uitzicht over de regio. De hut is verdeeld over twee verdiepingen en heeft een gezellig salon, een knusse slaapkamer en een droog toilet, waar comfort en ontsnapping hand in hand gaan. Profiteer van het grote terras boven op de boom om te ontspannen in de buitenlucht. Onder de boom staat een kleine tuin met een vuurplaats en BBQ tot je beschikking. Boek nu je verblijf in de Cabane du Chêne en geniet van een unieke ervaring in het hart van de natuur.",
-          "dome": "Dompel jezelf onder in de magische intimiteit van de Libellendome – een uniek toevluchtsoord in het hart van de natuur, ontworpen voor een romantisch uitje. Uitgerust met een verwarmd kingsize bed en privéterras biedt deze ruimte luxe en sereniteit. Genesteld in een hoekje van het bos is deze geïsoleerde plek perfect voor een totale ontkoppeling. Je brengt een onvergetelijke nacht door onder de sterren, gewiegd door de magie van de natuur. Er is een stapelbed beschikbaar in het kleine huisje ernaast, ideaal voor kinderen. Geniet ook van de vuurkorf-BBQ voor gezellige avonden. Boek nu en laat je meevoeren door de rust van de Libellendome.",
-          "moulin": "Dompel jezelf onder in de betoverende sfeer van de Molen - een romantische studio ontworpen voor twee personen waar modern comfort en charme uit het verleden zich vermengen. Met zijn queensize bed op de mezzanine, een gezellige slaapbank die plaats biedt aan kinderen, biedt deze ruimte je een intieme en comfortabele ontsnapping. Voeg daar een volledig uitgeruste keuken aan toe voor gezellige momenten. Boek nu en laat je verleiden door de onweerstaanbare charme van de Molen.",
-          "ble": "Dompel jezelf onder in de intimiteit van de Tarwekamer - een gezellig toevluchtsoord in het hart van een zorgvuldig gerestaureerde schuur. Ontworpen om plaats te bieden aan twee volwassenen en maximaal twee kinderen, combineert deze rustieke kamer op harmonieuze wijze de charme van vroeger met moderne voorzieningen. Ideaal voor een romantisch uitje of familievakantie, boek nu en laat je verleiden door de warme sfeer van de Tarwekamer.",
-          "logis": "Dompel jezelf onder in de warme intimiteit van het Verblijf – een rustiek toevluchtsoord dat plaats biedt aan maximaal 8 gasten, perfect voor familiebijeenkomsten of reünies met vrienden. Genesteld in een zorgvuldig gerestaureerde schuur, is het een uitnodiging voor een authentieke ontsnapping, waar modern comfort en charme uit het verleden samenkomen. Boek nu en laat je betoveren door de unieke sfeer van het Verblijf."
-        },
-        "features": {
-          "maxGuests": "Max {{value}} personen",
-          "maxGuestsWithChildren": "Max {{value}} volwassenen en {{value2}} kinderen",
-          "bedKing": "Kingsize bed en verwarmde matras",
-          "bedQueen": "1 queensize bed en 1 slaapbank",
-          "bedQueenNoCouch": "1 queensize bed",
-          "bedKingAndSingle": "1 kingsize bed en 2 enkele bedden",
-          "bedDoubleKing": "2 kingsize bedden en 4 enkele bedden",
-          "pets": "Geen huisdieren toegestaan",
-          "dryToilet": "Droog toilet",
-          "bathroom": "Een badkamer",
-          "twoBathrooms": "2 badkamers en 2 toiletten",
-          "brazier": "Vuurkorf",
-          "bbq": "Vuurkorf & Barbecue",
-          "heater": "Elektrische verwarming",
-          "gasheater": "gasverwarming",
-          "kitchen": "Uitgeruste keuken",
-          "wifi": "WiFi"
-        },
-        "errors": {
+      "names": {
+        "bulle": "De Bulle du Ruisseau",
+        "cabane": "De cabane du Chêne",
+        "dome": "De Dôme des Libellules",
+        "moulin": "De Moulin",
+        "ble": "De Chambre de Blé",
+        "logis": "De Logis"
+      },
+      "descriptions": {
+        "bulle": "Dompel jezelf onder in de rustgevende intimiteit van de Streambubbel - een unieke cocon genesteld tussen aarde en water, gewiegd door het gezang van de beek en de fluisteringen van de natuur. Met zijn Crusoe-fauteuil en kingsize bed biedt deze ruimte verfijnd comfort in het hart van de natuur. Geniet ook van de vuurkorf voor gezellige avonden onder de sterren, perfect voor het roosteren van marshmallows en het delen van onvergetelijke momenten. Boek nu en laat je betoveren door de magische sereniteit van de Streambubbel.",
+        "cabane": "Ontdek de Cabane du Chêne - een oase van rust op 7 meter hoogte in het bladerdak van een majestueuze eik. Gelegen in het hart van het landgoed, biedt het een adembenemend panoramisch uitzicht over de regio. De hut is verdeeld over twee verdiepingen en heeft een gezellig salon, een knusse slaapkamer en een droog toilet, waar comfort en ontsnapping hand in hand gaan. Profiteer van het grote terras boven op de boom om te ontspannen in de buitenlucht. Onder de boom staat een kleine tuin met een vuurplaats en BBQ tot je beschikking. Boek nu je verblijf in de Cabane du Chêne en geniet van een unieke ervaring in het hart van de natuur.",
+        "dome": "Dompel jezelf onder in de magische intimiteit van de Libellendome – een uniek toevluchtsoord in het hart van de natuur, ontworpen voor een romantisch uitje. Uitgerust met een verwarmd kingsize bed en privéterras biedt deze ruimte luxe en sereniteit. Genesteld in een hoekje van het bos is deze geïsoleerde plek perfect voor een totale ontkoppeling. Je brengt een onvergetelijke nacht door onder de sterren, gewiegd door de magie van de natuur. Er is een stapelbed beschikbaar in het kleine huisje ernaast, ideaal voor kinderen. Geniet ook van de vuurkorf-BBQ voor gezellige avonden. Boek nu en laat je meevoeren door de rust van de Libellendome.",
+        "moulin": "Dompel jezelf onder in de betoverende sfeer van de Molen - een romantische studio ontworpen voor twee personen waar modern comfort en charme uit het verleden zich vermengen. Met zijn queensize bed op de mezzanine, een gezellige slaapbank die plaats biedt aan kinderen, biedt deze ruimte je een intieme en comfortabele ontsnapping. Voeg daar een volledig uitgeruste keuken aan toe voor gezellige momenten. Boek nu en laat je verleiden door de onweerstaanbare charme van de Molen.",
+        "ble": "Dompel jezelf onder in de intimiteit van de Tarwekamer - een gezellig toevluchtsoord in het hart van een zorgvuldig gerestaureerde schuur. Ontworpen om plaats te bieden aan twee volwassenen en maximaal twee kinderen, combineert deze rustieke kamer op harmonieuze wijze de charme van vroeger met moderne voorzieningen. Ideaal voor een romantisch uitje of familievakantie, boek nu en laat je verleiden door de warme sfeer van de Tarwekamer.",
+        "logis": "Dompel jezelf onder in de warme intimiteit van het Verblijf – een rustiek toevluchtsoord dat plaats biedt aan maximaal 8 gasten, perfect voor familiebijeenkomsten of reünies met vrienden. Genesteld in een zorgvuldig gerestaureerde schuur, is het een uitnodiging voor een authentieke ontsnapping, waar modern comfort en charme uit het verleden samenkomen. Boek nu en laat je betoveren door de unieke sfeer van het Verblijf."
+      },
+      "features": {
+        "maxGuests": "Max {{value}} personen",
+        "maxGuestsWithChildren": "Max {{value}} volwassenen en {{value2}} kinderen",
+        "bedKing": "Kingsize bed en verwarmde matras",
+        "bedQueen": "1 queensize bed en 1 slaapbank",
+        "bedQueenNoCouch": "1 queensize bed",
+        "bedKingAndSingle": "1 kingsize bed en 2 enkele bedden",
+        "bedDoubleKing": "2 kingsize bedden en 4 enkele bedden",
+        "pets": "Geen huisdieren toegestaan",
+        "dryToilet": "Droog toilet",
+        "bathroom": "Een badkamer",
+        "twoBathrooms": "2 badkamers en 2 toiletten",
+        "brazier": "Vuurkorf",
+        "bbq": "Vuurkorf & Barbecue",
+        "heater": "Elektrische verwarming",
+        "gasheater": "gasverwarming",
+        "kitchen": "Uitgeruste keuken",
+        "wifi": "WiFi"
+      },
+      "errors": {
         "fetchFailed": "Kan kamers niet ophalen"
       },
       "loading": "Kamers laden..."
+    },
+    "booking": {
+      "steps": {
+        "extras": "1. Extra's kiezen",
+        "notes": "2. Notitie toevoegen",
+        "contact": "3. Contactgegevens"
       },
-      "booking": {
-        "steps": {
-          "extras": "1. Extra's kiezen",
-          "notes": "2. Notitie toevoegen",
-          "contact": "3. Contactgegevens"
-        },
-        "errors": {
-          "selectDates": "Selecteer beide data",
-          "noRates": "Geen tarieven beschikbaar voor de geselecteerde data",
-          "fetchError": "Kan tarieven niet ophalen",
-          "waitForPrice": "Wacht op de prijsberekening voordat u doorgaat",
-          "paymentError": "Er is een fout opgetreden bij het maken van de betaling",
-          "messageError": "Er is een fout opgetreden",
-          "roomUnavailable": {
-            "title": "Deze accommodatie is niet beschikbaar voor de geselecteerde data",
-            "message": "Selecteer andere data om uw boeking voort te zetten"
-          }
-        },
-        "coupon": {
-          "errors": {
-            "enterCode": "Voer een promocode in",
-            "invalid": "Ongeldige promocode",
-            "inactive": "Deze promocode is niet meer actief",
-            "expired": "Deze promocode is verlopen",
-            "alreadyUsed": "Deze promocode is al gebruikt",
-            "notFound": "Promocode niet gevonden",
-            "invalid_dates": "Deze code is alleen geldig voor verblijven tussen {{start}} en {{end}}"
-          },
-          "applied": "Promocode {{code}}",
-          "minusZero": "Totalen onder € 0 worden niet geaccepteerd bij het afrekenen."
-        },
-        "people": {
-          "singular": "persoon",
-          "plural": "personen"
-        },
-        "sections": {
-          "extras": {
-            "title": "Extra's kiezen",
-            "top": "Selectie extra's"
-          }
-        },
-        "messages": {
-          "error": "Fout",
-          "success": "Succes"
-        },
-        "payment": {
-          "title": "Uw betaling afronden"
-        }
-      },
-      "contact": {
-        "fields": {
-          "firstName": {
-            "label": "Voornaam*",
-            "placeholder": "Voornaam"
-          },
-          "lastName": {
-            "label": "Achternaam*",
-            "placeholder": "Achternaam"
-          },
-          "email": {
-            "label": "E-mail*",
-            "placeholder": "E-mail"
-          },
-          "phone": {
-            "label": "Telefoon",
-            "placeholder": "Telefoon"
-          },
-          "street": {
-            "label": "Straat/nummer",
-            "placeholder": "Straat/nummer"
-          },
-          "postalCode": {
-            "label": "Postcode",
-            "placeholder": "Postcode"
-          },
-          "city": {
-            "label": "Stad",
-            "placeholder": "Stad"
-          },
-          "country": {
-            "label": "Land",
-            "placeholder": "Land"
-          },
-          "checkIn": {
-            "label": "Check-in*"
-          }
-        }
-      },
-      "extras": {
-        "categories": {
-          "packs": "Pakketten",
-          "formulesRepas": "Maaltijdformules",
-          "spa": "Spa",
-          "formulesDecouverte": "Ontdekkingsformules",
-          "meals": "Maaltijden van Bossimé",
-          "boissons": "Dranken"
-        },
-        "drinkTypes": {
-          "wine": "Wijnen",
-          "beer": "Bieren",
-          "soft": "Niet-alcoholische dranken",
-          "bulles": "Bubbels"
-        },
-        "packs": {
-          "essential": {
-            "name": "Het Essentiële (voor 2)",
-            "description": "Dit pakket bevat ontbijt met zoete/hartige bijgerechten, sap, koffie en melk en 2 uur toegang tot onze spa met jacuzzi en sauna"
-          },
-          "relaxGourmet": {
-            "name": "De Gourmet Ontspanning (voor 2)",
-            "description": "Dit pakket bevat een plateau met vleeswaren en kaas, een fles wijn, een volledig ontbijt en 2 uur toegang tot onze spa met jacuzzi en sauna."
-          },
-          "racletteRelax": {
-            "name": "De Ontspannende Raclette (voor 2)",
-            "description": "*Van 1 november tot 30 april* Dit pakket bevat een assortiment raclette kaas en fijne vleeswaren, een fles wijn, een volledig ontbijt en 2 uur toegang tot onze spa met jacuzzi en sauna."
-          },
-          "romanticGourmet": {
-            "name": "De Romantische Gourmet (voor 2)",
-            "description": "Dit pakket bevat een plateau met vleeswaren en kaas, een fles bubbels, een flesje massageolie met bloemblaadjes, een volledig ontbijt en 2 uur toegang tot de spa met jacuzzi en sauna."
-          },
-          "racletteRomantic": {
-            "name": "De Romantische Raclette (voor 2)",
-            "description": "*Van 1 november tot 30 april* Dit pakket bevat een assortiment raclette kaas en fijne vleeswaren, een fles bubbels, een flesje massageolie met bloemblaadjes, een volledig ontbijt en 2 uur toegang tot de spa met jacuzzi en sauna"
-          },
-          "bbqRomantic": {
-            "name": "De Romantische barbecue (voor 2)",
-            "description": "*Van 1 april tot 30 november* Dit pakket omvat een barbecue met biefstuk, kip en zelfgemaakte bacon. Het bevat ook verse bijgerechten en een fles wijn, evenals 2 uur toegang tot de spa met jacuzzi en sauna."
-          },
-          "bbqRelax": {
-            "name": "De Ontspannende barbecue (voor 2)",
-            "description": "*Van 1 april tot 30 november* Dit pakket bevat een assortiment vlees en verse bijgerechten, een fles wijn, een volledig ontbijt en 2 uur toegang tot onze spa met jacuzzi en sauna."
-          }
-        },
-        "spa": {
-          "basic": {
-            "name": "SPA Formule (2 pers)",
-            "description": "Deze formule omvat 2 uur toegang tot de buitenspa met jacuzzi, sauna, warme douche met Noordse emmer, badjassen en slippers."
-          },
-          "withBottle": {
-            "name": "SPA Formule + fles (2 pers)",
-            "description": "Deze formule omvat 2 uur toegang tot de buitenspa met jacuzzi, sauna, warme douche met Noordse emmer, badjassen, slippers en een fles bubbels."
-          },
-          "selectDate": "Selecteer een datum",
-          "loading": "Tijdsloten laden...",
-          "greyedSlotInfoHelpText": "Als het tijdslot grijs is, is het beschikbaar met het vorige uur en niet met het volgende uur (aangezien dit laatste niet beschikbaar is).",
-          "errorLoadingSettings": "Fout bij het laden van SPA-instellingen",
-          "datePlaceholderDropdown": "Selecteer een datum",
-          "noSlots": "Geen tijdsloten beschikbaar voor deze datum",
-          "datePlaceholderNoDates": "Geen datums beschikbaar",
-          "checkBookingDates": "Zorg ervoor dat een datum is geselecteerd",
-          "selectTwoSlotsNote": "Selectie is voor twee tijdsloten",
-          "selectTime": "Selecteer een tijdslot",
-          "bookLater": "Ik wil mijn tijdsloten later kiezen",
-          "selectTimeOrBookLater": "Selecteer een datum/tijd voor de SPA of kies 'Later boeken'.",
-          "scheduleTitle": "Plan uw SPA-sessie",
-          "errorDurationMissing": "Duur van tijdslot ontbreekt in de API",
-          "bookLaterInfo": "In uw boekingsbevestiging vindt u het e-mailadres van de host om uw tijdsloten te kiezen"
-        },
-        "meals": {
-          "meatballsLiege": {
-            "name": "Luikse gehaktballen",
-            "description": "Dit gerecht bestaat uit twee gehaktballen in Luikse saus geserveerd met huisgemaakte aardappelpuree."
-          },
-          "meatballsTomato": {
-            "name": "Gehaktballen in tomatensaus",
-            "description": "Dit gerecht bestaat uit twee gehaktballen in huisgemaakte tomatensaus, geserveerd met aardappelpuree."
-          },
-          "waterzooi": {
-            "name": "Waterzooi van kip",
-            "description": "Dit gerecht bestaat uit een heerlijke waterzooi van kip, geserveerd met krielaardappeltjes."
-          },
-          "chiliVeg": {
-            "name": "Vegetarische chili",
-            "description": "Deze bereiding is een combinatie van rode bonen, maïs en verse groenten, langzaam gestoofde in een tomatensaus op smaak gebracht met milde kruiden."
-          },
-          "carrotSoup": {
-            "name": "Wortel- en komijnsoep",
-            "description": "Deze combinatie van smaken biedt een eenvoudige en heerlijke smaakervaring, waar de zoetheid van wortelen de kruidige warmte van komijn ontmoet"
-          }
-        },
-        "drinks": {
-          "brutBioul": {
-            "description": "Deze mousserende wijn, gemaakt van Bronner en Johanniter druiven, biedt delicate aroma's van wit vruchtvlees."
-          },
-          "cortilBarco": {
-            "description": "Met zijn aroma's van rode vruchten verweven met minerale en rokerige tonen, werd deze rode wijn gemaakt van Cabernet Noir, Pinotin en Cabernet Jura druiven"
-          },
-          "terreCharlot": {
-            "description": "Met zijn aroma's van abrikozen en passievrucht, en een licht kruidige afdronk, werd deze wijn gemaakt van de Solaris druivensoort."
-          },
-          "houblondeTriple": {
-            "description": "Dit tripel bier zal verrassen met zijn bloemige boeket van hibiscus en saffraan. Het onderscheidt zich door het gebruik van 3 verschillende hoppen en 3 verschillende granen."
-          },
-          "houblondeBlonde": {
-            "description": "Dit blonde bier, met zijn geroosterde graanaroma's, biedt een lichte bitterheid en een bloemige smaakidentiteit."
-          },
-          "houblondeWhite": {
-            "description": "Deze witte IPA, licht en verfrissend, biedt een zachte bitterheid en verrassende citrustoetsen."
-          },
-          "bruneCondroz": {
-            "description": "Dit bruine bier, gebrouwen met cacaobonen, biedt rondheid in de mond en een lichte bitterheid."
-          },
-          "tripleCondroz": {
-            "description": "De Triple du Condroz verleidt met zijn hoppige aroma's in de neus, gevolgd door een intense smaakervaring die typisch is voor tripelbieren."
-          },
-          "ambreeCondroz": {
-            "description": "Dit amberkleurige bier, met een rond en kruidig profiel, zal je verrassen met zijn karakter en uitgesproken bitterheid."
-          },
-          "blancheCondroz": {
-            "description": "Dit witbier, met subtiele viooltjesaroma's in de neus, biedt een pittige en frisse ervaring"
-          },
-          "appleJuice": {
-            "description": "Een natuurlijk en verfrissend appelsap."
-          },
-          "ritchieLemonRasp": {
-            "description": "Een bruisende drank met citroen en framboos smaken."
-          },
-          "ritchieOrangeVan": {
-            "description": "Een verfrissende mix van sinaasappel en vanille."
-          },
-          "ritchieCola": {
-            "description": "Een unieke ambachtelijke cola."
-          },
-          "ritchieColaZero": {
-            "description": "De suikervrije versie van de ambachtelijke cola."
-          }
-        },
-        "formulesRepas": {
-          "breakfast": {
-            "name": "Ontbijtformule (2 pers)",
-            "description": "Deze formule bevat gebak, stokbrood, zoete/hartige bijgerechten, Belgisch appelsap, koffie, melk en lokale yoghurt."
-          },
-          "gourmet": {
-            "name": "Gourmet formule (2 pers)",
-            "description": "Deze formule bevat een plateau met kaas, vleeswaren, rauwe groenten en honing van de boerderij. Het bevat ook een fles wijn."
-          },
-          "raclette": {
-            "name": "Raclette formule (2 pers)",
-            "description": "*Van 1 november tot 30 april* Deze formule bevat een assortiment raclette kaas, fijne vleeswaren, een vers stokbrood en een fles wijn"
-          },
-          "barbecue": {
-            "name": "Barbecue formule (2 pers)",
-            "description": "*Van 1 april tot 30 november* Deze formule bevat een barbecue met rundvlees ribeye, kip en huisgemaakte spek. Het bevat ook verse bijgerechten en een fles wijn."
-          },
-          "apero": {
-            "name": "Aperitief plank formule (2 pers)",
-            "description": "Deze formule bevat een plank met lokale kaas en vleeswaren, en twee bieren of frisdranken naar keuze."
-          }
-        },
-        "formulesDecouverte": {
-          "passion": {
-            "name": "Passie formule",
-            "description": "Deze formule bevat kaarsen, rode bloemblaadjes, een fles bubbels en een flesje massageolie"
-          },
-          "birthday": {
-            "name": "Verjaardagsformule (2 pers)",
-            "description": "Deze formule bevat feestelijke decoratie met ballonnen, een fles bubbels en een heerlijk dessert."
-          }
-        },
-        "additionalPerson": "Extra persoon",
-        "infoSup": {
-          "ownerMessage": {
-            "label": "Laat een bericht achter voor de eigenaar",
-            "placeholder": "Laat een bericht achter voor de eigenaar"
-          },
-          "promoCode": {
-            "label": "Kortingscode",
-            "placeholder": "Voer uw promotiecode in",
-            "button": "Toepassen",
-            "appliedStart": "Kortingscode ",
-            "appliedEnd": "toegepast ",
-            "appliedCurrency": "€",
-            "error": "Invalid promo code"
-        }
-        }
-      },
-      "navigation": {
-        "buttons": {
-          "previous": "Vorige",
-          "next": "Volgende",
-          "confirm": "Bevestigen"
-        }
-      },
-      "priceDetails": {
-        "notAvailable": "Niet beschikbaar",
-        "roomNotAvailable": "Deze kamer is helaas niet beschikbaar voor de geselecteerde data.",
-        "additionalPerson": "Extra persoon",
-        "title": "Prijsdetails:",
-        "basePrice": "Basisprijs",
-        "guestFees": "{{count}} extra perso(o)n(en) × {{fee}}€",
-        "longStayDiscount": "Korting voor lang verblijf",
-        "promoCode": {
-          "fixed": "Kortingscode",
-          "percentage": "Kortingscode"
-        },
-        "subtotal": "Subtotaal",
-        "totalDiscounts": "Totale kortingen",
-        "total": "Totaal",
-        "taxesIncluded": "* Totaalprijs inclusief alle belastingen en kosten",
-        "depositRequired": "** Vereiste aanbetaling: {{percentage}}% ({{amount}} EUR)"
-      },
-      "propertyDetails": {
-        "unavailableDates": "Niet beschikbare data: ",
+      "errors": {
+        "selectDates": "Selecteer beide data",
+        "noRates": "Geen tarieven beschikbaar voor de geselecteerde data",
+        "fetchError": "Kan tarieven niet ophalen",
+        "waitForPrice": "Wacht op de prijsberekening voordat u doorgaat",
+        "paymentError": "Er is een fout opgetreden bij het maken van de betaling",
+        "messageError": "Er is een fout opgetreden",
         "roomUnavailable": {
           "title": "Deze accommodatie is niet beschikbaar voor de geselecteerde data",
-          "message": "Selecteer andere data voor deze accommodatie of bekijk onze andere opties"
-        },
-        "tabs": {
-          "bookingDetails": "Reserveringsdetails",
-          "roomInfo": "Kamerinformatie"
-        },
-        "guests": {
-          "singular": "persoon",
-          "plural": "personen"
-        },
-        "selectDatePrompt": "Selecteer een datum",
-        "selectRoom": "Boek deze kamer",
-        "unavailableForDates": "Niet beschikbaar voor deze data",
-        "extraGuestFee": "Extra toeslag van {{fee}}€ per persoon vanaf {{threshold}} gasten ({{count}} extra gast(en))",
-        
-        "loading": "Laden...",
-        "capacityExceeded": {
-                "title": "Maximale capaciteit overschreden",
-                "message": "Deze kamer kan maximaal {{maxGuests}} personen accommoderen (u heeft {{selectedGuests}} personen geselecteerd)."
-                },
-            "tooManyGuests": "Te veel mensen voor deze kamer"
-      },
-      "terms": {
-        "accept": "Ik accepteer de ",
-        "accepted": "Geaccepteerd",
-        "generalConditions": "algemene voorwaarden",
-        "required": "U moet de algemene voorwaarden accepteren om door te gaan."
-      },
-      "timeSelect": {
-        "arrivalTime": "Aankomsttijd",
-        "placeholder": "Selecteer aankomsttijd"
-      },
-      "bookingConfirmation": {
-        "loading": {
-          "title": "Uw reservering wordt verwerkt...",
-          "message": "Even geduld terwijl we uw betaling bevestigen."
-        },
-        "error": {
-          "title": "Er is een fout opgetreden bij het ophalen van uw reserveringsgegevens.",
-          "message": "Controleer uw e-mail voor reserveringsdetails of neem contact met ons op."
-        },
-        "success": {
-          "title": "Reservering Bevestigd",
-          "subtitle": "Een bevestiging is verzonden naar {{email}}",
-          "sections": {
-            "stayDetails": {
-              "title": "Verblijfsdetails",
-              "checkIn": "Inchecken: {{date}}",
-              "arrivalTime": "Aankomsttijd: {{time}}",
-              "checkOut": "Uitchecken: {{date}}",
-              "travelers": "Reizigers: {{adults}} volwassenen",
-              "travelersWithChildren": "Reizigers: {{adults}} volwassenen, {{children}} kinderen"
-            },
-            "spaTime": {
-              "scheduledTitle": "SPA Sessie",
-              "scheduleLaterTitle": "Planning SPA Sessie",
-              "scheduleLaterInstruction": "Om uw SPA-sessie te plannen, neem alstublieft contact met ons op via het volgende adres: ",
-              "scheduleLaterPriority": "Let op: Tijdsloten worden toegewezen op basis van 'wie het eerst komt, het eerst maalt'."
-            },
-            "guestDetails": {
-              "title": "Gastinformatie",
-              "fullName": "Volledige naam: {{firstName}} {{lastName}}",
-              "email": "E-mail: {{email}}",
-              "phone": "Telefoon: {{phone}}"
-            },
-            "priceDetails": {
-              "title": "Prijsdetails",
-              "basePrice": "Basisprijs: {{price}}€",
-              "extraPerson": "Extra persoon ({{quantity}}x): {{price}}€",
-              "longStayDiscount": "Korting lang verblijf ({{percentage}}%): -{{amount}}€",
-              "promoCode": "Promocode ({{code}}): -{{amount}}€",
-              "total": "Totaal: {{price}}€",
-              "termsAccepted": "Algemene voorwaarden: Geaccepteerd",
-              "promoCodeFixed": "Kortingscode ({{code}}): -{{amount}}€",
-              "guestFees": "Extra gastentoeslag ({{extraGuests}} perso(o)n(en)): €{{amount}}",
-              "promoCodePercentage": "Kortingscode ({{code}} - {{value}}%): -{{amount}}€"
-            },
-            "address": {
-              "title": "Adres"
-            }
-          },
-          "buttons": {
-            "backHome": "Terug naar home",
-            "print": "Afdrukken"
-          }
+          "message": "Selecteer andere data om uw boeking voort te zetten"
         }
       },
-      "paymentForm": {
+      "coupon": {
+        "errors": {
+          "enterCode": "Voer een promocode in",
+          "invalid": "Ongeldige promocode",
+          "inactive": "Deze promocode is niet meer actief",
+          "expired": "Deze promocode is verlopen",
+          "alreadyUsed": "Deze promocode is al gebruikt",
+          "notFound": "Promocode niet gevonden",
+          "invalid_dates": "Deze code is alleen geldig voor verblijven tussen {{start}} en {{end}}"
+        },
+        "applied": "Promocode {{code}}",
+        "minusZero": "Totalen onder € 0 worden niet geaccepteerd bij het afrekenen."
+      },
+      "people": {
+        "singular": "persoon",
+        "plural": "personen"
+      },
+      "sections": {
+        "extras": {
+          "title": "Extra's kiezen",
+          "top": "Selectie extra's"
+        }
+      },
+      "messages": {
+        "error": "Fout",
+        "success": "Succes"
+      },
+      "payment": {
+        "title": "Uw betaling afronden"
+      }
+    },
+    "contact": {
+      "fields": {
+        "firstName": { "label": "Voornaam*", "placeholder": "Voornaam" },
+        "lastName": { "label": "Achternaam*", "placeholder": "Achternaam" },
+        "email": { "label": "E-mail*", "placeholder": "E-mail" },
+        "phone": { "label": "Telefoon", "placeholder": "Telefoon" },
+        "street": { "label": "Straat/nummer", "placeholder": "Straat/nummer" },
+        "postalCode": { "label": "Postcode", "placeholder": "Postcode" },
+        "city": { "label": "Stad", "placeholder": "Stad" },
+        "country": { "label": "Land", "placeholder": "Land" },
+        "checkIn": { "label": "Check-in*" }
+      }
+    },
+    "extras": {
+      "categories": {
+        "packs": "Pakketten",
+        "formulesRepas": "Maaltijdformules",
+        "spa": "Spa",
+        "formulesDecouverte": "Ontdekkingsformules",
+        "meals": "Maaltijden van Bossimé",
+        "boissons": "Dranken"
+      },
+      "drinkTypes": {
+        "wine": "Wijnen",
+        "beer": "Bieren",
+        "soft": "Niet-alcoholische dranken",
+        "bulles": "Bubbels"
+      },
+      "packs": {
+        "essential": {
+          "name": "Het Essentiële (voor 2)",
+          "description": "Dit pakket bevat ontbijt met zoete/hartige bijgerechten, sap, koffie en melk en 2 uur toegang tot onze spa met jacuzzi en sauna"
+        },
+        "relaxGourmet": {
+          "name": "De Gourmet Ontspanning (voor 2)",
+          "description": "Dit pakket bevat een plateau met vleeswaren en kaas, een fles wijn, een volledig ontbijt en 2 uur toegang tot onze spa met jacuzzi en sauna."
+        },
+        "racletteRelax": {
+          "name": "De Ontspannende Raclette (voor 2)",
+          "description": "*Van 1 november tot 30 april* Dit pakket bevat een assortiment raclette kaas en fijne vleeswaren, een fles wijn, een volledig ontbijt en 2 uur toegang tot onze spa met jacuzzi en sauna."
+        },
+        "romanticGourmet": {
+          "name": "De Romantische Gourmet (voor 2)",
+          "description": "Dit pakket bevat een plateau met vleeswaren en kaas, een fles bubbels, een flesje massageolie met bloemblaadjes, een volledig ontbijt en 2 uur toegang tot de spa met jacuzzi en sauna."
+        },
+        "racletteRomantic": {
+          "name": "De Romantische Raclette (voor 2)",
+          "description": "*Van 1 november tot 30 april* Dit pakket bevat een assortiment raclette kaas en fijne vleeswaren, een fles bubbels, een flesje massageolie met bloemblaadjes, een volledig ontbijt en 2 uur toegang tot de spa met jacuzzi en sauna"
+        },
+        "bbqRomantic": {
+          "name": "De Romantische barbecue (voor 2)",
+          "description": "*Van 1 april tot 30 november* Dit pakket omvat een barbecue met biefstuk, kip en zelfgemaakte bacon. Het bevat ook verse bijgerechten en een fles wijn, evenals 2 uur toegang tot de spa met jacuzzi en sauna."
+        },
+        "bbqRelax": {
+          "name": "De Ontspannende barbecue (voor 2)",
+          "description": "*Van 1 april tot 30 november* Dit pakket bevat een assortiment vlees en verse bijgerechten, een fles wijn, een volledig ontbijt en 2 uur toegang tot onze spa met jacuzzi en sauna."
+        }
+      },
+      "spa": {
+        "basic": {
+          "name": "SPA Formule (2 pers)",
+          "description": "Deze formule omvat 2 uur toegang tot de buitenspa met jacuzzi, sauna, warme douche met Noordse emmer, badjassen en slippers."
+        },
+        "withBottle": {
+          "name": "SPA Formule + fles (2 pers)",
+          "description": "Deze formule omvat 2 uur toegang tot de buitenspa met jacuzzi, sauna, warme douche met Noordse emmer, badjassen, slippers en een fles bubbels."
+        },
+        "selectDate": "Selecteer een datum",
+        "loading": "Tijdsloten laden...",
+        "greyedSlotInfoHelpText": "Als het tijdslot grijs is, is het beschikbaar met het vorige uur en niet met het volgende uur (aangezien dit laatste niet beschikbaar is).",
+        "errorLoadingSettings": "Fout bij het laden van SPA-instellingen",
+        "datePlaceholderDropdown": "Selecteer een datum",
+        "noSlots": "Geen tijdsloten beschikbaar voor deze datum",
+        "datePlaceholderNoDates": "Geen datums beschikbaar",
+        "checkBookingDates": "Zorg ervoor dat een datum is geselecteerd",
+        "selectTwoSlotsNote": "Selectie is voor twee tijdsloten",
+        "selectTime": "Selecteer een tijdslot",
+        "bookLater": "Ik wil mijn tijdsloten later kiezen",
+        "selectTimeOrBookLater": "Selecteer een datum/tijd voor de SPA of kies 'Later boeken'.",
+        "scheduleTitle": "Plan uw SPA-sessie",
+        "errorDurationMissing": "Duur van tijdslot ontbreekt in de API",
+        "bookLaterInfo": "In uw boekingsbevestiging vindt u het e-mailadres van de host om uw tijdsloten te kiezen"
+      },
+      "meals": {
+        "meatballsLiege": {
+          "name": "Luikse gehaktballen",
+          "description": "Dit gerecht bestaat uit twee gehaktballen in Luikse saus geserveerd met huisgemaakte aardappelpuree."
+        },
+        "meatballsTomato": {
+          "name": "Gehaktballen in tomatensaus",
+          "description": "Dit gerecht bestaat uit twee gehaktballen in huisgemaakte tomatensaus, geserveerd met aardappelpuree."
+        },
+        "waterzooi": {
+          "name": "Waterzooi van kip",
+          "description": "Dit gerecht bestaat uit een heerlijke waterzooi van kip, geserveerd met krielaardappeltjes."
+        },
+        "chiliVeg": {
+          "name": "Vegetarische chili",
+          "description": "Deze bereiding is een combinatie van rode bonen, maïs en verse groenten, langzaam gestoofde in een tomatensaus op smaak gebracht met milde kruiden."
+        },
+        "carrotSoup": {
+          "name": "Wortel- en komijnsoep",
+          "description": "Deze combinatie van smaken biedt een eenvoudige en heerlijke smaakervaring, waar de zoetheid van wortelen de kruidige warmte van komijn ontmoet"
+        }
+      },
+      "drinks": {
+        "brutBioul": {
+          "description": "Deze mousserende wijn, gemaakt van Bronner en Johanniter druiven, biedt delicate aroma's van wit vruchtvlees."
+        },
+        "cortilBarco": {
+          "description": "Met zijn aroma's van rode vruchten verweven met minerale en rokerige tonen, werd deze rode wijn gemaakt van Cabernet Noir, Pinotin en Cabernet Jura druiven"
+        },
+        "terreCharlot": {
+          "description": "Met zijn aroma's van abrikozen en passievrucht, en een licht kruidige afdronk, werd deze wijn gemaakt van de Solaris druivensoort."
+        },
+        "houblondeTriple": {
+          "description": "Dit tripel bier zal verrassen met zijn bloemige boeket van hibiscus en saffraan. Het onderscheidt zich door het gebruik van 3 verschillende hoppen en 3 verschillende granen."
+        },
+        "houblondeBlonde": {
+          "description": "Dit blonde bier, met zijn geroosterde graanaroma's, biedt een lichte bitterheid en een bloemige smaakidentiteit."
+        },
+        "houblondeWhite": {
+          "description": "Deze witte IPA, licht en verfrissend, biedt een zachte bitterheid en verrassende citrustoetsen."
+        },
+        "bruneCondroz": {
+          "description": "Dit bruine bier, gebrouwen met cacaobonen, biedt rondheid in de mond en een lichte bitterheid."
+        },
+        "tripleCondroz": {
+          "description": "De Triple du Condroz verleidt met zijn hoppige aroma's in de neus, gevolgd door een intense smaakervaring die typisch is voor tripelbieren."
+        },
+        "ambreeCondroz": {
+          "description": "Dit amberkleurige bier, met een rond en kruidig profiel, zal je verrassen met zijn karakter en uitgesproken bitterheid."
+        },
+        "blancheCondroz": {
+          "description": "Dit witbier, met subtiele viooltjesaroma's in de neus, biedt een pittige en frisse ervaring"
+        },
+        "appleJuice": {
+          "description": "Een natuurlijk en verfrissend appelsap."
+        },
+        "ritchieLemonRasp": {
+          "description": "Een bruisende drank met citroen en framboos smaken."
+        },
+        "ritchieOrangeVan": {
+          "description": "Een verfrissende mix van sinaasappel en vanille."
+        },
+        "ritchieCola": { "description": "Een unieke ambachtelijke cola." },
+        "ritchieColaZero": {
+          "description": "De suikervrije versie van de ambachtelijke cola."
+        }
+      },
+      "formulesRepas": {
+        "breakfast": {
+          "name": "Ontbijtformule (2 pers)",
+          "description": "Deze formule bevat gebak, stokbrood, zoete/hartige bijgerechten, Belgisch appelsap, koffie, melk en lokale yoghurt."
+        },
+        "gourmet": {
+          "name": "Gourmet formule (2 pers)",
+          "description": "Deze formule bevat een plateau met kaas, vleeswaren, rauwe groenten en honing van de boerderij. Het bevat ook een fles wijn."
+        },
+        "raclette": {
+          "name": "Raclette formule (2 pers)",
+          "description": "*Van 1 november tot 30 april* Deze formule bevat een assortiment raclette kaas, fijne vleeswaren, een vers stokbrood en een fles wijn"
+        },
+        "barbecue": {
+          "name": "Barbecue formule (2 pers)",
+          "description": "*Van 1 april tot 30 november* Deze formule bevat een barbecue met rundvlees ribeye, kip en huisgemaakte spek. Het bevat ook verse bijgerechten en een fles wijn."
+        },
+        "apero": {
+          "name": "Aperitief plank formule (2 pers)",
+          "description": "Deze formule bevat een plank met lokale kaas en vleeswaren, en twee bieren of frisdranken naar keuze."
+        }
+      },
+      "formulesDecouverte": {
+        "passion": {
+          "name": "Passie formule",
+          "description": "Deze formule bevat kaarsen, rode bloemblaadjes, een fles bubbels en een flesje massageolie"
+        },
+        "birthday": {
+          "name": "Verjaardagsformule (2 pers)",
+          "description": "Deze formule bevat feestelijke decoratie met ballonnen, een fles bubbels en een heerlijk dessert."
+        }
+      },
+      "additionalPerson": "Extra persoon",
+      "infoSup": {
+        "ownerMessage": {
+          "label": "Laat een bericht achter voor de eigenaar",
+          "placeholder": "Laat een bericht achter voor de eigenaar"
+        },
+        "promoCode": {
+          "label": "Kortingscode",
+          "placeholder": "Voer uw promotiecode in",
+          "button": "Toepassen",
+          "appliedStart": "Kortingscode ",
+          "appliedEnd": "toegepast ",
+          "appliedCurrency": "€",
+          "error": "Ongeldige promocode"
+        }
+      }
+    },
+    "navigation": {
+      "buttons": {
+        "previous": "Vorige",
+        "next": "Volgende",
+        "confirm": "Bevestigen"
+      }
+    },
+    "priceDetails": {
+      "notAvailable": "Niet beschikbaar",
+      "roomNotAvailable": "Deze kamer is helaas niet beschikbaar voor de geselecteerde data.",
+      "additionalPerson": "Extra persoon",
+      "title": "Prijsdetails:",
+      "basePrice": "Basisprijs",
+      "guestFees": "{{count}} extra perso(o)n(en) × {{fee}}€",
+      "longStayDiscount": "Korting voor lang verblijf",
+      "promoCode": { "fixed": "Kortingscode", "percentage": "Kortingscode" },
+      "subtotal": "Subtotaal",
+      "totalDiscounts": "Totale kortingen",
+      "total": "Totaal",
+      "taxesIncluded": "* Totaalprijs inclusief alle belastingen en kosten",
+      "depositRequired": "** Vereiste aanbetaling: {{percentage}}% ({{amount}} EUR)"
+    },
+    "propertyDetails": {
+      "unavailableDates": "Niet beschikbare data: ",
+      "roomUnavailable": {
+        "title": "Deze accommodatie is niet beschikbaar voor de geselecteerde data",
+        "message": "Selecteer andere data voor deze accommodatie of bekijk onze andere opties"
+      },
+      "tabs": {
+        "bookingDetails": "Reserveringsdetails",
+        "roomInfo": "Kamerinformatie"
+      },
+      "guests": { "singular": "persoon", "plural": "personen" },
+      "selectDatePrompt": "Selecteer een datum",
+      "selectRoom": "Boek deze kamer",
+      "unavailableForDates": "Niet beschikbaar voor deze data",
+      "extraGuestFee": "Extra toeslag van {{fee}}€ per persoon vanaf {{threshold}} gasten ({{count}} extra gast(en))",
+      "loading": "Laden...",
+      "capacityExceeded": {
+        "title": "Maximale capaciteit overschreden",
+        "message": "Deze kamer kan maximaal {{maxGuests}} personen accommoderen (u heeft {{selectedGuests}} personen geselecteerd)."
+      },
+      "tooManyGuests": "Te veel mensen voor deze kamer"
+    },
+    "terms": {
+      "accept": "Ik accepteer de ",
+      "accepted": "Geaccepteerd",
+      "generalConditions": "algemene voorwaarden",
+      "required": "U moet de algemene voorwaarden accepteren om door te gaan."
+    },
+    "timeSelect": {
+      "arrivalTime": "Aankomsttijd",
+      "placeholder": "Selecteer aankomsttijd"
+    },
+    "bookingConfirmation": {
+      "loading": {
+        "title": "Uw reservering wordt verwerkt...",
+        "message": "Even geduld aub terwijl wij uw betaling bevestigen."
+      },
+      "error": {
+        "title": "Fout bij Ophalen Reserveringsdetails",
+        "message": "Er is een fout opgetreden bij het ophalen van uw reserveringsgegevens. Controleer uw e-mail of neem rechtstreeks contact met ons op.",
+        "notFound": "Reserveringsdetails niet gevonden. Controleer uw e-mail of neem contact met ons op.",
+        "fetchFailed": "Kon reserveringsdetails niet ophalen."
+      },
+      "success": {
+        "title": "Reservering Bevestigd!",
+        "subtitle": "Een bevestiging is verzonden naar {{email}}.",
+        "sections": {
+          "stayDetails": {
+            "title": "Verblijfsdetails",
+            "checkIn_label": "Check-in:",
+            "checkIn": "{{date}}",
+            "arrivalTime_label": "Aankomsttijd:",
+            "arrivalTime": "{{time}}",
+            "checkOut_label": "Check-out:",
+            "checkOut": "{{date}}",
+            "travelers_label": "Reizigers:",
+            "travelers": "{{adults}} volwassene(n)",
+            "travelersWithChildren": "{{adults}} volwassene(n), {{children}} kind(eren)"
+          },
+          "spaTime": {
+            "scheduledTitle": "Uw SPA Sessie",
+            "scheduleLaterTitle": "Plan Uw SPA Sessie",
+            "scheduleLaterInstruction": "Om uw SPA-sessie te plannen, neem contact met ons op via e-mail of telefoon:",
+            "scheduleLaterPriority": "Let op: Slots worden toegewezen op basis van wie het eerst komt, het eerst maalt."
+          },
+          "guestDetails": {
+            "title": "Gastinformatie",
+            "fullName_label": "Volledige naam:",
+            "fullName": "{{firstName}} {{lastName}}",
+            "email_label": "E-mail:",
+            "email": "{{email}}",
+            "phone_label": "Telefoon:",
+            "phone": "{{phone}}"
+          },
+          "priceDetails": {
+            "title": "Prijsdetails",
+            "basePrice_label": "Basisprijs Verblijf",
+            "basePrice": "{{price}}€",
+            "guestFees_label": "Kosten voor {{extraGuests}} extra persoon/personen",
+            "guestFees": "{{amount}}€",
+            "longStayDiscount_label": "Korting Lang Verblijf",
+            "longStayDiscount": "{{percentage}}%",
+            "promoCode_label": "Promocode ({{code}})",
+            "promoCode": "-{{amount}}€",
+            "total_label": "Totaalbedrag",
+            "total": "{{price}}€"
+          },
+          "paidExtras": { "title": "Betaalde Extra's" },
+          "freeDrinks": { "title": "Gratis Dranken" },
+          "nonAlcoholicChoice": {
+            "title": "Keuze Niet-Alcoholische Drank",
+            "instructionFor": "Voor uw '__GRANTOR_NAME__' aanbod heeft u gekozen om later een niet-alcoholische drank te selecteren. Neem contact met ons op via e-mail of telefoon om uw keuze door te geven:",
+            "contactPrompt": "Neem alstublieft zo snel mogelijk contact met ons op."
+          },
+          "address": { "title": "Adres Accommodatie" }
+        },
+        "buttons": { "backHome": "Terug naar Home", "print": "Afdrukken" }
+      },
+      "adults": "volwassene(n)",
+      "children": "kind(eren)",
+      "included": "Inbegrepen",
+      "notProvided": "Niet opgegeven",
+      "extras": { "additionalPerson": "extra pers." },
+      "terms": {
+        "generalConditions": "Algemene Voorwaarden",
+        "accepted": "Geaccepteerd"
+      },
+      "errors": {
+        "invalidDate": "Ongeldige Datum",
+        "invalidTime": "Ongeldige Tijd"
+      },
+      "emailDefaults": {
+        "spaContactEmail": "fermedebasseilles@gmail.com",
+        "spaContactPhone": " / +32 475 20 16 19"
+      },
+      "emailSubjects": {
+        "nonAlcoholicChoice": "Keuze niet-alcoholische drank - Reservering"
+      },
+      "emailBodies": {
+        "nonAlcoholicChoice": "Hallo,\n\nBetreffende mijn reservering (Ref: {{bookingId}}), voor het {{grantors}} aanbod, wil ik graag mijn keuze voor een niet-alcoholische drank specificeren.\n\nDank u,\n{{guestName}}"
+      }
+    },
+    "paymentForm": {
       "notLoaded": "Stripe is nog niet geladen",
       "processing": "Verwerking...",
       "payNow": "Nu betalen",
       "errors": {
         "generic": "Er is een fout opgetreden bij de betaling"
       }
-    }
-    }
-  }
+    } 
+  } 
+} 

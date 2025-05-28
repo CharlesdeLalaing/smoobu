@@ -1,16 +1,22 @@
-// src/pages/BookingConfirmation.js (or appropriate path)
+// src/pages/BookingConfirmation.js
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import logoBaseilles from "../assets/logoBaseilles.webp"; // Verify path to logo
+import logoBaseilles from "../assets/logoBaseilles.webp"; // Verify path
 import { addMinutes, format as formatFn } from "date-fns";
 import { fr, enUS, nl } from "date-fns/locale"; // Import all required locales
-import "../assets/bookingConfirmation.css"; // Verify path to CSS
-import { CalendarClock } from "lucide-react";
+import "../assets/bookingConfirmation.css"; // Verify path
+import {
+  CalendarClock,
+  ShoppingBagIcon,
+  GiftIcon,
+  InfoIcon,
+  Wine
+} from "lucide-react"; // Icons
 
-// Helper to get date-fns locale (can be moved to a shared utils file)
+// Helper to get date-fns locale
 const getDateFnLocale = (lang = "fr") => {
-  const baseLang = lang.split("-")[0]; // Use base language (e.g., "en" from "en-US")
+  const baseLang = lang.split("-")[0];
   switch (baseLang) {
     case "fr":
       return fr;
@@ -19,21 +25,55 @@ const getDateFnLocale = (lang = "fr") => {
     case "nl":
       return nl;
     default:
-      return fr; // Default to French
+      return fr;
+  }
+};
+
+// Robust date conversion utility
+const getJsDate = (dateValue) => {
+  if (!dateValue) return null;
+  try {
+    let date;
+    if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
+      return dateValue;
+    }
+    // Handle Firestore Timestamp objects (from client SDK or Admin SDK-like structure)
+    if (dateValue && typeof dateValue.toDate === "function") {
+      date = dateValue.toDate();
+    } else if (
+      dateValue &&
+      typeof dateValue === "object" &&
+      dateValue._seconds !== undefined
+    ) {
+      date = new Date(
+        dateValue._seconds * 1000 + (dateValue._nanoseconds || 0) / 1000000
+      );
+    } else {
+      // Handle ISO strings or other parsable date strings
+      date = new Date(dateValue);
+    }
+    if (isNaN(date.getTime())) {
+      // console.warn("getJsDate: Resulted in Invalid Date for input:", dateValue);
+      return null;
+    }
+    return date;
+  } catch (e) {
+    // console.error("getJsDate: Error converting to JS Date:", dateValue, e);
+    return null;
   }
 };
 
 const BookingConfirmation = () => {
-  const { t, i18n } = useTranslation(); // Get i18n instance
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [status, setStatus] = useState("loading");
   const [bookingDetails, setBookingDetails] = useState(null);
   const [searchParams] = useSearchParams();
-  const paymentIntent = searchParams.get("payment_intent");
+  const paymentIntentIdFromUrl = searchParams.get("payment_intent"); // Renamed for clarity
   const [displayPrice, setDisplayPrice] = useState(null);
   const [priceCalculated, setPriceCalculated] = useState(false);
 
-  const currentLocale = i18n.language; // e.g., "en", "fr-BE", "nl"
+  const currentLocale = i18n.language;
   const currentDateFnsLocale = getDateFnLocale(currentLocale);
 
   useEffect(() => {
@@ -41,22 +81,30 @@ const BookingConfirmation = () => {
     if (storedBookingData) {
       try {
         const parsedData = JSON.parse(storedBookingData);
+        // console.log("BookingConfirmation: Loaded data from localStorage: ", parsedData);
         setBookingDetails(parsedData);
         setStatus("success");
-        localStorage.removeItem("bookingData");
+        localStorage.removeItem("bookingData"); // Crucial to remove after use
       } catch (error) {
         console.error("Error parsing booking data from localStorage:", error);
-        setStatus("error");
+        // If localStorage fails, try fetching if paymentIntentIdFromUrl exists
+        if (paymentIntentIdFromUrl) {
+          // console.log(`BookingConfirmation: localStorage parse failed, attempting to fetch for PI: ${paymentIntentIdFromUrl}`);
+          fetchBookingDetails(paymentIntentIdFromUrl);
+        } else {
+          setStatus("error");
+        }
       }
-    } else if (paymentIntent) {
-      fetchBookingDetails(paymentIntent);
+    } else if (paymentIntentIdFromUrl) {
+      // console.log(`BookingConfirmation: No localStorage data, attempting to fetch for PI: ${paymentIntentIdFromUrl}`);
+      fetchBookingDetails(paymentIntentIdFromUrl);
     } else {
       console.error(
         "Cannot display confirmation: No booking data found in localStorage or paymentIntent in URL."
       );
       setStatus("error");
     }
-  }, [paymentIntent]);
+  }, [paymentIntentIdFromUrl]); // Dependency is the PI from URL
 
   useEffect(() => {
     if (bookingDetails && !priceCalculated) {
@@ -66,37 +114,43 @@ const BookingConfirmation = () => {
   }, [bookingDetails, priceCalculated]);
 
   const calculateAndSetFinalPrice = (data) => {
-    if (data.price !== null && data.price !== undefined) {
+    if (!data) return;
+    if (
+      data.price !== null &&
+      data.price !== undefined &&
+      !isNaN(parseFloat(data.price))
+    ) {
       setDisplayPrice(parseFloat(data.price));
       return;
     }
+    // Fallback calculation if data.price is not directly usable
     const basePrice = parseFloat(
-      data.priceBreakdown?.basePrice ||
+      data.priceBreakdown?.roomBasePrice ||
         data.basePrice ||
-        data.priceDetails?.basePrice ||
+        data.priceDetailsSnapshot?.originalPrice ||
         0
     );
-    const guestFees = parseFloat(data.guestFees || 0);
+    const guestFees = parseFloat(
+      data.priceBreakdown?.calculatedGuestFees || data.guestFees || 0
+    );
     let extrasTotal = 0;
     if (data.extras && Array.isArray(data.extras)) {
       extrasTotal = data.extras.reduce((sum, extra) => {
         const extraAmount = parseFloat(extra.amount || 0);
         const extraPersonAmount =
-          extra.extraPersonQuantity > 0
-            ? parseFloat(extra.extraPersonAmount || 0)
+          extra.extraPersonQuantity > 0 && extra.extraPersonAmount !== undefined
+            ? parseFloat(extra.extraPersonAmount)
             : 0;
         return sum + extraAmount + extraPersonAmount;
       }, 0);
     }
     const longStayDiscount = parseFloat(
-      data.priceBreakdown?.longStayDiscount ||
-        data.priceDetails?.longStayDiscount ||
-        data.priceDetails?.discount ||
+      data.priceBreakdown?.appliedLongStayDiscount ||
+        data.priceDetailsSnapshot?.discount ||
         0
     );
     const couponDiscount = parseFloat(
-      data.priceBreakdown?.couponDiscount ||
-        data.priceDetails?.couponDiscount ||
+      data.priceBreakdown?.appliedCouponDiscount ||
         data.couponApplied?.discount ||
         0
     );
@@ -107,82 +161,75 @@ const BookingConfirmation = () => {
 
   const fetchBookingDetails = async (paymentIntentId) => {
     let attempts = 0;
-    const maxAttempts = 5;
-    const retryDelay = 2000;
+    const maxAttempts = 7; // Increased attempts slightly
+    const retryDelay = 3000; // Increased retry delay
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
     const attemptFetch = async () => {
+      // console.log(`BookingConfirmation: Attempting to fetch for PI: ${paymentIntentId} (Attempt: ${attempts + 1})`);
       try {
         const response = await fetch(
           `${API_URL}/api/bookings/${paymentIntentId}`,
-          { method: "GET", headers: { "Content-Type": "application/json" } }
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }
         );
         if (response.status === 404) {
           attempts++;
           if (attempts < maxAttempts) {
+            // console.log(`BookingConfirmation: Booking not found (attempt ${attempts}), retrying...`);
             setTimeout(attemptFetch, retryDelay);
             return;
           } else {
-            throw new Error(t("bookingConfirmation.error.notFound"));
+            console.error(
+              `BookingConfirmation: Booking not found after ${maxAttempts} attempts for PI: ${paymentIntentId}`
+            );
+            throw new Error(
+              t(
+                "bookingConfirmation.error.notFound",
+                "Détails de la réservation non trouvés. Veuillez vérifier votre e-mail ou nous contacter."
+              )
+            );
           }
         }
         if (!response.ok) {
           const errorText = await response.text();
+          console.error(
+            `BookingConfirmation: Fetch failed - Status ${response.status}, Body: ${errorText}`
+          );
           throw new Error(
-            `${t("bookingConfirmation.error.fetchFailed")} Status: ${
-              response.status
-            }. Body: ${errorText}`
+            `${t(
+              "bookingConfirmation.error.fetchFailed",
+              "Échec de la récupération des détails de la réservation."
+            )} Statut: ${response.status}.`
           );
         }
         const data = await response.json();
-        if (data.error) throw new Error(data.error);
+        if (data.error) {
+          console.error("BookingConfirmation: API returned error:", data.error);
+          throw new Error(data.error);
+        }
+        // console.log("BookingConfirmation: Successfully fetched booking details from API:", data);
         setBookingDetails(data);
         setStatus("success");
       } catch (error) {
-        console.error("Detailed error in fetchBookingDetails attempt:", error);
-        if (attempts < maxAttempts && status !== "success") {
-          attempts++;
-          setTimeout(attemptFetch, retryDelay);
+        console.error(
+          "BookingConfirmation: Detailed error in fetchBookingDetails attempt:",
+          error
+        );
+        if (
+          attempts < maxAttempts - 1 &&
+          error.message.includes(t("bookingConfirmation.error.notFound"))
+        ) {
+          // If it's a 404 and we haven't exhausted retries, the retry is handled by the 404 block.
+          // This 'else' path is more for other types of errors or final failure.
         } else {
-          setStatus("error");
+          setStatus("error"); // Set to error on final attempt or non-404 error
         }
       }
     };
     attemptFetch();
-  };
-
-  const getJsDate = (dateValue) => {
-    if (!dateValue) return null;
-    try {
-      let date;
-      if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
-        return dateValue;
-      }
-      if (dateValue && typeof dateValue.toDate === "function") {
-        date = dateValue.toDate();
-      } else if (
-        dateValue &&
-        typeof dateValue === "object" &&
-        dateValue._seconds !== undefined
-      ) {
-        date = new Date(
-          dateValue._seconds * 1000 + (dateValue._nanoseconds || 0) / 1000000
-        );
-      } else {
-        date = new Date(dateValue);
-      }
-      if (isNaN(date.getTime())) {
-        console.error(
-          "getJsDate resulted in an Invalid Date for input:",
-          dateValue
-        );
-        return null; // Return null for invalid dates
-      }
-      return date;
-    } catch (e) {
-      console.error("Error converting to JS Date:", dateValue, e);
-      return null;
-    }
   };
 
   const formatDate = (dateValue) => {
@@ -191,22 +238,14 @@ const BookingConfirmation = () => {
     if (!date) return t("errors.invalidDate", "Date invalide");
     try {
       return new Intl.DateTimeFormat(currentLocale, {
-        // Use currentLocale
         day: "numeric",
         month: "long",
         year: "numeric",
       }).format(date);
     } catch (e) {
-      console.error("Error formatting date with Intl:", dateValue, e);
-      // Fallback to a simpler format if Intl fails for some reason
       try {
         return formatFn(date, "d MMMM yyyy", { locale: currentDateFnsLocale });
       } catch (e2) {
-        console.error(
-          "Error formatting date with date-fns fallback:",
-          dateValue,
-          e2
-        );
         return t("errors.invalidDate", "Date invalide");
       }
     }
@@ -214,39 +253,34 @@ const BookingConfirmation = () => {
 
   const formatTime = (timeStringOrDate) => {
     if (!timeStringOrDate) return "-";
-    const dateObj = getJsDate(timeStringOrDate); // Try to parse if it's a full date string/object
+    const dateObj = getJsDate(timeStringOrDate);
     if (dateObj) {
       try {
         return formatFn(dateObj, "HH:mm", { locale: currentDateFnsLocale });
       } catch (e) {
-        console.error("Error formatting dateObj as time:", timeStringOrDate, e);
-        // If it was a date object that failed, it's an issue.
-        // If it was meant to be a simple time string like "14:00", it might pass through.
+        /* console.error("Error formatting dateObj as time:", timeStringOrDate, e); */
       }
     }
-    // If it's already a simple HH:mm string, return it.
-    // This is a basic check; more robust validation might be needed if various formats are expected.
     if (
       typeof timeStringOrDate === "string" &&
       /^\d{2}:\d{2}$/.test(timeStringOrDate)
     ) {
       return timeStringOrDate;
     }
-    return "-"; // Fallback
+    return "-";
   };
 
   const renderExtraName = (extra) => {
-    if (!extra?.name)
-      return t("bookingConfirmation.unknownExtra", "Extra Item");
-    return extra.name.startsWith("extras.") ? t(extra.name) : extra.name;
+    if (!extra?.name) return t("bookingConfirmation.unknownExtra", "Extra");
+    // Assuming extra.name is already translated if it was a key, by prepareBookingDocument
+    return extra.name;
   };
 
   const formatPrice = (price) => {
-    if (price === null || price === undefined) return "0.00";
-    const numberPrice = typeof price === "string" ? parseFloat(price) : price;
-    return typeof numberPrice === "number" && !isNaN(numberPrice)
-      ? numberPrice.toFixed(2)
-      : "0.00";
+    if (price === null || price === undefined || isNaN(parseFloat(price)))
+      return "0.00";
+    const numberPrice = parseFloat(price);
+    return numberPrice.toFixed(2);
   };
 
   const calculateExtraGuests = () => {
@@ -255,8 +289,10 @@ const BookingConfirmation = () => {
       (parseInt(bookingDetails.adults) || 0) +
       (parseInt(bookingDetails.children) || 0);
     const startingGuests =
-      bookingDetails.priceDetails?.settings?.startingAtGuest || 2;
-    return Math.max(0, totalGuests - startingGuests);
+      bookingDetails.priceBreakdown?.settings?.startingAtGuest || // From prepareBookingDocument
+      bookingDetails.priceDetailsSnapshot?.settings?.startingAtGuest || // From frontend state
+      2; // Default
+    return Math.max(0, totalGuests - Number(startingGuests));
   };
 
   if (status === "loading") {
@@ -296,7 +332,12 @@ const BookingConfirmation = () => {
           <h2 className="mb-2 text-xl font-semibold text-red-600">
             {t("bookingConfirmation.error.title")}
           </h2>
-          <p className="mb-4">{t("bookingConfirmation.error.message")}</p>
+          <p className="mb-4">
+            {t(
+              "bookingConfirmation.error.message",
+              "Une erreur est survenue lors de la récupération des détails de votre réservation. Veuillez vérifier votre e-mail de confirmation ou nous contacter directement."
+            )}
+          </p>
           <button onClick={() => navigate("/")} className="button-primary">
             {t(
               "bookingConfirmation.error.backHomeButton",
@@ -308,22 +349,31 @@ const BookingConfirmation = () => {
     );
   }
 
+  // SPA Time Display Logic
   const needsSpaScheduling = bookingDetails.spaBookingPreference === "later";
   const scheduledSpaTime =
     bookingDetails.spaDateTime &&
     bookingDetails.spaBookingPreference === "scheduled";
   let spaTimeDisplay = t("errors.invalidTime", "Heure invalide");
 
-  if (scheduledSpaTime && bookingDetails) {
-    const startTimeObj = getJsDate(bookingDetails.spaDateTime);
-    let endTimeObj = bookingDetails.spaEndDateTime
-      ? getJsDate(bookingDetails.spaEndDateTime)
+  if (scheduledSpaTime) {
+    const spaDateTimeFromDetails =
+      bookingDetails.spaDateTime || bookingDetails.spaInfo?.scheduledDateTime;
+    const spaEndDateTimeFromDetails =
+      bookingDetails.spaEndDateTime || bookingDetails.spaInfo?.endDateTime;
+
+    const startTimeObj = getJsDate(spaDateTimeFromDetails);
+    let endTimeObj = spaEndDateTimeFromDetails
+      ? getJsDate(spaEndDateTimeFromDetails)
       : null;
 
     if (startTimeObj) {
       if (!endTimeObj) {
-        // Fallback to calculate end time if spaEndDateTime is not available
-        let actualSlotDurationMinutes;
+        let actualSlotDurationMinutes = 120; // Default duration
+        const spaSettingsForDuration =
+          bookingDetails.spaSettings ||
+          bookingDetails.priceDetailsSnapshot?.spaSettings;
+
         if (
           bookingDetails.spaSlotDuration &&
           typeof bookingDetails.spaSlotDuration === "number" &&
@@ -332,29 +382,20 @@ const BookingConfirmation = () => {
           actualSlotDurationMinutes = bookingDetails.spaSlotDuration;
         } else if (
           bookingDetails.spaInfo?.slots?.length > 0 &&
-          bookingDetails.spaSettings?.slotDurationMinutes
+          spaSettingsForDuration?.slotDurationMinutes
         ) {
-          // Fallback similar to email, if spaInfo and spaSettings are in bookingDetails
           actualSlotDurationMinutes =
             bookingDetails.spaInfo.slots.length *
-            bookingDetails.spaSettings.slotDurationMinutes;
-        } else {
-          console.warn(
-            `BookingConfirmation: spaEndDateTime and spaSlotDuration are missing or invalid. Falling back to a default duration (e.g., 120 minutes) or unable to determine end time accurately. Booking ID: ${
-              bookingDetails?.id || bookingDetails?.smoobuId || "N/A"
-            }. Consider ensuring 'spaEndDateTime' or 'spaSlotDuration' is saved in booking details.`
-          );
-          actualSlotDurationMinutes = 120; // Default fallback if no other info
+            spaSettingsForDuration.slotDurationMinutes;
         }
         if (actualSlotDurationMinutes > 0) {
           try {
             endTimeObj = addMinutes(startTimeObj, actualSlotDurationMinutes);
           } catch (e) {
-            console.error("Error calculating fallback end time for SPA:", e);
+            console.error("Error calculating SPA end time from duration:", e);
           }
         }
       }
-
       try {
         const startTimeString = formatFn(startTimeObj, "HH:mm", {
           locale: currentDateFnsLocale,
@@ -362,21 +403,22 @@ const BookingConfirmation = () => {
         const endTimeString = endTimeObj
           ? formatFn(endTimeObj, "HH:mm", { locale: currentDateFnsLocale })
           : null;
-
         if (startTimeString && endTimeString) {
           spaTimeDisplay = `${startTimeString} - ${endTimeString}`;
         } else if (startTimeString) {
-          spaTimeDisplay = startTimeString; // Only start time if end time couldn't be determined
-          console.warn(
-            "SPA time display only has start time, end time could not be determined or was invalid."
-          );
+          spaTimeDisplay = `${startTimeString} (Durée non spécifiée)`;
         }
       } catch (e) {
-        console.error("Error formatting SPA times:", e);
-        // spaTimeDisplay remains "Heure invalide" or its default
+        console.error("Error formatting SPA times for display:", e);
       }
     }
   }
+
+  // Free Drinks "Choose Later" Logic
+  const needsNonAlcoholicChoice =
+    bookingDetails.freeDrinkInfo?.needsNonAlcoholicChoice === true;
+  const nonAlcoholicChoiceGrantors =
+    bookingDetails.freeDrinkInfo?.nonAlcoholicChoiceGrantors || [];
 
   return (
     <div
@@ -408,45 +450,59 @@ const BookingConfirmation = () => {
           </div>
         </div>
         <div className="grid">
+          {/* Stay Details */}
           <div className="details-card">
             <h2 className="titleConfirmation">
               {t("bookingConfirmation.success.sections.stayDetails.title")}
             </h2>
             <p>
-              {t("bookingConfirmation.success.sections.stayDetails.checkIn", {
-                date: formatDate(bookingDetails.arrivalDate),
-              })}
+              <strong className="font-medium">
+                {t(
+                  "bookingConfirmation.success.sections.stayDetails.checkIn_label",
+                  "Arrivée:"
+                )}
+              </strong>{" "}
+              {formatDate(bookingDetails.arrivalDate)}
             </p>
             <p>
-              {t(
-                "bookingConfirmation.success.sections.stayDetails.arrivalTime",
-                { time: formatTime(bookingDetails.arrivalTime) }
-              )}
+              <strong className="font-medium">
+                {t(
+                  "bookingConfirmation.success.sections.stayDetails.arrivalTime_label",
+                  "Heure d'arrivée:"
+                )}
+              </strong>{" "}
+              {formatTime(bookingDetails.arrivalTime)}
             </p>
             <p>
-              {t("bookingConfirmation.success.sections.stayDetails.checkOut", {
-                date: formatDate(bookingDetails.departureDate),
-              })}
+              <strong className="font-medium">
+                {t(
+                  "bookingConfirmation.success.sections.stayDetails.checkOut_label",
+                  "Départ:"
+                )}
+              </strong>{" "}
+              {formatDate(bookingDetails.departureDate)}
             </p>
             <p>
+              <strong className="font-medium">
+                {t(
+                  "bookingConfirmation.success.sections.stayDetails.travelers_label",
+                  "Voyageurs:"
+                )}
+              </strong>{" "}
+              {bookingDetails.adults}{" "}
+              {t("bookingConfirmation.adults", "adulte(s)")}
               {bookingDetails.children > 0
-                ? t(
-                    "bookingConfirmation.success.sections.stayDetails.travelersWithChildren",
-                    {
-                      adults: bookingDetails.adults,
-                      children: bookingDetails.children,
-                    }
-                  )
-                : t(
-                    "bookingConfirmation.success.sections.stayDetails.travelers",
-                    { adults: bookingDetails.adults }
-                  )}
+                ? `, ${bookingDetails.children} ${t(
+                    "bookingConfirmation.children",
+                    "enfant(s)"
+                  )}`
+                : ""}
             </p>
             {scheduledSpaTime && (
               <p className="pt-2 mt-2 text-sm border-t border-gray-200">
                 <CalendarClock
                   size={14}
-                  className="inline-block mr-1 text-indigo-600 align-text-bottom"
+                  className="inline-block mr-1 align-text-bottom text-brandColor"
                 />
                 <span className="font-semibold">
                   {t(
@@ -454,115 +510,227 @@ const BookingConfirmation = () => {
                     "Séance SPA:"
                   )}
                 </span>{" "}
-                {formatDate(bookingDetails.spaDateTime)}{" "}
-                <span className="">{spaTimeDisplay}</span>
+                {formatDate(
+                  bookingDetails.spaDateTime ||
+                    bookingDetails.spaInfo?.scheduledDateTime
+                )}{" "}
+                <span className="font-medium">{spaTimeDisplay}</span>
               </p>
             )}
           </div>
 
+          {/* Guest Details */}
           <div className="details-card">
             <h2 className="titleConfirmation">
               {t("bookingConfirmation.success.sections.guestDetails.title")}
             </h2>
             <p>
-              {t("bookingConfirmation.success.sections.guestDetails.fullName", {
-                firstName: bookingDetails.firstName,
-                lastName: bookingDetails.lastName,
-              })}
+              <strong className="font-medium">
+                {t(
+                  "bookingConfirmation.success.sections.guestDetails.fullName_label",
+                  "Nom complet:"
+                )}
+              </strong>{" "}
+              {bookingDetails.guestName ||
+                `${bookingDetails.firstName} ${bookingDetails.lastName}`}
             </p>
             <p>
-              {t("bookingConfirmation.success.sections.guestDetails.email", {
-                email: bookingDetails.email,
-              })}
+              <strong className="font-medium">
+                {t(
+                  "bookingConfirmation.success.sections.guestDetails.email_label",
+                  "Email:"
+                )}
+              </strong>{" "}
+              {bookingDetails.email}
             </p>
-            <p>
-              {t("bookingConfirmation.success.sections.guestDetails.phone", {
-                phone: bookingDetails.phone || "-",
-              })}
-            </p>
+            {bookingDetails.phone && (
+              <p>
+                <strong className="font-medium">
+                  {t(
+                    "bookingConfirmation.success.sections.guestDetails.phone_label",
+                    "Téléphone:"
+                  )}
+                </strong>{" "}
+                {bookingDetails.phone}
+              </p>
+            )}
           </div>
 
+          {/* Price Details - Including Paid Extras AND Free Drinks */}
           <div className="details-card">
             <h2 className="titleConfirmation">
               {t("bookingConfirmation.success.sections.priceDetails.title")}
             </h2>
-            <p>
-              {t(
-                "bookingConfirmation.success.sections.priceDetails.basePrice",
-                {
-                  price: formatPrice(
-                    bookingDetails.priceBreakdown?.basePrice ||
-                      bookingDetails.basePrice ||
-                      0
-                  ),
-                }
-              )}
+            <p className="text-sm item-line">
+              <span>
+                {t(
+                  "bookingConfirmation.success.sections.priceDetails.basePrice_label",
+                  "Prix de base du séjour "
+                )}
+              </span>
+              <span className="price-value">
+                {formatPrice(
+                  bookingDetails.priceBreakdown?.roomBasePrice ||
+                    bookingDetails.basePrice ||
+                    0
+                )}
+                €
+              </span>
             </p>
-            {bookingDetails.guestFees > 0 && (
-              <p>
-                {t(
-                  "bookingConfirmation.success.sections.priceDetails.guestFees",
-                  {
-                    amount: formatPrice(bookingDetails.guestFees),
-                    extraGuests: calculateExtraGuests(),
-                  }
-                )}
+            {Number(
+              bookingDetails.priceBreakdown?.calculatedGuestFees ||
+                bookingDetails.guestFees ||
+                0
+            ) > 0 && (
+              <p className="text-sm item-line">
+                <span>
+                  {t(
+                    "bookingConfirmation.success.sections.priceDetails.guestFees_label",
+                    `Frais pour ${calculateExtraGuests()} pers. suppl.`
+                  )}
+                </span>
+                <span className="price-value">
+                  {formatPrice(
+                    bookingDetails.priceBreakdown?.calculatedGuestFees ||
+                      bookingDetails.guestFees
+                  )}
+                  €
+                </span>
               </p>
             )}
-            <div className="mt-1 mb-2 extras-list">
-              {bookingDetails.extras?.map((extra, index) => {
-                const hasExtraPerson = extra.extraPersonQuantity > 0;
-                return (
-                  <p key={index} className="text-sm">
-                    {renderExtraName(extra)} (x{extra.quantity}):{" "}
-                    {formatPrice(extra.amount)}€
-                    {hasExtraPerson && (
-                      <span className="text-xs text-gray-600">
-                        {` (+ ${t("extras.additionalPerson", "pers. sup.")} x${
-                          extra.extraPersonQuantity
-                        } : ${formatPrice(extra.extraPersonAmount)}€)`}
-                      </span>
-                    )}
-                  </p>
-                );
-              })}
-            </div>
-            {(bookingDetails.priceDetails?.discount > 0 ||
-              bookingDetails.priceDetails?.longStayDiscount > 0) && (
-              <p className="text-sm text-orange-600 discount-text">
-                {t(
-                  "bookingConfirmation.success.sections.priceDetails.longStayDiscount",
-                  {
-                    percentage:
-                      bookingDetails.priceDetails?.settings
-                        ?.lengthOfStayDiscount?.discountPercentage || "?",
-                    amount: formatPrice(
-                      bookingDetails.priceDetails?.discount ||
-                        bookingDetails.priceDetails?.longStayDiscount ||
-                        0
-                    ),
-                  }
-                )}
-              </p>
-            )}
-            {bookingDetails.couponApplied && (
-              <p className="text-sm text-green-600 discount-text">
-                {t(
-                  "bookingConfirmation.success.sections.priceDetails.promoCode",
-                  {
-                    code: bookingDetails.couponApplied.code,
-                    amount: formatPrice(
-                      bookingDetails.couponApplied.discount || 0
-                    ),
-                  }
-                )}
-              </p>
-            )}
-            <div className="total-section">
-              <p className="total-text">
-                {t("bookingConfirmation.success.sections.priceDetails.total", {
-                  price: formatPrice(displayPrice),
+
+            {/* Paid Extras */}
+            {bookingDetails.extras?.length > 0 && (
+              <div className="mt-3 sub-section">
+                <h3 className="flex items-center mb-2 text-base font-semibold text-gray-800">
+                  <ShoppingBagIcon
+                    size={18}
+                    className="inline-block mr-2 text-brandColor"
+                  />
+                  {t(
+                    "bookingConfirmation.success.sections.paidExtras.title",
+                    "Extras Payants"
+                  )}
+                </h3>
+                {bookingDetails.extras.map((extra, index) => {
+                  const hasExtraPerson =
+                    extra.extraPersonQuantity > 0 &&
+                    parseFloat(extra.extraPersonAmount || 0) > 0;
+                  return (
+                    <div
+                      key={`paid-extra-${index}-${extra.id || index}`}
+                      className="mb-1"
+                    >
+                      <p className="text-sm item-line">
+                        <span>
+                          {renderExtraName(extra)} (x{extra.quantity || 1})
+                        </span>
+                        <span className="price-value">
+                          {formatPrice(extra.amount)}€
+                        </span>
+                      </p>
+                      {hasExtraPerson && (
+                        <p className="block text-xs text-gray-600 pl-7 sub-item-line">
+                          {" "}
+                          {/* Increased pl for more indent */}
+                          {`↳ ${t("extras.additionalPerson", "pers. sup.")} x${
+                            extra.extraPersonQuantity
+                          } : ${formatPrice(extra.extraPersonAmount)}€`}
+                        </p>
+                      )}
+                    </div>
+                  );
                 })}
+              </div>
+            )}
+
+            {/* Free Drinks */}
+            {bookingDetails.processedFreeDrinks &&
+              bookingDetails.processedFreeDrinks.length > 0 && (
+                <div className="mt-3 sub-section">
+                  <h3 className="flex items-center mb-2 text-base font-semibold text-green-700">
+                    <GiftIcon
+                      size={18}
+                      className="inline-block mr-2 text-green-600"
+                    />
+                    {t(
+                      "bookingConfirmation.success.sections.freeDrinks.title",
+                      "Boissons Offertes"
+                    )}
+                  </h3>
+                  {bookingDetails.processedFreeDrinks.map((drink, index) => (
+                    <p
+                      key={drink.id || `free-drink-${index}-${drink.name}`}
+                      className="text-sm item-line text-green-600 mb-0.5"
+                    >
+                      <span>
+                        {drink.name} (x{drink.quantity})
+                      </span>
+                    </p>
+                  ))}
+                </div>
+              )}
+
+            {/* Discounts */}
+            {parseFloat(
+              bookingDetails.priceBreakdown?.appliedLongStayDiscount || 0
+            ) > 0 && (
+              <p className="mt-3 text-sm text-orange-600 discount-text item-line">
+                <span>
+                  {t(
+                    "bookingConfirmation.success.sections.priceDetails.longStayDiscount_label",
+                    "Réduction long séjour"
+                  )}
+                  {bookingDetails.priceDetailsSnapshot?.settings
+                    ?.lengthOfStayDiscount?.discountPercentage ||
+                  bookingDetails.priceBreakdown?.settings?.lengthOfStayDiscount
+                    ?.discountPercentage
+                    ? ` (${
+                        bookingDetails.priceDetailsSnapshot?.settings
+                          .lengthOfStayDiscount.discountPercentage ||
+                        bookingDetails.priceBreakdown.settings
+                          .lengthOfStayDiscount.discountPercentage
+                      }%)`
+                    : ""}
+                </span>
+                <span className="price-value">
+                  -
+                  {formatPrice(
+                    bookingDetails.priceBreakdown?.appliedLongStayDiscount
+                  )}
+                  €
+                </span>
+              </p>
+            )}
+            {bookingDetails.couponApplied &&
+              parseFloat(bookingDetails.couponApplied.discount || 0) > 0 && (
+                <p className="mt-1 text-sm text-green-600 discount-text item-line">
+                  <span>
+                    {t(
+                      "bookingConfirmation.success.sections.priceDetails.promoCode_label",
+                      `Code Promo (${bookingDetails.couponApplied.code})`
+                    )}
+                    {bookingDetails.couponApplied.type === "percentage"
+                      ? ` (${bookingDetails.couponApplied.percentageValue}%)`
+                      : ""}
+                  </span>
+                  <span className="price-value">
+                    -{formatPrice(bookingDetails.couponApplied.discount)}€
+                  </span>
+                </p>
+              )}
+
+            {/* Total */}
+            <div className="mt-4 total-section">
+              <p className="total-text item-line">
+                <span>
+                  {t(
+                    "bookingConfirmation.success.sections.priceDetails.total_label",
+                  )}
+                </span>
+                <span className="price-value">
+                  {formatPrice(displayPrice)}€
+                </span>
               </p>
               <p className="mt-1 text-xs text-gray-500">
                 {t("terms.generalConditions")}: {t("terms.accepted")}
@@ -570,25 +738,31 @@ const BookingConfirmation = () => {
             </div>
           </div>
 
+          {/* Address */}
           <div className="details-card">
             <h2 className="titleConfirmation">
               {t("bookingConfirmation.success.sections.address.title")}
             </h2>
-            <p>{bookingDetails.street || "-"}</p>
             <p>
-              {bookingDetails.postalCode || "-"}{" "}
-              {bookingDetails.location || "-"}
+              {bookingDetails.street ||
+                t("bookingConfirmation.notProvided", "Non fourni")}
             </p>
-            <p>{bookingDetails.country || "-"}</p>
+            <p>
+              {bookingDetails.postalCode || ""} {bookingDetails.location || ""}
+            </p>
+            <p>{bookingDetails.country || ""}</p>
           </div>
 
+          {/* SPA Schedule Later Section */}
           {needsSpaScheduling && (
             <div className="details-card spa-schedule-later-card">
               <h2 className="flex items-center titleConfirmation spa-schedule-title">
-                <CalendarClock size={18} className="inline-block mr-2" />
+                <CalendarClock
+                  size={18}
+                  className="inline-block mr-2 text-brandColor"
+                />
                 {t(
-                  "bookingConfirmation.success.sections.spaTime.scheduleLaterTitle",
-                  "Programmation Séance SPA"
+                  "bookingConfirmation.success.sections.spaTime.scheduleLaterTitle"
                 )}
               </h2>
               <p className="mb-1 text-sm">
@@ -596,12 +770,18 @@ const BookingConfirmation = () => {
                   "bookingConfirmation.success.sections.spaTime.scheduleLaterInstruction"
                 )}
               </p>
-              <p className="mb-2 text-sm font-semibold">
+              <p className="mb-1 text-sm font-semibold text-green-600 contact-line">
                 <a
-                  href="mailto:fermedebasseilles@gmail.com"
-                  className="text-blue-600 hover:underline"
+                  href={`mailto:${t(
+                    "emailDefaults.spaContactEmail",
+                    "fermedebasseilles@gmail.com"
+                  )}`}
+                  className="text-brandColor hover:underline"
                 >
-                  fermedebasseilles@gmail.com
+                  {t(
+                    "emailDefaults.spaContactEmail",
+                    "fermedebasseilles@gmail.com"
+                  )}
                 </a>
               </p>
               <p className="text-xs text-gray-600">
@@ -611,7 +791,83 @@ const BookingConfirmation = () => {
               </p>
             </div>
           )}
-        </div>
+
+          {/* Non-Alcoholic Drink Choice Later Section */}
+          {needsNonAlcoholicChoice && nonAlcoholicChoiceGrantors.length > 0 && (
+            <div className="details-card non-alcoholic-choice-later-card">
+              <h2 className="flex items-center titleConfirmation non-alcoholic-title">
+                <Wine
+                  size={18}
+                  className="inline-block mr-2 text-orange-500"
+                />
+                {t(
+                  "bookingConfirmation.success.sections.nonAlcoholicChoice.title"
+                )}
+              </h2>
+              {nonAlcoholicChoiceGrantors.map((grantor, index) => {
+                // 1. Get the translated template string
+                const instructionTemplate = t(
+                  "bookingConfirmation.success.sections.nonAlcoholicChoice.instructionFor"
+                );
+
+                // 2. Split the template by our placeholder
+                const parts = instructionTemplate.split("__GRANTOR_NAME__");
+
+                return (
+                  <p key={`na-instr-${index}`} className="mb-1 text-sm">
+                    {/* 3. Reconstruct with the bolded grantor */}
+                    {parts[0]} {/* Text before placeholder */}
+                    <strong>{grantor}</strong> {/* The bolded grantor name */}
+                    {parts[1]} {/* Text after placeholder (if any) */}
+                  </p>
+                );
+              })}
+              <p className="mb-1 text-sm font-semibold text-green-600 contact-line">
+                <a
+                  href={`mailto:${t(
+                    "emailDefaults.spaContactEmail",
+                    "fermedebasseilles@gmail.com"
+                  )}?subject=${encodeURIComponent(
+                    t(
+                      "bookingConfirmation.emailSubjects.nonAlcoholicChoice",
+                      "Choix boisson non-alcoolisée - Réservation"
+                    ) + ` ${bookingDetails.smoobuId || bookingDetails.id || ""}`
+                  )}&body=${encodeURIComponent(
+                    t(
+                      "bookingConfirmation.emailBodies.nonAlcoholicChoice",
+                      `Bonjour,\n\nConcernant ma réservation (Réf: ${
+                        bookingDetails.smoobuId || bookingDetails.id || ""
+                      }), pour l'offre ${nonAlcoholicChoiceGrantors.join(
+                        " et "
+                      )}, je souhaiterais préciser mon choix de boisson non-alcoolisée.\n\nMerci,\n${
+                        bookingDetails.firstName
+                      } ${bookingDetails.lastName}`,
+                      {
+                        bookingId:
+                          bookingDetails.smoobuId || bookingDetails.id || "",
+                        grantors: nonAlcoholicChoiceGrantors.join(" et "),
+                        guestName: `${bookingDetails.firstName} ${bookingDetails.lastName}`,
+                      }
+                    )
+                  )}`}
+                  className="text-brandColor hover:underline"
+                >
+                  {t(
+                    "emailDefaults.spaContactEmail",
+                    "fermedebasseilles@gmail.com"
+                  )}
+                </a>
+
+              </p>
+              <p className="text-xs text-gray-600">
+                {t(
+                  "bookingConfirmation.success.sections.nonAlcoholicChoice.contactPrompt"
+                )}
+              </p>
+            </div>
+          )}
+        </div>{" "}
+        {/* End of grid */}
         <div className="actions">
           <button onClick={() => navigate("/")} className="button-primary">
             {t("bookingConfirmation.success.buttons.backHome")}
@@ -620,8 +876,9 @@ const BookingConfirmation = () => {
             {t("bookingConfirmation.success.buttons.print")}
           </button>
         </div>
-      </div>
-    </div>
+      </div>{" "}
+      {/* End of card */}
+    </div> /* End of container */
   );
 };
 

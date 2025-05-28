@@ -425,62 +425,107 @@
         "arrivalTime": "Heure d'arrivée",
         "placeholder": "Sélectionnez l'heure d'arrivée"
       },
-      "bookingConfirmation": {
-        "loading": {
-          "title": "Traitement de votre réservation...",
-          "message": "Veuillez patienter pendant que nous confirmons votre paiement."
-        },
-        "error": {
-          "title": "Une erreur s'est produite lors de la récupération de vos détails de réservation.",
-          "message": "Veuillez vérifier votre email pour les détails de la réservation ou nous contacter."
-        },
-        "success": {
-          "title": "Réservation Confirmée",
-          "subtitle": "Une confirmation vous a été envoyée à {{email}}",
-          "sections": {
-            "stayDetails": {
-              "title": "Détails du séjour",
-              "checkIn": "Check-in: {{date}}",
-              "arrivalTime": "Heure d'arrivée: {{time}}",
-              "checkOut": "Check-out: {{date}}",
-              "travelers": "Voyageurs: {{adults}} adultes",
-              "travelersWithChildren": "Voyageurs: {{adults}} adultes, {{children}} enfants"
-            },
-            "spaTime": {
-              "scheduledTitle": "Session SPA",
-              "scheduleLaterTitle": "Programmation Séance SPA",
-              "scheduleLaterInstruction": "Pour planifier votre séane SPA, veuillez nous contacte à l'adresse suivante : ",
-              "scheduleLaterPriority": "Note : Les créneaux sont attribués selon le principe du premier arrivé, premier servi."
-            },
-            "guestDetails": {
-              "title": "Informations du client",
-              "fullName": "Nom complet: {{firstName}} {{lastName}}",
-              "email": "Email: {{email}}",
-              "phone": "Téléphone: {{phone}}"
-            },
-            "priceDetails": {
-              "title": "Détails du prix",
-              "basePrice": "Prix de base: {{price}}€",
-              "extraPerson": "Personne supplémentaire ({{quantity}}x): {{price}}€",
-              "longStayDiscount": "Réduction long séjour ({{percentage}}%): -{{amount}}€",
-              "promoCode": "Code promo ({{code}}): -{{amount}}€",
-              "guestFees": "Frais supplémentaires ({{extraGuests}} personne(s)): {{amount}}€",
-              "total": "Total: {{price}}€",
-
-              "termsAccepted": "Conditions générales: Acceptée",
-              "promoCodeFixed": "Code promo ({{code}}): -{{amount}}€",
-              "promoCodePercentage": "Code promo ({{code}} - {{value}}%): -{{amount}}€"
-            },
-            "address": {
-              "title": "Adresse"
-            }
-          },
-          "buttons": {
-            "backHome": "Retour à l'accueil",
-            "print": "Imprimer"
-          }
-        }
+"bookingConfirmation": {
+  "loading": {
+    "title": "Traitement de votre réservation...",
+    "message": "Veuillez patienter pendant que nous confirmons votre paiement."
+  },
+  "error": {
+    "title": "Erreur de Récupération des Détails",
+    "message": "Une erreur s'est produite lors de la récupération des détails de votre réservation. Veuillez vérifier votre e-mail ou nous contacter directement.",
+    "notFound": "Détails de la réservation non trouvés. Veuillez vérifier votre e-mail ou nous contacter.",
+    "fetchFailed": "Échec de la récupération des détails de la réservation."
+  },
+  "success": {
+    "title": "Réservation Confirmée !",
+    "subtitle": "Une confirmation vous a été envoyée à {{email}}.",
+    "sections": {
+      "stayDetails": {
+        "title": "Détails du séjour",
+        "checkIn_label": "Arrivée :",
+        "checkIn": "{{date}}",
+        "arrivalTime_label": "Heure d'arrivée :",
+        "arrivalTime": "{{time}}",
+        "checkOut_label": "Départ :",
+        "checkOut": "{{date}}",
+        "travelers_label": "Voyageurs :",
+        "travelers": "{{adults}} adulte(s)",
+        "travelersWithChildren": "{{adults}} adulte(s), {{children}} enfant(s)"
       },
+      "spaTime": {
+        "scheduledTitle": "Votre Séance SPA",
+        "scheduleLaterTitle": "Programmation Séance SPA",
+        "scheduleLaterInstruction": "Pour planifier votre séance SPA, veuillez nous contacter par email ou téléphone :",
+        "scheduleLaterPriority": "Note : Les créneaux sont attribués selon le principe du premier arrivé, premier servi."
+      },
+      "guestDetails": {
+        "title": "Informations du Client",
+        "fullName_label": "Nom complet :",
+        "fullName": "{{firstName}} {{lastName}}",
+        "email_label": "Email :",
+        "email": "{{email}}",
+        "phone_label": "Téléphone :",
+        "phone": "{{phone}}"
+      },
+      "priceDetails": {
+        "title": "Détails du Prix",
+        "basePrice_label": "Prix de base du séjour",
+        "basePrice": "{{price}}€",
+        "guestFees_label": "Frais pour {{extraGuests}} personne(s) supplémentaire(s)",
+        "guestFees": "{{amount}}€",
+        "longStayDiscount_label": "Réduction long séjour",
+        "longStayDiscount": "{{percentage}}%",
+        "promoCode_label": "Code promo ({{code}})",
+        "promoCode": "-{{amount}}€",
+        "total_label": "Total à Payer",
+        "total": "{{price}}€"
+      },
+      "paidExtras": {
+        "title": "Extras Payants"
+      },
+      "freeDrinks": {
+        "title": "Boissons Offertes"
+      },
+      "nonAlcoholicChoice": {
+        "title": "Choix de Boisson Non-Alcoolisée",
+        "instructionFor": "Pour votre offre '__GRANTOR_NAME__', vous avez choisi de sélectionner une boisson non-alcoolisée ultérieurement. Veuillez nous contacter :",
+        "contactPrompt": "Veuillez nous contacter au plus vite."
+      },
+      "address": {
+        "title": "Adresse"
+      }
+    },
+    "buttons": {
+      "backHome": "Retour à l'accueil",
+      "print": "Imprimer"
+    }
+  },
+  "adults": "adulte(s)",
+  "children": "enfant(s)",
+  "included": "Inclus",
+  "notProvided": "Non fourni",
+  "extras": {
+    "additionalPerson": "pers. sup."
+  },
+  "terms": {
+    "generalConditions": "Conditions générales",
+    "accepted": "Acceptées"
+  },
+  "errors": {
+    "invalidDate": "Date invalide",
+    "invalidTime": "Heure invalide"
+  },
+  "emailDefaults": {
+    "spaContactEmail": "fermedebasseilles@gmail.com",
+    "spaContactPhone": " / +32 475 20 16 19"
+  },
+  "emailSubjects": {
+    "nonAlcoholicChoice": "Choix boisson non-alcoolisée - Réservation"
+  },
+  "emailBodies": {
+    "nonAlcoholicChoice": "Bonjour,\n\nConcernant ma réservation (Réf: {{bookingId}}), pour l'offre {{grantors}}, je souhaiterais préciser mon choix de boisson non-alcoolisée.\n\nMerci,\n{{guestName}}"
+  }
+},
       "paymentForm": {
       "notLoaded": "Stripe n'est pas encore chargé",
       "processing": "Traitement en cours...",
