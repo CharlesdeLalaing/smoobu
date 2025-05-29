@@ -21,9 +21,7 @@ function AdminBookingCancellation() {
     const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3000"; // Adjust port if needed, Vite uses VITE_ prefix
 
     try {
-      console.log(
-        `Sending cancel request for ID: ${reservationId} to ${backendUrl}`
-      );
+
       const response = await axios.delete(
         `${backendUrl}/api/cancel-smoobu-reservation/${reservationId.trim()}`
       ); // Trim ID

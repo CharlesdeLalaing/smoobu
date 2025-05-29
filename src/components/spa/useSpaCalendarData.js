@@ -113,40 +113,7 @@ export const useBookingsForMonth = (month) => {
         const rawSpaDateTime = data.spaDateTime;
         const spaDateTimeObj = parseBookingDateTime(rawSpaDateTime); // Call your utility
 
-        if (
-          bookingIdForLog === "97475833" ||
-          (rawSpaDateTime &&
-            typeof rawSpaDateTime === "object" &&
-            rawSpaDateTime._seconds === 1747746000)
-        ) {
-          console.log(
-            `----------------------------------------------------------------`
-          );
-          console.log(
-            `useBookingsForMonth (Processing Booking ID: ${bookingIdForLog})`
-          );
-          console.log(
-            `   Raw spaDateTime from Firestore:`,
-            JSON.stringify(rawSpaDateTime)
-          );
-          console.log(`   Calling parseBookingDateTime with:`, rawSpaDateTime);
-          // The parseBookingDateTime function itself will log its internal steps
-          console.log(`   Resulting spaDateTimeObj:`, spaDateTimeObj);
-          console.log(
-            `   Is spaDateTimeObj a Date instance:`,
-            spaDateTimeObj instanceof Date
-          );
-          console.log(
-            `   Is spaDateTimeObj valid (using date-fns isValid):`,
-            spaDateTimeObj
-              ? isValid(spaDateTimeObj)
-              : "N/A (value is null/undefined)"
-          );
-          console.log(
-            `----------------------------------------------------------------`
-          );
-        }
-
+       
         const spaEndDateTimeObj = parseBookingDateTime(data.spaEndDateTime);
 
         let spaInfoProcessed = null;

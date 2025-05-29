@@ -72,9 +72,7 @@ export const storeBookingInFirebase = async (
 
     // Add the fully prepared document to the 'bookings' collection in Firebase.
     const docRef = await db.collection("bookings").add(bookingDoc);
-    console.log(
-      `🟩 Firebase: Booking ${docRef.id} stored successfully for Smoobu ID ${reservationId}.`
-    );
+
 
     // Send confirmation email using the comprehensive bookingDoc.
     try {

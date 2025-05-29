@@ -112,9 +112,7 @@ export async function createPaymentIntent(req, res) {
       bookingReference: bookingReference, // Add the reference itself
       // No need to add 'totalPriceWithExtras' here if priceBreakdown.finalPayableAmount is used.
     });
-    console.log(
-      `🟩 Create PI: Stored pending booking for reference: ${bookingReference}`
-    );
+
 
     // Construct a concise description for Stripe.
     // Details will be in your Firebase record and Smoobu.
@@ -144,9 +142,6 @@ export async function createPaymentIntent(req, res) {
         // arrivalDate: bookingData.arrivalDate,
       },
     });
-    console.log(
-      `🟩 Create PI: Stripe PaymentIntent ${paymentIntent.id} created for ${bookingReference}.`
-    );
 
     res.json({
       clientSecret: paymentIntent.client_secret,

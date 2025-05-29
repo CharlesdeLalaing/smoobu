@@ -10,9 +10,7 @@ export const updateCouponUsage = async (
 ) => {
   // Validate that essential information is present
   if (!appliedCouponObject || !appliedCouponObject.code) {
-    console.log(
-      "ℹ️ [updateCouponUsage] No coupon information provided or code missing. Skipping update."
-    );
+
     // Returning success:true because it's not an error if no coupon was applied.
     return { success: true, message: "No coupon data to update." };
   }
@@ -25,9 +23,7 @@ export const updateCouponUsage = async (
   const couponCodeToUpdate = appliedCouponObject.code;
 
   try {
-    console.log(
-      `🟨 [updateCouponUsage] Starting update process for coupon code: ${couponCodeToUpdate}`
-    );
+
 
     const couponsRef = db.collection("coupons");
     const couponQuery = await couponsRef
@@ -47,10 +43,7 @@ export const updateCouponUsage = async (
     const couponDoc = couponQuery.docs[0];
     const couponDataFromDb = couponDoc.data(); // Fresh data from the database for this coupon
 
-    console.log(
-      `ℹ️ [updateCouponUsage] Found coupon in DB (ID: ${couponDoc.id}):`,
-      JSON.stringify(couponDataFromDb)
-    );
+ 
 
     // Prepare the record for usage history
     const usageRecord = {
@@ -91,9 +84,7 @@ export const updateCouponUsage = async (
       // 1. Standard promo codes (where isUnlimited is false or undefined, and code is not POTES).
       // 2. One-time-use Gift Vouchers (where isGiftVoucher is true, AND isUnlimited is false or undefined in Firestore).
       updates.status = "inactive";
-      console.log(
-        `🟩 [updateCouponUsage] Coupon ${couponDataFromDb.code} (ID: ${couponDoc.id}) is NOT effectively unlimited. Setting status to 'inactive'.`
-      );
+
     } else {
       console.log(
         `🟩 [updateCouponUsage] Coupon ${couponDataFromDb.code} (ID: ${couponDoc.id}) is effectively unlimited. Status will not be changed to 'inactive' by this update.`

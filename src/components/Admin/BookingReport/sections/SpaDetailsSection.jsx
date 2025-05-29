@@ -4,12 +4,10 @@ import React from "react";
 import { format, isValid } from "date-fns"; // ENSURE isValid IS IMPORTED
 import { fr } from "date-fns/locale";
 
-// No need to import parseBookingDateTime here if we consistently rely on ...Obj fields
-// from the useBookingsForMonth hook (or wherever bookings are processed).
+
 
 const SpaDetailsSection = ({ booking }) => {
-  // console.log("SpaDetailsSection rendering for booking:", booking?.id); // For debugging
-  // console.log("SpaDetailsSection booking data:", booking); // For debugging
+
 
   // Handle cases where the booking prop might not be provided
   if (!booking) {
@@ -127,55 +125,6 @@ const SpaDetailsSection = ({ booking }) => {
     // Assuming booking.firestoreId holds the Firestore document ID.
     const bookingIdentifierForLog = booking.firestoreId || booking.id;
 
-    if (bookingIdentifierForLog === "0QuPIsh53w00kiBINavp") {
-      console.log(
-        `--- Debugging getFormattedDateTimeRange for Booking ID: ${bookingIdentifierForLog} ---`
-      );
-      console.log(
-        "   Raw booking.spaDateTime (from prop):",
-        JSON.stringify(booking.spaDateTime)
-      );
-      console.log(
-        "   Raw booking.spaEndDateTime (from prop):",
-        JSON.stringify(booking.spaEndDateTime)
-      );
-      console.log(
-        "   Processed startTime (booking.spaDateTimeObj):",
-        startTime
-      );
-      console.log(
-        "     Is startTime a Date instance?",
-        startTime instanceof Date
-      );
-      console.log(
-        "     Is startTime valid (date-fns isValid)?",
-        startTime ? isValid(startTime) : "N/A (startTime is null/undefined)"
-      );
-      if (startTime && isValid(startTime)) {
-        console.log("     startTime.toString():", startTime.toString());
-        console.log(
-          "     Formatted startTime for display (HH:mm):",
-          format(startTime, "HH:mm", { locale: fr })
-        );
-      }
-      console.log("   Processed endTime (booking.spaEndDateTimeObj):", endTime);
-      console.log("     Is endTime a Date instance?", endTime instanceof Date);
-      console.log(
-        "     Is endTime valid (date-fns isValid)?",
-        endTime ? isValid(endTime) : "N/A (endTime is null/undefined)"
-      );
-      if (endTime && isValid(endTime)) {
-        console.log("     endTime.toString():", endTime.toString());
-        console.log(
-          "     Formatted endTime for display (HH:mm):",
-          format(endTime, "HH:mm", { locale: fr })
-        );
-      }
-      console.log(
-        `--- End Debugging for Booking ID: ${bookingIdentifierForLog} ---`
-      );
-    }
-    // --- END DETAILED LOGGING ---
 
     if (startTime && isValid(startTime)) {
       let formattedString = format(startTime, "EEEE d MMMM yyyy", {

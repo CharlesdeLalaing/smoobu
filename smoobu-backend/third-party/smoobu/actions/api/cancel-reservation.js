@@ -10,9 +10,7 @@ dotenv.config();
  * @returns {Promise<object>} A promise that resolves with { success: true, message: "..." } or rejects with an error object.
  */
 export async function cancelSmoobuReservationById(reservationId) {
-  console.log(
-    `[Smoobu API] Attempting to cancel reservation ID: ${reservationId}`
-  );
+
 
   // --- Validate Input ---
   if (!reservationId) {
@@ -43,9 +41,6 @@ export async function cancelSmoobuReservationById(reservationId) {
 
   try {
     // --- Send DELETE Request to Smoobu ---
-    console.log(
-      `[Smoobu API] Sending DELETE request to Smoobu: ${smoobuApiUrl}`
-    );
     const response = await axios.delete(smoobuApiUrl, {
       headers: {
         "Api-Key": smoobuApiKey,

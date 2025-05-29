@@ -27,9 +27,7 @@ export class SmoobuClient {
       );
       return [];
     }
-    console.log(
-      `[SmoobuClient] Fetching ACTIVE bookings (Arrival: ${startDate} to ${endDate})...`
-    );
+
     try {
       const response = await axios.get(
         "https://login.smoobu.com/api/reservations",
@@ -48,9 +46,7 @@ export class SmoobuClient {
         }
       );
       const bookings = response.data.bookings || [];
-      console.log(
-        `[SmoobuClient] Fetched ${bookings.length} active bookings by arrival date.`
-      );
+
       return bookings;
     } catch (error) {
       console.error(
@@ -106,9 +102,7 @@ export class SmoobuClient {
       );
       return [];
     }
-    console.log(
-      `[SmoobuClient] Fetching bookings MODIFIED (from ${modifiedSinceDate} to ${modifiedUntilDate}, including cancellations)...`
-    );
+
     try {
       const response = await axios.get(
         "https://login.smoobu.com/api/reservations",
@@ -127,9 +121,7 @@ export class SmoobuClient {
         }
       );
       const bookings = response.data.bookings || [];
-      console.log(
-        `[SmoobuClient] Fetched ${bookings.length} bookings modified from ${modifiedSinceDate} to ${modifiedUntilDate}.`
-      );
+
       return bookings;
     } catch (error) {
       console.error(

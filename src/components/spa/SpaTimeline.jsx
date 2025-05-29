@@ -244,9 +244,7 @@ const SpaTimeline = ({
 
   // Final check before rendering
   if (hoursToDisplay.length === 0) {
-    console.log(
-      "Timeline hoursToDisplay is empty after all calculations, rendering nothing."
-    );
+
     return null; // Render nothing if no hours could be calculated
   }
 

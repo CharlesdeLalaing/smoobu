@@ -3,13 +3,7 @@ import React from "react";
 import { formatPrice } from "../../../utils/formatters"; // Adjust path if necessary
 
 const PriceDetailsSection = ({ booking }) => {
-  // For debugging, you can uncomment these lines:
-  // console.log("PriceDetailsSection received booking (stringified for full view):", JSON.stringify(booking, null, 2));
-  // if (booking) {
-  //   console.log("   >>> PriceDetailsSection - booking.coupon:", booking.coupon);
-  //   console.log("   >>> PriceDetailsSection - booking.priceDetails.couponDiscount:", booking.priceDetails?.couponDiscount);
-  //   console.log("   >>> PriceDetailsSection - booking.priceDetails.promoCode:", booking.priceDetails?.promoCode);
-  // }
+
 
   if (!booking) {
     return (

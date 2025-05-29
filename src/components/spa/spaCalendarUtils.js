@@ -29,7 +29,6 @@ export const parseBookingDateTime = (dateTimeValue) => {
     Array.isArray(dateTimeValue)
       ? JSON.stringify(dateTimeValue)
       : dateTimeValue;
-  // console.log(`${logPrefix} Attempting to parse:`, inputValueForLog); // Can be too verbose
 
   try {
     // 1. If it's already a JavaScript Date object and valid

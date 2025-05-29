@@ -28,17 +28,9 @@ const EditDeleteSpaModal = ({
   onRequestDeleteStep,
   onRequestOptionsStep,
 }) => {
-  console.log(
-    "EditDeleteSpaModal rendering, modalStep:",
-    modalStep,
-    "bookingToEdit:",
-    bookingToEdit?.id,
-    "actionLoading:",
-    actionLoading
-  );
+
 
   if (!bookingToEdit) {
-    console.log("EditDeleteSpaModal: No bookingToEdit, returning null");
     return null;
   }
 
@@ -129,7 +121,6 @@ const EditDeleteSpaModal = ({
               {/* MODIFIED "Supprimer" BUTTON */}
               <button
                 onClick={() => {
-                  console.log("Modal: Supprimer (options) clicked");
                   onRequestDeleteStep();
                 }}
                 className="py-1 text-xs font-medium text-red-600 sm:w-auto hover:text-red-700 hover:underline focus:outline-none focus:underline focus:text-red-700 disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
@@ -140,7 +131,6 @@ const EditDeleteSpaModal = ({
               <div className="flex flex-col w-full space-y-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2 sm:w-auto">
                 <button
                   onClick={() => {
-                    console.log("Modal: Fermer clicked");
                     onClose();
                   }}
                   className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md sm:w-auto hover:bg-gray-200"
@@ -150,7 +140,6 @@ const EditDeleteSpaModal = ({
                 </button>
                 <button
                   onClick={() => {
-                    console.log("Modal: Reprogrammer (options) clicked");
                     onRequestRescheduleStep();
                   }}
                   className="w-full px-4 py-2 text-sm font-medium text-white bg-yellow-500 border border-transparent rounded-md sm:w-auto hover:bg-yellow-600"
@@ -181,7 +170,6 @@ const EditDeleteSpaModal = ({
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => {
-                  console.log("Modal: Annuler (reschedule confirm) clicked");
                   onRequestOptionsStep();
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
@@ -191,7 +179,6 @@ const EditDeleteSpaModal = ({
               </button>
               <button
                 onClick={() => {
-                  console.log("Modal: Oui, Reprogrammer (confirm) clicked");
                   onRescheduleConfirm();
                 }}
                 className="px-4 py-2 text-sm font-medium text-white bg-yellow-500 rounded-md hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -222,7 +209,6 @@ const EditDeleteSpaModal = ({
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => {
-                  console.log("Modal: Annuler (delete confirm) clicked");
                   onRequestOptionsStep();
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"

@@ -53,7 +53,6 @@ try {
   clientDb = getClientFirestore(clientApp);
   auth = getAuth(clientApp);
   
-  console.log('✅ Firebase Admin and Client SDKs initialized successfully');
 } catch (error) {
   console.error('🔥 Error initializing Firebase:', error);
   console.error('Service Account:', {

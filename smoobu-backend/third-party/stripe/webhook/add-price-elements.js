@@ -12,9 +12,7 @@ export const addBasePriceToReservation = async (
   apiKey
 ) => {
   if (basePrice === undefined || basePrice === null || basePrice <= 0) {
-    console.log(
-      `ℹ️ Smoobu: No positive base price to add for reservation ${reservationId}. Value: ${basePrice}`
-    );
+
     return { success: true, message: "No positive base price to add." };
   }
   try {
@@ -35,11 +33,7 @@ export const addBasePriceToReservation = async (
         },
       }
     );
-    console.log(
-      `🟩 Smoobu: Base price (${basePrice.toFixed(
-        2
-      )} EUR) added for reservation ${reservationId}.`
-    );
+
     return { success: true };
   } catch (error) {
     const errorMessage =
@@ -62,9 +56,7 @@ export const addGuestFeesToReservation = async (
     bookingDoc.guestFees || bookingDoc.priceBreakdown?.calculatedGuestFees || 0
   );
   if (guestFees <= 0) {
-    console.log(
-      `ℹ️ Smoobu: No guest fees to add for reservation ${reservationId}.`
-    );
+
     return { success: true, message: "No guest fees to add." };
   }
 
@@ -104,11 +96,7 @@ export const addGuestFeesToReservation = async (
         },
       }
     );
-    console.log(
-      `🟩 Smoobu: Guest fees (${guestFees.toFixed(
-        2
-      )} EUR) added for reservation ${reservationId}.`
-    );
+
     return { success: true };
   } catch (error) {
     const errorMessage =
@@ -130,16 +118,12 @@ export const addExtrasToReservation = async (
   apiKey
 ) => {
   if (!paidExtras || paidExtras.length === 0) {
-    console.log(
-      `ℹ️ Smoobu: No paid extras to add for reservation ${reservationId}.`
-    );
+
     return { success: true };
   }
 
   let allSucceeded = true;
-  console.log(
-    `ℹ️ Smoobu: Attempting to add ${paidExtras.length} paid extra item(s)/groups to reservation ${reservationId}.`
-  );
+
 
   for (const extra of paidExtras) {
     // `extra.name` is assumed to be the final French display name from prepareBookingDocument.
@@ -166,11 +150,7 @@ export const addExtrasToReservation = async (
             },
           }
         );
-        console.log(
-          `  🟩 Smoobu: Added paid extra: "${extra.name}" (Qty: ${
-            extra.quantity
-          }, Amount: ${extra.amount.toFixed(2)}) for ${reservationId}.`
-        );
+
         await wait(1000);
       } catch (error) {
         const errorMessage =
@@ -222,13 +202,7 @@ export const addExtrasToReservation = async (
             },
           }
         );
-        console.log(
-          `  🟩 Smoobu: Added extra person cost for "${
-            extra.name
-          }" (Amount: ${extra.extraPersonAmount.toFixed(
-            2
-          )}) for ${reservationId}.`
-        );
+
         await wait(1000);
       } catch (error) {
         const errorMessage =
@@ -246,86 +220,6 @@ export const addExtrasToReservation = async (
   return { success: allSucceeded };
 };
 
-
-// export const addFreeDrinksToSmoobu = async (
-//   reservationId,
-//   processedFreeDrinks,
-//   apiKey,
-//   index
-// ) => {
-//   if (!processedFreeDrinks || processedFreeDrinks.length === 0) {
-//     console.log(
-//       `ℹ️ Smoobu: No free drinks to add for reservation ${reservationId}.`
-//     );
-//     return { success: true };
-//   }
-
-//   let allSucceeded = true;
-//   console.log(
-//     `ℹ️ Smoobu: Attempting to add ${processedFreeDrinks.length} free drink item(s) to reservation ${reservationId}.`
-//   );
-
-//   for (const drink of processedFreeDrinks) {
-//     const smoobuItemName = `Free Drink ${drink.drinkId || index }`;
-//     const payload = {
-//       type: "addon",
-//       name: smoobuItemName.substring(0, 250),
-//       amount: 0.01,
-//       quantity: Number(drink.quantity || 1),
-//       currencyCode: "EUR",
-//     };
-
-//     try {
-//       console.log(
-//         `  ➡️ Smoobu: Sending free drink payload for ${reservationId}:`,
-//         JSON.stringify(payload)
-//       );
-//       await axios.post(
-//         `https://login.smoobu.com/api/reservations/${reservationId}/price-elements`,
-//         payload,
-//         {
-//           headers: {
-//             "Api-Key": apiKey,
-//             "Content-Type": "application/json",
-//             "Cache-Control": "no-cache",
-//           },
-//         }
-//       );
-//       console.log(
-//         `  🟩 Smoobu: Added free drink: "${smoobuItemName}" (Qty: ${drink.quantity}) for ${reservationId}.`
-//       );
-//       await wait(1000);
-//     } catch (error) {
-//       allSucceeded = false;
-//       console.error(
-//         `  🟥 Smoobu: Failed to add free drink "${smoobuItemName}" for ${reservationId}.`
-//       );
-//       if (error.response) {
-//         // Axios error with a response from the server
-//         console.error("    Smoobu Status:", error.response.status);
-//         console.error(
-//           "    Smoobu Headers:",
-//           JSON.stringify(error.response.headers, null, 2)
-//         );
-//         console.error(
-//           "    Smoobu Data:",
-//           JSON.stringify(error.response.data, null, 2)
-//         ); // THIS IS KEY!
-//       } else if (error.request) {
-//         // The request was made but no response was received
-//         console.error("    Smoobu No Response:", error.request);
-//       } else {
-//         // Something happened in setting up the request that triggered an Error
-//         console.error("    Smoobu Error Message:", error.message);
-//       }
-//       console.error("    Failed Payload:", JSON.stringify(payload, null, 2)); // Log what was sent
-//     }
-//   }
-//   console.log(
-//     `ℹ️ Smoobu: Finished processing free drinks for reservation ${reservationId}. Overall success: ${allSucceeded}`
-//   );
-//   return { success: allSucceeded };
-// };
 
 // --- Add Discounts (Coupon & Long Stay) ---
 // Uses bookingDoc to get couponInfo and longStayDiscountAmount
@@ -377,11 +271,7 @@ export const addDiscountsToReservation = async (
           },
         }
       );
-      console.log(
-        `🟩 Smoobu: Coupon discount (${
-          couponInfo.code
-        }, -${couponInfo.discount.toFixed(2)} EUR) added for ${reservationId}.`
-      );
+
       await wait(1000);
     } catch (error) {
       const errorMessage =
@@ -429,11 +319,7 @@ export const addDiscountsToReservation = async (
           },
         }
       );
-      console.log(
-        `🟩 Smoobu: Long stay discount (-${longStayDiscountAmount.toFixed(
-          2
-        )} EUR) added for ${reservationId}.`
-      );
+
       await wait(1000);
     } catch (error) {
       const errorMessage =

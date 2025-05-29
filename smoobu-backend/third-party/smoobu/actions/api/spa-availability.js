@@ -30,9 +30,7 @@ export async function handleGetSpaAvailability(req, res) {
     departure: departureDateString,
   } = req.query;
 
-  console.log(
-    `[SPA Availability] Req: date=${dateString}, arrival=${arrivalDateString}, departure=${departureDateString}`
-  );
+
 
   if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
     return res.status(400).json({ message: "Invalid or missing 'date' query parameter (YYYY-MM-DD)." });
@@ -68,7 +66,7 @@ export async function handleGetSpaAvailability(req, res) {
     const overrideSnap = await overrideRef.get();
     if (overrideSnap.exists) {
       const overrideData = overrideSnap.data();
-      console.log(`[SPA Availability] Override for ${dateString}:`, overrideData);
+
       if (overrideData.isClosed === true) {
         isClosedByOverride = true;
       } else {
@@ -82,7 +80,7 @@ export async function handleGetSpaAvailability(req, res) {
 
     // 3. If explicitly closed by an override, no further logic needed for times
     if (isClosedByOverride) {
-      console.log(`[SPA Availability] SPA is closed on ${dateString} by override.`);
+
       return res.status(200).json({
         availableSlots: [],
         manuallyDeactivatedSlots: manuallyDeactivatedSlotsList,
@@ -100,11 +98,11 @@ export async function handleGetSpaAvailability(req, res) {
     const isDepartureDayQuery = departureDateString && dateString === departureDateString;
 
     if (isDepartureDayQuery) {
-      console.log(`[SPA Availability] Applying DEPARTURE day hours (${DEPARTURE_DAY_START_TIME} - ${DEPARTURE_DAY_END_TIME}) for ${dateString}`);
+     
       finalEffectiveStartTime = DEPARTURE_DAY_START_TIME;
       finalEffectiveEndTime = DEPARTURE_DAY_END_TIME;
     } else if (isArrivalDayQuery) {
-      console.log(`[SPA Availability] Applying ARRIVAL day logic for ${dateString}. Fixed start: ${FIXED_ARRIVAL_DAY_START_TIME}`);
+     
       // On arrival day, start time is the LATER of (baseEffectiveStartTime from settings/override)
       // AND the FIXED_ARRIVAL_DAY_START_TIME.
       // This means an override can make arrival day start LATER than 14:00, but not EARLIER.
@@ -118,7 +116,7 @@ export async function handleGetSpaAvailability(req, res) {
       }
       // End time for arrival day is the normal end time (already in baseEffectiveEndTime from settings/override)
       finalEffectiveEndTime = baseEffectiveEndTime;
-      console.log(`[SPA Availability] Arrival Day Final Times: ${finalEffectiveStartTime} - ${finalEffectiveEndTime}`);
+      
     }
     // If it's a regular day, finalEffectiveStart/End Time remain baseEffectiveStart/End Time (from settings/override).
 
@@ -180,12 +178,6 @@ export async function handleGetSpaAvailability(req, res) {
       currentMinutesLoop += slotDurationMinutes;
     }
 
-    console.log(`[SPA Availability] Sending data for ${dateString} (Arrival: ${isArrivalDayQuery}, Departure: ${isDepartureDayQuery}):`, {
-        slotsCount: availableSlotsResult.length,
-        deactivatedCount: manuallyDeactivatedSlotsList.length,
-        effectiveStart: finalEffectiveStartTime,
-        effectiveEnd: finalEffectiveEndTime
-      });
 
     res.status(200).json({
       availableSlots: availableSlotsResult,

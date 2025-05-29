@@ -41,7 +41,6 @@ import SpaTimeline from "../spa/SpaTimeline";
 import EditDeleteSpaModal from "../spa/EditDeleteSpaModal";
 
 const SpaCalendar = () => {
-  console.log("SpaCalendar rendering...");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -525,7 +524,7 @@ const SpaCalendar = () => {
         overridePayload,
         { merge: true }
       );
-      console.log(`Slot ${slotToToggle} ${actionMessagePart} for ${dateStr}.`);
+
 
       setEditableOverrideSettings((prev) => ({
         ...prev,

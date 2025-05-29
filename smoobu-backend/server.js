@@ -101,22 +101,12 @@ app.delete(
     }
 
     try {
-      // --- STEP A: Cancel reservation in Smoobu ---
-      console.log(
-        `[API Route] Attempting to cancel reservation ID ${numericSmoobuId} in Smoobu...`
-      );
       const smoobuResult = await cancelSmoobuReservationById(
         numericSmoobuId.toString()
       );
 
-      console.log(
-        `[API Route] Smoobu cancellation successful for ID ${numericSmoobuId}: ${smoobuResult.message}`
-      );
 
-      // --- STEP B: Delete from Firebase (using imported 'db') ---
-      console.log(
-        `[API Route] Proceeding to delete booking from Firebase for Smoobu ID ${numericSmoobuId}.`
-      );
+
       const bookingsRef = db.collection("bookings");
       // Query using the NUMERIC smoobuReservationId field
       const querySnapshot = await bookingsRef
@@ -124,9 +114,7 @@ app.delete(
         .get();
 
       if (querySnapshot.empty) {
-        console.log(
-          `[API Route] No booking found in Firebase with Smoobu Reservation ID (number): ${numericSmoobuId}.`
-        );
+
         return res.status(200).json({
           message: `${smoobuResult.message} No corresponding booking found in Firebase (it may have already been removed or never existed there).`,
           smoobuSuccess: true,
@@ -137,17 +125,12 @@ app.delete(
       const batch = db.batch();
       let deletedFirebaseCount = 0;
       querySnapshot.forEach((doc) => {
-        console.log(
-          `[API Route] Preparing to delete Firebase booking doc ID: ${doc.id} (Smoobu Reservation ID: ${numericSmoobuId})`
-        );
+
         batch.delete(doc.ref);
         deletedFirebaseCount++;
       });
       await batch.commit();
 
-      console.log(
-        `[API Route] Successfully deleted ${deletedFirebaseCount} booking(s) from Firebase for Smoobu Reservation ID: ${numericSmoobuId}`
-      );
       res.status(200).json({
         message: `${smoobuResult.message} Additionally, ${deletedFirebaseCount} corresponding booking(s) removed from Firebase.`,
         smoobuSuccess: true,

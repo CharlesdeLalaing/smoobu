@@ -264,7 +264,6 @@ const BookingForm = () => {
 
         if (isStart) {
           // Setting start date
-          console.log("Setting as START date");
           setStartDate(selectedDate);
 
           // If there's already an end date that's earlier than the new start date,
@@ -286,7 +285,6 @@ const BookingForm = () => {
           });
         } else {
           // Setting end date
-          console.log("Setting as END date");
           setEndDate(selectedDate);
 
           // Format date for form data
@@ -307,10 +305,6 @@ const BookingForm = () => {
 
         // Only check availability if both dates are set
         if (updatedStartDate && updatedEndDate) {
-          console.log(
-            "Both dates set, checking availability for room:",
-            currentViewMonth || formData.apartmentId
-          );
 
           try {
             // Call availability check but preserve existing data

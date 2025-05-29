@@ -387,10 +387,7 @@ export const useBookingForm = () => {
 
   const handleFreeDrinkChange = useCallback(
     (instanceId, payload) => {
-      console.log(
-        `[useBookingForm] handleFreeDrinkChange ENTERED. instanceId: "${instanceId}", payload:`,
-        JSON.stringify(payload, null, 2)
-      );
+
 
       if (!DRINK_OFFER_CONFIG || !instanceId) {
         console.error(
@@ -412,19 +409,14 @@ export const useBookingForm = () => {
       }
 
       setFormData((prevData) => {
-        console.log(
-          `[useBookingForm] setFormData for instanceId "${instanceId}". Prev selectedFreeDrinks:`,
-          JSON.stringify(prevData.selectedFreeDrinks, null, 2)
-        );
+ 
         const newSelectedFreeDrinks = JSON.parse(
           JSON.stringify(prevData.selectedFreeDrinks || {})
         );
 
         // Initialize instance if it doesn't exist (should be rare now with useEffect)
         if (!newSelectedFreeDrinks[instanceId]) {
-          console.log(
-            `[useBookingForm] Initializing new instance data for ${instanceId}`
-          );
+
           if (offerConfig.type === "wine_choice")
             newSelectedFreeDrinks[instanceId] = {
               selection: null,
@@ -496,7 +488,6 @@ export const useBookingForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isStepValid()) {
-      console.log("Form submit blocked, final step invalid.");
       return;
     }
     if (
@@ -523,10 +514,7 @@ export const useBookingForm = () => {
 
     try {
       const selectedExtrasArray = createSelectedExtrasArray();
-      console.log(
-        "CLIENT: selectedExtrasArray being sent to backend:",
-        JSON.stringify(selectedExtrasArray, null, 2)
-      );
+
       const guestFees = calculateGuestFees(
         formData.adults,
         formData.children,
@@ -980,11 +968,9 @@ export const useBookingForm = () => {
               "extras.drinks.validation.incomplete",
               "Veuillez compléter votre sélection de boissons pour : "
             ) + incompleteDrinkOffers.join(", ");
-          console.log("[isStepValid] Setting drinkValidationError:", errorMsg); // <<<< ADD THIS
           setDrinkValidationError(errorMsg);
           areDrinksValid = false;
         } else {
-          console.log("[isStepValid] Clearing drinkValidationError."); // <<<< ADD THIS
           setDrinkValidationError("");
           areDrinksValid = true;
         }

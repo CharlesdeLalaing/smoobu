@@ -765,10 +765,6 @@ export const sendBookingConfirmation = async (bookingData) => {
       html: emailContent,
     });
 
-    console.log(
-      "🟩 Email: Modern confirmation email sent successfully to:",
-      bookingData.email
-    );
   } catch (error) {
     console.error("🟥 Email: Error sending modern confirmation email:", error);
   }

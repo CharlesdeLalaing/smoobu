@@ -206,11 +206,7 @@ const SpaScheduler = ({
 
   // Effect 1: Handles state synchronization when initial props change
   useEffect(() => {
-    console.log("SpaScheduler Effect [Props Sync]: Running.", {
-      initialDateTime,
-      initialPreference,
-      currentSelectedDate: selectedSpaDateString,
-    });
+
     const isLater = initialPreference === "later";
     if (chooseLaterChecked !== isLater) setChooseLaterChecked(isLater);
 
@@ -276,12 +272,7 @@ const SpaScheduler = ({
 
   // Effect 2: Fetches available slots
   useEffect(() => {
-    console.log("SpaScheduler Effect [Fetch]: Checking conditions.", {
-      selectedSpaDateString,
-      chooseLaterChecked,
-      slotsLoadedForCurrentDate,
-      isLoading,
-    });
+
 
     if (
       selectedSpaDateString &&
@@ -308,10 +299,7 @@ const SpaScheduler = ({
         (key) => apiParams[key] === undefined && delete apiParams[key]
       );
 
-      console.log("SpaScheduler Effect [Fetch]: Fetching availability", {
-        apiEndpoint,
-        apiParams,
-      });
+
       axios
         .get(apiEndpoint, { params: apiParams })
         .then((response) => {
@@ -321,26 +309,17 @@ const SpaScheduler = ({
           const isDayClosedByAPI = response.data?.isClosed || false;
 
           setSlotDuration(baseSlotDurationFromAPI);
-          console.log("SpaScheduler Effect [Fetch]: API Success", {
-            allIndividualOpenSlotsFromAPI,
-            baseSlotDurationFromAPI,
-            isDayClosedByAPI,
-          });
+
 
           if (isDayClosedByAPI) {
-            console.log(
-              "SpaScheduler Effect [Fetch]: Day is marked closed by API."
-            );
+
             setAvailableSlots([]);
           } else if (
             baseSlotDurationFromAPI &&
             allIndividualOpenSlotsFromAPI.length > 0
           ) {
             setAvailableSlots(allIndividualOpenSlotsFromAPI);
-            console.log(
-              "SpaScheduler Effect [Fetch]: Stored all individual open slots:",
-              allIndividualOpenSlotsFromAPI
-            );
+
 
             // Post-Fetch Validation of any existing `selectedSlots`
             if (selectedSlots.length > 0 && baseSlotDurationFromAPI) {
@@ -588,7 +567,6 @@ const SpaScheduler = ({
 
       if (!isChecked) {
         // WHEN UNCHECKING
-        console.log("SpaScheduler: Unchecked 'Choose Later'");
         setSlotsLoadedForCurrentDate(false); // This will trigger the fetch effect if a date is selected
         setSelectedSlots([]);
         setAvailableSlots([]); // Clear visual slots immediately
@@ -603,7 +581,6 @@ const SpaScheduler = ({
         }
       } else {
         // WHEN CHECKING
-        console.log("SpaScheduler: Checked 'Choose Later'");
         // Clear all local state related to specific time slots
         setSelectedSlots([]);
         setAvailableSlots([]);

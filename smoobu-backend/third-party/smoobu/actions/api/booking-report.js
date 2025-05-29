@@ -19,14 +19,6 @@ export async function generateBookingsReport(req, res) {
     ).getDate();
     const endDate = `${finalEndYear}-${finalEndMonth}-${lastDay}`;
 
-    console.log("=== START OF BOOKINGS REPORT REQUEST ===");
-    console.log("Request params:", {
-      startMonth: finalStartMonth,
-      startYear: finalStartYear,
-      endMonth: finalEndMonth,
-      endYear: finalEndYear,
-    });
-
     // Fetch bookings for the period
     const bookingsResponse = await axios.get(
       "https://login.smoobu.com/api/reservations",
@@ -45,26 +37,18 @@ export async function generateBookingsReport(req, res) {
     );
 
     const bookings = bookingsResponse.data.bookings || [];
-    console.log(
-      `Found ${bookings.length} bookings for period ${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`
-    );
+
 
     // Process each booking to get price elements and extras
     const processedBookings = [];
     for (const booking of bookings) {
       try {
-        console.log(`Processing booking ${booking.id}`);
 
         // Skip if it's a blocked booking or cancelled booking
         if (
           booking.channelId === "Blocked" ||
           booking.type === "cancellation"
         ) {
-          console.log(
-            `Skipping ${
-              booking.channelId === "Blocked" ? "blocked" : "cancelled"
-            } booking ${booking.id}`
-          );
           continue;
         }
 
@@ -80,12 +64,7 @@ export async function generateBookingsReport(req, res) {
         );
 
         const priceElements = priceElementsResponse.data.priceElements || [];
-        console.log(
-          "Price elements for booking",
-          booking.id,
-          ":",
-          priceElements
-        );
+
 
         // Calculate nights
         const checkIn = new Date(booking.arrival);
@@ -246,13 +225,6 @@ export async function generateBookingsReport(req, res) {
       }
     }
 
-    console.log("=== PROCESSING SUMMARY ===");
-    console.log({
-      period: `${finalStartMonth}/${finalStartYear} - ${finalEndMonth}/${finalEndYear}`,
-      totalBookings: bookings.length,
-      processedBookings: processedBookings.length,
-      sampleBooking: processedBookings[0],
-    });
 
     res.json({
       startMonth: finalStartMonth,

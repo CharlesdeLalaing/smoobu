@@ -41,7 +41,7 @@ export const handleWebhook = async (req, res) => {
   }
 
   if (event.type !== "payment_intent.succeeded") {
-    console.log(`ℹ️ Webhook: Received event type ${event.type}, ignoring.`);
+
     return res.json({
       received: true,
       processed: false,
@@ -50,9 +50,7 @@ export const handleWebhook = async (req, res) => {
   }
 
   const paymentIntent = event.data.object;
-  console.log(
-    `🟩 Webhook: Processing payment_intent.succeeded: ${paymentIntent.id}`
-  );
+
 
   const bookingReference = paymentIntent.metadata.bookingReference;
   if (!bookingReference) {
@@ -78,9 +76,7 @@ export const handleWebhook = async (req, res) => {
         reason: `No pending data for ${bookingReference}`,
       });
   }
-  console.log(
-    `🟩 Webhook: Retrieved pending booking data for reference: ${bookingReference}`
-  );
+
 
   let reservationId; // To store Smoobu reservation ID for potential cleanup on error
 
@@ -97,9 +93,7 @@ export const handleWebhook = async (req, res) => {
         .send(`Failed to create Smoobu reservation: ${smoobuResult.error}`);
     }
     reservationId = smoobuResult.reservationId;
-    console.log(
-      `🟩 Smoobu: Reservation ${reservationId} created successfully for ${bookingReference}.`
-    );
+
 
     // Step 3: Store booking in Firebase (this calls prepareBookingDocument internally)
     const {
@@ -117,27 +111,18 @@ export const handleWebhook = async (req, res) => {
         .status(500)
         .send(`Failed to store booking in Firebase: ${storageError}`);
     }
-    console.log(
-      `🟩 Firebase Store: Booking stored for ${bookingReference}, Firebase Doc ID ${
-        bookingDoc.id || "N/A"
-      }.`
-    );
+
 
     await wait(1500); // Short delay
 
     // Step 4: Add price elements to Smoobu (using data from bookingDoc)
-    console.log(
-      `ℹ️ Smoobu: Adding price elements for reservation ${reservationId}...`
-    );
+
 
     // 4.1: Base Price
     const basePrice =
       bookingDoc.basePrice || bookingDoc.priceBreakdown?.roomBasePrice;
     if (basePrice !== undefined && basePrice > 0) {
-      console.log(
-        "🔑 Webhook: API Key before addBasePrice:",
-        apiKey ? `VALID (ends ...${apiKey.slice(-4)})` : "INVALID/MISSING"
-      );
+
       await addBasePriceToReservation(reservationId, basePrice, apiKey); // apiKey passed
       await wait(1000);
     }
@@ -146,10 +131,7 @@ export const handleWebhook = async (req, res) => {
     const guestFees =
       bookingDoc.guestFees || bookingDoc.priceBreakdown?.calculatedGuestFees;
     if (guestFees !== undefined && guestFees > 0) {
-      console.log(
-        "🔑 Webhook: API Key before addGuestFees:",
-        apiKey ? `VALID (ends ...${apiKey.slice(-4)})` : "INVALID/MISSING"
-      );
+
       await addGuestFeesToReservation(reservationId, bookingDoc, apiKey); // apiKey passed
       await wait(1000);
     }
@@ -191,13 +173,8 @@ export const handleWebhook = async (req, res) => {
 
     // Step 6: Clean up pending booking
     pendingBookings.delete(bookingReference);
-    console.log(
-      `🟩 Cleanup: Pending booking data for reference ${bookingReference} cleared.`
-    );
 
-    console.log(
-      `✅ Webhook: Full booking process completed for Smoobu ID ${reservationId}.`
-    );
+
     return res.json({
       received: true,
       processed: true,
