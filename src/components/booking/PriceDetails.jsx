@@ -283,7 +283,7 @@ export const PriceDetails = ({
                   {drink.quantity > 1 ? ` (${drink.quantity}x)` : ""}
                 </span>
                 <span className="font-medium">
-                  {t("priceDetails.included", "Inclus")}
+                  {t("extras.drinks.included", "Inclus")}
                 </span>
               </div>
             ))}
