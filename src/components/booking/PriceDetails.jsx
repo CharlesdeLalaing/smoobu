@@ -296,10 +296,7 @@ export const PriceDetails = ({
           selectedFreeDrinksDetails.length > 0) && (
           <div className="flex items-center justify-between pt-2 mt-2 font-semibold text-gray-700 border-t border-gray-300">
             <span>
-              {t(
-                "priceDetails.subtotal",
-                "Sous-total (avant remises)"
-              )}
+              {t("priceDetails.subtotal", "Sous-total (avant remises)")}
             </span>
             <span>{subtotalBeforeDiscounts.toFixed(2)} EUR</span>
           </div>
@@ -352,6 +349,17 @@ export const PriceDetails = ({
           <span>{finalTotal.toFixed(2)} EUR</span>
         </div>
       </div>
+
+      {finalTotal <= 0 && (
+        <div className="pt-2 mt-2 text-sm text-orange-600">
+          <p>
+            {t(
+              "booking.coupon.minusZero",
+              "Totals below 0€ will not be accepted for checkout" // Fallback text
+            )}
+          </p>
+        </div>
+      )}
 
       {/* Additional information about payment */}
       <div className="pt-3 mt-3 text-xs text-gray-500 border-t border-gray-200">

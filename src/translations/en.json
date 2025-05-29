@@ -132,7 +132,7 @@
             "invalid_dates": "This code is only valid for stays between {{start}} and {{end}}"
           },
           "applied": "Promo code {{code}}",
-          "minusZero": "Totals below 0€ will not be accepted for checkout"
+          "minusZero": "Totals below or equal to 0€ will not be accepted for checkout"
         },
         "people": {
           "singular": "person",

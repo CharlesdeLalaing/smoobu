@@ -133,7 +133,7 @@
             "invalid_dates": "Ce code n'est valable que pour les séjours entre {{start}} et {{end}}"
           },
           "applied": "Code promo {{code}}",
-          "minusZero": "Les totaux inférieurs à 0€ ne seront pas acceptés à la caisse."
+          "minusZero": "Les totaux inférieurs ou égaux à 0€ ne seront pas acceptés à la caisse."
         },
         "people": {
           "singular": "personne",

@@ -133,7 +133,7 @@
           "invalid_dates": "Deze code is alleen geldig voor verblijven tussen {{start}} en {{end}}"
         },
         "applied": "Promocode {{code}}",
-        "minusZero": "Totalen onder € 0 worden niet geaccepteerd bij het afrekenen."
+        "minusZero": "Total bedragen onder of lager dan € 0 worden niet geaccepteerd bij het afrekenen."
       },
       "people": {
         "singular": "persoon",
