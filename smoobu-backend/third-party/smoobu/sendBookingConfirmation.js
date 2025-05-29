@@ -30,7 +30,7 @@ const emailTexts = {
     longStayDiscount: "Réduction long séjour ({{percentage}}%)", // Assuming you might want to show percentage
     promoCode: "Code promo ({{code}})",
     paidExtrasTitle: "Extras Payants",
-    freeDrinksTitle: "Boissons Offertes",
+    freeDrinksTitle: "Boissons Incluses",
     nonAlcoholicChoiceTitle: "Choix de Boisson Non-Alcoolisée",
     nonAlcoholicChoiceInstruction:
       "Pour votre offre '{{grantor}}', vous avez choisi de sélectionner une boisson non-alcoolisée ultérieurement. Veuillez nous contacter pour préciser votre choix :",

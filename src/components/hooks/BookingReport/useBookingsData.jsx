@@ -414,7 +414,7 @@ export const useBookingsData = () => {
         "Promo Long Séjour (€)",
         "Commission (€)",
         "SPA",
-        "Boissons Offertes",
+        "Boissons Incluses",
         "Extras Payants Liste",
         "Extras Payants Total (€)",
         "Prix Total Payé (€)",

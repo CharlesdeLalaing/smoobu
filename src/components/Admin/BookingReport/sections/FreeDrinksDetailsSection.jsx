@@ -19,7 +19,7 @@ const FreeDrinksDetailsSection = ({ booking }) => {
   return (
     <div className="p-4 bg-white border rounded-md shadow-sm">
       <h2 className="mb-3 text-sm font-bold text-green-700">
-        Boissons Offertes Incluses
+        Boissons Incluses
       </h2>
 
       {hasFreeDrinks ? (
