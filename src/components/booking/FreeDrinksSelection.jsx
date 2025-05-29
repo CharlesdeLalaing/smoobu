@@ -205,24 +205,28 @@ const FreeDrinksSelection = ({
       <div>
         <h3 className="mb-2 font-semibold text-gray-700 text-md">
           {t(offerConfig.titleKey, offerConfig.defaultTitle)}
-          {/* CORRECTED PART FOR SOFT_BEER_CHOICE LIMIT INFO */}
-          {offerConfig.type === "soft_beer_choice" &&
-            currentMaxForThisOffer > 0 &&
-            // Using existing keys "extras.drinks.upTo" and "extras.drinks.items"
-            // Assumes "extras.drinks.items" does NOT take a count for pluralization itself,
-            // but is just the word "items" or "articles".
-            // If "extras.drinks.items" *is* a pluralizable key (e.g., item/item_plural),
-            // then it should be t("extras.drinks.items", { count: currentMaxForThisOffer })
-            ` (${t(
-              "extras.drinks.upTo",
-              "up to"
-            )} ${currentMaxForThisOffer} ${t("extras.drinks.items", "items")})`}
+          {
+            offerConfig.type === "soft_beer_choice" &&
+              currentMaxForThisOffer > 0 &&
+              ` (${t(
+                "extras.drinks.upTo",
+                "up to"
+              )} ${currentMaxForThisOffer} ${t(
+                "extras.drinks.items",
+                "items"
+              )})`
+          }
         </h3>
         <p className="mb-4 text-sm text-gray-500">
-          {t("extras.drinks.selectedOutOf", `Selected {{count}} of {{max}}`, {
-            count: totalSelectedCount,
-            max: currentMaxForThisOffer,
-          })}
+          {t(
+            // This part is for "Selected X of Y"
+            "extras.drinks.selectedOutOf",
+            `Selected {{count}} of {{max}}`,
+            {
+              count: totalSelectedCount,
+              max: currentMaxForThisOffer,
+            }
+          )}
         </p>
         <div className="space-y-4">
           {["softs", "beers"].map(

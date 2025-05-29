@@ -954,13 +954,20 @@ export const useBookingForm = () => {
                 dynamicMaxForThisInstance > 0 &&
                 currentSelectedCount < dynamicMaxForThisInstance
               ) {
+                const remainingToChoose =
+                  dynamicMaxForThisInstance - currentSelectedCount;
+
+                // THE CORRECTED WAY:
+                const needsMoreText = t(
+                  "extras.drinks.needsMoreSelections", // Key for "{{count}} more to choose"
+                  {
+                    // Interpolation object
+                    count: remainingToChoose,
+                  }
+                );
+
                 incompleteDrinkOffers.push(
-                  `${paidExtraDisplayName} (${t(
-                    "extras.drinks.needsMoreSelections",
-                    `encore ${
-                      dynamicMaxForThisInstance - currentSelectedCount
-                    } à choisir`
-                  )})`
+                  `${paidExtraDisplayName} (${needsMoreText})`
                 );
               }
             }

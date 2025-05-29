@@ -329,7 +329,8 @@
           },
           "ritchieColaZero": {
             "description": "La version sans sucre du cola artisanal."
-          }
+          },
+          "needsMoreSelections": "{{count}} encore à choisir"
         },
         "formulesRepas": {
           "breakfast": {

@@ -180,9 +180,9 @@ const emailTexts = {
       "extras.drinks.wineOfferTitle": "Included Wine Choice (1 bottle)",
       "extras.drinks.softBeerOfferTitle": "Included Drinks Choice",
       "priceDetails.nonAlcoholicChosenLater":
-        "Non-alcoholic option (to be arranged with host)",
+        "Non-alcoholic option",
       "extras.drinks.chooseNonAlcoholicLater":
-        "Prefers a non-alcoholic drink (to discuss with host)",
+        "Prefers a non-alcoholic drink",
       "extras.additionalPerson": "Additional Person",
       "priceDetails.promoCode.generic": "Promo Code",
       "priceDetails.giftVoucher": "Gift Voucher",

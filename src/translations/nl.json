@@ -312,7 +312,6 @@
         "selectedOutOf": "{{count}} van {{max}} geselecteerd",
         "included": "Inbegrepen",
         "needsMoreSelections": "nog {{count}} te kiezen",
-
         "validation": {
           "incomplete": "Voltooi alstublieft uw drankselectie voor: "
         },

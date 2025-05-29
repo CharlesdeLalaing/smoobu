@@ -410,7 +410,7 @@
         "giftVoucher": "Gift card",
         "longStayDiscount": "Long stay discount",
         "guestFees": "{{count}} extra guest(s) × {{fee}}€",
-        "nonAlcoholicChosenLater": "Non-alcoholic option (to be arranged with host)",
+        "nonAlcoholicChosenLater": "Non-alcoholic option ",
         "promoCode": {
           "fixed": "Promo code",
           "percentage": "Promo code"
