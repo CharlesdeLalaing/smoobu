@@ -452,7 +452,7 @@ export const InfoSupSection = ({
                             />
                             {t(
                               "extras.drinks.chooseNonAlcoholicLater",
-                              "Préfère une boisson non-alcoolisée (à voir avec l'hôte)"
+                              "Préfère une boisson non-alcoolisée (à voir avec l'hôte) "
                             )}
                           </label>
                         </div>
