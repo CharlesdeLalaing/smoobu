@@ -43,6 +43,7 @@ app.use(
     origin: [
       "https://reservation.fermedebasseilles.be",
       "https://smoobu-test.vercel.app",
+      "https://spa-test-beige.vercel.app",
       "http://localhost:5173",
       "http://localhost:3000",
     ],
