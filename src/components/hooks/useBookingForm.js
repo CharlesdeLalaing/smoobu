@@ -691,7 +691,7 @@ export const useBookingForm = () => {
 
   const handleApplyCoupon = async (couponCode) => {
     setError(null);
-    setCouponError(null);
+    setCouponError(null); // Clear previous coupon error
     try {
       const couponsRef = collection(db, "coupons");
       const q = query(
@@ -699,13 +699,16 @@ export const useBookingForm = () => {
         where("code", "==", couponCode.toUpperCase())
       );
       const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty)
+      if (querySnapshot.empty) {
         return {
           error: "not_found",
           message: t("booking.coupon.errors.notFound"),
         };
+      }
       const couponDoc = querySnapshot.docs[0];
       const couponData = { id: couponDoc.id, ...couponDoc.data() };
+
+      // Basic coupon validations
       if (couponData.status !== "active")
         return {
           error: "inactive",
@@ -756,64 +759,109 @@ export const useBookingForm = () => {
           }),
         };
       }
+
       const currentRoomPriceDetails = priceDetails?.[formData.apartmentId];
       if (
         !currentRoomPriceDetails ||
         currentRoomPriceDetails.originalPrice === undefined
-      )
+      ) {
         return {
           error: "invalid_room_selection",
           message: t("booking.coupon.errors.selectRoomFirst"),
         };
+      }
 
       const isGiftCard = couponData.isGiftVoucher === true;
       const roomOriginalPrice = currentRoomPriceDetails.originalPrice || 0;
       const longStayDiscount = currentRoomPriceDetails.discount || 0;
+
       const roomPriceAfterLongStay = Math.max(
         0,
         roomOriginalPrice - longStayDiscount
       );
+
       const selectedExtrasArrayForCoupon = createSelectedExtrasArray();
+      // Corrected calculation for extrasTotalForCoupon
       const extrasTotalForCoupon = selectedExtrasArrayForCoupon.reduce(
-        (sum, extra) =>
-          sum + (extra.amount || 0) + (extra.extraPersonAmount || 0),
+        (sum, extra) => {
+          const mainItemTotal = extra.amount || 0;
+          const extraPersonTotal =
+            (extra.extraPersonQuantity || 0) * (extra.extraPersonPrice || 0);
+          return sum + mainItemTotal + extraPersonTotal;
+        },
         0
       );
+
       const guestFeesForCoupon = calculateGuestFees(
         formData.adults,
         formData.children,
         currentRoomPriceDetails.settings
       );
-      let priceEligibleForDiscountTotal = isGiftCard
-        ? roomPriceAfterLongStay + extrasTotalForCoupon + guestFeesForCoupon
-        : roomPriceAfterLongStay;
-      priceEligibleForDiscountTotal = Math.max(
+
+      const grandTotalEligibleItems = Math.max(
         0,
-        priceEligibleForDiscountTotal
+        roomPriceAfterLongStay + extrasTotalForCoupon + guestFeesForCoupon
       );
 
-      if (
-        !isGiftCard &&
-        roomPriceAfterLongStay <= 0 &&
-        (couponData.percentageValue > 0 || couponData.amount > 0)
-      ) {
-        return {
-          error: "no_amount_for_promo",
-          message: t("booking.coupon.errors.noAmountToDiscountRoom"),
-        };
+      let applicablePriceBase;
+
+      if (isGiftCard) {
+        applicablePriceBase = grandTotalEligibleItems;
+      } else {
+        // Promo code
+        if (couponData.type === "percentage") {
+          applicablePriceBase = roomPriceAfterLongStay;
+        } else if (couponData.type === "fixed") {
+          applicablePriceBase = grandTotalEligibleItems;
+        } else {
+          console.warn(
+            `[handleApplyCoupon] Unknown coupon type "${couponData.type}" for promo ${couponData.code}. Defaulting to room price.`
+          );
+          applicablePriceBase = roomPriceAfterLongStay;
+        }
+      }
+
+      if (applicablePriceBase <= 0) {
+        if (
+          !isGiftCard &&
+          couponData.type === "percentage" &&
+          couponData.percentageValue > 0
+        ) {
+          return {
+            error: "no_amount_for_promo_percentage",
+            message: t(
+              "booking.coupon.errors.noAmountToDiscountRoomForPercentage",
+              "This percentage promo code applies to the room, but the room's value is currently zero or less."
+            ),
+          };
+        } else if (
+          !isGiftCard &&
+          couponData.type === "fixed" &&
+          couponData.amount > 0
+        ) {
+          return {
+            error: "no_amount_for_promo_fixed",
+            message: t(
+              "booking.coupon.errors.noAmountToDiscountTotalForFixed",
+              "This fixed amount promo code has no eligible total to apply to, as the value is zero or less."
+            ),
+          };
+        }
+        // For gift cards on zero total, or promos with 0 value, discount will be 0 by calculation below.
       }
 
       let calculatedDiscount = 0;
       if (couponData.type === "percentage" && couponData.percentageValue > 0) {
         calculatedDiscount =
-          (priceEligibleForDiscountTotal * couponData.percentageValue) / 100;
-      } else if (couponData.type === "fixed" && couponData.amount > 0) {
+          (applicablePriceBase * couponData.percentageValue) / 100;
+      } else if (
+        (couponData.type === "fixed" || isGiftCard) &&
+        couponData.amount > 0
+      ) {
         calculatedDiscount = couponData.amount;
       }
-      calculatedDiscount = Math.min(
-        calculatedDiscount,
-        priceEligibleForDiscountTotal
-      );
+
+      calculatedDiscount = Math.min(calculatedDiscount, applicablePriceBase);
       calculatedDiscount = parseFloat(calculatedDiscount.toFixed(2));
       calculatedDiscount = Math.max(0, calculatedDiscount);
 
@@ -826,7 +874,9 @@ export const useBookingForm = () => {
         percentageValue: couponData.percentageValue || null,
         isGiftVoucher: isGiftCard,
       };
+
       setAppliedCoupon(couponToApply);
+      setCouponError(null); // Clear any previous error on success
       return {
         success: true,
         appliedCouponData: couponToApply,
@@ -834,6 +884,7 @@ export const useBookingForm = () => {
       };
     } catch (error) {
       console.error("Error applying coupon in useBookingForm:", error);
+      setCouponError(t("errors.generic")); // Set coupon error for display
       return { error: "invalid", message: t("errors.generic") };
     }
   };

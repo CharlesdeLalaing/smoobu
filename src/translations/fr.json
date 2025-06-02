@@ -330,6 +330,15 @@
           "ritchieColaZero": {
             "description": "La version sans sucre du cola artisanal."
           },
+          "chooseNonAlcoholicLater": "Préfère une boisson non-alcoolisée (à voir avec l'hôte)",
+          "cortilBarcoLabel": "Cortil Barco (rouge)",
+          "terreCharlotLabel": "Terre Charlot (blanc)",
+          "softBeerOfferTitle": "Choix des Boissons",
+          "wineOfferTitle": "Choix de Vin Inclus (1 bouteille)",
+          "upTo": "jusqu'à",
+          "items": "articles",
+          "selectedOutOf": "{{count}} sélectionné(s) sur {{max}}",
+          "included": "Inclus",
           "needsMoreSelections": "{{count}} encore à choisir"
         },
         "formulesRepas": {
