@@ -12,10 +12,7 @@ import { storeBookingInFirebase } from "./store-booking.js";
 import { updateCouponUsage } from "./update-coupon-usage.js";
 import { wait } from "../../../helpers/wait.js"; // Ensure this helper exists
 
-// Manage pendingBookings:
-// If create-payment-intent.js is in a separate module/process, this Map won't be shared.
-// You'll need a more robust shared store (e.g., Redis, temporary Firestore collection).
-// For now, assuming it's accessible if in the same process.
+
 export let pendingBookings = new Map(); // Export if create-payment-intent needs to set it.
 
 export const handleWebhook = async (req, res) => {

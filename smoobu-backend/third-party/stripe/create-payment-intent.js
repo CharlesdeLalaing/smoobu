@@ -1,171 +1,148 @@
+// createPaymentIntent.js (in your project's root or a suitable directory, e.g., api)
+
 import Stripe from "stripe";
-import { roomNames } from "../../config/config.js"; // Assuming this contains room names
-// Import pendingBookings from where it's actually defined and exported (likely your webhook index.js)
-// Ensure this is the SAME instance.
-import { pendingBookings } from "./webhook/index.js"; // Adjust path as needed
+import { roomNames } from "../../config/config.js";
+import { pendingBookings } from "./webhook/index.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function createPaymentIntent(req, res) {
   try {
-    // bookingData comes from the frontend (useBookingForm state)
-    // It should contain all necessary details for the booking.
-    const { bookingData } = req.body;
+    const { price, bookingData } = req.body;
 
-    if (!bookingData) {
-      return res
-        .status(400)
-        .json({ error: "Missing bookingData in request body." });
+    let totalPrice = Number(bookingData.basePrice);
+
+    totalPrice += Number(bookingData.guestFees || 0);
+
+    if (bookingData.extras && bookingData.extras.length > 0) {
+      const extrasTotal = bookingData.extras.reduce((sum, extra) => {
+        const extraAmount = Number(extra.amount) || 0;
+        const extraPersonFee =
+          (Number(extra.extraPersonPrice) || 0) *
+          (Number(extra.extraPersonQuantity) || 0);
+        return sum + extraAmount + extraPersonFee;
+      }, 0);
+
+      totalPrice += extrasTotal;
     }
 
-    // Validate essential parts of bookingData
-    if (
-      !bookingData.priceBreakdown ||
-      typeof bookingData.priceBreakdown.finalPayableAmount !== "number"
-    ) {
-      console.error(
-        "🟥 Create PI Error: bookingData.priceBreakdown.finalPayableAmount is missing or not a number.",
-        bookingData.priceBreakdown
-      );
-      return res
-        .status(400)
-        .json({ error: "Invalid pricing information in bookingData." });
-    }
-    if (!bookingData.firstName || !bookingData.lastName || !bookingData.email) {
-      console.error(
-        "🟥 Create PI Error: Missing required customer information.",
-        bookingData
-      );
-      return res
-        .status(400)
-        .json({
-          error:
-            "Missing required customer information (firstName, lastName, email).",
-        });
-    }
-    if (
-      !bookingData.arrivalDate ||
-      !bookingData.departureDate ||
-      !bookingData.apartmentId
-    ) {
-      console.error(
-        "🟥 Create PI Error: Missing required booking details.",
-        bookingData
-      );
-      return res
-        .status(400)
-        .json({
-          error: "Missing required booking details (dates, apartmentId).",
-        });
+    if (bookingData.couponApplied) {
+      totalPrice -= Number(bookingData.couponApplied.discount || 0);
     }
 
-    // Use the finalPayableAmount from the detailed priceBreakdown calculated on the frontend.
-    // This is the single source of truth for the amount to be charged.
-    const finalAmountToCharge = Number(
-      bookingData.priceBreakdown.finalPayableAmount
-    );
-
-    if (isNaN(finalAmountToCharge) || finalAmountToCharge < 0) {
-      // Or some minimum amount like 0.50 EUR
-      console.error(
-        "🟥 Create PI Error: Invalid finalAmountToCharge:",
-        finalAmountToCharge,
-        bookingData.priceBreakdown
-      );
-      return res
-        .status(400)
-        .json({ error: "Calculated final amount is invalid." });
-    }
-
-    const finalAmountCents = Math.round(finalAmountToCharge * 100);
-
-    // Ensure minimum chargeable amount for Stripe (e.g., 50 cents for EUR)
-    if (finalAmountCents < 50) {
-      console.error(
-        "🟥 Create PI Error: Amount is too low to be charged by Stripe.",
-        finalAmountCents
-      );
-      // You might want to translate this error or handle it more gracefully on the frontend.
-      return res
-        .status(400)
-        .json({
-          error:
-            "The total amount is too low to process the payment (minimum 0.50 EUR).",
-        });
+    if (bookingData.priceDetails?.discount) {
+      totalPrice -= Number(bookingData.priceDetails.discount);
     }
 
     const bookingReference = `BOOKING-${Date.now()}-${Math.random()
       .toString(36)
-      .substring(2, 9)}`;
+      .substr(2, 9)}`;
 
-    // Store the *entire* bookingData (as received from the client) in pendingBookings.
-    // This bookingData should already contain:
-    // - selectedExtras (paid ones)
-    // - selectedFreeDrinks
-    // - priceBreakdown (with roomBasePrice, calculatedExtrasTotal, finalPayableAmount, etc.)
-    // - couponApplied
-    // - spaDateTime, spaBookingPreference
-    // - All customer and stay details.
-    // `prepareBookingDocument` in the webhook will use this comprehensive data.
     pendingBookings.set(bookingReference, {
-      ...bookingData, // Spread all data received from the client
-      bookingReference: bookingReference, // Add the reference itself
-      // No need to add 'totalPriceWithExtras' here if priceBreakdown.finalPayableAmount is used.
+      ...bookingData,
+      totalPriceWithExtras: totalPrice,
+      spaDateTime: bookingData.spaDateTime || null,
+      spaBookingPreference: bookingData.spaBookingPreference || null,
     });
 
-
-    // Construct a concise description for Stripe.
-    // Details will be in your Firebase record and Smoobu.
-    const stripeDescription = `Réservation ${
-      roomNames[bookingData.apartmentId] || bookingData.apartmentId
-    } - ${bookingData.lastName}`;
-
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: finalAmountCents,
-      currency: bookingData.currency || "eur", // Use currency from bookingData or default
+      amount: Math.round(totalPrice * 100),
+      currency: "eur",
       automatic_payment_methods: {
         enabled: true,
       },
-      description: stripeDescription.substring(0, 255), // Stripe description limit
-      receipt_email: bookingData.email, // Stripe can send a basic receipt
+      description: `Réservation - ${bookingData.firstName} ${
+        bookingData.lastName
+      }
+    Chambre: ${roomNames[bookingData.apartmentId]}
+    (${bookingData.arrivalDate} - ${bookingData.departureDate})
+    Base: ${bookingData.basePrice}€
+    ${
+      bookingData.guestFees > 0
+        ? ` • Frais invités: ${bookingData.guestFees}€`
+        : ""
+    }
+    ${
+      bookingData.extras?.length
+        ? ` • Extras: ${bookingData.extras.reduce(
+            (sum, extra) =>
+              sum +
+              Number(extra.amount) +
+              Number(extra.extraPersonPrice) *
+                Number(extra.extraPersonQuantity),
+            0
+          )}€`
+        : ""
+    }
+    ${
+      bookingData.couponApplied
+        ? ` • Code ${bookingData.couponApplied.code}: -${bookingData.couponApplied.discount}€`
+        : ""
+    }
+    ${
+      bookingData.spaDateTime
+        ? ` • SPA: ${new Date(bookingData.spaDateTime).toLocaleString("fr-BE", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })}`
+        : bookingData.spaBookingPreference === "later"
+        ? ` • SPA: À réserver ultérieurement`
+        : ""
+    }`,
       metadata: {
-        // CRUCIAL for linking webhook to pending data:
+        clientName: `${bookingData.firstName} ${bookingData.lastName}`,
+        clientEmail: bookingData.email,
+        clientPhone: bookingData.phone || "",
+        roomId: bookingData.apartmentId,
+        roomName: roomNames[bookingData.apartmentId],
         bookingReference: bookingReference,
-
-        // Essential for Stripe's view and basic identification:
-        clientName:
-          `${bookingData.firstName} ${bookingData.lastName}`.substring(0, 100),
-        clientEmail: bookingData.email.substring(0, 100),
-        // Optional: other key identifiers if absolutely needed by Stripe or for quick lookup
-        // but avoid duplicating the entire bookingData here.
-        // apartmentId: bookingData.apartmentId,
-        // arrivalDate: bookingData.arrivalDate,
+        checkIn: bookingData.arrivalDate,
+        checkOut: bookingData.departureDate,
+        basePrice: `${bookingData.basePrice}€`,
+        guestFees: `${bookingData.guestFees}€`,
+        extrasTotal: bookingData.extras?.length
+          ? `${bookingData.extras.reduce(
+              (sum, extra) =>
+                sum +
+                Number(extra.amount) +
+                Number(extra.extraPersonPrice) *
+                  Number(extra.extraPersonQuantity),
+              0
+            )}€`
+          : "0€",
+        ...(bookingData.couponApplied && {
+          couponCode: bookingData.couponApplied.code,
+          couponDiscount: `-${bookingData.couponApplied.discount}€`,
+          couponType: bookingData.couponApplied.type,
+        }),
+        // Add SPA details to metadata
+        ...(bookingData.spaDateTime && {
+          spaDateTime: bookingData.spaDateTime,
+          spaFormatted: new Date(bookingData.spaDateTime).toLocaleString(
+            "fr-BE",
+            {
+              dateStyle: "short",
+              timeStyle: "short",
+            }
+          ),
+        }),
+        ...(bookingData.spaBookingPreference && {
+          spaBookingPreference: bookingData.spaBookingPreference,
+        }),
+        finalPrice: `${totalPrice}€`,
       },
     });
 
     res.json({
       clientSecret: paymentIntent.client_secret,
-      bookingReference: bookingReference, // Can be useful for client-side logging/debugging if needed
+      bookingReference: bookingReference,
     });
   } catch (error) {
-    console.error(
-      "🟥 Create PI Error: Error creating payment intent:",
-      error.message,
-      error.stack
-    );
-    let userMessage = "Failed to create payment intent. Please try again.";
-    if (error.type === "StripeCardError") {
-      userMessage = error.message; // Show Stripe's card error message directly
-    } else if (error.code === "amount_too_small") {
-      userMessage =
-        "The total amount is too low to process the payment (minimum 0.50 EUR).";
-    }
-    // Add more specific error handling if needed
+    console.error("Error creating payment intent:", error);
 
     res.status(500).json({
-      error: userMessage,
-      details:
-        process.env.NODE_ENV === "development" ? error.message : undefined, // Only show full details in dev
+      error: "Failed to create payment intent",
+      details: error.message,
     });
   }
 }
