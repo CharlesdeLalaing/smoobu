@@ -201,6 +201,10 @@
           "formulesDecouverte": "Les formules découverte",
           "boissons": "Les boissons"
         },
+
+        "readMore": "Lire plus",
+        "readLess": "Lire moins",
+
         "drinkTypes": {
           "wine": "Vins",
           "beer": "Bières",
@@ -339,7 +343,10 @@
           "items": "articles",
           "selectedOutOf": "{{count}} sélectionné(s) sur {{max}}",
           "included": "Inclus",
-          "needsMoreSelections": "{{count}} encore à choisir"
+          "needsMoreSelections": "{{count}} encore à choisir",
+          "goToDrinksButton": {
+            "nextStepText": "Suivant : Choisir vos boissons"
+          }
         },
         "formulesRepas": {
           "breakfast": {

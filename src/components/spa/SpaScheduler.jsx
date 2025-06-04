@@ -599,7 +599,7 @@ const SpaScheduler = ({
   );
 
   return (
-    <div className="p-3 space-y-4 bg-white border border-gray-200 rounded-md">
+    <div className="p-3 space-y-4 border border-gray-200 rounded-md">
       <div>
         <label
           htmlFor="spaDateSelect"

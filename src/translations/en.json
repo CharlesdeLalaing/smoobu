@@ -201,6 +201,9 @@
           "boissons": "Drinks"
         },
 
+        "readMore" : "Read more",
+        "readLess" : "Read less",
+
         "drinkTypes": {
           "wine": "Wines",
           "beer": "Beers",
@@ -340,6 +343,9 @@
           "selectedOutOf": "Selected {{count}} of {{max}}",
           "included": "Included",
           "needsMoreSelections": "{{count}} more to choose",
+          "goToDrinksButton" : {
+            "nextStepText" : "Next : Choose your drinks"
+          },
           "validation": {
             "incomplete": "Please complete your drink selection for: "
           },

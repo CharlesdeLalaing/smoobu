@@ -1,15 +1,16 @@
 // src/components/booking/InfoSupSection.js
 import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import LongBird from "../../assets/GlobalImg/long_bird.webp"; // Adjust path as needed
-import SpaScheduler from "../spa/SpaScheduler"; // Adjust path as needed
-import { useSpaSettings } from "../spa/useSpaCalendarData"; // Adjust path as needed
+import LongBird from "../../assets/GlobalImg/long_bird.webp";
+import SpaScheduler from "../spa/SpaScheduler";
+import { useSpaSettings } from "../spa/useSpaCalendarData";
 import {
-  extraCategories,
+  // extraCategories, // No longer directly used in this component's render if not needed elsewhere
   ALL_DRINK_ITEMS_MAP,
   DRINK_OFFER_CONFIG,
-} from "../extraCategories"; // Adjust path as needed
-import FreeDrinksSelection from "./FreeDrinksSelection"; // Adjust path as needed
+} from "../extraCategories";
+import FreeDrinksSelection from "./FreeDrinksSelection";
+import { ArrowRight } from "lucide-react";
 
 
 const SPA_ITEM_IDS = [
@@ -31,11 +32,11 @@ export const InfoSupSection = ({
   handleApplyCoupon,
   selectedExtras,
   handleSpaScheduleChange,
-  spaValidationError, // Received from useBookingForm
-  drinkValidationError, // Received from useBookingForm
+  spaValidationError,
+  drinkValidationError,
   selectedFreeDrinks,
   handleFreeDrinkChange,
-  getPaidExtraName, // Received from useBookingForm
+  getPaidExtraName,
 }) => {
   const { t } = useTranslation();
   const [couponInput, setCouponInput] = useState("");
@@ -78,6 +79,7 @@ export const InfoSupSection = ({
 
   const shouldShowDrinksSection = activeDrinkOfferInstanceList.length > 0;
 
+  // --- Existing useEffects for tab management (kept as is) ---
   useEffect(() => {
     if (shouldShowSpaSection) {
       if (
@@ -133,6 +135,7 @@ export const InfoSupSection = ({
     activeDrinkOfferInstanceList,
     activeDrinkOfferInstanceId,
   ]);
+  // --- End of existing useEffects ---
 
   const spaMinDate = useMemo(
     () => (formData.arrivalDate ? new Date(formData.arrivalDate) : undefined),
@@ -152,6 +155,7 @@ export const InfoSupSection = ({
   };
 
   const onApplyCouponClick = async () => {
+    // ... (coupon logic - kept as is)
     if (appliedCoupon) return;
     if (!couponInput) {
       setLocalCouponError(t("booking.coupon.errors.enterCode"));
@@ -214,16 +218,22 @@ export const InfoSupSection = ({
     }
   };
 
+  const showGoToDrinksButton =
+    shouldShowSpaSection &&
+    shouldShowDrinksSection &&
+    mainActiveTab === "spa" &&
+    !spaValidationError;
+
   return (
     <div className="relative w-full mt-6 space-y-8">
       <div
-        className="absolute top-0 right-0 z-0 hidden w-64 h-64 pointer-events-none md:block"
+        className="absolute top-0 right-0 z-0 block w-64 h-64 pointer-events-none"
         style={{
           backgroundImage: `url(${LongBird})`,
           backgroundPosition: "bottom right",
           backgroundRepeat: "no-repeat",
           backgroundSize: "contain",
-          opacity: 0.1,
+          opacity: 0.06,
         }}
         aria-hidden="true"
       />
@@ -320,6 +330,31 @@ export const InfoSupSection = ({
                 </p>
               )}
             </div>
+
+            {/* --- MODIFIED BUTTON TO GO TO DRINKS --- */}
+            {showGoToDrinksButton && (
+              <div className="flex justify-center mt-6 mb-2">
+                {" "}
+                {/* Adjusted margins */}
+                <button
+                  type="button"
+                  onClick={() => setMainActiveTab("drinks")}
+                  className="px-4 py-2 text-base font-medium text-white bg-[#668E73] rounded-md shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-[#557761] focus:ring-opacity-75"
+                  aria-label={t(
+                    "extras.drinks.goToDrinksButton.ariaLabel",
+                    "Passer à la sélection des boissons"
+                  )}
+                >
+                  {t(
+                    "extras.drinks.goToDrinksButton.nextStepText",
+                    "Suivant : Choisir vos boissons"
+                  )}
+                      <ArrowRight size={18} className="inline ml-2" /> 
+  
+                </button>
+              </div>
+            )}
+            {/* --- END OF MODIFIED BUTTON --- */}
           </>
         )}
 
@@ -335,8 +370,6 @@ export const InfoSupSection = ({
                 {drinkValidationError}
               </div>
             )}
-
-            {/* Drink Offer Sub-Tabs */}
             {activeDrinkOfferInstanceList.length > 1 && (
               <div className="flex flex-wrap items-end -mb-px">
                 {activeDrinkOfferInstanceList.map((instance) => (
@@ -361,12 +394,10 @@ export const InfoSupSection = ({
                 ))}
               </div>
             )}
-
-            {/* Content for the Active Drink Offer Instance */}
             <div
               className={`${
                 activeDrinkOfferInstanceList.length > 1
-                  ? "p-4 bg-white border border-gray-300 rounded-b-md rounded-tr-md shadow-sm"
+                  ? "p-4 border border-gray-300 rounded-b-md rounded-tr-md shadow-sm"
                   : "space-y-8"
               }`}
             >
@@ -421,7 +452,7 @@ export const InfoSupSection = ({
                       className={`${
                         activeDrinkOfferInstanceList.length > 1
                           ? ""
-                          : "p-4 border border-gray-200 rounded-lg shadow-sm bg-white"
+                          : "p-4 border border-gray-200 rounded-lg shadow-sm"
                       }`}
                     >
                       <FreeDrinksSelection
@@ -472,6 +503,7 @@ export const InfoSupSection = ({
           </div>
         )}
 
+        {/* ... Tab prompt and coupon/notice sections - kept as is ... */}
         {mainActiveTab === "" &&
           (shouldShowSpaSection || shouldShowDrinksSection) && (
             <div className="pt-2 pb-2 mt-2 mb-2 text-sm text-gray-500">

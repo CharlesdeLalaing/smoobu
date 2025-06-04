@@ -1,7 +1,8 @@
-import React from "react";
+// src/components/booking/ExtrasSection.js
+import React, { useState, useRef, useLayoutEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { extraCategories } from "../extraCategories";
-import SpaScheduler from "../spa/SpaScheduler";
+
 export const ExtrasSection = ({
   selectedExtras,
   handleExtraChange,
@@ -9,18 +10,31 @@ export const ExtrasSection = ({
   setSelectedCategory,
   formData,
   selectedRoom,
-
 }) => {
   const { t } = useTranslation();
   const totalGuests =
     (parseInt(formData.adults) || 0) + (parseInt(formData.children) || 0);
   const isOverCapacity = selectedRoom && totalGuests > selectedRoom.maxGuests;
 
+  const [expandedDescriptions, setExpandedDescriptions] = useState({});
+
+  const toggleDescription = (itemId) => {
+    setExpandedDescriptions((prev) => ({
+      ...prev,
+      [itemId]: !prev[itemId],
+    }));
+  };
+
+  // NO specific height calculations needed within ExtrasSection itself anymore.
+  // Its parent ("PARENT E" in BookingForm.js) will provide the scrollable height.
+
   return (
-    <div className="flex flex-col h-[300px] md:h-[500px] overflow-hidden">
-      {/* Capacity Warning Message */}
+    // ExtrasSection Root: A simple flex column. IT DOES NOT SCROLL.
+    // It will grow as tall as its content (sticky tabs + extras list).
+    // Its parent (PARENT E in BookingForm.js) will handle the scrolling.
+    <div className="flex flex-col">
       {isOverCapacity && (
-        <div className="p-4 mb-4 border border-red-200 rounded-md bg-red-50">
+        <div className="p-4 mb-4 border border-red-200 rounded-md bg-red-50 shrink-0">
           <p className="font-medium text-red-600">
             {t("propertyDetails.capacityExceeded.title")}
           </p>
@@ -33,9 +47,10 @@ export const ExtrasSection = ({
         </div>
       )}
 
-      {/* Categories */}
-      <div className="mb-4 shrink-0">
-        <div className="flex flex-wrap gap-3">
+      {/* Sticky Category Tabs: Sticks to the top of its nearest scrolling ancestor (PARENT E) */}
+      <div className="sticky top-0 z-10 pt-4 pb-4 mb-1 shadow-sm bg-opacity-95 bg-gray-50 backdrop-blur-sm shrink-0">
+        {/* Using bg-gray-50 for sticky tabs; change to bg-white or your preference */}
+        <div className="flex flex-wrap gap-3 px-1">
           {Object.entries(extraCategories).map(([key, category]) => (
             <button
               key={key}
@@ -54,21 +69,25 @@ export const ExtrasSection = ({
         </div>
       </div>
 
-      {/* Content */}
+      {/* Actual Extras List Area: This div simply contains the items. It does NOT scroll itself. */}
       <div
-        className={`flex-1 min-h-0 overflow-y-auto ${
+        className={`px-1 pb-4 ${
+          // No flex-1, no min-h-0, no overflow here
           isOverCapacity ? "opacity-50 pointer-events-none" : ""
         }`}
-        style={{ height: "400px", overflow: "scroll" }}
       >
         {selectedCategory === "boissons" ? (
-          <div className="pb-4 space-y-6">{renderGroupedBoissons()}</div>
+          <div className="space-y-4">{renderGroupedBoissons()}</div>
         ) : (
-          <div className="pb-4 space-y-4">{renderRegularExtras()}</div>
+          <div className="space-y-4">{renderRegularExtras()}</div>
         )}
       </div>
-    </div>
+    </div> // End of ExtrasSection root
   );
+
+  // renderGroupedBoissons, renderRegularExtras, ExtraItemDisplay, QuantitySelector
+  // remain the same as in the previous "best solution" with the ref-based "Read more" button.
+  // Make sure ExtraItemDisplay and QuantitySelector are defined below or imported.
 
   function renderGroupedBoissons() {
     const groupedBoissons = extraCategories.boissons.items.reduce(
@@ -84,85 +103,110 @@ export const ExtrasSection = ({
     );
 
     return Object.entries(groupedBoissons).map(([type, items]) => (
-      <div key={type} className="pb-6">
-        <h2 className="mb-4 text-xl font-semibold text-gray-800 capitalize">
+      <div key={type} className="pb-2">
+        <h2 className="mb-3 text-xl font-semibold text-gray-800 capitalize">
           {t(`extras.drinkTypes.${type}`)}
         </h2>
         <div className="space-y-4">
-          {items.map((item) => renderExtraItem(item))}
+          {items.map((item) => (
+            <ExtraItemDisplay item={item} key={item.id} />
+          ))}
         </div>
       </div>
     ));
   }
 
   function renderRegularExtras() {
-    return extraCategories[selectedCategory].items.map((item) =>
-      renderExtraItem(item)
-    );
+    return extraCategories[selectedCategory].items.map((item) => (
+      <ExtraItemDisplay item={item} key={item.id} />
+    ));
   }
 
-function renderExtraItem(item) {
-  const itemName = item.name ? t(item.name) : item.name;
-  const itemDescription = item.descriptionKey
-    ? t(item.descriptionKey)
-    : item.description;
+  function ExtraItemDisplay({ item }) {
+    const itemName = item.name ? t(item.name) : item.name;
+    const itemDescription = item.descriptionKey
+      ? t(item.descriptionKey)
+      : item.description;
 
-  const spaItemIds = [
-    "formuleSpa",
-    "formuleSpaBottle",
-    "packEssentiel",
-    "packDetenteGourmet",
-    "packRomantiqueGourmet",
-    "packRacletteDetente",
-    "packRacletteRomantique",
-    "packBbqDetente",
-    "packBbqRomantique",
-  ]; // List of your SPA extra IDs
-  const isSpaPackage = spaItemIds.includes(item.id); // Check if the current item's ID is in the list
-  const spaQuantity = selectedExtras[item.id] || 0;
-  // --- END ADDED ---
+    const isGloballyExpanded = !!expandedDescriptions[item.id];
+    const pRef = useRef(null);
+    const [isVisuallyClamped, setIsVisuallyClamped] = useState(false);
 
-  return (
-    // Main div for the extra item
-    <div
-      key={item.id}
-      className="flex flex-col gap-4 p-4 transition-shadow bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md" // Changed flex-row to flex-col
-    >
-      {/* Top part: Image, details, price, quantity */}
-      <div className="flex items-start w-full gap-4">
-        {" "}
-        {/* Added w-full */}
-        <img
-          src={item.image}
-          alt={itemName}
-          className="object-cover w-24 h-24 rounded-lg shrink-0" // Added shrink-0
-        />
-        <div className="flex-grow space-y-2">
-          <div className="flex items-start justify-between">
-            <h3 className="text-[15px] font-medium text-gray-900">
-              {itemName}
-            </h3>
-            <div className="bg-[#668E73] px-2 py-1 rounded text-white text-[13px] font-medium whitespace-nowrap">
-              {" "}
-              {/* Added whitespace-nowrap */}
-              {item.price}€
-            </div>
-          </div>
-          <p className="text-[13px] text-gray-600 line-clamp-3">
-            {itemDescription}
-          </p>
-          <QuantitySelector
-            item={item}
-            selectedExtras={selectedExtras}
-            handleExtraChange={handleExtraChange}
-            disabled={isOverCapacity}
+    const checkClamping = useCallback(() => {
+      if (pRef.current) {
+        const visuallyClamped =
+          pRef.current.scrollHeight > pRef.current.clientHeight;
+        setIsVisuallyClamped(visuallyClamped);
+      } else {
+        setIsVisuallyClamped(false);
+      }
+    }, []);
+
+    useLayoutEffect(() => {
+      checkClamping();
+      let timeoutId;
+      const handleResize = () => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => checkClamping(), 150);
+      };
+      window.addEventListener("resize", handleResize);
+      return () => {
+        clearTimeout(timeoutId);
+        window.removeEventListener("resize", handleResize);
+      };
+    }, [checkClamping, itemDescription, isGloballyExpanded]);
+
+    const showButton =
+      isGloballyExpanded || (!isGloballyExpanded && isVisuallyClamped);
+
+    return (
+      <div className="flex flex-col gap-3 p-3 transition-shadow bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md">
+        <div className="flex items-start w-full gap-3">
+          <img
+            src={item.image}
+            alt={itemName}
+            className="object-cover w-20 h-20 rounded-lg shrink-0 md:w-24 md:h-24"
           />
+          <div className="flex-grow min-w-0 space-y-1.5">
+            <div className="flex items-start justify-between">
+              <h3 className="text-[14px] md:text-[15px] font-medium text-gray-900">
+                {itemName}
+              </h3>
+              <div className="bg-[#668E73] px-2 py-0.5 md:py-1 rounded text-white text-[12px] md:text-[13px] font-medium whitespace-nowrap ml-2">
+                {item.price}€
+              </div>
+            </div>
+            <div className="text-[12px] md:text-[13px] text-gray-600">
+              <p
+                ref={pRef}
+                className={!isGloballyExpanded ? "line-clamp-3" : ""}
+              >
+                {itemDescription}
+              </p>
+              {showButton && (
+                <button
+                  type="button"
+                  onClick={() => toggleDescription(item.id)}
+                  className="mt-1 text-xs font-medium text-[#668E73] hover:underline md:text-sm"
+                >
+                  {isGloballyExpanded
+                    ? t("extras.readLess", "Lire moins")
+                    : t("extras.readMore", "Lire la suite")}
+                </button>
+              )}
+            </div>
+            <QuantitySelector
+              item={item}
+              selectedExtras={selectedExtras}
+              handleExtraChange={handleExtraChange}
+              disabled={isOverCapacity}
+            />
+          </div>
         </div>
       </div>
-    </div> // End main div for the extra item
-  );
-}
-};
+    );
+  }
+}; // End of ExtrasSection
 
 const QuantitySelector = ({
   item,
@@ -171,76 +215,82 @@ const QuantitySelector = ({
   disabled,
 }) => {
   const { t } = useTranslation();
+  const currentSelectedExtras = selectedExtras || {};
+  const itemIdExtra = `${item.id}-extra`;
 
   return (
     <>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3">
         <button
           type="button"
           onClick={() => {
-            const newQuantity = (selectedExtras[item.id] || 0) - 1;
+            const newQuantity = (currentSelectedExtras[item.id] || 0) - 1;
             handleExtraChange(item.id, newQuantity);
           }}
-          disabled={disabled || (selectedExtras[item.id] || 0) === 0}
-          className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-[#668E73] text-[#668E73] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#668E73] hover:text-white transition-colors"
+          disabled={disabled || (currentSelectedExtras[item.id] || 0) === 0}
+          className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full border-2 border-[#668E73] text-[#668E73] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#668E73] hover:text-white transition-colors"
         >
           -
         </button>
-        <span className="w-8 font-medium text-center text-gray-900">
-          {selectedExtras[item.id] || 0}
+        <span className="font-medium text-center text-gray-900 w-7 md:w-8">
+          {currentSelectedExtras[item.id] || 0}
         </span>
         <button
           type="button"
           onClick={() =>
-            handleExtraChange(item.id, (selectedExtras[item.id] || 0) + 1)
+            handleExtraChange(
+              item.id,
+              (currentSelectedExtras[item.id] || 0) + 1
+            )
           }
           disabled={disabled}
-          className="w-8 h-8 flex items-center bg-[#668E73] justify-center rounded-full border-2 border-[#668E73] text-white hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-7 h-7 md:w-8 md:h-8 flex items-center bg-[#668E73] justify-center rounded-full border-2 border-[#668E73] text-white hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           +
         </button>
       </div>
 
-      {item.extraPersonPrice && (selectedExtras[item.id] || 0) > 0 && (
-        <div className="mt-2">
-          <p className="text-[14px] text-gray-600 mb-1">
-            {t("extras.additionalPerson", { price: item.extraPersonPrice })}
-          </p>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() =>
-                handleExtraChange(
-                  `${item.id}-extra`,
-                  (selectedExtras[`${item.id}-extra`] || 0) - 1
-                )
-              }
-              disabled={
-                disabled || (selectedExtras[`${item.id}-extra`] || 0) === 0
-              }
-              className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-[#668E73] text-[#668E73] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#668E73] hover:text-white transition-colors"
-            >
-              -
-            </button>
-            <span className="w-8 font-medium text-center text-gray-900">
-              {selectedExtras[`${item.id}-extra`] || 0}
-            </span>
-            <button
-              type="button"
-              onClick={() =>
-                handleExtraChange(
-                  `${item.id}-extra`,
-                  (selectedExtras[`${item.id}-extra`] || 0) + 1
-                )
-              }
-              disabled={disabled}
-              className="w-8 h-8 flex items-center bg-[#668E73] justify-center rounded-full border-2 border-[#668E73] text-white hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              +
-            </button>
+      {item.extraPersonPrice > 0 &&
+        (currentSelectedExtras[item.id] || 0) > 0 && (
+          <div className="mt-1.5 md:mt-2">
+            <p className="text-[12px] md:text-[14px] text-gray-600 mb-0.5 md:mb-1">
+              {t("extras.additionalPerson", { price: item.extraPersonPrice })}
+            </p>
+            <div className="flex items-center gap-2 md:gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  handleExtraChange(
+                    itemIdExtra,
+                    (currentSelectedExtras[itemIdExtra] || 0) - 1
+                  )
+                }
+                disabled={
+                  disabled || (currentSelectedExtras[itemIdExtra] || 0) === 0
+                }
+                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full border-2 border-[#668E73] text-[#668E73] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#668E73] hover:text-white transition-colors"
+              >
+                -
+              </button>
+              <span className="font-medium text-center text-gray-900 w-7 md:w-8">
+                {currentSelectedExtras[itemIdExtra] || 0}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  handleExtraChange(
+                    itemIdExtra,
+                    (currentSelectedExtras[itemIdExtra] || 0) + 1
+                  )
+                }
+                disabled={disabled}
+                className="w-7 h-7 md:w-8 md:h-8 flex items-center bg-[#668E73] justify-center rounded-full border-2 border-[#668E73] text-white hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                +
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </>
   );
 };

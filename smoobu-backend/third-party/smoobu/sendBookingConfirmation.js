@@ -10,11 +10,13 @@ const emailTexts = {
     confirmationMessage:
       "Merci pour votre réservation ! Voici les détails de votre séjour :",
     stayDetails: "Détails du séjour",
+    bookedAccommodation: "Hébergement",
     arrival: "Arrivée",
     departure: "Départ",
     travelers: "Voyageurs",
     adults: "adultes",
     children: "enfants",
+    smoobuBookingId: "ID de Réservation",
     spaScheduledTitle: "Votre séance SPA",
     spaScheduledFormat: "{{date}} de {{startTime}} à {{endTime}}",
     spaScheduleLaterTitle: "Programmation de votre séance SPA",
@@ -27,7 +29,7 @@ const emailTexts = {
     priceDetails: "Détails des prix",
     basePrice: "Prix de base",
     guestFees: "Frais pour {{persons}} personnes supplémentaires",
-    longStayDiscount: "Réduction long séjour ({{percentage}}%)", // Assuming you might want to show percentage
+    longStayDiscount: "Réduction long séjour ({{percentage}}%)",
     promoCode: "Code promo ({{code}})",
     paidExtrasTitle: "Extras Payants",
     freeDrinksTitle: "Boissons Incluses",
@@ -43,6 +45,15 @@ const emailTexts = {
     addressTitle: "Adresse de la propriété",
     propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), Belgique",
     viewOnMap: "Voir sur la carte",
+    arrivalInstructionsTitle: "Instructions d'arrivée à la Ferme",
+    arrivalInstructionsText:
+      "Lorsque vous arrivez à la Ferme de Basseilles, située « Route de Basseilles 1, 5340 Mozet », nous vous invitons à vous rendre avec votre véhicule jusqu'à l'entrée de la ferme. Vous découvrirez alors un grand parking où vous pourrez vous garer tout en consultant les informations disponibles à l'accueil. Vous pourrez alors parcourir la fiche explicative concernant les modalités pratiques de votre séjour, telles que l'emplacement du parking, l'hébergement et les services complémentaires.",
+    glampingInfoTitle: "Informations importantes pour votre séjour Glamping",
+    glampingInfoText:
+      "Il est important de savoir que, l'insolite étant du Glamping, c'est-à-dire du camping plus luxueux en pleine nature. Ceci implique que par temps humide/temps de pluie, nous vous conseillons vivement de ne pas sortir vos plus beaux souliers pour réaliser les trajets de votre véhicule au logement et inversement. Le chemin peut être humide et parfois un peu boueux. Le chauffage à disposition prend quelques minutes pour préchauffer.\n\nUne douche extérieure est accessible à l'espace \"Spa\", sans supplément. Nous demandons juste de prévenir de l'heure pour éviter toute réservation simultanée du Spa. Le Spa est situé au sein de la ferme, à environ 100m du logement insolite.",
+    terraceBbqInfoTitle: "Votre espace extérieur",
+    terraceBbqInfoText:
+      "Pour finir, nous sommes ravis de vous informer qu'une petite terrasse avec du mobilier de jardin ainsi qu'un barbecue se trouvent juste derrière votre logement. Pour y accéder, il vous suffit de prendre la direction du Spa.",
     included: "Inclus",
     extrasCatalog: {
       "extras.categories.packs": "Nos Paquets Thématiques",
@@ -90,7 +101,7 @@ const emailTexts = {
       "priceDetails.nonAlcoholicChosenLater":
         "Option non-alcoolisée (choix ultérieur avec l'hôte)",
       "extras.drinks.chooseNonAlcoholicLater":
-        "Préfère une boisson non-alcoolisée (à voir avec l'hôte)", // You might not need this if priceDetails.nonAlcoholicChosenLater covers it
+        "Préfère une boisson non-alcoolisée (à voir avec l'hôte)",
       "extras.additionalPerson": "Personne supplémentaire",
       "priceDetails.promoCode.generic": "Code Promo",
       "priceDetails.giftVoucher": "Chèque Cadeau",
@@ -103,11 +114,13 @@ const emailTexts = {
     confirmationMessage:
       "Thank you for your booking! Here are your stay details:",
     stayDetails: "Stay Details",
+    bookedAccommodation: "Accommodation",
     arrival: "Arrival",
     departure: "Departure",
     travelers: "Travelers",
     adults: "adults",
     children: "children",
+    smoobuBookingId: "Booking ID",
     spaScheduledTitle: "Your SPA Session",
     spaScheduledFormat: "{{date}} from {{startTime}} to {{endTime}}",
     spaScheduleLaterTitle: "SPA Session Scheduling",
@@ -136,6 +149,15 @@ const emailTexts = {
     addressTitle: "Property Address",
     propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), Belgium",
     viewOnMap: "View on Map",
+    arrivalInstructionsTitle: "Arrival Instructions at the Farm",
+    arrivalInstructionsText:
+      'When you arrive at La Ferme de Basseilles, located at "Route de Basseilles 1, 5340 Mozet", we invite you to drive to the farm entrance with your vehicle. You will then discover a large parking lot where you can park while consulting the information available at the reception. You can then go through the explanatory sheet regarding the practical arrangements for your stay, such as the location of the parking, the accommodation, and the additional services.',
+    glampingInfoTitle: "Important Information for Your Glamping Stay",
+    glampingInfoText:
+      'It is important to know that, being Glamping, this is more luxurious camping in nature. This means that in wet/rainy weather, we strongly advise you not to wear your best shoes for the trips from your vehicle to the accommodation and vice versa. The path can be wet and sometimes a bit muddy. The heating available takes a few minutes to warm up.\n\nAn outdoor shower is available at the "Spa" area, at no extra cost. We just ask that you inform us of the time to avoid any simultaneous bookings of the Spa. The Spa is located within the farm, about 100m from the glamping accommodation.',
+    terraceBbqInfoTitle: "Your Outdoor Space",
+    terraceBbqInfoText:
+      "Finally, we are pleased to inform you that a small terrace with garden furniture and a barbecue is located just behind your accommodation. To access it, simply head towards the Spa.",
     included: "Included",
     extrasCatalog: {
       "extras.categories.packs": "Our Thematic Packs",
@@ -179,10 +201,8 @@ const emailTexts = {
       "drinkNames.ritchieColaZero": "Ritchie Cola Zero",
       "extras.drinks.wineOfferTitle": "Included Wine Choice (1 bottle)",
       "extras.drinks.softBeerOfferTitle": "Included Drinks Choice",
-      "priceDetails.nonAlcoholicChosenLater":
-        "Non-alcoholic option",
-      "extras.drinks.chooseNonAlcoholicLater":
-        "Prefers a non-alcoholic drink",
+      "priceDetails.nonAlcoholicChosenLater": "Non-alcoholic option",
+      "extras.drinks.chooseNonAlcoholicLater": "Prefers a non-alcoholic drink",
       "extras.additionalPerson": "Additional Person",
       "priceDetails.promoCode.generic": "Promo Code",
       "priceDetails.giftVoucher": "Gift Voucher",
@@ -195,11 +215,13 @@ const emailTexts = {
     confirmationMessage:
       "Bedankt voor uw boeking! Hier zijn de details van uw verblijf:",
     stayDetails: "Verblijfsdetails",
+    bookedAccommodation: "Accommodatie",
     arrival: "Aankomst",
     departure: "Vertrek",
     travelers: "Reizigers",
     adults: "volwassenen",
     children: "kinderen",
+    smoobuBookingId: "Boekings-ID",
     spaScheduledTitle: "Uw SPA-sessie",
     spaScheduledFormat: "{{date}} van {{startTime}} tot {{endTime}}",
     spaScheduleLaterTitle: "Planning SPA-sessie",
@@ -228,6 +250,15 @@ const emailTexts = {
     addressTitle: "Adres van de accommodatie",
     propertyAddress: "Route de Basseilles 1, 5340 Mozet (Gesves), België",
     viewOnMap: "Bekijk op kaart",
+    arrivalInstructionsTitle: "Aankomstinstructies bij de Boerderij",
+    arrivalInstructionsText:
+      "Wanneer je aankomt bij La Ferme de Basseilles, gelegen aan “Route de Basseilles 1, 5340 Mozet”, nodigen we je uit om met je voertuig naar de ingang van de boerderij te rijden. U zult dan een grote parkeerplaats ontdekken waar u kunt parkeren terwijl u de informatie raadpleegt die beschikbaar is bij de receptie. Je kunt dan de uitleg doornemen over de praktische regelingen voor je verblijf, zoals de locatie van de parkeerplaats, de accommodatie en de aanvullende diensten.",
+    glampingInfoTitle: "Belangrijke Informatie voor uw Glamping Verblijf",
+    glampingInfoText:
+      'Het is belangrijk om te weten dat, omdat het glamping is, dit luxueus kamperen in de natuur is. Dit betekent dat we bij vochtig/regenachtig weer ten zeerste aanraden om niet uw mooiste schoenen te dragen voor de ritjes van uw voertuig naar de accommodatie en vice versa. Het pad kan vochtig en soms een beetje modderig zijn. De verwarming heeft een paar minuten nodig om op te warmen.\n\nEen buitendouche is beschikbaar bij het "Spa" gebied, zonder extra kosten. We vragen alleen om ons op de hoogte te stellen van het tijdstip om gelijktijdige boekingen van de Spa te voorkomen. De Spa bevindt zich binnen de boerderij, ongeveer 100m van de glamping accommodatie.',
+    terraceBbqInfoTitle: "Uw Buitenruimte",
+    terraceBbqInfoText:
+      "Tot slot zijn we verheugd u te kunnen meedelen dat er een klein terras met tuinmeubilair en een barbecue direct achter uw accommodatie te vinden is. Om hier toegang toe te krijgen, hoeft u alleen maar richting de Spa te gaan.",
     included: "Inbegrepen",
     extrasCatalog: {
       "extras.categories.packs": "Onze Thematische Pakketten",
@@ -271,8 +302,7 @@ const emailTexts = {
       "drinkNames.ritchieColaZero": "Ritchie Cola Zero",
       "extras.drinks.wineOfferTitle": "Inbegrepen Wijnkeuze (1 fles)",
       "extras.drinks.softBeerOfferTitle": "Inbegrepen Drankkeuze",
-      "priceDetails.nonAlcoholicChosenLater":
-        "Niet-alcoholische optie",
+      "priceDetails.nonAlcoholicChosenLater": "Niet-alcoholische optie",
       "extras.drinks.chooseNonAlcoholicLater":
         "Verkiest een niet-alcoholische drank",
       "extras.additionalPerson": "Extra Persoon",
@@ -282,6 +312,7 @@ const emailTexts = {
     },
   },
 };
+
 const getEmailDateFnLocale = (lang = "fr") => {
   const baseLang = lang.split("-")[0];
   switch (baseLang) {
@@ -296,7 +327,6 @@ const getEmailDateFnLocale = (lang = "fr") => {
   }
 };
 
-// Robust date conversion (remains the same)
 const getJsDateForEmail = (dateValue) => {
   if (!dateValue) return null;
   try {
@@ -326,7 +356,6 @@ const getJsDateForEmail = (dateValue) => {
   }
 };
 
-// Format date for email (remains the same)
 const formatDateForEmail = (dateInput, lang = "fr") => {
   const date = getJsDateForEmail(dateInput);
   if (!date) return "N/A";
@@ -339,10 +368,8 @@ const formatDateForEmail = (dateInput, lang = "fr") => {
   }
 };
 
-// Helper function to get translated name from emailTexts.extrasCatalog (remains the same)
 const getTranslatedName = (key, lang, fallbackNameIfKeyMissing = null) => {
   const currentLang = lang?.split("-")[0] || "fr";
-  // Assumes emailTexts is globally available in this file's scope or imported
   const T_static = emailTexts[currentLang] || emailTexts.fr;
   const catalog = T_static.extrasCatalog || emailTexts.fr.extrasCatalog || {};
 
@@ -352,7 +379,6 @@ const getTranslatedName = (key, lang, fallbackNameIfKeyMissing = null) => {
   return catalog[key] || fallbackNameIfKeyMissing || key;
 };
 
-// SPA Item IDs (remains the same)
 const SPA_ITEM_IDS = [
   "formuleSpa",
   "formuleSpaBottle",
@@ -367,11 +393,9 @@ const SPA_ITEM_IDS = [
 
 export const sendBookingConfirmation = async (bookingData) => {
   const lang = bookingData.language?.split("-")[0] || "fr";
-  // Assumes emailTexts is globally available in this file's scope or imported
-  const T = emailTexts[lang] || emailTexts.fr; // T for static email phrases
+  const T = emailTexts[lang] || emailTexts.fr;
   const brandColor = "#668E73";
 
-  // --- SPA Section HTML Generation ---
   let spaSectionHtml = "";
   const hasSpaExtra = bookingData.extras?.some((extra) =>
     SPA_ITEM_IDS.includes(extra.id)
@@ -390,7 +414,6 @@ export const sendBookingConfirmation = async (bookingData) => {
         bookingData.spaInfo.scheduledDateTime
       );
       let spaEndJsDate = getJsDateForEmail(bookingData.spaInfo.endDateTime);
-      // Fallback logic for spaEndJsDate
       if (
         !spaEndJsDate &&
         spaStartJsDate &&
@@ -429,7 +452,6 @@ export const sendBookingConfirmation = async (bookingData) => {
           .replace("{{endTime}}", `<strong>${endTimePart}</strong>`);
         spaSectionHtml = `<div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;"><h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.spaScheduledTitle}</h3><p style="margin: 0; font-size: 0.95em; color: #333;">${spaTimeText}</p></div>`;
       } else if (spaStartJsDate) {
-        // Only start time available
         const emailLocale = getEmailDateFnLocale(lang);
         const datePart = formatFn(spaStartJsDate, "PPPP", {
           locale: emailLocale,
@@ -456,7 +478,6 @@ export const sendBookingConfirmation = async (bookingData) => {
     }
   }
 
-  // --- Free Drinks HTML Generation ---
   let freeDrinksHtml = "";
   if (
     bookingData.processedFreeDrinks &&
@@ -468,20 +489,20 @@ export const sendBookingConfirmation = async (bookingData) => {
         drink.grantorNameKeyForClient,
         lang,
         drink.paidExtraGrantor
-      ); // fallback to paidExtraGrantor (French name from DB)
+      );
       let translatedDrinkOrChoiceName;
       if (drink.chooseNonAlcoholicLater) {
         translatedDrinkOrChoiceName = getTranslatedName(
           drink.choiceNameKeyForClient,
           lang,
           drink.drinkDetails
-        ); // fallback to drinkDetails (French name from DB)
+        );
       } else {
         translatedDrinkOrChoiceName = getTranslatedName(
           drink.drinkNameKeyForClient,
           lang,
           drink.drinkDetails
-        ); // fallback to drinkDetails (French name from DB)
+        );
       }
       const displayDrinkName = `${translatedGrantorName}: ${translatedDrinkOrChoiceName}`;
       freeDrinksHtml += `<p class="extra-item" style="color: #228B22;">${displayDrinkName} (x${
@@ -490,7 +511,6 @@ export const sendBookingConfirmation = async (bookingData) => {
     });
   }
 
-  // --- Non-Alcoholic Choice HTML Generation ---
   let nonAlcoholicChoiceHtml = "";
   if (
     bookingData.freeDrinkInfo?.needsNonAlcoholicChoice &&
@@ -498,8 +518,8 @@ export const sendBookingConfirmation = async (bookingData) => {
   ) {
     nonAlcoholicChoiceHtml = `<div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #fff9e6;"><h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.nonAlcoholicChoiceTitle}</h3>`;
     const translatedGrantorsForInstruction =
-      bookingData.freeDrinkInfo.nonAlcoholicChoiceGrantors.map(
-        (grantorKey) => getTranslatedName(grantorKey, lang, grantorKey) // Fallback to the key itself if translation missing
+      bookingData.freeDrinkInfo.nonAlcoholicChoiceGrantors.map((grantorKey) =>
+        getTranslatedName(grantorKey, lang, grantorKey)
       );
     translatedGrantorsForInstruction.forEach((translatedGrantor) => {
       nonAlcoholicChoiceHtml += `<p style="margin: 5px 0; font-size: 0.95em; color: #333;">${T.nonAlcoholicChoiceInstruction.replace(
@@ -507,7 +527,6 @@ export const sendBookingConfirmation = async (bookingData) => {
         `<strong>${translatedGrantor}</strong>`
       )}</p>`;
     });
-    // Mailto link details
     const guestNameForMailto = encodeURIComponent(
       bookingData.guestName ||
         `${bookingData.firstName} ${bookingData.lastName}`
@@ -526,7 +545,6 @@ export const sendBookingConfirmation = async (bookingData) => {
     const grantorsStringForMailto = encodeURIComponent(
       translatedGrantorsForInstruction.join(joinerWord)
     );
-
     const emailSubjectNonAlcoholic = encodeURIComponent(
       `Non-alcoholic choice - Booking ${bookingIdForMailto}`
     );
@@ -553,7 +571,6 @@ export const sendBookingConfirmation = async (bookingData) => {
     }</p></div>`;
   }
 
-  // --- Price and other details for email body ---
   const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     T.propertyAddress
   )}`;
@@ -569,7 +586,28 @@ export const sendBookingConfirmation = async (bookingData) => {
     bookingData.priceBreakdown?.appliedLongStayDiscount || 0;
   const couponDiscountForEmail = bookingData.couponApplied?.discount || 0;
 
-  // --- Main Email HTML Structure ---
+  let glampingInfoHtml = "";
+  const glampingIds = ["2565753", "1644643", "1946282"];
+  if (glampingIds.includes(String(bookingData.apartmentId))) {
+    glampingInfoHtml = `
+      <div class="section additional-info">
+        <h2>${T.glampingInfoTitle}</h2>
+        <p>${T.glampingInfoText}</p>
+      </div>
+    `;
+  }
+
+  let terraceBbqInfoHtml = "";
+  const terraceBbqIds = ["1946270", "1946276", "1946279"];
+  if (terraceBbqIds.includes(String(bookingData.apartmentId))) {
+    terraceBbqInfoHtml = `
+      <div class="section additional-info">
+        <h2>${T.terraceBbqInfoTitle}</h2>
+        <p>${T.terraceBbqInfoText}</p>
+      </div>
+    `;
+  }
+
   try {
     const emailContent = `
       <!DOCTYPE html>
@@ -596,6 +634,7 @@ export const sendBookingConfirmation = async (bookingData) => {
           .footer a { color: ${brandColor}; text-decoration: none; }
           .extra-item { margin-left: 15px; font-size: 0.9em; }
           .extra-person-item { margin-left: 30px; font-size: 0.8em; color: #555; }
+          .additional-info p { white-space: pre-wrap; }
         </style>
       </head>
       <body>
@@ -613,6 +652,9 @@ export const sendBookingConfirmation = async (bookingData) => {
 
             <div class="section">
               <h2>${T.stayDetails}</h2>
+              <p><strong>${T.bookedAccommodation}:</strong> ${
+      bookingData.property || "N/A"
+    }</p>
               <p><strong>${T.arrival}:</strong> ${formatDateForEmail(
       bookingData.arrivalDate,
       lang
@@ -625,6 +667,9 @@ export const sendBookingConfirmation = async (bookingData) => {
       T.adults
     }${
       bookingData.children > 0 ? `, ${bookingData.children} ${T.children}` : ""
+    }</p>
+              <p><strong>${T.smoobuBookingId}:</strong> ${
+      bookingData.smoobuId || "N/A"
     }</p>
             </div>
 
@@ -669,14 +714,14 @@ export const sendBookingConfirmation = async (bookingData) => {
                     extra.nameKeyForClient,
                     lang,
                     extra.name
-                  ); // Use French name from DB as fallback
+                  );
                   const translatedExtraPersonName = extra.extraPersonName
                     ? getTranslatedName(
                         "extras.additionalPerson",
                         lang,
                         extra.extraPersonName
                       )
-                    : ""; // Fallback to French name from DB
+                    : "";
                   return `
                   <p class="extra-item">${translatedExtraName} (x${
                     extra.quantity || 1
@@ -736,6 +781,14 @@ export const sendBookingConfirmation = async (bookingData) => {
     }</a></p>
             </div>
 
+            <div class="section additional-info">
+                <h2>${T.arrivalInstructionsTitle}</h2>
+                <p>${T.arrivalInstructionsText}</p>
+            </div>
+
+            ${glampingInfoHtml}
+            ${terraceBbqInfoHtml}
+
             <div class="section">
               <h2>${T.contactInfo}</h2>
               <p>${bookingData.guestName}</p>
@@ -764,7 +817,6 @@ export const sendBookingConfirmation = async (bookingData) => {
       subject: T.subject,
       html: emailContent,
     });
-
   } catch (error) {
     console.error("🟥 Email: Error sending modern confirmation email:", error);
   }

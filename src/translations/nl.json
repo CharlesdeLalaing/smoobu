@@ -175,6 +175,10 @@
         "meals": "Maaltijden van Bossimé",
         "boissons": "Dranken"
       },
+
+      "readMore" : "Lees meer",
+      "readLess" : "Less minder",
+      
       "drinkTypes": {
         "wine": "Wijnen",
         "beer": "Bieren",
@@ -315,6 +319,9 @@
         "validation": {
           "incomplete": "Voltooi alstublieft uw drankselectie voor: "
         },
+        "goToDrinksButton" : {
+            "nextStepText" : "Volgende : Je drankjes kiezen"
+          },
         "tabTitle": "Kies Inbegrepen Dranken"
       },
       "formulesRepas": {
