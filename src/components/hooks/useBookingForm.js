@@ -6,6 +6,7 @@ import { db } from "../../firebase"; // Ensure this path is correct
 import { extraCategories } from "../extraCategories"; // Ensure this path is correct
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { format } from 'date-fns';
 
 // Assuming DRINK_OFFER_CONFIG and ALL_DRINK_ITEMS_MAP are correctly exported
 // from InfoSupSection.js or a shared constants file.
@@ -527,7 +528,7 @@ export const useBookingForm = () => {
         0
       );
       const subtotalBeforeDiscounts = basePrice + extrasTotal + guestFees;
-      const longStayDiscount = selectedRoomPrice.discount || 0; // This is the Smoobu calculated long-stay discount
+      const longStayDiscount = selectedRoomPrice.discount || 0;
       const couponDiscountAmount = appliedCoupon ? appliedCoupon.discount : 0;
       const totalAfterLongStay = Math.max(
         0,
@@ -542,7 +543,7 @@ export const useBookingForm = () => {
       }
 
       const bookingDataForPayment = {
-        ...formData, // Includes selectedFreeDrinks
+        ...formData,
         price: finalTotal,
         basePrice: basePrice,
         longStayDiscount: longStayDiscount,
@@ -570,6 +571,10 @@ export const useBookingForm = () => {
           finalPayableAmount: finalTotal,
         },
         priceDetailsSnapshot: { ...selectedRoomPrice, guestFees },
+
+        spaDateString: formData.spaDateTime
+          ? format(new Date(formData.spaDateTime), "yyyy-MM-dd")
+          : null,
       };
 
       const response = await api.post("/create-payment-intent", {
@@ -637,7 +642,6 @@ export const useBookingForm = () => {
       },
       priceDetailsSnapshot: { ...selectedApartmentPriceDetails, guestFees },
       price: finalTotal,
-      // spaDateTime, spaEndDateTime, spaSlots, spaBookingPreference are already in formData
       couponApplied: appliedCoupon
         ? {
             code: appliedCoupon.code,
@@ -649,7 +653,24 @@ export const useBookingForm = () => {
           }
         : null,
     };
-    localStorage.setItem("bookingData", JSON.stringify(bookingDataToSave));
+
+
+    // Create the final object that will be stored, including our new reliable date string.
+    const finalDataForStorage = {
+      ...bookingDataToSave,
+
+      // Add the new spaDateString field for reliable querying.
+      // It checks if a spaDateTime exists, and if so, formats it. Otherwise, it sets it to null.
+      spaDateString: bookingDataToSave.spaDateTime
+        ? format(new Date(bookingDataToSave.spaDateTime), "yyyy-MM-dd")
+        : null,
+    };
+
+    // Use the new finalDataForStorage object to save to localStorage.
+    localStorage.setItem("bookingData", JSON.stringify(finalDataForStorage));
+
+    // <<< --- MODIFICATION END --- >>>
+
     const paymentIntentQuery = clientSecret
       ? `?payment_intent=${clientSecret.split("_secret")[0]}`
       : "";

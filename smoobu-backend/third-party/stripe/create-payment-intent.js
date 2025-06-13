@@ -1,4 +1,4 @@
-// createPaymentIntent.js (in your project's root or a suitable directory, e.g., api)
+// File: createPaymentIntent.js
 
 import Stripe from "stripe";
 import { roomNames } from "../../config/config.js";
@@ -10,10 +10,9 @@ export async function createPaymentIntent(req, res) {
   try {
     const { price, bookingData } = req.body;
 
+    // The price calculation logic remains the same
     let totalPrice = Number(bookingData.basePrice);
-
     totalPrice += Number(bookingData.guestFees || 0);
-
     if (bookingData.extras && bookingData.extras.length > 0) {
       const extrasTotal = bookingData.extras.reduce((sum, extra) => {
         const extraAmount = Number(extra.amount) || 0;
@@ -22,14 +21,11 @@ export async function createPaymentIntent(req, res) {
           (Number(extra.extraPersonQuantity) || 0);
         return sum + extraAmount + extraPersonFee;
       }, 0);
-
       totalPrice += extrasTotal;
     }
-
     if (bookingData.couponApplied) {
       totalPrice -= Number(bookingData.couponApplied.discount || 0);
     }
-
     if (bookingData.priceDetails?.discount) {
       totalPrice -= Number(bookingData.priceDetails.discount);
     }
@@ -38,9 +34,13 @@ export async function createPaymentIntent(req, res) {
       .toString(36)
       .substr(2, 9)}`;
 
+    // --- MODIFICATION #1: Add spaDateString to the pending booking data ---
     pendingBookings.set(bookingReference, {
       ...bookingData,
       totalPriceWithExtras: totalPrice,
+      // The bookingData object from the frontend already contains spaDateString,
+      // so the spread operator `...bookingData` automatically includes it here.
+      // We just need to ensure the other fields are explicitly set if they are calculated here.
       spaDateTime: bookingData.spaDateTime || null,
       spaBookingPreference: bookingData.spaBookingPreference || null,
     });
@@ -89,6 +89,8 @@ export async function createPaymentIntent(req, res) {
         ? ` • SPA: À réserver ultérieurement`
         : ""
     }`,
+
+      // --- MODIFICATION #2: Add spaDateString to the Stripe metadata ---
       metadata: {
         clientName: `${bookingData.firstName} ${bookingData.lastName}`,
         clientEmail: bookingData.email,
@@ -115,7 +117,6 @@ export async function createPaymentIntent(req, res) {
           couponDiscount: `-${bookingData.couponApplied.discount}€`,
           couponType: bookingData.couponApplied.type,
         }),
-        // Add SPA details to metadata
         ...(bookingData.spaDateTime && {
           spaDateTime: bookingData.spaDateTime,
           spaFormatted: new Date(bookingData.spaDateTime).toLocaleString(
@@ -130,6 +131,11 @@ export async function createPaymentIntent(req, res) {
           spaBookingPreference: bookingData.spaBookingPreference,
         }),
         finalPrice: `${totalPrice}€`,
+
+        // --- THIS IS THE NEWLY ADDED LINE ---
+        // We add the spaDateString here so it's permanently attached to the payment record.
+        // The webhook can then read it from here. Use a fallback to an empty string for safety.
+        spaDateString: bookingData.spaDateString || "",
       },
     });
 

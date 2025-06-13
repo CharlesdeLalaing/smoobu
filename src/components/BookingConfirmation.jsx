@@ -6,6 +6,9 @@ import logoBaseilles from "../assets/logoBaseilles.webp"; // Verify path
 import { addMinutes, format as formatFn } from "date-fns";
 import { fr, enUS, nl } from "date-fns/locale"; // Import all required locales
 import "../assets/bookingConfirmation.css"; // Verify path
+
+
+
 import {
   CalendarClock,
   ShoppingBagIcon,

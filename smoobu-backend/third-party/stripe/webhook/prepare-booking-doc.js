@@ -486,6 +486,7 @@ export const prepareBookingDocument = (
       : null,
     conditions: bookingData.conditions || true,
     language: bookingData.language || "fr", // Store client's language
+    spaDateString: bookingData.spaDateString || null,
     spaDateTime: bookingData.spaDateTime
       ? admin.firestore.Timestamp.fromDate(parseISO(bookingData.spaDateTime))
       : null,

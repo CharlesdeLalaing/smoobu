@@ -74,6 +74,10 @@ export const handleWebhook = async (req, res) => {
       });
   }
 
+  if (paymentIntent.metadata.spaDateString) {
+    bookingData.spaDateString = paymentIntent.metadata.spaDateString;
+  }
+
 
   let reservationId; // To store Smoobu reservation ID for potential cleanup on error
 
