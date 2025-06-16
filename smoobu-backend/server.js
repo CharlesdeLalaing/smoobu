@@ -26,6 +26,7 @@ import { createPaymentIntent } from "./third-party/stripe/create-payment-intent.
 import { getBookingByPaymentIntentId } from "./third-party/stripe/get-payment-intent.js";
 import { getBookingHistoryByEmail } from "./third-party/smoobu/actions/api/get-booking-history-email.js";
 import { handleGetSpaAvailability } from "./third-party/smoobu/actions/api/spa-availability.js";
+import { handleCancelSpaBooking } from "./third-party/smoobu/actions/api/cancel-booking.js"
 
 // Updated import for the refactored Smoobu cancellation function
 import { cancelSmoobuReservationById } from "./third-party/smoobu/actions/api/cancel-reservation.js";
@@ -71,6 +72,7 @@ app.get("/api/apartments", fetchApartments);
 app.get("/api/apartments/:id", fetchApartmentsId);
 app.get("/api/rates", fetchRates);
 app.post("/api/create-payment-intent", createPaymentIntent);
+app.post("/api/cancel-booking", handleCancelSpaBooking);
 app.get("/api/bookings/:paymentIntentId", getBookingByPaymentIntentId);
 app.get("/api/pending-bookings", (req, res) => {
   const bookings = Array.from(pendingBookings.entries());

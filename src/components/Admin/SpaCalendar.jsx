@@ -22,6 +22,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db } from "../../firebase";
+import axios from "axios"; // Make sure axios is imported
 
 import {
   isDateWithinBookingStay,
@@ -79,6 +80,7 @@ const SpaCalendar = () => {
     loading: slotsAndOverrideHookLoading,
     error: slotsAndOverrideHookError,
     overrideData,
+    wordpressBookings,
     refetch: refetchSlotsAndOverride,
   } = useAvailableSlots(selectedDate, selectedBooking, spaSettings);
 
@@ -121,6 +123,34 @@ const SpaCalendar = () => {
         return a.property?.localeCompare(b.property || "") || 0;
       });
   }, [bookings]);
+
+
+  const handleCancelWordPressBooking = async (bookingId) => {
+    setActionLoading(true); // Set a loading state to prevent other actions
+    try {
+      const backendUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:3000";
+      // Make a POST request to our new API endpoint
+      const response = await axios.post(`${backendUrl}/api/cancel-booking`, {
+        bookingId: bookingId,
+      });
+
+      if (response.data.success) {
+        alert("Booking cancelled successfully!");
+        // If successful, we must refetch the slot data to update the UI
+        if (selectedDate) {
+          refetchSlotsAndOverride(selectedDate, selectedBooking, spaSettings);
+        }
+      } else {
+        throw new Error(response.data.message || "Failed to cancel booking.");
+      }
+    } catch (err) {
+      console.error("Error cancelling WordPress booking:", err);
+      alert(`Error: ${err.message}`);
+    } finally {
+      setActionLoading(false); // Reset the loading state
+    }
+  };
 
   const overallLoading =
     bookingsLoading || settingsLoading || slotsAndOverrideHookLoading;
@@ -942,6 +972,8 @@ const SpaCalendar = () => {
           bookingsError={bookingsError}
           isActionLoading={actionLoading || settingsSavingLoading}
           isOverrideSaving={overrideSavingLoading}
+          wordpressBookings={wordpressBookings} // Pass the new prop
+          onCancelWordPressBooking={handleCancelWordPressBooking}
           onToggleSlotActivation={handleToggleSlotActivation}
         />
       </div>

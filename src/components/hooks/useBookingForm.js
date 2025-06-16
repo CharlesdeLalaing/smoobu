@@ -875,11 +875,15 @@ export const useBookingForm = () => {
       if (couponData.type === "percentage" && couponData.percentageValue > 0) {
         calculatedDiscount =
           (applicablePriceBase * couponData.percentageValue) / 100;
-      } else if (
-        (couponData.type === "fixed" || isGiftCard) &&
-        couponData.amount > 0
-      ) {
-        calculatedDiscount = couponData.amount;
+      } else if (couponData.type === "fixed" || isGiftCard) {
+        // This new logic first checks for 'amount', and if it's not present,
+        // it falls back to the legacy 'discount' field.
+        // This makes it work for BOTH old and new coupons.
+        const discountValue = couponData.amount || couponData.discount || 0;
+
+        if (discountValue > 0) {
+          calculatedDiscount = discountValue;
+        }
       }
 
       calculatedDiscount = Math.min(calculatedDiscount, applicablePriceBase);

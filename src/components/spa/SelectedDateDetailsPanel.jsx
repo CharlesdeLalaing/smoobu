@@ -1,20 +1,9 @@
+// File: src/components/spa/SelectedDateDetailsPanel.jsx
+
 import React, { useState } from "react";
-import {
-  format,
-  // parseISO, // Not directly used here, but good to keep if utils use it
-  // startOfDay,
-  // addDays,
-  // addMinutes,
-  // isAfter,
-  // isBefore,
-  // isSameDay,
-} from "date-fns";
+import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import {
-  // parseBookingDateTime, // Parsed in parent or hook now
-  isDateWithinBookingStay,
-  getPropertyColor,
-} from "./spaCalendarUtils"; // Correct utility path
+import { isDateWithinBookingStay, getPropertyColor } from "./spaCalendarUtils";
 
 /**
  * Component to display available slots, scheduled bookings, and manage overrides for the selected date using tabs.
@@ -22,42 +11,31 @@ import {
 const SelectedDateDetailsPanel = ({
   selectedDate,
   selectedBooking,
-  availableSlots, // Truly bookable slots
-  manuallyDeactivatedSlots, // Slots admin has turned off
-  isDayClosed, // If the entire day is considered closed by API
+  availableSlots,
+  manuallyDeactivatedSlots,
+  isDayClosed,
   selectedDateBookings,
+  wordpressBookings, // New prop for WordPress bookings
   spaSettings,
-  overrideData, // Raw override doc content for "Gestion Horaire" tab
-  overrideLoading, // Loading for fetching the override document itself
-  overrideError, // Error for fetching the override document itself
+  overrideData,
+  overrideLoading,
+  overrideError,
   editableOverrideSettings,
   onEditableOverrideChange,
-  onSaveOverride, // Saves the override document (Gestion Horaire)
-  onDeleteOverride, // Deletes the override document (Gestion Horaire)
-  onBookSlot, // For booking an available slot
+  onSaveOverride,
+  onDeleteOverride,
+  onBookSlot,
   onScheduledBookingClick,
-  isLoading, // Overall parent loading (bookings, settings, slots+override API)
-  isSlotsLoading, // Loading state for the API call that fetches ALL slot data (avail, deactivated, isClosed)
-  slotsError, // Error state for that API call
+  onCancelWordPressBooking, // New prop for the cancellation handler
+  isLoading,
+  isSlotsLoading,
+  slotsError,
   bookingsError,
-  isActionLoading, // General booking/settings save actions (not override save)
-  isOverrideSaving, // Saving an override (triggered by save button in Gestion Horaire OR slot toggle)
-  onToggleSlotActivation, // To deactivate or reactivate a slot
+  isActionLoading,
+  isOverrideSaving,
+  onToggleSlotActivation,
 }) => {
-  console.log("SelectedDateDetailsPanel rendering with tabs", {
-    selectedDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : null,
-    selectedBookingId: selectedBooking?.id || null,
-    availableSlotsCount: availableSlots.length,
-    manuallyDeactivatedSlotsCount: manuallyDeactivatedSlots.length,
-    isDayClosed,
-    overrideDataExists: !!overrideData,
-    isLoading,
-    isSlotsLoading, // Loading for the API call for slots data
-    isOverrideDocLoading: overrideLoading, // Loading for the override *document* itself
-    isOverrideSaving, // Loading for *saving* an override (via button or slot toggle)
-  });
-
-  const [activeTab, setActiveTab] = useState("slots"); // Default to slots tab
+  const [activeTab, setActiveTab] = useState("slots");
 
   if (!selectedDate) {
     return (
@@ -74,20 +52,17 @@ const SelectedDateDetailsPanel = ({
     selectedBooking?.spaTreatmentDuration &&
     typeof selectedBooking.spaTreatmentDuration === "number"
       ? selectedBooking.spaTreatmentDuration
-      : 120; // Default for display if no specific booking duration
+      : 120;
 
-  const canEditOverridePanel = !!editableOverrideSettings; // For the "Gestion Horaire" tab inputs
+  const canEditOverridePanel = !!editableOverrideSettings;
 
-  // --- Handler for clicking any slot button (available or deactivated) ---
   const handleSlotButtonClick = (slotString, isCurrentlyDeactivated) => {
     if (!selectedDate || isOverrideSaving || isActionLoading) {
-      // Prevent action if another save is in progress
       alert("Une opération est en cours, veuillez patienter.");
       return;
     }
 
     if (isCurrentlyDeactivated) {
-      // Clicking a deactivated slot: always attempt to reactivate.
       if (
         window.confirm(
           `Voulez-vous réactiver le créneau de ${slotString} pour le ${format(
@@ -100,14 +75,10 @@ const SelectedDateDetailsPanel = ({
         onToggleSlotActivation(slotString);
       }
     } else {
-      // Clicking an *available* slot.
-      // Check the condition for allowing DEACTIVATION vs. proceeding to BOOK.
       const canAdminDeactivateSlot =
         !selectedBooking ||
         (selectedBooking && selectedBooking.spaBookingPreference !== "later");
-
       if (canAdminDeactivateSlot) {
-        // Admin is in "deactivation mode" for this available slot.
         if (
           window.confirm(
             `Voulez-vous désactiver le créneau de ${slotString} pour le ${format(
@@ -117,12 +88,9 @@ const SelectedDateDetailsPanel = ({
             )} ?\nCe créneau ne sera plus disponible à la réservation.`
           )
         ) {
-          onToggleSlotActivation(slotString); // This will add it to deactivated list in Firestore
+          onToggleSlotActivation(slotString);
         }
       } else {
-        // Deactivation is not allowed (because a 'later' booking is selected).
-        // So, a click on an available slot should proceed to book it for the selected 'later' booking.
-        // Ensure the date is within the booking stay for 'later' bookings
         if (
           selectedBooking &&
           !isDateWithinBookingStay(selectedDate, selectedBooking)
@@ -143,10 +111,53 @@ const SelectedDateDetailsPanel = ({
     }
   };
 
+  // --- NEW RENDER FUNCTION FOR WORDPRESS BOOKINGS ---
+  const renderWordPressBookingsSection = () => (
+    <div className="mt-4">
+      <h4 className="mb-2 text-sm font-medium text-blue-700">
+        Réservations Externes (WordPress) ({wordpressBookings?.length || 0})
+      </h4>
+      {(!wordpressBookings || wordpressBookings.length === 0) && (
+        <div className="p-2 text-sm text-center text-gray-500 rounded bg-gray-50">
+          Aucune réservation externe pour cette date.
+        </div>
+      )}
+      {wordpressBookings && wordpressBookings.length > 0 && (
+        <div className="pr-1 space-y-2 overflow-y-auto max-h-40">
+          {wordpressBookings.map((booking) => (
+            <div
+              key={booking.id}
+              className="flex items-center justify-between p-2 text-sm border rounded bg-blue-50"
+            >
+              <span className="font-medium text-blue-800">
+                Créneau: {booking.time}
+              </span>
+              <button
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      `Voulez-vous vraiment annuler le créneau de ${booking.time} ? Cette action est irréversible.`
+                    )
+                  ) {
+                    onCancelWordPressBooking(booking.id);
+                  }
+                }}
+                className="px-2 py-1 text-xs font-medium text-red-700 bg-red-100 border border-red-200 rounded hover:bg-red-200 disabled:opacity-50"
+                disabled={isActionLoading || isOverrideSaving}
+              >
+                Annuler
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   const renderOverrideSection = () => (
     <div className="mt-4">
       <h4 className="sr-only">Gestion Horaire Spécifique / Fermeture</h4>
-      {overrideLoading ? ( // This is for loading the override *document*
+      {overrideLoading ? (
         <div className="p-2 text-sm text-center text-blue-500">
           Chargement de l'état horaire spécifique...
         </div>
@@ -156,8 +167,7 @@ const SelectedDateDetailsPanel = ({
         </div>
       ) : !canEditOverridePanel ? (
         <div className="p-2 text-sm text-center text-gray-400">
-          Impossible d'éditer les paramètres pour le moment (pas de date
-          sélectionnée ou données manquantes).
+          Impossible d'éditer les paramètres pour le moment.
         </div>
       ) : (
         <div className="p-3 space-y-3 border border-gray-200 rounded-md bg-gray-50">
@@ -172,14 +182,14 @@ const SelectedDateDetailsPanel = ({
                   isClosed: e.target.checked,
                 })
               }
-              disabled={isOverrideSaving || isActionLoading} // Disable during save of override itself, or other major actions
+              disabled={isOverrideSaving || isActionLoading}
               className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 disabled:opacity-50"
             />
             <label
               htmlFor="overrideIsClosed"
               className="ml-2 text-sm font-medium text-gray-700"
             >
-              Marquer comme fermé pour cette date (via horaire spécifique)
+              Marquer comme fermé pour cette date
             </label>
           </div>
           <div
@@ -234,11 +244,9 @@ const SelectedDateDetailsPanel = ({
           </div>
           <div className="flex items-center justify-end pt-2 space-x-2 border-t border-gray-200">
             {isOverrideSaving && (
-              <span className="text-xs text-blue-600">
-                Enregistrement de l'horaire...
-              </span>
+              <span className="text-xs text-blue-600">Enregistrement...</span>
             )}
-            {overrideData && ( // Show delete only if an override document *exists*
+            {overrideData && (
               <button
                 onClick={onDeleteOverride}
                 disabled={isOverrideSaving || isActionLoading}
@@ -248,19 +256,13 @@ const SelectedDateDetailsPanel = ({
               </button>
             )}
             <button
-              onClick={onSaveOverride} // This saves startTime, endTime, isClosed, and manuallyDeactivatedSlots
+              onClick={onSaveOverride}
               disabled={isOverrideSaving || isActionLoading}
               className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-60"
             >
               {overrideData ? "Modifier Horaire Spéc." : "Créer Horaire Spéc."}
             </button>
           </div>
-          <p className="mt-1 text-xs text-gray-500">
-            Utilisez cet onglet pour définir des heures d'ouverture/fermeture
-            spécifiques pour cette date ou marquer la journée comme entièrement
-            fermée. La désactivation/réactivation de créneaux individuels se
-            fait via l'onglet "Gestion des Créneaux".
-          </p>
         </div>
       )}
     </div>
@@ -268,76 +270,57 @@ const SelectedDateDetailsPanel = ({
 
   const renderSlotsManagementSection = () => (
     <div className="mt-4 space-y-6">
-      {isSlotsLoading && ( // Loading for the API call that gets all slot data
+      {isSlotsLoading && (
         <div className="p-2 text-sm text-center text-blue-500">
           Chargement des créneaux...
         </div>
       )}
-      {slotsError &&
-        !isSlotsLoading && ( // Error from that API call
-          <div className="p-2 text-sm text-red-600 border border-red-200 rounded bg-red-50">
-            Erreur chargement créneaux: {slotsError.message}
-          </div>
-        )}
+      {slotsError && !isSlotsLoading && (
+        <div className="p-2 text-sm text-red-600 border border-red-200 rounded bg-red-50">
+          Erreur chargement créneaux: {slotsError.message}
+        </div>
+      )}
 
       {!isSlotsLoading && !slotsError && (
         <>
-          {/* Message if the entire day is considered closed by the API */}
           {isDayClosed && (
             <div className="p-3 text-sm text-center text-orange-700 border border-orange-200 rounded bg-orange-50">
               Le SPA est actuellement fermé pour cette date.
-              {editableOverrideSettings?.isClosed
-                ? " (Fermeture spécifique activée dans 'Gestion Horaire')."
-                : " (Possiblement dû aux heures par défaut, de départ, ou autre configuration)."}
-              <br />
-              Pour ouvrir, ajustez les paramètres dans "Gestion Horaire" et
-              assurez-vous que "Marquer comme fermé" n'est pas coché.
             </div>
           )}
 
-          {/* Section for Available Slots */}
           <div className={isDayClosed ? "opacity-50 pointer-events-none" : ""}>
-            {" "}
-            {/* Disable interaction if day is closed */}
             <h4 className="mb-2 text-sm font-medium text-green-700">
               Créneaux disponibles ({availableSlots.length})
-              {selectedBooking && ` (pour ${displaySearchDuration} min)`}
             </h4>
             {availableSlots.length === 0 && !isDayClosed && (
               <div className="p-2 text-sm text-center text-gray-500 rounded bg-gray-50">
-                Aucun créneau disponible pour la réservation. Vérifiez les
-                créneaux désactivés ci-dessous ou les paramètres généraux.
+                Aucun créneau disponible.
               </div>
             )}
             {availableSlots.length > 0 && !isDayClosed && (
               <div className="grid grid-cols-2 gap-2 pr-1 overflow-y-auto sm:grid-cols-3 max-h-40">
                 {availableSlots.map((slot) => {
                   const slotButtonDisabled =
-                    isOverrideSaving || isActionLoading || isLoading; // isLoading is overall parent loading
+                    isOverrideSaving || isActionLoading || isLoading;
                   let title = "";
-                  if (slotButtonDisabled) {
-                    title = isOverrideSaving
-                      ? "Sauvegarde en cours..."
-                      : isActionLoading
-                      ? "Action en cours..."
-                      : "Chargement global...";
-                  } else {
+                  if (slotButtonDisabled) title = "Action en cours...";
+                  else {
                     const canAdminDeactivateSlot =
                       !selectedBooking ||
                       (selectedBooking &&
                         selectedBooking.spaBookingPreference !== "later");
-                    if (canAdminDeactivateSlot) {
+                    if (canAdminDeactivateSlot)
                       title = `Cliquer pour DÉSactiver le créneau ${slot}`;
-                    } else {
+                    else {
                       title = `Cliquer pour RÉSERVER ${slot} pour ${
                         selectedBooking.guestName ||
                         `${selectedBooking.firstName} ${selectedBooking.lastName}`
                       }`;
                       if (
                         !isDateWithinBookingStay(selectedDate, selectedBooking)
-                      ) {
-                        title = `Date hors séjour. Réservation impossible pour ${slot}.`;
-                      }
+                      )
+                        title = `Date hors séjour. Réservation impossible.`;
                     }
                   }
                   return (
@@ -354,18 +337,17 @@ const SelectedDateDetailsPanel = ({
                           ) &&
                           selectedBooking.spaBookingPreference === "later")
                       }
-                      className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-1
-                        ${
-                          slotButtonDisabled ||
-                          (selectedBooking &&
-                            !isDateWithinBookingStay(
-                              selectedDate,
-                              selectedBooking
-                            ) &&
-                            selectedBooking.spaBookingPreference === "later")
-                            ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                            : "bg-green-50 text-green-700 border-green-300 hover:border-green-500 hover:bg-green-100"
-                        }`}
+                      className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                        slotButtonDisabled ||
+                        (selectedBooking &&
+                          !isDateWithinBookingStay(
+                            selectedDate,
+                            selectedBooking
+                          ) &&
+                          selectedBooking.spaBookingPreference === "later")
+                          ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                          : "bg-green-50 text-green-700 border-green-300 hover:border-green-500 hover:bg-green-100"
+                      }`}
                       title={title}
                     >
                       {slot}
@@ -376,16 +358,13 @@ const SelectedDateDetailsPanel = ({
             )}
           </div>
 
-          {/* Section for Manually Deactivated Slots */}
           <div className={isDayClosed ? "opacity-50 pointer-events-none" : ""}>
-            {" "}
-            {/* Also disable interaction if day is closed */}
             <h4 className="mb-2 text-sm font-medium text-red-700">
               Créneaux désactivés ({manuallyDeactivatedSlots.length})
             </h4>
             {manuallyDeactivatedSlots.length === 0 && !isDayClosed && (
               <div className="p-2 text-sm text-center text-gray-500 rounded bg-gray-50">
-                Aucun créneau spécifiquement désactivé pour cette date.
+                Aucun créneau spécifiquement désactivé.
               </div>
             )}
             {manuallyDeactivatedSlots.length > 0 && !isDayClosed && (
@@ -394,11 +373,7 @@ const SelectedDateDetailsPanel = ({
                   const slotButtonDisabled =
                     isOverrideSaving || isActionLoading || isLoading;
                   let title = slotButtonDisabled
-                    ? isOverrideSaving
-                      ? "Sauvegarde en cours..."
-                      : isActionLoading
-                      ? "Action en cours..."
-                      : "Chargement global..."
+                    ? "Action en cours..."
                     : `Cliquer pour RÉactiver le créneau ${slot}`;
                   return (
                     <button
@@ -406,12 +381,11 @@ const SelectedDateDetailsPanel = ({
                       type="button"
                       onClick={() => handleSlotButtonClick(slot, true)}
                       disabled={slotButtonDisabled}
-                      className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-1
-                        ${
-                          slotButtonDisabled
-                            ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                            : "bg-red-50 text-red-700 border-red-300 hover:border-red-500 hover:bg-red-100" // Deactivated style
-                        }`}
+                      className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                        slotButtonDisabled
+                          ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                          : "bg-red-50 text-red-700 border-red-300 hover:border-red-500 hover:bg-red-100"
+                      }`}
                       title={title}
                     >
                       {slot}
@@ -421,15 +395,17 @@ const SelectedDateDetailsPanel = ({
               </div>
             )}
           </div>
+
+          {/* --- RENDER THE NEW SECTION HERE --- */}
+          {renderWordPressBookingsSection()}
+
           {!selectedBooking &&
             !isDayClosed &&
             (availableSlots.length > 0 ||
               manuallyDeactivatedSlots.length > 0) && (
               <div className="p-2 mt-4 text-sm text-center text-yellow-600 border border-yellow-200 rounded bg-yellow-50">
                 Sélectionnez une réservation "À programmer" pour réserver un
-                créneau disponible. Cliquez sur un créneau disponible pour le
-                désactiver, ou sur un créneau désactivé pour le réactiver (si
-                aucune réservation "Plus tard" n'est sélectionnée).
+                créneau.
               </div>
             )}
         </>
@@ -441,7 +417,6 @@ const SelectedDateDetailsPanel = ({
     <div className="mt-4">
       <h4 className="mb-2 text-sm font-medium">
         Réservations planifiées ({selectedDateBookings.length})
-        {isLoading && selectedDateBookings.length === 0 && " (Mise à jour...)"}
       </h4>
       {bookingsError && (
         <div className="p-2 mb-3 text-sm text-red-600 border border-red-200 rounded bg-red-50">
@@ -461,36 +436,12 @@ const SelectedDateDetailsPanel = ({
               const startTime = booking.spaDateTimeObj;
               const endTime = booking.spaEndDateTimeObj;
               let displayTimeRange = "Heure invalide";
-
               if (startTime && !isNaN(startTime.getTime())) {
                 displayTimeRange = format(startTime, "HH:mm", { locale: fr });
-                if (
-                  endTime &&
-                  !isNaN(endTime.getTime()) &&
-                  endTime > startTime
-                ) {
+                if (endTime && !isNaN(endTime.getTime()) && endTime > startTime)
                   displayTimeRange += ` - ${format(endTime, "HH:mm", {
                     locale: fr,
                   })}`;
-                } else if (
-                  booking.spaSlots?.length > 0 &&
-                  spaSettings?.slotDurationMinutes
-                ) {
-                  const duration =
-                    booking.spaSlots.length * spaSettings.slotDurationMinutes;
-                  const calculatedEnd = new Date(
-                    startTime.getTime() + duration * 60000
-                  );
-                  if (calculatedEnd > startTime) {
-                    displayTimeRange += ` - ${format(calculatedEnd, "HH:mm", {
-                      locale: fr,
-                    })} (estimé)`;
-                  } else {
-                    displayTimeRange += ` (Durée invalide)`;
-                  }
-                } else {
-                  displayTimeRange += ` (Fin manquante/invalide)`;
-                }
               }
               return (
                 <button
@@ -502,7 +453,7 @@ const SelectedDateDetailsPanel = ({
                   title={`Voir détails pour ${
                     booking.guestName ||
                     `${booking.firstName} ${booking.lastName}`
-                  } - ${booking.property}`}
+                  }`}
                 >
                   <div className="text-sm font-medium">{displayTimeRange}</div>
                   <div className="text-xs">
@@ -564,9 +515,7 @@ const SelectedDateDetailsPanel = ({
           </button>
         </nav>
       </div>
-
-      {/*isLoading is the overall loading from parent including bookings, settings, and the initial slots API call */}
-      {isLoading && activeTab !== "override" ? ( // Show general loading for slot/scheduled tabs if parent is loading
+      {isLoading && activeTab !== "override" ? (
         <div className="p-4 mt-4 text-center text-blue-600">
           Chargement des données...
         </div>

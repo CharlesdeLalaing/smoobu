@@ -1,4 +1,5 @@
-// File: src/hooks/useSpaCalendarData.js
+// File: src/components/spa/useSpaCalendarData.js
+
 import { useState, useEffect, useCallback } from "react";
 import { format, startOfMonth, endOfMonth, parseISO, isValid } from "date-fns";
 import axios from "axios";
@@ -11,8 +12,6 @@ import {
   doc,
 } from "firebase/firestore";
 import { db } from "../../firebase"; // Adjust path as needed
-
-
 import { parseBookingDateTime } from "./spaCalendarUtils";
 
 export const useSpaSettings = () => {
@@ -111,9 +110,7 @@ export const useBookingsForMonth = (month) => {
           : null;
 
         const rawSpaDateTime = data.spaDateTime;
-        const spaDateTimeObj = parseBookingDateTime(rawSpaDateTime); // Call your utility
-
-       
+        const spaDateTimeObj = parseBookingDateTime(rawSpaDateTime);
         const spaEndDateTimeObj = parseBookingDateTime(data.spaEndDateTime);
 
         let spaInfoProcessed = null;
@@ -149,7 +146,7 @@ export const useBookingsForMonth = (month) => {
             departureDateObj && isValid(departureDateObj)
               ? departureDateObj
               : null,
-          spaDateTimeObj: spaDateTimeObj, // Crucial: this must be a valid Date or null
+          spaDateTimeObj: spaDateTimeObj,
           spaEndDateTimeObj: spaEndDateTimeObj,
           spaInfo: spaInfoProcessed,
           needsScheduling:
@@ -160,9 +157,6 @@ export const useBookingsForMonth = (month) => {
       });
 
       setBookings(fetchedBookings);
-      // if (fetchedBookings.find(b => b.id === "97475833")) { // Log the final processed booking if found
-      //   console.log("Final processed booking 97475833:", fetchedBookings.find(b => b.id === "97475833"));
-      // }
     } catch (err) {
       console.error("Error fetching bookings for month:", err);
       setError(err);
@@ -184,6 +178,7 @@ export const useBookingsForMonth = (month) => {
   return { bookings, loading, error, refetch: fetchBookingsForMonth };
 };
 
+// --- THIS IS THE CORRECTED HOOK ---
 export const useAvailableSlots = (
   selectedDate,
   selectedBooking,
@@ -192,6 +187,10 @@ export const useAvailableSlots = (
   const [availableSlots, setAvailableSlots] = useState([]);
   const [manuallyDeactivatedSlots, setManuallyDeactivatedSlots] = useState([]);
   const [isDayClosed, setIsDayClosed] = useState(false);
+
+  // 1. Add new state for the WordPress bookings
+  const [wordpressBookings, setWordpressBookings] = useState([]);
+
   const [apiSlotDataLoading, setApiSlotDataLoading] = useState(false);
   const [apiSlotDataError, setApiSlotDataError] = useState(null);
   const [overrideData, setOverrideData] = useState(null);
@@ -199,15 +198,17 @@ export const useAvailableSlots = (
   const [overrideError, setOverrideError] = useState(null);
 
   const fetchSlotsAndOverride = useCallback(
-    async (dateToFetch, bookingForContext /* currentSpaSettings */) => {
+    async (dateToFetch, bookingForContext) => {
       if (
         !dateToFetch ||
         !(dateToFetch instanceof Date) ||
         !isValid(dateToFetch)
       ) {
+        // Reset all states if the date is invalid or cleared
         setAvailableSlots([]);
         setManuallyDeactivatedSlots([]);
         setIsDayClosed(false);
+        setWordpressBookings([]); // Also reset the new state
         setApiSlotDataLoading(false);
         setApiSlotDataError(null);
         setOverrideData(null);
@@ -215,7 +216,10 @@ export const useAvailableSlots = (
         setOverrideError(null);
         return;
       }
+
       const dateStr = format(dateToFetch, "yyyy-MM-dd");
+
+      // Fetch override data (no changes here)
       setOverrideLoading(true);
       setOverrideError(null);
       try {
@@ -229,11 +233,11 @@ export const useAvailableSlots = (
       } catch (err) {
         console.error(`Error fetching override doc for ${dateStr}:`, err);
         setOverrideError(err);
-        setOverrideData(null);
       } finally {
         setOverrideLoading(false);
       }
 
+      // Fetch slot availability from API
       setApiSlotDataLoading(true);
       setApiSlotDataError(null);
       try {
@@ -241,6 +245,7 @@ export const useAvailableSlots = (
           import.meta.env.VITE_API_URL || "http://localhost:3000";
         const apiEndpoint = `${apiUrlBase}/api/spa/availability`;
         const params = { date: dateStr };
+
         if (
           bookingForContext?.arrivalDateObj &&
           isValid(bookingForContext.arrivalDateObj)
@@ -259,21 +264,28 @@ export const useAvailableSlots = (
             "yyyy-MM-dd"
           );
         }
+
         const response = await axios.get(apiEndpoint, { params });
-        if (response.status !== 200)
+        if (response.status !== 200) {
           throw new Error(
             response.data?.message || `API status ${response.status}`
           );
+        }
+
         const data = response.data;
+
+        // 2. Set ALL state variables from the API response
         setAvailableSlots(data.availableSlots || []);
         setManuallyDeactivatedSlots(data.manuallyDeactivatedSlots || []);
         setIsDayClosed(data.isClosed || false);
+        setWordpressBookings(data.wordpressBookings || []); // Set the new state here
       } catch (err) {
         console.error(`Error fetching slot data for ${dateStr}:`, err);
         setApiSlotDataError(err);
         setAvailableSlots([]);
         setManuallyDeactivatedSlots([]);
         setIsDayClosed(false);
+        setWordpressBookings([]); // Reset on error as well
       } finally {
         setApiSlotDataLoading(false);
       }
@@ -285,18 +297,22 @@ export const useAvailableSlots = (
     if (selectedDate && isValid(selectedDate)) {
       fetchSlotsAndOverride(selectedDate, selectedBooking, spaSettings);
     } else {
+      // Clear all data if no date is selected
       setAvailableSlots([]);
       setManuallyDeactivatedSlots([]);
       setIsDayClosed(false);
+      setWordpressBookings([]);
       setApiSlotDataLoading(false);
       setOverrideData(null);
     }
   }, [selectedDate, selectedBooking, spaSettings, fetchSlotsAndOverride]);
 
+  // 3. Return the new state variable along with the others
   return {
     availableSlots,
     manuallyDeactivatedSlots,
     isDayClosed,
+    wordpressBookings, // Make the data available to the component
     loading: apiSlotDataLoading || overrideLoading,
     error: apiSlotDataError || overrideError,
     overrideData,
