@@ -283,9 +283,10 @@ export function calculateBookingTotal(booking) {
     booking.priceDetails?.longStayDiscount || 0
   );
   let couponDiscount = parseFloat(
-    booking.priceDetails?.promoCode?.amount ||
-      booking.priceDetails?.couponDiscount ||
-      0
+    booking.couponApplied?.discount || // 1. Check the modern, correct structure first.
+      booking.priceDetails?.couponDiscount || // 2. Fallback for older data.
+      booking.priceDetails?.promoCode?.amount || // 3. Fallback for other legacy data.
+      0 // 4. Default to zero if no discount is found.
   );
   let taxeDeSejour = 0;
 

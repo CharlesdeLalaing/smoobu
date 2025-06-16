@@ -16,18 +16,18 @@ import { mergeAndSortExtras, getCleanExtrasFromPriceElements } from "./utils/ext
  */
 
 export function calculateBookingTotal(booking) {
-  // Check if this is an Airbnb or Booking.com booking
+  // For debugging, you can uncomment this to see the exact data being processed
+  // console.log("Calculating total for booking:", booking);
+
   const portalName =
     booking.portalName || booking.channelName || booking.portal;
   const isAirbnb = portalName === "Airbnb";
   const isBookingCom = portalName === "Booking.com";
 
-  // Get price elements if available
   const priceElements = booking.priceDetails?.priceElements || [];
 
-  // Calculate room price components
   let basePrice = parseFloat(
-    booking.priceDetails?.basePrice || booking.basePrice || 0
+    booking.priceDetails?.basePrice || booking.basePrice || booking.price || 0
   );
   let linenFee = parseFloat(
     booking.priceDetails?.linenFee || booking.linenFee || 0
@@ -35,80 +35,74 @@ export function calculateBookingTotal(booking) {
   let longStayDiscount = parseFloat(
     booking.priceDetails?.longStayDiscount || 0
   );
+
+  // =================================================================
+  // === THIS IS THE CRITICAL FIX ===
+  // The old code did not check `booking.couponApplied.discount`.
+  // This new code checks the correct location first.
+  // =================================================================
   let couponDiscount = parseFloat(
-    booking.priceDetails?.promoCode?.amount ||
-      booking.priceDetails?.couponDiscount ||
-      0
+    booking.couponApplied?.discount || // CHECK HERE FIRST: This is where modern bookings save it.
+      booking.priceDetails?.couponDiscount || // Fallback for older data structures.
+      booking.priceDetails?.promoCode?.amount || // Another fallback.
+      0 // Default to 0 if nothing is found.
   );
+
   let taxeDeSejour = 0;
 
-  // For Airbnb, handle different price calculation
+  // This special block for Airbnb might accidentally reset the coupon.
+  // Let's ensure it ONLY runs for Airbnb.
   if (isAirbnb && priceElements.length > 0) {
-    // Try to find the base price element
     const basePriceElement = priceElements.find(
       (el) =>
         el && el.name && (el.name === "Base Price" || el.name === "base_price")
     );
-
     if (basePriceElement) {
       basePrice = parseFloat(basePriceElement.amount) || 0;
     }
-
-    // For Airbnb, reset other components that might not apply
+    // These resets are ONLY for Airbnb bookings.
     longStayDiscount = 0;
     couponDiscount = 0;
-  } 
-  // For Booking.com, handle taxe de séjour specially
-  else if (isBookingCom) {
-    // Look for taxe de séjour in priceElements
+  } else if (isBookingCom) {
     const taxeElement = priceElements.find(
       (el) => el && el.name && el.name.toLowerCase().includes("taxe de séjour")
     );
-    
     if (taxeElement) {
       taxeDeSejour = parseFloat(taxeElement.amount) || 0;
     }
   }
 
-  // Calculate room subtotal
+  // Calculate room subtotal (Base + Fees - Discounts)
   let roomTotal = basePrice + linenFee - longStayDiscount - couponDiscount;
-  
-  // For Booking.com, include taxe de séjour in the room total
+
   if (isBookingCom) {
     roomTotal += taxeDeSejour;
   }
 
-  // Get clean extras
+  // --- Extras Calculation ---
   let displayExtras = [];
-
-  // If we have price elements, use those for a consistent display
   if (priceElements.length > 0) {
     displayExtras = getCleanExtrasFromPriceElements(priceElements, portalName);
-  }
-  // Otherwise fall back to the extras array
-  else if (booking.extras?.length > 0) {
+  } else if (booking.extras?.length > 0) {
     displayExtras = booking.extras;
   }
 
-  // For Booking.com, remove TVA and taxe de séjour from extras since they're in the room price
   if (isBookingCom) {
     displayExtras = displayExtras.filter(
-      (extra) => 
-        !extra.name.includes("TVA") && 
+      (extra) =>
+        !extra.name.includes("TVA") &&
         !extra.name.toLowerCase().includes("taxe de séjour")
     );
   }
 
-  // Merge duplicate extras
   const mergedExtras = mergeAndSortExtras(displayExtras);
-
-  // Calculate extras total
   const extrasTotal = mergedExtras.reduce(
     (sum, extra) => sum + parseFloat(extra.amount || 0),
     0
   );
 
-  // Calculate total price
+  // --- FINAL CALCULATION ---
+  // The final total is the calculated room total PLUS the extras total.
   return roomTotal + extrasTotal;
 }
 
