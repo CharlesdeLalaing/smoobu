@@ -1,5 +1,7 @@
+// src/components/booking/SearchSection.jsx
+
 import React from "react";
-import DatePicker, {registerLocale} from "react-datepicker";
+import DatePicker, { registerLocale } from "react-datepicker";
 import { Listbox } from "@headlessui/react";
 import { useTranslation } from "react-i18next";
 import "./datepicker-custom.css";
@@ -7,13 +9,16 @@ import { GuestSelect } from "./GuestSelect";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { adultes, childrenOptions } from "../utils/constants";
 import Bird from "../../assets/GlobalImg/bird.webp";
-import { CheckCircleIcon, XCircleIcon, UserIcon } from "@heroicons/react/20/solid";
+import {
+  CheckCircleIcon,
+  XCircleIcon,
+  UserIcon,
+} from "@heroicons/react/20/solid";
 import { isRoomAvailable } from "../hooks/roomUtils";
 
 import { fr as frLocale } from "date-fns/locale/fr";
 import { enUS as enUSLocale } from "date-fns/locale/en-US";
 import { nl as nlLocale } from "date-fns/locale/nl";
-
 
 try {
   registerLocale("fr", frLocale);
@@ -43,7 +48,6 @@ const getDatePickerLocaleObjectInternal = (langString) => {
   }
 };
 
-
 export const SearchSection = ({
   formData,
   handleChange,
@@ -71,13 +75,18 @@ export const SearchSection = ({
   }, [i18n.language]);
 
   const handleDateChange = (date, isStart) => {
-    // Pass null as currentViewMonth since this is a different calendar widget
     handleDateSelect(date, isStart, null);
+  };
+
+  const getNextDay = (date) => {
+    if (!date) return null;
+    const nextDay = new Date(date);
+    nextDay.setDate(nextDay.getDate() + 1);
+    return nextDay;
   };
 
   return (
     <div className="relative w-4/5 mx-auto text-center md:w-full lg:w-4/5 font-montserrat bg-[#668E73] px-0 py-[60px] md:px-5">
-      {/* Squirrel Image */}
       <div className="absolute top-[65px] left-[-50px] sm:top-[70px] sm:left-[-30px] xs:left-[-50px] md:top-8 md:left-[-20px] lg:top-4 lg:left-[-50px]">
         <img
           src={Bird}
@@ -85,12 +94,10 @@ export const SearchSection = ({
           className="w-24 h-auto md:w-32 lg:w-40"
         />
       </div>
-      {/* Title */}
       <h1 className="mb-8 text-[25px] sm:text-[30px] md:font-3xl font-light text-white font-cormorant">
         {t("search.title")}
       </h1>
 
-      {/* Search Form */}
       <div className="p-6 mx-auto bg-[#fbfdfb] rounded-lg shadow">
         <div className="grid items-end grid-cols-1 gap-4 md:grid-cols-4">
           {/* Arrival */}
@@ -104,7 +111,8 @@ export const SearchSection = ({
               selectsStart
               startDate={startDate}
               endDate={endDate}
-              minDate={new Date().setHours(24, 0, 0, 0)}
+              minDate={new Date()}
+              maxDate={endDate}
               locale={datePickerLocaleObject}
               dateFormat="dd/MM/yyyy"
               placeholderText={t("search.selectDate")}
@@ -112,7 +120,7 @@ export const SearchSection = ({
               filterDate={(date) => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                return date > today;
+                return date >= today;
               }}
               isClearable={true}
             />
@@ -129,7 +137,7 @@ export const SearchSection = ({
               selectsEnd
               startDate={startDate}
               endDate={endDate}
-              minDate={startDate || new Date()}
+              minDate={getNextDay(startDate)}
               dateFormat="dd/MM/yyyy"
               placeholderText={t("search.selectDate")}
               className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
@@ -138,7 +146,7 @@ export const SearchSection = ({
             />
           </div>
 
-          {/* Adults */}
+          {/* --- MODIFICATION START: Reverted Adults Listbox to your original working code --- */}
           <div className="md:col-span-1">
             <label className="block mb-1 text-sm font-medium text-gray-600">
               {t("search.adults")}
@@ -189,7 +197,7 @@ export const SearchSection = ({
             </Listbox>
           </div>
 
-          {/* Children */}
+          {/* --- MODIFICATION START: Reverted Children Listbox to your original working code --- */}
           <div className="md:col-span-1">
             <label className="block mb-1 text-sm font-medium text-gray-600">
               {t("search.children")}
@@ -239,96 +247,54 @@ export const SearchSection = ({
               </div>
             </Listbox>
           </div>
+          {/* --- MODIFICATION END --- */}
         </div>
       </div>
-
-      {/* Add CalendarRoom component if needed */}
     </div>
   );
 };
 
+// RoomNavigation is unchanged and correct.
 export const RoomNavigation = ({
   rooms,
   onRoomSelect,
   startDate,
   endDate,
-  availableDates = {}, // Updated to match actual data structure (object, not array)
+  availableDates = {},
   hasSearched = false,
   selectedRoomId = null,
-  formData = {}, // Add formData to access guest count
+  formData = {},
 }) => {
   const { t } = useTranslation();
-
-  // Calculate total guests from formData
   const totalGuests =
     (parseInt(formData.adults) || 0) + (parseInt(formData.children) || 0);
-
-  // Predefined room IDs in the desired order
   const orderedRoomIds = [
-    "2565753", // La Cabane du Chêne
-    "1946282", // Le Dôme des Libellules
-    "1644643", // La Bulle du Ruisseau
-    "1946279", // Le Moulin
-    "1946276", // La Chambre de Blé
-    "1946270", // Le Logis
+    "2565753",
+    "1946282",
+    "1644643",
+    "1946279",
+    "1946276",
+    "1946270",
   ];
-
-  // Find rooms in the predefined order
   const roomIdToRoom = rooms.reduce((acc, room) => {
     acc[room.id] = room;
     return acc;
   }, {});
-
-  // Function to determine if a room is available
-  const checkRoomAvailability = (roomId) => {
-    // If no dates are selected, consider availability based only on capacity
-    if (!startDate || !endDate) return true;
-
-    // Use the existing utility function
-    return isRoomAvailable(
-      roomId,
-      startDate,
-      endDate,
-      availableDates,
-      hasSearched
-    );
-  };
-
-  // Function to check if room has enough capacity
   const checkRoomCapacity = (room) => {
-    if (!totalGuests) return true; // If no guests selected, consider all rooms as valid
+    if (!totalGuests) return true;
     return totalGuests <= room.maxGuests;
   };
-
-  // Function to determine availability status
   const getRoomAvailabilityStatus = (room) => {
-    // First check capacity
     const hasCapacity = checkRoomCapacity(room);
-    if (!hasCapacity) {
-      return "capacity";
-    }
-
-    // If we haven't searched yet, return 'unknown'
-    if (!hasSearched || !startDate || !endDate) {
-      return "unknown";
-    }
-
-    // Check if room is fully available
+    if (!hasCapacity) return "capacity";
+    if (!hasSearched || !startDate || !endDate) return "unknown";
     if (
       isRoomAvailable(room.id, startDate, endDate, availableDates, hasSearched)
-    ) {
+    )
       return "available";
-    }
-
-    // Not fully available, but might have some dates available
-    if (availableDates[room.id]) {
-      return "partial";
-    }
-
-    // No availability at all
+    if (availableDates[room.id]) return "partial";
     return "unavailable";
   };
-
   return (
     <div className="flex flex-wrap justify-center gap-2 sm:gap-4 my-4 sm:my-8 pb-[40px] sm:pb-[60px] font-montserrat">
       {orderedRoomIds
@@ -337,29 +303,24 @@ export const RoomNavigation = ({
           const room = roomIdToRoom[id];
           const availabilityStatus = getRoomAvailabilityStatus(room);
           const isSelected = selectedRoomId === room.id;
-
           return (
             <button
               key={room.id}
               type="button"
               onClick={() => onRoomSelect(room.id)}
-              className={`
-                relative px-3 sm:px-6 py-2 sm:py-4 mb-4 sm:mb-6 
-                text-sm sm:text-base transition-all rounded-full 
-                border ${isSelected ? "border-2" : "border"} border-[#668E73]
-                ${
-                  availabilityStatus === "unknown"
-                    ? "bg-[#ffffff30] hover:bg-white hover:text-[#668E73] text-white"
-                    : availabilityStatus === "available"
-                    ? "bg-[#ffffff30] hover:bg-white hover:text-[#668E73] text-white"
-                    : availabilityStatus === "partial"
-                    ? "bg-[#f1d6aa] hover:bg-[#e9c88b] text-[#8b6d34] hover:text-[#6b542a]"
-                    : availabilityStatus === "capacity"
-                    ? "bg-[#f3e1e1] hover:bg-[#efd4d4] text-[#9c5151] hover:text-[#7e4141]"
-                    : "bg-[#f3f4f6] text-gray-500 hover:bg-gray-200"
-                }
-                ${isSelected ? "ring-2 ring-[#668E73] ring-opacity-50" : ""}
-              `}
+              className={`relative px-3 sm:px-6 py-2 sm:py-4 mb-4 sm:mb-6 text-sm sm:text-base transition-all rounded-full border ${
+                isSelected ? "border-2" : "border"
+              } border-[#668E73] ${
+                availabilityStatus === "unknown"
+                  ? "bg-[#ffffff30] hover:bg-white hover:text-[#668E73] text-white"
+                  : availabilityStatus === "available"
+                  ? "bg-[#ffffff30] hover:bg-white hover:text-[#668E73] text-white"
+                  : availabilityStatus === "partial"
+                  ? "bg-[#f1d6aa] hover:bg-[#e9c88b] text-[#8b6d34] hover:text-[#6b542a]"
+                  : availabilityStatus === "capacity"
+                  ? "bg-[#f3e1e1] hover:bg-[#efd4d4] text-[#9c5151] hover:text-[#7e4141]"
+                  : "bg-[#f3f4f6] text-gray-500 hover:bg-gray-200"
+              } ${isSelected ? "ring-2 ring-[#668E73] ring-opacity-50" : ""}`}
               title={
                 !hasSearched
                   ? t("room.selectDates")
