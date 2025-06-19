@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import {
   isToday,
-  isPastOrToday,
+  isPastOrToday, // Reverted back to your original, working function
   formatDate,
   isSameDate,
 } from "../../utils/dateUtils";
@@ -20,9 +20,7 @@ export const CalendarDay = ({
   onDateClick,
   onDateMouseEnter,
   onDateMouseLeave,
-  // Assuming currency is passed down or globally available, e.g., 'EUR'
-  // For simplicity, let's hardcode it here, but ideally get it from props/context
-  currency = "€", // Or '$', '£', etc.
+  currency = "€",
 }) => {
   if (dayObj.empty) {
     return (
@@ -36,24 +34,21 @@ export const CalendarDay = ({
   const date = dayObj.date;
   const dateStr = formatDate(date);
 
+  // Use the function we know exists in your code
   const isPast = isPastOrToday(date);
   const isTodayDate = isToday(date);
 
-  // --- Get the price for this day ---
   const price = availabilityService.getPriceForDate(date);
-  // --- Format the price for display ---
   const formattedPrice =
     price !== null
       ? price.toLocaleString(undefined, {
-          // Use locale formatting
           style: "currency",
-          currency: currency === "€" ? "EUR" : "USD", // Map symbol to code
-          minimumFractionDigits: 0, // Optional: Adjust decimals
-          maximumFractionDigits: 0, // Optional: Adjust decimals
+          currency: currency === "€" ? "EUR" : "USD",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
         })
-      : null; // Or set to ''
+      : null;
 
-  // Determine date status (your existing logic)
   const isAvailable = availabilityService.isDateAvailable(
     date,
     startDate,
@@ -74,60 +69,64 @@ export const CalendarDay = ({
     hoveredDate,
     endDate
   );
-  const isClickable = availabilityService.isDateClickable(
+
+  // --- THE CORE FIX: This logic is correct and remains ---
+  // First, get the general clickability from the service.
+  // This already checks for past dates, availability, etc.
+  let isClickable = availabilityService.isDateClickable(
     date,
     startDate,
     endDate,
     true
-  ); // Assuming true for hasSearched here
+  );
 
-  // Build classes (your existing logic)
+  // Now, add the specific rule to prevent double-clicking the start date.
+  if (startDate && !endDate && isSameDate(date, startDate)) {
+    isClickable = false;
+  }
+  // --- END OF FIX ---
+
   let classNames = "calendar-day";
   if (isPast) classNames += isTodayDate ? " today" : " past-date";
-  if (!isAvailable && !isPartial)
-    classNames +=
-      " unavailable"; // Adjusted logic from previous discussion might be needed here
-  else if (isCheckout) classNames += " checkout-only";
-  else if (isCheckin) classNames += " checkin-only";
-  else if (isPartial) classNames += " partially-available";
+  if (!isAvailable && !isPartial) {
+    classNames += " unavailable";
+  } else if (isCheckout) {
+    classNames += " checkout-only";
+  } else if (isCheckin) {
+    classNames += " checkin-only";
+  } else if (isPartial) {
+    classNames += " partially-available";
+  }
   if (isSelected) classNames += " selected";
   if (isInRange) classNames += " in-range";
   if (isInHoverRange) classNames += " in-hover-range";
+
+  // Simplified back to the original logic. The `isClickable` variable should be the single source of truth.
   if (isClickable) classNames += " clickable";
 
-  // --- Determine if price should be shown ---
   // Don't show price for past dates, or if no price exists
   const showPrice = !isPast && formattedPrice !== null;
-  // Optional: You might also hide price on 'unavailable' days depending on preference
-  // const showPrice = !isPast && formattedPrice !== null && (isAvailable || isPartial);
 
   return (
     <div
       key={`day-${monthDate.getMonth()}-${date.getDate()}`}
       className={classNames}
-      onClick={() => isClickable && onDateClick(date)} // Only trigger click if clickable
+      onClick={() => isClickable && onDateClick(date)}
       onMouseEnter={() => onDateMouseEnter(date)}
       onMouseLeave={onDateMouseLeave}
       data-date={dateStr}
-      // data-status={dataStatus} // Keep if needed
-      // Remove inline styles if managed by classes
     >
-      {/* --- Container for Number and Price (using Flexbox) --- */}
       <div className="day-content">
         <span className="calendar-day-number">{date.getDate()}</span>
-        {/* --- Conditionally render the price --- */}
         {showPrice && (
-          <span className="calendar-day-price">
-            {/* Display formatted price */}
-            {formattedPrice}
-          </span>
+          <span className="calendar-day-price">{formattedPrice}</span>
         )}
       </div>
     </div>
   );
 };
 
-// --- PropTypes (add currency if passed as prop) ---
+// PropTypes are unchanged and correct
 CalendarDay.propTypes = {
   dayObj: PropTypes.shape({
     date: PropTypes.instanceOf(Date),
@@ -142,4 +141,5 @@ CalendarDay.propTypes = {
   onDateClick: PropTypes.func.isRequired,
   onDateMouseEnter: PropTypes.func.isRequired,
   onDateMouseLeave: PropTypes.func.isRequired,
+  currency: PropTypes.string,
 };

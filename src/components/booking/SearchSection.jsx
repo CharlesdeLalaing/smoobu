@@ -57,15 +57,15 @@ export const SearchSection = ({
   handleCheckAvailability,
   dateError,
   resetAvailability,
-  availableDates, // Added prop
-  hasSearched, // Added prop
-  calendarViewMonth, // Added prop
-  onCalendarViewChange, // Added prop
+  availableDates,
+  hasSearched,
+  calendarViewMonth,
+  onCalendarViewChange,
 }) => {
   const { t, i18n } = useTranslation();
 
   const handleSearch = (e) => {
-    e.preventDefault(); // Prevent form refresh
+    e.preventDefault();
     handleCheckAvailability();
   };
 
@@ -84,6 +84,13 @@ export const SearchSection = ({
     nextDay.setDate(nextDay.getDate() + 1);
     return nextDay;
   };
+
+  // --- MODIFICATION START ---
+  // Create a 'tomorrow' variable to use as the minimum date.
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0); // Normalize to the start of the day
+  // --- MODIFICATION END ---
 
   return (
     <div className="relative w-4/5 mx-auto text-center md:w-full lg:w-4/5 font-montserrat bg-[#668E73] px-0 py-[60px] md:px-5">
@@ -111,17 +118,14 @@ export const SearchSection = ({
               selectsStart
               startDate={startDate}
               endDate={endDate}
-              minDate={new Date()}
+              // --- MODIFICATION ---
+              // The minimum selectable date is now tomorrow.
+              minDate={tomorrow}
               maxDate={endDate}
               locale={datePickerLocaleObject}
               dateFormat="dd/MM/yyyy"
               placeholderText={t("search.selectDate")}
               className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
-              filterDate={(date) => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                return date >= today;
-              }}
               isClearable={true}
             />
           </div>
@@ -146,7 +150,7 @@ export const SearchSection = ({
             />
           </div>
 
-          {/* --- MODIFICATION START: Reverted Adults Listbox to your original working code --- */}
+          {/* Adults (original working code) */}
           <div className="md:col-span-1">
             <label className="block mb-1 text-sm font-medium text-gray-600">
               {t("search.adults")}
@@ -174,7 +178,6 @@ export const SearchSection = ({
                     />
                   </span>
                 </Listbox.Button>
-
                 <Listbox.Options className="absolute z-10 w-full py-1 mt-1 overflow-auto text-base bg-[#fbfdfb] rounded-md shadow-lg max-h-56 ring-1 ring-black/5 focus:outline-none sm:text-sm">
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
                     <Listbox.Option
@@ -197,7 +200,7 @@ export const SearchSection = ({
             </Listbox>
           </div>
 
-          {/* --- MODIFICATION START: Reverted Children Listbox to your original working code --- */}
+          {/* Children (original working code) */}
           <div className="md:col-span-1">
             <label className="block mb-1 text-sm font-medium text-gray-600">
               {t("search.children")}
@@ -210,7 +213,7 @@ export const SearchSection = ({
             >
               <div className="relative">
                 <Listbox.Button
-                  id="adults"
+                  id="adults" // Note: This ID is duplicated but reflects your original working code
                   className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
                 >
                   <span className="flex items-center">
@@ -225,7 +228,6 @@ export const SearchSection = ({
                     />
                   </span>
                 </Listbox.Button>
-
                 <Listbox.Options className="absolute z-10 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-56 ring-1 ring-black/5 focus:outline-none sm:text-sm">
                   {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
                     <Listbox.Option
@@ -247,14 +249,13 @@ export const SearchSection = ({
               </div>
             </Listbox>
           </div>
-          {/* --- MODIFICATION END --- */}
         </div>
       </div>
     </div>
   );
 };
 
-// RoomNavigation is unchanged and correct.
+// The RoomNavigation component is correct and does not need changes.
 export const RoomNavigation = ({
   rooms,
   onRoomSelect,
