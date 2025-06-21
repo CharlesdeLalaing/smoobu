@@ -343,8 +343,14 @@
           "selectedOutOf": "Selected {{count}} of {{max}}",
           "included": "Included",
           "needsMoreSelections": "{{count}} more to choose",
-          "goToDrinksButton" : {
-            "nextStepText" : "Next : Choose your drinks"
+          "goToDrinksButton": {
+            "nextStepText": "Next : Choose your drinks"
+          },
+          "nextOfferButton": {
+            "text": "Next"
+          },
+          "prevOfferButton": {
+            "text": "Back"
           },
           "validation": {
             "incomplete": "Please complete your drink selection for: "

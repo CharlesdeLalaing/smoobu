@@ -346,6 +346,12 @@
           "needsMoreSelections": "{{count}} encore à choisir",
           "goToDrinksButton": {
             "nextStepText": "Suivant : Choisir vos boissons"
+          },
+          "nextOfferButton": {
+            "text": "Suivant"
+          },
+          "prevOfferButton": {
+            "text": "Précédent"
           }
         },
         "formulesRepas": {

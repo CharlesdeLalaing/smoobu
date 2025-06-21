@@ -519,7 +519,7 @@ const BookingForm = () => {
               style={{ backgroundColor: "#FBFDFB" }}
             >
               {formData.apartmentId && (
-                <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-200px)]">
+                <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-100px)]">
                   <div className="w-full h-full lg:w-1/2">
                     <div className="h-full overflow-auto">
                       <PropertyDetails

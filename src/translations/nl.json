@@ -322,6 +322,12 @@
         "goToDrinksButton" : {
             "nextStepText" : "Volgende : Je drankjes kiezen"
           },
+          "nextOfferButton": {
+            "text": "Volgende"
+          },
+          "prevOfferButton": {
+            "text": "Vorige"
+          },
         "tabTitle": "Kies Inbegrepen Dranken"
       },
       "formulesRepas": {

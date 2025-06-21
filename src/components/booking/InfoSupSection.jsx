@@ -5,13 +5,14 @@ import LongBird from "../../assets/GlobalImg/long_bird.webp";
 import SpaScheduler from "../spa/SpaScheduler";
 import { useSpaSettings } from "../spa/useSpaCalendarData";
 import {
-  // extraCategories, // No longer directly used in this component's render if not needed elsewhere
+  // extraCategories,
   ALL_DRINK_ITEMS_MAP,
   DRINK_OFFER_CONFIG,
 } from "../extraCategories";
 import FreeDrinksSelection from "./FreeDrinksSelection";
-import { ArrowRight } from "lucide-react";
-
+// START OF MODIFICATION: Import ArrowLeft for the new "Previous" button
+import { ArrowRight, ArrowLeft } from "lucide-react";
+// END OF MODIFICATION
 
 const SPA_ITEM_IDS = [
   "formuleSpa",
@@ -79,7 +80,6 @@ export const InfoSupSection = ({
 
   const shouldShowDrinksSection = activeDrinkOfferInstanceList.length > 0;
 
-  // --- Existing useEffects for tab management (kept as is) ---
   useEffect(() => {
     if (shouldShowSpaSection) {
       if (
@@ -135,7 +135,38 @@ export const InfoSupSection = ({
     activeDrinkOfferInstanceList,
     activeDrinkOfferInstanceId,
   ]);
-  // --- End of existing useEffects ---
+
+  // START OF MODIFICATION: Logic for drink offer navigation
+  const currentDrinkOfferIndex = useMemo(() => {
+    if (
+      !activeDrinkOfferInstanceId ||
+      activeDrinkOfferInstanceList.length === 0
+    ) {
+      return -1;
+    }
+    return activeDrinkOfferInstanceList.findIndex(
+      (instance) => instance.instanceId === activeDrinkOfferInstanceId
+    );
+  }, [activeDrinkOfferInstanceId, activeDrinkOfferInstanceList]);
+
+  const handleNextDrinkOffer = () => {
+    const nextIndex = currentDrinkOfferIndex + 1;
+    if (nextIndex < activeDrinkOfferInstanceList.length) {
+      setActiveDrinkOfferInstanceId(
+        activeDrinkOfferInstanceList[nextIndex].instanceId
+      );
+    }
+  };
+
+  const handlePrevDrinkOffer = () => {
+    const prevIndex = currentDrinkOfferIndex - 1;
+    if (prevIndex >= 0) {
+      setActiveDrinkOfferInstanceId(
+        activeDrinkOfferInstanceList[prevIndex].instanceId
+      );
+    }
+  };
+  // END OF MODIFICATION
 
   const spaMinDate = useMemo(
     () => (formData.arrivalDate ? new Date(formData.arrivalDate) : undefined),
@@ -155,7 +186,6 @@ export const InfoSupSection = ({
   };
 
   const onApplyCouponClick = async () => {
-    // ... (coupon logic - kept as is)
     if (appliedCoupon) return;
     if (!couponInput) {
       setLocalCouponError(t("booking.coupon.errors.enterCode"));
@@ -238,7 +268,6 @@ export const InfoSupSection = ({
         aria-hidden="true"
       />
       <div className="relative z-10">
-        {/* Main Tab Navigation */}
         {(shouldShowSpaSection || shouldShowDrinksSection) && (
           <div className="flex flex-wrap justify-start mb-4 border-b border-gray-300">
             {shouldShowSpaSection && (
@@ -290,7 +319,6 @@ export const InfoSupSection = ({
           </div>
         )}
 
-        {/* SPA Section Content */}
         {mainActiveTab === "spa" && shouldShowSpaSection && (
           <>
             {spaValidationError && (
@@ -331,15 +359,12 @@ export const InfoSupSection = ({
               )}
             </div>
 
-            {/* --- MODIFIED BUTTON TO GO TO DRINKS --- */}
             {showGoToDrinksButton && (
               <div className="flex justify-center mt-6 mb-2">
-                {" "}
-                {/* Adjusted margins */}
                 <button
                   type="button"
                   onClick={() => setMainActiveTab("drinks")}
-                  className="px-4 py-2 text-base font-medium text-white bg-[#668E73] rounded-md shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-[#557761] focus:ring-opacity-75"
+                  className="flex items-center px-4 py-2 text-base font-medium text-white bg-[#668E73] rounded-md shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-[#557761] focus:ring-opacity-75"
                   aria-label={t(
                     "extras.drinks.goToDrinksButton.ariaLabel",
                     "Passer à la sélection des boissons"
@@ -349,16 +374,13 @@ export const InfoSupSection = ({
                     "extras.drinks.goToDrinksButton.nextStepText",
                     "Suivant : Choisir vos boissons"
                   )}
-                      <ArrowRight size={18} className="inline ml-2" /> 
-  
+                  <ArrowRight size={18} className="inline ml-2" />
                 </button>
               </div>
             )}
-            {/* --- END OF MODIFIED BUTTON --- */}
           </>
         )}
 
-        {/* Drinks Section Content */}
         {mainActiveTab === "drinks" && shouldShowDrinksSection && (
           <div>
             {drinkValidationError && (
@@ -491,6 +513,46 @@ export const InfoSupSection = ({
                     </div>
                   );
                 })}
+
+              {/* START OF MODIFICATION: Drink offer navigation buttons */}
+              {activeDrinkOfferInstanceList.length > 1 && (
+                <div className="flex items-center justify-center gap-4 mt-6">
+                  {/* Previous Button */}
+                  {currentDrinkOfferIndex > 0 && (
+                    <button
+                      type="button"
+                      onClick={handlePrevDrinkOffer}
+                      className="flex items-center px-4 py-2 text-base font-medium text-[#668E73] bg-white border border-[#668E73] rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#557761] focus:ring-opacity-75"
+                      aria-label={t(
+                        "extras.drinks.prevOfferButton.ariaLabel",
+                        "Offre précédente"
+                      )}
+                    >
+                      <ArrowLeft size={18} className="inline mr-2" />
+                      {t("extras.drinks.prevOfferButton.text", "Précédent")}
+                    </button>
+                  )}
+
+                  {/* Next Button */}
+                  {currentDrinkOfferIndex <
+                    activeDrinkOfferInstanceList.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={handleNextDrinkOffer}
+                      className="flex items-center px-4 py-2 text-base font-medium text-white bg-[#668E73] rounded-md shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-[#557761] focus:ring-opacity-75"
+                      aria-label={t(
+                        "extras.drinks.nextOfferButton.ariaLabel",
+                        "Passer à l'offre suivante"
+                      )}
+                    >
+                      {t("extras.drinks.nextOfferButton.text", "Suivant")}
+                      <ArrowRight size={18} className="inline ml-2" />
+                    </button>
+                  )}
+                </div>
+              )}
+              {/* END OF MODIFICATION */}
+
               {activeDrinkOfferInstanceList.length === 0 && (
                 <p className="p-4 text-sm text-gray-500">
                   {t(
@@ -503,7 +565,6 @@ export const InfoSupSection = ({
           </div>
         )}
 
-        {/* ... Tab prompt and coupon/notice sections - kept as is ... */}
         {mainActiveTab === "" &&
           (shouldShowSpaSection || shouldShowDrinksSection) && (
             <div className="pt-2 pb-2 mt-2 mb-2 text-sm text-gray-500">
@@ -516,9 +577,7 @@ export const InfoSupSection = ({
         {mainActiveTab === "" &&
           !shouldShowSpaSection &&
           !shouldShowDrinksSection && (
-            <div className="pt-2 pb-2 mt-2 mb-2 text-sm text-gray-500">
-              {/* Placeholder if no tabs are relevant */}
-            </div>
+            <div className="pt-2 pb-2 mt-2 mb-2 text-sm text-gray-500"></div>
           )}
 
         <div className="pt-6 space-y-6">

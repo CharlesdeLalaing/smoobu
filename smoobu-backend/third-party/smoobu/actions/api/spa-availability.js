@@ -20,7 +20,7 @@ const minutesToTime = (totalMinutes) => {
 
 const FIXED_ARRIVAL_DAY_START_TIME = "14:00";
 const DEPARTURE_DAY_START_TIME = "06:00";
-const DEPARTURE_DAY_END_TIME = "10:00";
+const DEPARTURE_DAY_END_TIME = "13:00";
 const WIDEST_POSSIBLE_START_TIME = "06:00";
 const WIDEST_POSSIBLE_END_TIME = "23:59";
 
