@@ -6,8 +6,9 @@ import { normalizeBookingId } from "../../../../../helpers/normalize-booking-id.
  */
 export class BookingRepository {
   /**
-   * Fetches all existing bookings from Firebase
-   * @returns {Promise<Map>} - Map of booking IDs to booking data
+   * Fetches all existing bookings from Firebase and creates a map.
+   * Each Smoobu ID maps to a SINGLE booking object.
+   * @returns {Promise<Map<string, object>>} - Map of Smoobu IDs to a single booking data object.
    */
   async fetchExistingBookings() {
     const existingBookingsSnapshot = await db.collection("bookings").get();
@@ -15,35 +16,28 @@ export class BookingRepository {
 
     existingBookingsSnapshot.forEach((doc) => {
       const data = doc.data();
+      const bookingWithId = {
+        firebaseDocId: doc.id, // <-- IMPORTANT: Explicitly add the Firebase document ID.
+        ...data,
+      };
 
-      // Use normalized ID to ensure consistent matching
+      // Use normalized ID to ensure consistent matching.
+      // We only store the FIRST booking found for a given ID to keep the map simple.
       if (data.smoobuId) {
         const normalizedId = normalizeBookingId(data.smoobuId);
         if (!existingBookingMap.has(normalizedId)) {
-          existingBookingMap.set(normalizedId, []);
+          existingBookingMap.set(normalizedId, bookingWithId);
         }
-        existingBookingMap.get(normalizedId).push({
-          id: doc.id,
-          ...data,
-        });
       }
 
-      // Also add by smoobuReservationId if it exists and is different
-      if (
-        data.smoobuReservationId &&
-        data.smoobuReservationId !== data.smoobuId
-      ) {
+      // Also add by smoobuReservationId if it exists
+      if (data.smoobuReservationId) {
         const normalizedResId = normalizeBookingId(data.smoobuReservationId);
         if (!existingBookingMap.has(normalizedResId)) {
-          existingBookingMap.set(normalizedResId, []);
+          existingBookingMap.set(normalizedResId, bookingWithId);
         }
-        existingBookingMap.get(normalizedResId).push({
-          id: doc.id,
-          ...data,
-        });
       }
     });
-
 
     return existingBookingMap;
   }

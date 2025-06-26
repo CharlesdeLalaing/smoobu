@@ -1,50 +1,23 @@
 import { normalizeBookingId } from "../../../../../helpers/normalize-booking-id.js";
 import { extractPricingInfo } from "../../../../../helpers/pricing/extract-pricing-info.js";
 import { processExtrasWithPersons } from "../../../../../third-party/smoobu/process-extras-with-persons.js";
-import { roomNames } from "../../../../../config/config.js";
+import { roomNames, portalNames } from "../../../../../config/config.js";
 import { mergeExtras, calculateExtrasTotal } from "./extras-merger.js";
-import { portalNames } from "../../../../../config/config.js";
 
 const getPortalName = (portal) => {
-  // Handle null/undefined
   if (!portal) return "Website";
-
-  // Check if it's already a mapped portal
   if (portalNames[portal]) return portalNames[portal];
-
-  // Handle channel IDs that should map to Website
-  if (portal === "2323525" || portal === 2323525) return "Website";
-
-  // Handle channel IDs that should map to Airbnb
-  if (portal === "2323543" || portal === 2323543) return "Airbnb";
-
-  // Special case for unknown channels from Smoobu that should be Website
-  if (
-    portal.includes("Homepage") ||
-    portal === "Direct" ||
-    portal === "Direct booking"
-  ) {
-    return "Website";
-  }
-
-  // Return the original portal name or default to Website
+  if (["2323525", 2323525].includes(portal)) return "Website";
+  if (["2323543", 2323543].includes(portal)) return "Airbnb";
+  if (["Homepage", "Direct", "Direct booking"].includes(portal)) return "Website";
   return portal || "Website";
 };
 
-/**
- * Cleans an object by removing undefined values
- * @param {Object} obj - Object to clean
- * @returns {Object} - Cleaned object
- */
 function cleanObject(obj) {
   const cleanedObj = {};
   Object.entries(obj).forEach(([key, value]) => {
     if (value !== undefined) {
-      if (
-        value !== null &&
-        typeof value === "object" &&
-        !Array.isArray(value)
-      ) {
+      if (value !== null && typeof value === "object" && !Array.isArray(value)) {
         cleanedObj[key] = cleanObject(value);
       } else {
         cleanedObj[key] = value;
@@ -54,82 +27,34 @@ function cleanObject(obj) {
   return cleanedObj;
 }
 
-/**
- * Merges duplicate items in priceElements array
- * @param {Array} priceElements - Raw price elements array from API
- * @returns {Array} - Price elements with duplicates merged
- */
-/**
- * Merges duplicate items in priceElements array
- * @param {Array} priceElements - Raw price elements array from API
- * @returns {Array} - Price elements with duplicates merged
- */
 function mergeDuplicatePriceElements(priceElements) {
-  if (!priceElements || !Array.isArray(priceElements)) {
-    return priceElements || [];
-  }
-
-  // Create a map to track elements by name
-  const elementsMap = new Map();
-
-  // Process each price element
-  priceElements.forEach((element) => {
-    if (!element.name) return;
-
-    const elementName = element.name.trim();
-
-    // If we already have this element in our map
-    if (elementsMap.has(elementName)) {
-      // Get the existing element
-      const existingElement = elementsMap.get(elementName);
-
-      // For extras/packages, merge them
-      if (
-        elementName.includes("Personne supplémentaire") ||
-        elementName.includes("Formule") ||
-        elementName.includes("essentiel") ||
-        elementName.includes("détente") ||
-        elementName.includes("gourmet") ||
-        elementName.includes("romantique") ||
-        elementName.includes("barbecue") ||
-        elementName.includes("anniversaire") ||
-        elementName.includes("petit-déjeuner") ||
-        elementName.includes("raclette") ||
-        elementName.includes("bouteille") ||
-        elementName.includes("champagne") ||
-        elementName.includes("spa") ||
-        elementName.includes("massage")
-      ) {
-        // Calculate merged quantity and amount
-        const existingQuantity = parseInt(existingElement.quantity) || 1;
-        const newQuantity = parseInt(element.quantity) || 1;
-        const totalQuantity = existingQuantity + newQuantity;
-
-        const existingAmount = parseFloat(existingElement.amount) || 0;
-        const newAmount = parseFloat(element.amount) || 0;
-        const totalAmount = existingAmount + newAmount;
-
-        // Update the existing element
-        existingElement.quantity = totalQuantity;
-        existingElement.amount = totalAmount;
-
-        // Update the map
-        elementsMap.set(elementName, existingElement);
-      }
-      // For all other items, keep the most recent one
-      else if (element.id > existingElement.id) {
-        // New element has higher ID (likely more recent), so replace
-        elementsMap.set(elementName, element);
-      }
+    if (!priceElements || !Array.isArray(priceElements)) {
+        return priceElements || [];
     }
-    // This is a new element, add it to the map
-    else {
-      elementsMap.set(elementName, { ...element });
-    }
-  });
-
-  // Convert map back to array
-  return Array.from(elementsMap.values());
+    const elementsMap = new Map();
+    priceElements.forEach((element) => {
+        if (!element.name) return;
+        const elementName = element.name.trim();
+        if (elementsMap.has(elementName)) {
+            const existingElement = elementsMap.get(elementName);
+            if (elementName.includes("Personne supplémentaire") || elementName.includes("Formule") || elementName.includes("essentiel") || elementName.includes("détente") || elementName.includes("gourmet") || elementName.includes("romantique") || elementName.includes("barbecue") || elementName.includes("anniversaire") || elementName.includes("petit-déjeuner") || elementName.includes("raclette") || elementName.includes("bouteille") || elementName.includes("champagne") || elementName.includes("spa") || elementName.includes("massage")) {
+                const existingQuantity = parseInt(existingElement.quantity) || 1;
+                const newQuantity = parseInt(element.quantity) || 1;
+                const totalQuantity = existingQuantity + newQuantity;
+                const existingAmount = parseFloat(existingElement.amount) || 0;
+                const newAmount = parseFloat(element.amount) || 0;
+                const totalAmount = existingAmount + newAmount;
+                existingElement.quantity = totalQuantity;
+                existingElement.amount = totalAmount;
+                elementsMap.set(elementName, existingElement);
+            } else if (element.id > existingElement.id) {
+                elementsMap.set(elementName, element);
+            }
+        } else {
+            elementsMap.set(elementName, { ...element });
+        }
+    });
+    return Array.from(elementsMap.values());
 }
 
 /**
@@ -148,87 +73,48 @@ export class BookingProcessor {
    * @param {Object} stats - Statistics object to update
    * @returns {Promise<Object>} - Updated stats
    */
-  /**
-   * Processes a single booking
-   * @param {Object} booking - Booking data from Smoobu API
-   * @param {Map} existingBookingMap - Map of existing bookings
-   * @param {Object} stats - Statistics object to update
-   * @returns {Promise<Object>} - Updated stats
-   */
   async processBooking(booking, existingBookingMap, stats) {
     try {
-      // Normalize booking ID
       const smoobuId = normalizeBookingId(booking.id);
+      
+      // *** THE CORE FIX IS HERE: We now expect a single object, not an array ***
+      const existingBooking = existingBookingMap.get(smoobuId);
 
-      // Check for existing booking
-      const existingBookings = existingBookingMap.get(smoobuId) || [];
-
-      // Get channel/portal name
       const channelName = booking.channel?.name || "Website";
       const portalName = getPortalName(channelName);
-
-      // Fetch and process price elements
-      const priceElements = await this.smoobuClient.fetchPriceElements(
-        smoobuId
-      );
-
-      // Merge duplicate price elements first
+      const priceElements = await this.smoobuClient.fetchPriceElements(smoobuId);
       const mergedPriceElements = mergeDuplicatePriceElements(priceElements);
-
-      // Extract pricing info and extras (using merged price elements)
       const pricingInfo = extractPricingInfo(mergedPriceElements);
       const extrasData = processExtrasWithPersons(mergedPriceElements);
 
-      // Special handling for Airbnb bookings
       if (booking.channel?.name === "Airbnb" || portalName === "Airbnb") {
         this._handleAirbnbExtras(extrasData);
       }
 
-      // Create booking document
-      const bookingDoc = this._createBookingDocument(
-        booking,
-        smoobuId,
-        portalName,
-        pricingInfo,
-        extrasData,
-        mergedPriceElements // Use merged price elements here
-      );
-
-      // Clean the document
+      const bookingDoc = this._createBookingDocument(booking, smoobuId, portalName, pricingInfo, extrasData, mergedPriceElements);
       const cleanBookingDoc = cleanObject(bookingDoc);
 
-      // Add or update in Firebase
-      if (existingBookings.length === 0) {
-        // Add new booking
+      // --- THIS IS THE UPDATED LOGIC ---
+      if (!existingBooking) {
+        // Booking does not exist, so we create it.
         await this.repository.createBooking(cleanBookingDoc);
-
         stats.added++;
-      } else if (existingBookings.length === 1) {
-        // Update single existing booking
-        await this._updateSingleBooking(
-          existingBookings[0],
-          cleanBookingDoc,
-          portalName,
-          extrasData
-        );
-        stats.updated++;
       } else {
-        // Handle duplicate bookings
-        await this._handleDuplicateBookings(
-          existingBookings,
+        // Booking exists, so we update it using the _updateSingleBooking method.
+        // This avoids any logic with `.length` or `.sort()`
+        await this._updateSingleBooking(
+          existingBooking, // Pass the single object
           cleanBookingDoc,
           portalName,
           extrasData
         );
         stats.updated++;
       }
+      // --- END OF UPDATED LOGIC ---
 
       return stats;
     } catch (error) {
-      console.error(
-        `🟥 Error processing booking ${booking.id}:`,
-        error.message
-      );
+      console.error(`🟥 Error processing booking ${booking.id}:`, error.message, error.stack);
       stats.errors++;
       return stats;
     }
@@ -240,90 +126,30 @@ export class BookingProcessor {
    * @private
    */
   _handleAirbnbExtras(extrasData) {
-    // Only keep anniversary-related extras for Airbnb bookings
     const filteredExtras = extrasData.extras.filter(
       (extra) => extra.name && extra.name.includes("anniversaire")
     );
-
-    // Replace the extras in extrasData
     extrasData.extras = filteredExtras;
     extrasData.extrasTotal = filteredExtras.reduce(
-      (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
-      0
-    );
+      (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0), 0);
   }
 
   /**
    * Creates a booking document from raw data
-   * @param {Object} booking - Raw booking data from API
-   * @param {string} smoobuId - Normalized booking ID
-   * @param {string} portalName - Portal name
-   * @param {Object} pricingInfo - Extracted pricing info
-   * @param {Object} extrasData - Extracted extras data
-   * @param {Array} priceElements - Price elements array
-   * @returns {Object} - Formatted booking document
    * @private
    */
-  /**
-   * Creates a booking document from raw data
-   * @param {Object} booking - Raw booking data from API
-   * @param {string} smoobuId - Normalized booking ID
-   * @param {string} portalName - Portal name
-   * @param {Object} pricingInfo - Extracted pricing info
-   * @param {Object} extrasData - Extracted extras data
-   * @param {Array} priceElements - Price elements array
-   * @returns {Object} - Formatted booking document
-   * @private
-   */
-  _createBookingDocument(
-    booking,
-    smoobuId,
-    portalName,
-    pricingInfo,
-    extrasData,
-    priceElements
-  ) {
-    // Format guest name
-    const guestName =
-      booking["guest-name"] ||
-      `${booking.firstName || ""} ${booking.lastName || ""}`.trim() ||
-      "Unknown Guest";
-
-    // Calculate nights
+  _createBookingDocument(booking, smoobuId, portalName, pricingInfo, extrasData, priceElements) {
+    const guestName = booking["guest-name"] || `${booking.firstName || ""} ${booking.lastName || ""}`.trim() || "Unknown Guest";
     const checkIn = new Date(booking.arrival);
     const checkOut = new Date(booking.departure);
-    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-
-    // Extract linen fee and commission
-    const linenFee =
-      priceElements.find(
-        (el) =>
-          el.name?.toLowerCase().includes("linen") ||
-          el.name?.toLowerCase().includes("linge") ||
-          el.name?.toLowerCase().includes("cleaning")
-      )?.amount || 0;
-
-    const commission =
-      priceElements.find((el) => el.name?.toLowerCase().includes("commission"))
-        ?.amount || 0;
-
-    // Merge duplicate price elements
+    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24)) || 1;
+    const linenFee = priceElements.find((el) => el.name?.toLowerCase().includes("linen") || el.name?.toLowerCase().includes("linge") || el.name?.toLowerCase().includes("cleaning"))?.amount || 0;
+    const commission = priceElements.find((el) => el.name?.toLowerCase().includes("commission"))?.amount || 0;
     const mergedPriceElements = mergeDuplicatePriceElements(priceElements);
-
-    // Recalculate extras total based on merged price elements
-    // This ensures the extras total reflects the merged quantities
     const mergedExtrasTotal = extrasData.extras.reduce((sum, extra) => {
-      // Find the corresponding merged element for this extra
-      const mergedElement = mergedPriceElements.find(
-        (el) => el.name === extra.name
-      );
-
-      // Use the merged amount if found, otherwise use the original amount
-      const amount = mergedElement
-        ? Math.abs(parseFloat(mergedElement.amount) || 0)
-        : Math.abs(parseFloat(extra.amount) || 0);
-
-      return sum + amount;
+        const mergedElement = mergedPriceElements.find((el) => el.name === extra.name);
+        const amount = mergedElement ? Math.abs(parseFloat(mergedElement.amount) || 0) : Math.abs(parseFloat(extra.amount) || 0);
+        return sum + amount;
     }, 0);
 
     return {
@@ -333,11 +159,7 @@ export class BookingProcessor {
       updatedAt: new Date().toISOString(),
       type: booking.type || "reservation",
       firstName: booking.firstName || guestName.split(" ")[0] || "",
-      lastName:
-        booking.lastName ||
-        (guestName.split(" ").length > 1
-          ? guestName.split(" ").slice(1).join(" ")
-          : ""),
+      lastName: booking.lastName || (guestName.split(" ").length > 1 ? guestName.split(" ").slice(1).join(" ") : ""),
       guestName: guestName,
       email: booking.email || "",
       phone: booking.phone || "",
@@ -346,11 +168,10 @@ export class BookingProcessor {
       children: parseInt(booking.children) || 0,
       arrivalDate: booking.arrival,
       departureDate: booking.departure,
-      checkInTime: booking["check-in"] || "",
-      checkOutTime: booking["check-out"] || "",
-      apartmentId: booking.apartment?.id,
-      property:
-        roomNames[booking.apartment?.id] || booking.apartment?.name || "",
+      checkInTime: booking["check-in"] || "17:00",
+      checkOutTime: booking["check-out"] || "10:00",
+      apartmentId: String(booking.apartment?.id), // Ensure string for comparison
+      property: roomNames[booking.apartment?.id] || booking.apartment?.name || "",
       channelId: booking.channel?.id,
       channelName: booking.channel?.name || "",
       portalName: portalName,
@@ -367,22 +188,16 @@ export class BookingProcessor {
         longStayDiscount: pricingInfo.longStayDiscount,
         couponDiscount: pricingInfo.couponDiscount,
         discount: pricingInfo.longStayDiscount,
-        extrasTotal: mergedExtrasTotal, // Use the recalculated total
+        extrasTotal: mergedExtrasTotal,
         priceElements: mergedPriceElements,
         promoCode: pricingInfo.promoCode,
-        calculatedDiscounts: {
-          longStay: pricingInfo.longStayDiscount,
-          coupon: pricingInfo.couponDiscount,
-        },
+        calculatedDiscounts: { longStay: pricingInfo.longStayDiscount, coupon: pricingInfo.couponDiscount },
         settings: {
-          extraChildPerNight: 20,
-          extraGuestsPerNight: 20,
-          lengthOfStayDiscount: {
-            discountPercentage: pricingInfo.longStayDiscount > 0 ? 40 : 0,
-            minNights: 2,
-          },
-          maxGuests: 4,
-          startingAtGuest: 2,
+            extraChildPerNight: 20,
+            extraGuestsPerNight: 20,
+            lengthOfStayDiscount: { discountPercentage: pricingInfo.longStayDiscount > 0 ? 40 : 0, minNights: 2 },
+            maxGuests: 4,
+            startingAtGuest: 2
         },
       },
       lastSyncedAt: new Date().toISOString(),
@@ -391,85 +206,49 @@ export class BookingProcessor {
 
   /**
    * Updates a single existing booking
-   * @param {Object} existingBooking - Existing booking data
-   * @param {Object} newBookingData - New booking data
-   * @param {string} portalName - Portal name
-   * @param {Object} extrasData - Extras data
    * @private
    */
-  async _updateSingleBooking(
-    existingBooking,
-    newBookingData,
-    portalName,
-    extrasData
-  ) {
-    const docId = existingBooking.id;
-    const existingData = existingBooking;
+  async _updateSingleBooking(existingBooking, newBookingData, portalName, extrasData) {
+    // *** THE CORE FIX IS HERE: We use `firebaseDocId` from the single object ***
+    const docId = existingBooking.firebaseDocId; 
+    
+    // Ensure docId exists before proceeding
+    if (!docId) {
+        console.error(`🟥 Cannot update booking ${newBookingData.smoobuId}, firebaseDocId is missing from existing booking object.`);
+        // Optionally, throw an error or handle it as needed
+        return;
+    }
 
-    // Merge extras
-    const mergedExtras = mergeExtras(
-      existingData,
-      extrasData.extras,
-      portalName
-    );
-
-    // Calculate extras total
+    const mergedExtras = mergeExtras(existingBooking, extrasData.extras, portalName);
     const mergedExtrasTotal = calculateExtrasTotal(mergedExtras);
-
-    // Create updated booking doc
     const updatedBookingDoc = {
-      ...existingData, // Start with existing data
-      ...newBookingData, // Add/overwrite with new data
-
-      type: newBookingData.type || existingData.type || "reservation",
+      ...existingBooking,
+      ...newBookingData,
+      type: newBookingData.type || existingBooking.type || "reservation",
       extras: mergedExtras,
-
-      // Preserve critical fields
-      createdAt: existingData.createdAt || newBookingData.createdAt,
-      paymentIntentId: existingData.paymentIntentId || null,
-      stripePaymentStatus: existingData.stripePaymentStatus || null,
+      createdAt: existingBooking.createdAt || newBookingData.createdAt,
+      paymentIntentId: existingBooking.paymentIntentId || null,
+      stripePaymentStatus: existingBooking.stripePaymentStatus || null,
       updatedAt: new Date().toISOString(),
-
-      // Update price details with merged extras
       priceDetails: {
         ...newBookingData.priceDetails,
         extrasTotal: mergedExtrasTotal,
       },
     };
 
-    // Clean and update
     const cleanUpdatedDoc = cleanObject(updatedBookingDoc);
     await this.repository.updateBooking(docId, cleanUpdatedDoc);
   }
 
   /**
-   * Handles updating when multiple bookings exist with same ID
-   * @param {Array} existingBookings - Array of existing bookings
-   * @param {Object} newBookingData - New booking data
-   * @param {string} portalName - Portal name
-   * @param {Object} extrasData - Extras data
+   * NOTE: This method is now OBSOLETE with the new repository logic,
+   * but we can leave it here for reference or future needs. It won't be called.
    * @private
    */
-  async _handleDuplicateBookings(
-    existingBookings,
-    newBookingData,
-    portalName,
-    extrasData
-  ) {
-    // Sort by updatedAt (newest first)
-    existingBookings.sort((a, b) => {
-      const dateA = new Date(a.updatedAt || a.createdAt || 0);
-      const dateB = new Date(b.updatedAt || b.createdAt || 0);
-      return dateB - dateA;
-    });
-
-    // Update the most recent booking
+  async _handleDuplicateBookings(existingBookings, newBookingData, portalName, extrasData) {
+    console.warn(`[Sync] _handleDuplicateBookings was called for ${newBookingData.smoobuId}, but this path should be obsolete.`);
+    // Fallback to updating the first item if this ever gets called unexpectedly.
     const mostRecent = existingBookings[0];
-    await this._updateSingleBooking(
-      mostRecent,
-      newBookingData,
-      portalName,
-      extrasData
-    );
+    await this._updateSingleBooking(mostRecent, newBookingData, portalName, extrasData);
   }
 }

@@ -814,6 +814,7 @@ export const sendBookingConfirmation = async (bookingData) => {
     await transporter.sendMail({
       from: `Ferme de Basseilles <${process.env.EMAIL_USER}>`,
       to: bookingData.email,
+      cc: "bookingconfirmation@fermedebasseilles.be",
       subject: T.subject,
       html: emailContent,
     });
