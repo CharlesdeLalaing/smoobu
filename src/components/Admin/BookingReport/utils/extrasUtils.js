@@ -130,9 +130,14 @@ export function sortExtras(extras) {
   return result;
 }
 
-
 export function getCleanExtrasFromPriceElements(priceElements, portalName) {
   if (!priceElements || !Array.isArray(priceElements)) return [];
+
+  console.log(
+    "🔍 getCleanExtrasFromPriceElements - Input priceElements:",
+    priceElements
+  );
+  console.log("🔍 getCleanExtrasFromPriceElements - Portal name:", portalName);
 
   // Define unwanted extras patterns
   const unwantedPatterns = [
@@ -167,27 +172,85 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
   const relevantElements = priceElements.filter((el) => {
     if (!el || !el.amount || !el.name) return false;
 
+    console.log(`🔍 Filtering element: "${el.name}" (amount: ${el.amount})`);
+
     // For Airbnb, be very selective
     if (isAirbnb) {
-      // Only allow formules and specific extras
+      // Check if it's a valid drink for Airbnb
+      const isValidAirbnbDrink =
+        el.name.includes("Brut de Bioul") ||
+        el.name.includes("Cortil Barco") ||
+        el.name.includes("Terre Charlot") ||
+        el.name.includes("Brune du Condroz") ||
+        el.name.includes("Ambrée du Condroz") ||
+        el.name.includes("Triple du Condroz") ||
+        el.name.includes("Blanche du Condroz") ||
+        el.name.includes("Jus de pomme « Pom d'Happy »") ||
+        el.name.includes("Ritchie Citron/Framboise") ||
+        el.name.includes("Ritchie Orange/Vanille") ||
+        el.name.includes("Ritchie Cola") ||
+        el.name.includes("Ritchie Cola Zéro");
+
+      // Only allow formules, specific extras, and drinks
       return (
         el.name.toLowerCase().includes("formule") ||
         el.name.toLowerCase().includes("anniversaire") ||
         el.name.toLowerCase().includes("détente") ||
         el.name.toLowerCase().includes("gourmet") ||
         el.name.toLowerCase().includes("essentiel") ||
-        el.name.toLowerCase().includes("romantique")
+        el.name.toLowerCase().includes("romantique") ||
+        isValidAirbnbDrink
       );
     } else {
-      // For non-Airbnb, filter out unwanted patterns
-      return (
+      // For non-Airbnb, filter out unwanted patterns but include drinks and valid extras
+      const isValidDrink =
+        el.name.includes("Brut de Bioul") ||
+        el.name.includes("Cortil Barco") ||
+        el.name.includes("Terre Charlot") ||
+        el.name.includes("Brune du Condroz") ||
+        el.name.includes("Ambrée du Condroz") ||
+        el.name.includes("Triple du Condroz") ||
+        el.name.includes("Blanche du Condroz") ||
+        el.name.includes("Jus de pomme « Pom d'Happy »") ||
+        el.name.includes("Ritchie Citron/Framboise") ||
+        el.name.includes("Ritchie Orange/Vanille") ||
+        el.name.includes("Ritchie Cola") ||
+        el.name.includes("Ritchie Cola Zéro");
+
+      const isValidExtra =
+        el.name.includes("formule") ||
+        el.name.includes("Formule") ||
+        el.name.includes("détente") ||
+        el.name.includes("gourmet") ||
+        el.name.includes("essentiel") ||
+        el.name.includes("romantique") ||
+        el.name.includes("barbecue") ||
+        el.name.includes("anniversaire") ||
+        el.name.includes("petit-déjeuner") ||
+        el.name.includes("raclette") ||
+        el.name.includes("spa") ||
+        el.name.includes("SPA") ||
+        el.name.includes("massage") ||
+        el.name.includes("Personne supplémentaire") ||
+        el.name.includes("Boulettes") ||
+        el.name.includes("Waterzooi") ||
+        el.name.includes("Chili") ||
+        el.name.includes("Velouté");
+
+      const shouldInclude =
         el.amount > 0 &&
         !el.name.includes("Prix de base") &&
         !el.name.includes("Base price") &&
         !el.name.includes("Code promo") &&
         !el.name.includes("Réduction") &&
-        !unwantedPatterns.some((pattern) => el.name.includes(pattern))
+        !unwantedPatterns.some((pattern) => el.name.includes(pattern)) &&
+        (isValidDrink || isValidExtra);
+
+      console.log(
+        `🔍 Element "${el.name}": isValidDrink=${isValidDrink}, isValidExtra=${isValidExtra}, shouldInclude=${shouldInclude}`
       );
+
+      return shouldInclude;
     }
   });
 
@@ -246,6 +309,7 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
 
   // Convert Map values to array
   const result = Array.from(uniqueExtras.values());
+  console.log("🔍 getCleanExtrasFromPriceElements - Final result:", result);
 
   // Special handling for duplicate "Frais supplémentaires"
   const fraisElements = result.filter((e) =>
@@ -305,14 +369,14 @@ export function calculateBookingTotal(booking) {
     // For Airbnb, reset other components that might not apply
     longStayDiscount = 0;
     couponDiscount = 0;
-  } 
+  }
   // For Booking.com, handle taxe de séjour specially
   else if (isBookingCom) {
     // Look for taxe de séjour in priceElements
     const taxeElement = priceElements.find(
       (el) => el && el.name && el.name.toLowerCase().includes("taxe de séjour")
     );
-    
+
     if (taxeElement) {
       taxeDeSejour = parseFloat(taxeElement.amount) || 0;
     }
@@ -320,7 +384,7 @@ export function calculateBookingTotal(booking) {
 
   // Calculate room subtotal
   let roomTotal = basePrice + linenFee - longStayDiscount - couponDiscount;
-  
+
   // For Booking.com, include taxe de séjour in the room total
   if (isBookingCom) {
     roomTotal += taxeDeSejour;
@@ -341,8 +405,8 @@ export function calculateBookingTotal(booking) {
   // For Booking.com, remove TVA and taxe de séjour from extras since they're in the room price
   if (isBookingCom) {
     displayExtras = displayExtras.filter(
-      (extra) => 
-        !extra.name.includes("TVA") && 
+      (extra) =>
+        !extra.name.includes("TVA") &&
         !extra.name.toLowerCase().includes("taxe de séjour")
     );
   }
