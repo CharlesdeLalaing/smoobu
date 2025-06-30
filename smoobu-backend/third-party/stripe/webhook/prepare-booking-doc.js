@@ -510,11 +510,48 @@ export const prepareBookingDocument = (
                 )
               : null,
             preference: bookingData.spaBookingPreference || null,
-            formattedDateTime: bookingData.spaDateTime
-              ? format(parseISO(bookingData.spaDateTime), "PPPp", {
-                  locale: fr,
-                })
-              : null,
+            formattedDateTime:
+              bookingData.spaDateTime &&
+              bookingData.spaSlots &&
+              bookingData.spaSlots.length > 0
+                ? (() => {
+                    // Use the spa date string and the first slot to construct the display time
+                    const spaDate =
+                      bookingData.spaDateString ||
+                      bookingData.spaDateTime.split("T")[0];
+                    const startTime = bookingData.spaSlots[0];
+                    try {
+                      // Create date object from date string and time slot to avoid timezone issues
+                      const [year, month, day] = spaDate.split("-").map(Number);
+                      const [hour, minute] = startTime.split(":").map(Number);
+                      const localDate = new Date(
+                        year,
+                        month - 1,
+                        day,
+                        hour,
+                        minute
+                      );
+                      return format(localDate, "d MMMM yyyy 'à' HH:mm", {
+                        locale: fr,
+                      });
+                    } catch (e) {
+                      console.error("Error formatting spa date/time:", e);
+                      return format(
+                        parseISO(bookingData.spaDateTime),
+                        "d MMMM yyyy 'à' HH:mm",
+                        { locale: fr }
+                      );
+                    }
+                  })()
+                : bookingData.spaDateTime
+                ? format(
+                    parseISO(bookingData.spaDateTime),
+                    "d MMMM yyyy 'à' HH:mm",
+                    {
+                      locale: fr,
+                    }
+                  )
+                : null,
             slots: bookingData.spaSlots || [],
             status:
               bookingData.spaBookingPreference === "later"
