@@ -1,6 +1,9 @@
 import { transporter } from "../../config/nodemailer.js";
 import { format as formatFn, addMinutes } from "date-fns";
 import { fr, enUS, nl } from "date-fns/locale";
+// NEW: Import the timezone-aware formatting function
+import { formatInTimeZone } from "date-fns-tz";
+
 
 // Helper to get date-fns locale for email
 const emailTexts = {
@@ -360,6 +363,7 @@ const formatDateForEmail = (dateInput, lang = "fr") => {
   const date = getJsDateForEmail(dateInput);
   if (!date) return "N/A";
   try {
+    // This function is fine as is, because it only handles the date part.
     return formatFn(date, "d MMMM yyyy", {
       locale: getEmailDateFnLocale(lang),
     });
@@ -395,6 +399,8 @@ export const sendBookingConfirmation = async (bookingData) => {
   const lang = bookingData.language?.split("-")[0] || "fr";
   const T = emailTexts[lang] || emailTexts.fr;
   const brandColor = "#668E73";
+  // NEW: Define the target timezone. IANA format handles DST automatically.
+  const timeZone = "Europe/Brussels";
 
   let spaSectionHtml = "";
   const hasSpaExtra = bookingData.extras?.some((extra) =>
@@ -437,28 +443,42 @@ export const sendBookingConfirmation = async (bookingData) => {
 
       if (spaStartJsDate && spaEndJsDate) {
         const emailLocale = getEmailDateFnLocale(lang);
-        const datePart = formatFn(spaStartJsDate, "PPPP", {
+
+        // CHANGED: Use formatInTimeZone to ensure the time is correct for the client
+        const datePart = formatInTimeZone(spaStartJsDate, timeZone, "PPPP", {
           locale: emailLocale,
         });
-        const startTimePart = formatFn(spaStartJsDate, "HH:mm", {
+        const startTimePart = formatInTimeZone(
+          spaStartJsDate,
+          timeZone,
+          "HH:mm",
+          {
+            locale: emailLocale,
+          }
+        );
+        const endTimePart = formatInTimeZone(spaEndJsDate, timeZone, "HH:mm", {
           locale: emailLocale,
         });
-        const endTimePart = formatFn(spaEndJsDate, "HH:mm", {
-          locale: emailLocale,
-        });
+
         const spaTimeText = T.spaScheduledFormat
           .replace("{{date}}", `<strong>${datePart}</strong>`)
           .replace("{{startTime}}", `<strong>${startTimePart}</strong>`)
           .replace("{{endTime}}", `<strong>${endTimePart}</strong>`);
         spaSectionHtml = `<div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;"><h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.spaScheduledTitle}</h3><p style="margin: 0; font-size: 0.95em; color: #333;">${spaTimeText}</p></div>`;
       } else if (spaStartJsDate) {
+        // CHANGED: Also apply timezone-aware formatting to the fallback case
         const emailLocale = getEmailDateFnLocale(lang);
-        const datePart = formatFn(spaStartJsDate, "PPPP", {
+        const datePart = formatInTimeZone(spaStartJsDate, timeZone, "PPPP", {
           locale: emailLocale,
         });
-        const startTimePart = formatFn(spaStartJsDate, "HH:mm", {
-          locale: emailLocale,
-        });
+        const startTimePart = formatInTimeZone(
+          spaStartJsDate,
+          timeZone,
+          "HH:mm",
+          {
+            locale: emailLocale,
+          }
+        );
         spaSectionHtml = `<div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;"><h3 style="margin-top:0; color: ${brandColor}; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">${T.spaScheduledTitle}</h3><p style="margin: 0; font-size: 0.95em; color: #333;">Date: <strong>${datePart}</strong>, Heure: <strong>${startTimePart}</strong> (Fin non spécifiée)</p></div>`;
       }
     } else if (bookingData.spaBookingPreference === "later") {

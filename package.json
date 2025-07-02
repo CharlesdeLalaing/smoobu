@@ -15,6 +15,7 @@
     "@heroicons/react": "^2.1.5",
     "@stripe/react-stripe-js": "^2.9.0",
     "axios": "^1.7.7",
+    "date-fns-tz": "^3.2.0",
     "firebase": "^11.1.0",
     "firebase-admin": "^13.2.0",
     "google-gax": "^4.4.1",
