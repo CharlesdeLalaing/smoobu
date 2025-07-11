@@ -104,6 +104,51 @@ export const useBookingsData = () => {
           };
         }
 
+        // Extract coupon information from priceElements if available
+        let extractedCoupon = couponApplied || null;
+        if (!extractedCoupon && priceDetails?.priceElements?.length > 0) {
+          const couponElement = priceDetails.priceElements.find(
+            (el) =>
+              el &&
+              el.name &&
+              el.amount &&
+              (el.type === "coupon" ||
+                el.name.toLowerCase().includes("coupon") ||
+                el.name.toLowerCase().includes("code promo") ||
+                el.name.toLowerCase().includes("réduction") ||
+                el.name.toLowerCase().includes("promo"))
+          );
+
+          if (couponElement) {
+            let couponCode = "";
+            if (
+              couponElement.name.includes("Gift.") ||
+              couponElement.name.includes("GIFT.")
+            ) {
+              const match = couponElement.name.match(
+                /Gift\.(\d+)|GIFT\.(\d+)/i
+              );
+              if (match) {
+                couponCode = `GIFT.${match[1] || match[2]}`;
+              }
+            } else if (couponElement.name.includes("Coupon - ")) {
+              couponCode = couponElement.name.replace("Coupon - ", "");
+            } else if (couponElement.name.includes("Code promo: ")) {
+              const match = couponElement.name.match(/Code promo: ([^(]+)/);
+              if (match) {
+                couponCode = match[1].trim();
+              }
+            }
+
+            extractedCoupon = {
+              code: couponCode,
+              discount: Math.abs(parseFloat(couponElement.amount)),
+              type: "fixed",
+              fromPriceElements: true,
+            };
+          }
+        }
+
         const formattedBooking = {
           id: String(smoobuId || smoobuReservationId || id),
           firestoreId: id,
@@ -132,7 +177,7 @@ export const useBookingsData = () => {
           commission: Number(commission) || 0,
           extras: extras || [],
           priceDetails: priceDetails || {},
-          coupon: couponApplied || null,
+          coupon: extractedCoupon,
           created: createdAt,
           updated: updatedAt || lastSyncedAt,
           arrivalDateObj:
@@ -502,6 +547,54 @@ export const useBookingsData = () => {
         ) {
           exportCouponValue = parseFloat(mainCouponObject.discount);
         }
+
+        // --- Check priceElements for coupon/discount entries (CRITICAL FOR EXPORT) ---
+        if (
+          exportCouponValue === 0 &&
+          booking.priceDetails?.priceElements?.length > 0
+        ) {
+          const priceElements = booking.priceDetails.priceElements;
+          const couponElement = priceElements.find(
+            (el) =>
+              el &&
+              el.name &&
+              el.amount &&
+              (el.type === "coupon" ||
+                el.name.toLowerCase().includes("coupon") ||
+                el.name.toLowerCase().includes("code promo") ||
+                el.name.toLowerCase().includes("réduction") ||
+                el.name.toLowerCase().includes("promo"))
+          );
+
+          if (couponElement) {
+            exportCouponValue = Math.abs(parseFloat(couponElement.amount));
+
+            // Extract coupon code from the name if not already set
+            if (!exportCouponName) {
+              if (
+                couponElement.name.includes("Gift.") ||
+                couponElement.name.includes("GIFT.")
+              ) {
+                const match = couponElement.name.match(
+                  /Gift\.(\d+)|GIFT\.(\d+)/i
+                );
+                if (match) {
+                  exportCouponName = `GIFT.${match[1] || match[2]}`;
+                }
+              } else if (couponElement.name.includes("Coupon - ")) {
+                exportCouponName = couponElement.name.replace("Coupon - ", "");
+              } else if (couponElement.name.includes("Code promo: ")) {
+                const match = couponElement.name.match(/Code promo: ([^(]+)/);
+                if (match) {
+                  exportCouponName = match[1].trim();
+                }
+              } else {
+                exportCouponName = "PROMO APPLIQUÉ";
+              }
+            }
+          }
+        }
+
         if (exportCouponValue > 0 && exportCouponName !== "")
           exportCouponValue = -exportCouponValue;
 

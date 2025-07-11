@@ -3,8 +3,6 @@ import React from "react";
 import { formatPrice } from "../../../utils/formatters"; // Adjust path if necessary
 
 const PriceDetailsSection = ({ booking }) => {
-
-
   if (!booking) {
     return (
       <div className="text-sm text-gray-500">
@@ -79,6 +77,52 @@ const PriceDetailsSection = ({ booking }) => {
       console.warn(
         "PriceDetailsSection: booking.coupon.type is 'percentage', 'discount' field might be the percentage value. Monetary discount amount might be missing or derived from priceDetails.couponDiscount which was not found."
       );
+    }
+  }
+
+  // --- Check priceElements for coupon/discount entries ---
+  // This is critical for bookings where coupon info is stored in priceElements
+  if (
+    couponDiscountAmount === 0 &&
+    booking.priceDetails?.priceElements?.length > 0
+  ) {
+    const priceElements = booking.priceDetails.priceElements;
+
+    // Look for coupon entries in priceElements
+    const couponElement = priceElements.find(
+      (el) =>
+        el &&
+        el.name &&
+        el.amount &&
+        (el.type === "coupon" ||
+          el.name.toLowerCase().includes("coupon") ||
+          el.name.toLowerCase().includes("code promo") ||
+          el.name.toLowerCase().includes("réduction") ||
+          el.name.toLowerCase().includes("promo"))
+    );
+
+    if (couponElement) {
+      couponDiscountAmount = Math.abs(parseFloat(couponElement.amount));
+
+      // Extract coupon code from the name if not already set
+      if (!actualCouponCode) {
+        if (
+          couponElement.name.includes("Gift.") ||
+          couponElement.name.includes("GIFT.")
+        ) {
+          const match = couponElement.name.match(/Gift\.(\d+)|GIFT\.(\d+)/i);
+          if (match) {
+            actualCouponCode = `GIFT.${match[1] || match[2]}`;
+          }
+        } else if (couponElement.name.includes("Coupon - ")) {
+          actualCouponCode = couponElement.name.replace("Coupon - ", "");
+        } else if (couponElement.name.includes("Code promo: ")) {
+          const match = couponElement.name.match(/Code promo: ([^(]+)/);
+          if (match) {
+            actualCouponCode = match[1].trim();
+          }
+        }
+      }
     }
   }
   // Ensure the discount is stored as a positive value for calculations; it will be displayed as negative.

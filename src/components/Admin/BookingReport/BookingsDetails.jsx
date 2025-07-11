@@ -1,13 +1,16 @@
 // File: src/components/BookingsReport/BookingDetails.js
 import React from "react";
-import { formatPrice} from "../../utils/formatters";
+import { formatPrice } from "../../utils/formatters";
 import ClientInfoSection from "./sections/ClientInfoSection.jsx";
 import BookingInfoSection from "./sections/BookingInfoSection.jsx";
 import PriceDetailsSection from "./sections/PriceDetailsSection.jsx";
 import ExtrasDetailsSection from "./sections/ExtrasDetailsSection.jsx";
 import SpaDetailsSection from "./sections/SpaDetailsSection.jsx";
 import FreeDrinksDetailsSection from "./sections/FreeDrinksDetailsSection.jsx";
-import { mergeAndSortExtras, getCleanExtrasFromPriceElements } from "./utils/extrasUtils.js";
+import {
+  mergeAndSortExtras,
+  getCleanExtrasFromPriceElements,
+} from "./utils/extrasUtils.js";
 
 /**
  * Calculates the total price for a booking using the most accurate method
@@ -47,6 +50,26 @@ export function calculateBookingTotal(booking) {
       booking.priceDetails?.promoCode?.amount || // Another fallback.
       0 // Default to 0 if nothing is found.
   );
+
+  // --- Check priceElements for coupon/discount entries ---
+  // This is critical for bookings where coupon info is stored in priceElements
+  if (couponDiscount === 0 && priceElements.length > 0) {
+    const couponElement = priceElements.find(
+      (el) =>
+        el &&
+        el.name &&
+        el.amount &&
+        (el.type === "coupon" ||
+          el.name.toLowerCase().includes("coupon") ||
+          el.name.toLowerCase().includes("code promo") ||
+          el.name.toLowerCase().includes("réduction") ||
+          el.name.toLowerCase().includes("promo"))
+    );
+
+    if (couponElement) {
+      couponDiscount = Math.abs(parseFloat(couponElement.amount));
+    }
+  }
 
   let taxeDeSejour = 0;
 
@@ -174,8 +197,5 @@ const BookingDetails = ({ booking }) => {
     </div>
   );
 };
-
-
-
 
 export default BookingDetails;
