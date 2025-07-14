@@ -17,6 +17,7 @@ import {
 } from "../../Admin/BookingReport/utils/extrasUtils.js";
 import { parseBookingDateTime } from "../../spa/spaCalendarUtils.js";
 import { parseISO, isValid } from "date-fns";
+import { calculateBookingTotal } from "../../Admin/BookingReport/BookingsDetails.jsx";
 
 export const useBookingsData = () => {
   const [reportData, setReportData] = useState([]);
@@ -623,9 +624,41 @@ export const useBookingsData = () => {
             : booking.checkOut || "N/A";
         const createdDateObjToFormat = parseBookingDateTime(booking.created);
 
-        const exportBasePrice = parseFloat(
+        let exportBasePrice = parseFloat(
           booking.priceDetails?.basePrice || booking.basePrice || 0
         );
+
+        // If basePrice is 0, try to calculate it from the total price minus extras
+        if (
+          exportBasePrice === 0 &&
+          booking.priceDetails?.priceElements?.length > 0
+        ) {
+          // Look for base price in priceElements first
+          const basePriceElement = booking.priceDetails.priceElements.find(
+            (element) =>
+              element.name === "Prix de base" ||
+              element.type === "base" ||
+              element.type === "basePrice"
+          );
+
+          if (basePriceElement) {
+            exportBasePrice = parseFloat(basePriceElement.amount) || 0;
+          } else if (booking.price) {
+            // Fallback to original logic if no base price element found
+            const totalPrice = parseFloat(booking.price);
+            const priceElementsTotal =
+              booking.priceDetails.priceElements.reduce((sum, element) => {
+                return sum + (parseFloat(element.amount) || 0);
+              }, 0);
+
+            // If total price seems too low compared to extras, assume the stored price is just the base price
+            if (totalPrice < priceElementsTotal) {
+              exportBasePrice = totalPrice;
+            } else {
+              exportBasePrice = Math.max(0, totalPrice - priceElementsTotal);
+            }
+          }
+        }
         const exportLongStayDiscount = parseFloat(
           booking.priceDetails?.longStayDiscount ||
             booking.priceBreakdown?.appliedLongStayDiscount ||
@@ -655,6 +688,9 @@ export const useBookingsData = () => {
         }
         if (freeDrinksExportText.trim() === "") freeDrinksExportText = "-";
 
+        // Use the same calculation logic as the UI for consistency
+        const totalPricePaid = calculateBookingTotal(booking);
+
         return [
           booking.id,
           booking.guest,
@@ -682,8 +718,8 @@ export const useBookingsData = () => {
           freeDrinksExportText,
           paidExtrasList || "-",
           paidExtrasTotal || 0,
-          parseFloat(booking.price || 0),
-          parseFloat(booking.price || 0) + Math.abs(exportCouponValue),
+          totalPricePaid,
+          totalPricePaid + Math.abs(exportCouponValue),
         ];
       }),
     ];

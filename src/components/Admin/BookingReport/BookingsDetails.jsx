@@ -19,8 +19,24 @@ import {
  */
 
 export function calculateBookingTotal(booking) {
+  // General debug to see if function is called
+  // console.log("calculateBookingTotal called - booking keys:", Object.keys(booking));
+  // console.log("calculateBookingTotal booking:", {
+  //   guestName: booking.guestName,
+  //   guest: booking.guest,
+  //   smoobuId: booking.smoobuId,
+  //   id: booking.id,
+  //   price: booking.price
+  // });
+
   // For debugging, you can uncomment this to see the exact data being processed
-  // console.log("Calculating total for booking:", booking);
+  // console.log("Calculating total for booking:", booking.guestName, {
+  //   basePrice: booking.priceDetails?.basePrice || booking.basePrice,
+  //   price: booking.price,
+  //   priceElements: booking.priceDetails?.priceElements,
+  //   couponApplied: booking.couponApplied,
+  //   couponDiscount: booking.priceDetails?.couponDiscount
+  // });
 
   const portalName =
     booking.portalName || booking.channelName || booking.portal;
@@ -30,8 +46,61 @@ export function calculateBookingTotal(booking) {
   const priceElements = booking.priceDetails?.priceElements || [];
 
   let basePrice = parseFloat(
-    booking.priceDetails?.basePrice || booking.basePrice || booking.price || 0
+    booking.priceDetails?.basePrice || booking.basePrice || 0
   );
+
+  // If basePrice is 0, try to calculate it from priceElements
+  if (basePrice === 0 && priceElements.length > 0) {
+    // Look for base price in priceElements first
+    const basePriceElement = priceElements.find(
+      (element) =>
+        element.name === "Prix de base" ||
+        element.type === "base" ||
+        element.type === "basePrice"
+    );
+
+    if (basePriceElement) {
+      basePrice = parseFloat(basePriceElement.amount) || 0;
+    } else if (booking.price) {
+      // Fallback: calculate from total price minus extras, accounting for discounts
+      const totalPrice = parseFloat(booking.price);
+      const extrasTotal = priceElements
+        .filter(
+          (element) =>
+            element.amount > 0 && // Only positive amounts (exclude discounts)
+            element.name !== "Prix de base" && // Exclude base price
+            !element.name.toLowerCase().includes("coupon") &&
+            !element.name.toLowerCase().includes("promo") &&
+            !element.name.toLowerCase().includes("réduction")
+        )
+        .reduce((sum, element) => sum + (parseFloat(element.amount) || 0), 0);
+
+      // Get coupon discount amount to add back to base price calculation
+      const couponDiscountAmount = priceElements
+        .filter(
+          (element) =>
+            element.amount < 0 && // Only negative amounts (discounts)
+            (element.name.toLowerCase().includes("coupon") ||
+              element.name.toLowerCase().includes("promo") ||
+              element.name.toLowerCase().includes("réduction"))
+        )
+        .reduce(
+          (sum, element) => sum + Math.abs(parseFloat(element.amount) || 0),
+          0
+        );
+
+      // If total price seems too low compared to extras, assume the stored price is just the base price
+      if (totalPrice < extrasTotal) {
+        basePrice = totalPrice;
+      } else {
+        // Calculate base price: total - extras + discounts (to get original base price before discounts)
+        basePrice = Math.max(
+          0,
+          totalPrice - extrasTotal + couponDiscountAmount
+        );
+      }
+    }
+  }
   let linenFee = parseFloat(
     booking.priceDetails?.linenFee || booking.linenFee || 0
   );
@@ -106,6 +175,10 @@ export function calculateBookingTotal(booking) {
   let displayExtras = [];
   if (priceElements.length > 0) {
     displayExtras = getCleanExtrasFromPriceElements(priceElements, portalName);
+    // If priceElements didn't yield any extras, fallback to booking.extras
+    if (displayExtras.length === 0 && booking.extras?.length > 0) {
+      displayExtras = booking.extras;
+    }
   } else if (booking.extras?.length > 0) {
     displayExtras = booking.extras;
   }
@@ -125,8 +198,68 @@ export function calculateBookingTotal(booking) {
   );
 
   // --- FINAL CALCULATION ---
-  // The final total is the calculated room total PLUS the extras total.
-  return roomTotal + extrasTotal;
+  const calculatedTotal = roomTotal + extrasTotal;
+  const storedPrice = parseFloat(booking.price || 0);
+
+  // Debug for Laura using correct field names
+  if (booking.id === "97079768" && booking.guest === "Laura Serra") {
+    console.log("Laura Debug - priceElements:", priceElements);
+    console.log("Laura Debug (ID: 97079768):", {
+      guest: booking.guest,
+      rawBasePrice: booking.priceDetails?.basePrice || booking.basePrice,
+      basePriceFromPriceDetails: booking.priceDetails?.basePrice,
+      basePriceFromBooking: booking.basePrice,
+      priceElementsLength: priceElements.length,
+      finalBasePrice: basePrice,
+      couponDiscount,
+      roomTotal,
+      extrasTotal,
+      calculatedTotal,
+      storedPrice,
+      condition1: !isAirbnb,
+      condition2: storedPrice > 0,
+      condition3: storedPrice > roomTotal,
+      condition4: extrasTotal > 0,
+      priceDifference: Math.abs(storedPrice - calculatedTotal),
+      allowedDifference: Math.max(5, calculatedTotal * 0.05),
+      willUseStoredPrice:
+        !isAirbnb &&
+        storedPrice > 0 &&
+        storedPrice > roomTotal &&
+        extrasTotal > 0 &&
+        Math.abs(storedPrice - calculatedTotal) <=
+          Math.max(5, calculatedTotal * 0.05),
+    });
+  }
+
+  // For newer bookings, if stored price is reasonable and includes extras, use it
+  // But only if it's very close to our calculated total (within 5% or €5)
+  // However, for Airbnb bookings, always use calculated total since stored price often excludes extras
+  if (
+    !isAirbnb &&
+    storedPrice > 0 &&
+    storedPrice > roomTotal &&
+    extrasTotal > 0
+  ) {
+    const priceDifference = Math.abs(storedPrice - calculatedTotal);
+    const allowedDifference = Math.max(5, calculatedTotal * 0.05);
+
+    if (priceDifference <= allowedDifference) {
+      // console.log("Using stored price:", storedPrice);
+      return storedPrice;
+    } else {
+      // console.log("Stored price differs too much from calculated, using calculated:", {
+      //   storedPrice,
+      //   calculatedTotal,
+      //   difference: priceDifference,
+      //   allowedDifference
+      // });
+    }
+  }
+
+  // Otherwise, use our calculated total
+  // console.log("Using calculated total:", calculatedTotal);
+  return calculatedTotal;
 }
 
 const BookingDetails = ({ booking }) => {

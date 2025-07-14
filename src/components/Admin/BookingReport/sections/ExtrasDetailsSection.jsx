@@ -16,14 +16,11 @@ const ExtrasDetailsSection = ({ booking }) => {
   // If we have price elements, use those for a consistent display
   if (booking.priceDetails?.priceElements?.length > 0) {
     const priceElements = booking.priceDetails.priceElements;
-    console.log("🔍 ExtrasDetailsSection - Raw priceElements:", priceElements);
-    console.log("🔍 ExtrasDetailsSection - Portal name:", portalName);
+    // console.log("🔍 ExtrasDetailsSection - Raw priceElements:", priceElements);
+    // console.log("🔍 ExtrasDetailsSection - Portal name:", portalName);
 
     displayExtras = getCleanExtrasFromPriceElements(priceElements, portalName);
-    console.log(
-      "🔍 ExtrasDetailsSection - After getCleanExtrasFromPriceElements:",
-      displayExtras
-    );
+    // console.log("🔍 ExtrasDetailsSection - After getCleanExtrasFromPriceElements:", displayExtras);
 
     // For Booking.com, remove TVA and taxe de séjour from extras
     if (isBookingCom) {
@@ -50,10 +47,7 @@ const ExtrasDetailsSection = ({ booking }) => {
 
   // Merge duplicate extras and sort them
   const mergedAndSortedExtras = mergeAndSortExtras(displayExtras);
-  console.log(
-    "🔍 ExtrasDetailsSection - Final mergedAndSortedExtras:",
-    mergedAndSortedExtras
-  );
+  // console.log("🔍 ExtrasDetailsSection - Final mergedAndSortedExtras:", mergedAndSortedExtras);
 
   // Calculate total
   const extrasTotal = mergedAndSortedExtras.reduce(
@@ -109,4 +103,3 @@ const ExtrasDetailsSection = ({ booking }) => {
 };
 
 export default ExtrasDetailsSection;
-

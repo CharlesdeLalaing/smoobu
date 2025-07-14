@@ -154,6 +154,38 @@ const PriceDetailsSection = ({ booking }) => {
     basePrice = parseFloat(
       booking.priceDetails?.basePrice || booking.basePrice || 0
     );
+
+    // If basePrice is 0, try to calculate it from the total price minus extras
+    if (basePrice === 0 && booking.priceDetails?.priceElements?.length > 0) {
+      // Look for base price in priceElements first
+      const basePriceElement = booking.priceDetails.priceElements.find(
+        (element) =>
+          element.name === "Prix de base" ||
+          element.type === "base" ||
+          element.type === "basePrice"
+      );
+
+      if (basePriceElement) {
+        basePrice = parseFloat(basePriceElement.amount) || 0;
+      } else if (booking.price) {
+        // Fallback to original logic if no base price element found
+        const totalPrice = parseFloat(booking.price);
+        const priceElementsTotal = booking.priceDetails.priceElements.reduce(
+          (sum, element) => {
+            return sum + (parseFloat(element.amount) || 0);
+          },
+          0
+        );
+
+        // If total price seems too low compared to extras, assume the stored price is just the base price
+        if (totalPrice < priceElementsTotal) {
+          basePrice = totalPrice;
+        } else {
+          basePrice = Math.max(0, totalPrice - priceElementsTotal);
+        }
+      }
+    }
+
     const priceElements = booking.priceDetails?.priceElements || [];
     const taxeElement = priceElements.find(
       (el) => el && el.name && el.name.toLowerCase().includes("taxe de séjour")
@@ -164,6 +196,38 @@ const PriceDetailsSection = ({ booking }) => {
     basePrice = parseFloat(
       booking.priceDetails?.basePrice || booking.basePrice || 0
     );
+
+    // If basePrice is 0, try to calculate it from the total price minus extras
+    if (basePrice === 0 && booking.priceDetails?.priceElements?.length > 0) {
+      // Look for base price in priceElements first
+      const basePriceElement = booking.priceDetails.priceElements.find(
+        (element) =>
+          element.name === "Prix de base" ||
+          element.type === "base" ||
+          element.type === "basePrice"
+      );
+
+      if (basePriceElement) {
+        basePrice = parseFloat(basePriceElement.amount) || 0;
+      } else if (booking.price) {
+        // Fallback to original logic if no base price element found
+        const totalPrice = parseFloat(booking.price);
+        const priceElementsTotal = booking.priceDetails.priceElements.reduce(
+          (sum, element) => {
+            return sum + (parseFloat(element.amount) || 0);
+          },
+          0
+        );
+
+        // If total price seems too low compared to extras, assume the stored price is just the base price
+        if (totalPrice < priceElementsTotal) {
+          basePrice = totalPrice;
+        } else {
+          basePrice = Math.max(0, totalPrice - priceElementsTotal);
+        }
+      }
+    }
+
     linenFee = parseFloat(
       booking.priceDetails?.linenFee || booking.linenFee || 0
     );

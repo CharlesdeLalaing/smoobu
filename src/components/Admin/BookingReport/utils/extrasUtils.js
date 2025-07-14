@@ -133,11 +133,8 @@ export function sortExtras(extras) {
 export function getCleanExtrasFromPriceElements(priceElements, portalName) {
   if (!priceElements || !Array.isArray(priceElements)) return [];
 
-  console.log(
-    "🔍 getCleanExtrasFromPriceElements - Input priceElements:",
-    priceElements
-  );
-  console.log("🔍 getCleanExtrasFromPriceElements - Portal name:", portalName);
+  // console.log("🔍 getCleanExtrasFromPriceElements - Input priceElements:", priceElements);
+  // console.log("🔍 getCleanExtrasFromPriceElements - Portal name:", portalName);
 
   // Define unwanted extras patterns
   const unwantedPatterns = [
@@ -172,7 +169,7 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
   const relevantElements = priceElements.filter((el) => {
     if (!el || !el.amount || !el.name) return false;
 
-    console.log(`🔍 Filtering element: "${el.name}" (amount: ${el.amount})`);
+    // console.log(`🔍 Filtering element: "${el.name}" (amount: ${el.amount})`);
 
     // For Airbnb, be very selective
     if (isAirbnb) {
@@ -246,9 +243,7 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
         !unwantedPatterns.some((pattern) => el.name.includes(pattern)) &&
         (isValidDrink || isValidExtra);
 
-      console.log(
-        `🔍 Element "${el.name}": isValidDrink=${isValidDrink}, isValidExtra=${isValidExtra}, shouldInclude=${shouldInclude}`
-      );
+      // console.log(`🔍 Element "${el.name}": isValidDrink=${isValidDrink}, isValidExtra=${isValidExtra}, shouldInclude=${shouldInclude}`);
 
       return shouldInclude;
     }
@@ -309,7 +304,7 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
 
   // Convert Map values to array
   const result = Array.from(uniqueExtras.values());
-  console.log("🔍 getCleanExtrasFromPriceElements - Final result:", result);
+  // console.log("🔍 getCleanExtrasFromPriceElements - Final result:", result);
 
   // Special handling for duplicate "Frais supplémentaires"
   const fraisElements = result.filter((e) =>
