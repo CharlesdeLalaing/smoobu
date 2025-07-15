@@ -3,12 +3,16 @@
 import Stripe from "stripe";
 import { roomNames } from "../../config/config.js";
 import { pendingBookings } from "./webhook/index.js";
+import { formatInTimeZone } from "date-fns-tz";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function createPaymentIntent(req, res) {
   try {
     const { price, bookingData } = req.body;
+
+    // Define the target timezone for consistent formatting
+    const timeZone = "Europe/Brussels";
 
     // The price calculation logic remains the same
     let totalPrice = Number(bookingData.basePrice);
@@ -81,10 +85,11 @@ export async function createPaymentIntent(req, res) {
     }
     ${
       bookingData.spaDateTime
-        ? ` • SPA: ${new Date(bookingData.spaDateTime).toLocaleString("fr-BE", {
-            dateStyle: "short",
-            timeStyle: "short",
-          })}`
+        ? ` • SPA: ${formatInTimeZone(
+            new Date(bookingData.spaDateTime),
+            timeZone,
+            "dd/MM/yyyy HH:mm"
+          )}`
         : bookingData.spaBookingPreference === "later"
         ? ` • SPA: À réserver ultérieurement`
         : ""
@@ -119,12 +124,10 @@ export async function createPaymentIntent(req, res) {
         }),
         ...(bookingData.spaDateTime && {
           spaDateTime: bookingData.spaDateTime,
-          spaFormatted: new Date(bookingData.spaDateTime).toLocaleString(
-            "fr-BE",
-            {
-              dateStyle: "short",
-              timeStyle: "short",
-            }
+          spaFormatted: formatInTimeZone(
+            new Date(bookingData.spaDateTime),
+            timeZone,
+            "dd/MM/yyyy HH:mm"
           ),
         }),
         ...(bookingData.spaBookingPreference && {
