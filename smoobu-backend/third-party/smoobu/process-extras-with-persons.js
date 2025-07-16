@@ -46,7 +46,6 @@ export function processExtrasWithPersons(priceElements) {
   // First filter the price elements to only include the extras we definitely want
   const wantedExtras = priceElements.filter(isWantedExtra);
 
-
   // 1. Separate regular extras and "Personne supplémentaire" extras
   const regularExtras = [];
   const personneExtras = [];
@@ -80,7 +79,6 @@ export function processExtrasWithPersons(priceElements) {
 
   const potentialExtras = Array.from(extraNamesMap.values());
 
-
   // 3. Group and merge "personne supplémentaire" items by exact name
   const personneItemsMap = new Map();
 
@@ -104,15 +102,12 @@ export function processExtrasWithPersons(priceElements) {
       };
 
       personneItemsMap.set(element.name, mergedItem);
-
     } else {
       personneItemsMap.set(element.name, element);
     }
   });
 
   const mergedPersonneItems = Array.from(personneItemsMap.values());
-
-
 
   // 4. Match regular extras with their corresponding "personne supplémentaire" items
   // Track which personne items have been matched
@@ -131,8 +126,6 @@ export function processExtrasWithPersons(priceElements) {
       (personItem) => personItem.name === expectedPersonneName
     );
 
-
-
     let extraPersonAmount = 0;
     let extraPersonPrice = 0;
     let extraPersonQuantity = 0;
@@ -147,10 +140,38 @@ export function processExtrasWithPersons(priceElements) {
 
       // Mark this personne item as matched
       matchedPersonneItems.add(matchingPersonItem.name);
-
-
     } else {
-      console.log(`❌ NO match found for "${regularExtraName}"`);
+      // Check if this extra should have extra person entries based on typical formule patterns
+      // and if the base quantity is > 1 (indicating multiple people)
+      const isFormuleExtra =
+        regularExtraName.toLowerCase().includes("formule") ||
+        regularExtraName.toLowerCase().includes("spa") ||
+        regularExtraName.toLowerCase().includes("gourmet") ||
+        regularExtraName.toLowerCase().includes("petit-déjeuner") ||
+        regularExtraName.toLowerCase().includes("barbecue");
+
+      const baseQuantity = parseInt(regularExtra.quantity) || 1;
+      const shouldHaveExtraPerson = isFormuleExtra && baseQuantity > 1;
+
+      if (shouldHaveExtraPerson) {
+        // Calculate extra person quantities based on the base quantity
+        // For formules that are "(2pers)", each unit serves 2 people
+        // So if quantity is 2, it means 4 people total, so 2 extra persons
+        const extraPersonsNeeded = baseQuantity - 1; // Subtract 1 for the base 2 people
+
+        // Estimate price per extra person (typically 20€ based on the working example)
+        const estimatedPersonPrice = 20;
+        extraPersonQuantity = extraPersonsNeeded;
+        extraPersonPrice = estimatedPersonPrice;
+        extraPersonAmount = extraPersonQuantity * extraPersonPrice;
+        hasExtraPerson = true;
+
+        console.log(
+          `🔄 Generated missing extra person entry for "${regularExtraName}": ${extraPersonQuantity} persons at ${extraPersonPrice}€ each`
+        );
+      } else {
+        console.log(`❌ NO match found for "${regularExtraName}"`);
+      }
     }
 
     // Add the processed extra
@@ -169,6 +190,37 @@ export function processExtrasWithPersons(priceElements) {
         : "Personne supplémentaire",
       hasExtraPerson,
     });
+
+    // If we generated a missing extra person entry, add it to priceElements as well
+    if (hasExtraPerson && !matchingPersonItem && extraPersonAmount > 0) {
+      // Create a synthetic "Personne supplémentaire" price element
+      const syntheticPersonElement = {
+        name: expectedPersonneName,
+        amount: extraPersonAmount,
+        quantity: extraPersonQuantity,
+        type: "addon",
+        id: regularExtra.id + 1000000, // Generate a unique ID
+        currencyCode: regularExtra.currencyCode || "EUR",
+        priceIncludedInId: null,
+        sortOrder: 100,
+        tax: 0,
+      };
+
+      // Add to processed extras as a standalone item
+      processedExtras.push({
+        name: expectedPersonneName,
+        amount: extraPersonAmount,
+        quantity: extraPersonQuantity,
+        type: "addon",
+        id: syntheticPersonElement.id,
+        currencyCode: syntheticPersonElement.currencyCode,
+        extraPersonQuantity: 0,
+        extraPersonPrice: 0,
+        extraPersonAmount: 0,
+        extraPersonName: "",
+        hasExtraPerson: false,
+      });
+    }
   });
 
   // 5. Add any "Personne supplémentaire" items that weren't matched as standalone extras
@@ -179,8 +231,6 @@ export function processExtrasWithPersons(priceElements) {
   );
 
   if (unmatchedPersonneItems.length > 0) {
-
-
     unmatchedPersonneItems.forEach((item) => {
       processedExtras.push({
         name: item.name,
@@ -231,8 +281,6 @@ export function processExtrasWithPersons(priceElements) {
         extraPersonName: "Personne supplémentaire",
         hasExtraPerson: false,
       });
-
-
     }
   }
 

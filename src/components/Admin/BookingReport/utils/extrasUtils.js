@@ -80,9 +80,38 @@ export function sortExtras(extras) {
       parentName = personExtra.name.split(" - ")[0].trim();
     }
 
-    // If we found a parent and it exists in our groups, add this person extra to that group
+    // Try to find a matching parent group
+    let matchedGroup = null;
+
+    // First, try exact match
     if (parentName && extrasGroups.has(parentName)) {
-      extrasGroups.get(parentName).push(personExtra);
+      matchedGroup = parentName;
+    } else {
+      // If no exact match, try fuzzy matching by normalizing names
+      const normalizedParentName = parentName
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .replace(/\((\d+)\s*pers?\)/g, "($1pers)") // Normalize (2 pers) to (2pers)
+        .trim();
+
+      // Look for a similar main extra
+      for (const [groupName] of extrasGroups) {
+        const normalizedGroupName = groupName
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .replace(/\((\d+)\s*pers?\)/g, "($1pers)") // Normalize (2pers) to (2pers)
+          .trim();
+
+        if (normalizedParentName === normalizedGroupName) {
+          matchedGroup = groupName;
+          break;
+        }
+      }
+    }
+
+    // If we found a parent and it exists in our groups, add this person extra to that group
+    if (matchedGroup) {
+      extrasGroups.get(matchedGroup).push(personExtra);
     } else {
       // If we can't determine the parent, handle it as an orphan
       // Create a fallback group
@@ -90,6 +119,10 @@ export function sortExtras(extras) {
         extrasGroups.set("Autres", []);
       }
       extrasGroups.get("Autres").push(personExtra);
+      console.log(
+        `⚠️ Could not match person extra "${personExtra.name}" to any main extra. Available groups:`,
+        Array.from(extrasGroups.keys())
+      );
     }
   });
 
@@ -132,9 +165,6 @@ export function sortExtras(extras) {
 
 export function getCleanExtrasFromPriceElements(priceElements, portalName) {
   if (!priceElements || !Array.isArray(priceElements)) return [];
-
-  // console.log("🔍 getCleanExtrasFromPriceElements - Input priceElements:", priceElements);
-  // console.log("🔍 getCleanExtrasFromPriceElements - Portal name:", portalName);
 
   // Define unwanted extras patterns
   const unwantedPatterns = [
@@ -186,7 +216,8 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
         el.name.includes("Ritchie Citron/Framboise") ||
         el.name.includes("Ritchie Orange/Vanille") ||
         el.name.includes("Ritchie Cola") ||
-        el.name.includes("Ritchie Cola Zéro");
+        el.name.includes("Ritchie Cola Zéro") ||
+        el.name.includes("Houblonde Triple");
 
       // Only allow formules, specific extras, and drinks
       return (
@@ -212,7 +243,8 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
         el.name.includes("Ritchie Citron/Framboise") ||
         el.name.includes("Ritchie Orange/Vanille") ||
         el.name.includes("Ritchie Cola") ||
-        el.name.includes("Ritchie Cola Zéro");
+        el.name.includes("Ritchie Cola Zéro") ||
+        el.name.includes("Houblonde Triple");
 
       const isValidExtra =
         el.name.includes("formule") ||
@@ -242,8 +274,6 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
         !el.name.includes("Réduction") &&
         !unwantedPatterns.some((pattern) => el.name.includes(pattern)) &&
         (isValidDrink || isValidExtra);
-
-      // console.log(`🔍 Element "${el.name}": isValidDrink=${isValidDrink}, isValidExtra=${isValidExtra}, shouldInclude=${shouldInclude}`);
 
       return shouldInclude;
     }
@@ -304,7 +334,6 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
 
   // Convert Map values to array
   const result = Array.from(uniqueExtras.values());
-  // console.log("🔍 getCleanExtrasFromPriceElements - Final result:", result);
 
   // Special handling for duplicate "Frais supplémentaires"
   const fraisElements = result.filter((e) =>

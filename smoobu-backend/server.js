@@ -26,7 +26,7 @@ import { createPaymentIntent } from "./third-party/stripe/create-payment-intent.
 import { getBookingByPaymentIntentId } from "./third-party/stripe/get-payment-intent.js";
 import { getBookingHistoryByEmail } from "./third-party/smoobu/actions/api/get-booking-history-email.js";
 import { handleGetSpaAvailability } from "./third-party/smoobu/actions/api/spa-availability.js";
-import { handleCancelSpaBooking } from "./third-party/smoobu/actions/api/cancel-booking.js"
+import { handleCancelSpaBooking } from "./third-party/smoobu/actions/api/cancel-booking.js";
 
 // Updated import for the refactored Smoobu cancellation function
 import { cancelSmoobuReservationById } from "./third-party/smoobu/actions/api/cancel-reservation.js";
@@ -63,6 +63,266 @@ app.use(
 // Your existing routes
 app.get("/api/deduplicate-bookings", deduplicateBookings);
 app.get("/api/fetch-and-sync", fetchAndSync);
+
+// Safe fetch-and-sync with backup
+app.get("/api/safe-fetch-and-sync", async (req, res) => {
+  try {
+    // Step 1: Create backup
+    console.log("🔄 Creating backup before sync...");
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const backupData = {};
+
+    const bookingsSnapshot = await db.collection("bookings").get();
+    backupData.bookings = {};
+
+    bookingsSnapshot.forEach((doc) => {
+      backupData.bookings[doc.id] = doc.data();
+    });
+
+    // Save backup to file
+    const backupFilename = `backup-before-sync-${timestamp}.json`;
+    const fs = await import("fs");
+    fs.writeFileSync(backupFilename, JSON.stringify(backupData, null, 2));
+
+    console.log(`✅ Backup created: ${bookingsSnapshot.size} bookings`);
+    console.log(`📁 Backup saved to: ${backupFilename}`);
+
+    // Step 2: Run fetch-and-sync
+    console.log("🔄 Running fetch-and-sync...");
+    const syncResult = await fetchAndSync(req, res);
+
+    res.json({
+      success: true,
+      message: "Safe fetch-and-sync completed successfully",
+      backup: {
+        timestamp: timestamp,
+        filename: backupFilename,
+        bookingsCount: bookingsSnapshot.size,
+        location: `${process.cwd()}/${backupFilename}`,
+      },
+      sync: syncResult,
+    });
+  } catch (error) {
+    console.error("🟥 Safe fetch-and-sync failed:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: "Failed to perform safe fetch-and-sync",
+    });
+  }
+});
+
+// Backup database endpoint
+app.get("/api/backup-database", async (req, res) => {
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const backupData = {};
+
+    console.log("🔄 Starting database backup...");
+
+    // Backup bookings collection
+    const bookingsSnapshot = await db.collection("bookings").get();
+    backupData.bookings = {};
+
+    bookingsSnapshot.forEach((doc) => {
+      backupData.bookings[doc.id] = doc.data();
+    });
+
+    // Save backup to file
+    const backupFilename = `backup-manual-${timestamp}.json`;
+    const fs = await import("fs");
+    fs.writeFileSync(backupFilename, JSON.stringify(backupData, null, 2));
+
+    console.log(`✅ Backed up ${bookingsSnapshot.size} bookings`);
+    console.log(`📁 Backup saved to: ${backupFilename}`);
+
+    res.json({
+      success: true,
+      message: "Database backup completed",
+      timestamp: timestamp,
+      filename: backupFilename,
+      location: `${process.cwd()}/${backupFilename}`,
+      collections: {
+        bookings: bookingsSnapshot.size,
+      },
+      backup: backupData,
+    });
+  } catch (error) {
+    console.error("🟥 Backup failed:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: "Failed to backup database",
+    });
+  }
+});
+
+// Test endpoint for specific booking sync
+app.get("/api/test-booking-sync/:bookingId", async (req, res) => {
+  try {
+    const { SmoobuClient } = await import(
+      "./third-party/smoobu/actions/api/fetch-and-sync/smoobu-client.js"
+    );
+    const { processExtrasWithPersons } = await import(
+      "./third-party/smoobu/process-extras-with-persons.js"
+    );
+
+    const smoobuClient = new SmoobuClient();
+
+    // Get booking ID from URL parameter
+    const testBookingId = req.params.bookingId;
+
+    console.log(`🔍 Testing sync for booking: ${testBookingId}`);
+
+    // Fetch booking from Firebase
+    const bookingDoc = await db
+      .collection("bookings")
+      .where("smoobuId", "==", testBookingId)
+      .get();
+
+    if (bookingDoc.empty) {
+      return res.status(404).json({
+        success: false,
+        error: "Booking not found in Firebase",
+        bookingId: testBookingId,
+      });
+    }
+
+    const booking = { id: bookingDoc.docs[0].id, ...bookingDoc.docs[0].data() };
+    console.log(`✅ Found booking in Firebase:`, {
+      id: booking.smoobuId,
+      guest: booking.guestName,
+      arrival: booking.arrivalDate,
+      extras: booking.extras?.length || 0,
+      priceElements: booking.priceDetails?.priceElements?.length || 0,
+    });
+
+    // Test our sync logic by fetching price elements and processing them
+    console.log(`🔍 Fetching price elements for booking ${testBookingId}`);
+    const priceElements = await smoobuClient.fetchPriceElements(testBookingId);
+    console.log(
+      `📋 Retrieved ${priceElements.length} price elements from Smoobu`
+    );
+
+    // Log the price elements to see what we're working with
+    console.log(
+      `📋 Price elements:`,
+      priceElements.map((pe) => ({
+        id: pe.id,
+        name: pe.name,
+        amount: pe.amount,
+        quantity: pe.quantity,
+        type: pe.type,
+      }))
+    );
+
+    // Test our enhanced processing logic
+    console.log(`🔄 Processing extras with persons logic...`);
+    const processedExtras = processExtrasWithPersons(priceElements);
+    console.log(`✅ Processed ${processedExtras.extras.length} extras`);
+
+    // Log the results
+    console.log(
+      `📋 Processed extras:`,
+      processedExtras.extras.map((e) => ({
+        name: e.name,
+        amount: e.amount,
+        quantity: e.quantity,
+        hasExtraPerson: e.hasExtraPerson,
+        extraPersonQuantity: e.extraPersonQuantity,
+        extraPersonAmount: e.extraPersonAmount,
+      }))
+    );
+
+    // Update the booking document with the processed data
+    const updatedPriceElements = [...priceElements];
+
+    // Add any missing extra person entries to priceElements
+    processedExtras.extras.forEach((extra) => {
+      if (extra.hasExtraPerson && extra.extraPersonAmount > 0) {
+        const expectedPersonneName = `${extra.name} - Personne supplémentaire`;
+
+        // Check if this extra person entry already exists in price elements
+        const existingEntry = updatedPriceElements.find(
+          (el) => el.name === expectedPersonneName
+        );
+
+        if (!existingEntry) {
+          // Create the missing extra person entry
+          const syntheticPersonElement = {
+            name: expectedPersonneName,
+            amount: extra.extraPersonAmount,
+            quantity: extra.extraPersonQuantity,
+            type: "addon",
+            id: extra.id + 1000000, // Generate a unique ID
+            currencyCode: extra.currencyCode || "EUR",
+            priceIncludedInId: null,
+            sortOrder: 100,
+            tax: 0,
+          };
+
+          updatedPriceElements.push(syntheticPersonElement);
+          console.log(
+            `✅ Added missing extra person entry: "${expectedPersonneName}" (${extra.extraPersonQuantity}x ${extra.extraPersonPrice}€)`
+          );
+        }
+      }
+    });
+
+    // Calculate the new extras total
+    const newExtrasTotal = updatedPriceElements
+      .filter((el) => el.type === "addon" && el.amount > 0)
+      .reduce((sum, el) => sum + Math.abs(parseFloat(el.amount) || 0), 0);
+
+    // Update the booking in Firebase
+    const updatedBookingData = {
+      ...booking,
+      extras: processedExtras.extras,
+      priceDetails: {
+        ...booking.priceDetails,
+        priceElements: updatedPriceElements,
+        extrasTotal: newExtrasTotal,
+      },
+      lastSyncedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await db
+      .collection("bookings")
+      .doc(bookingDoc.docs[0].id)
+      .update(updatedBookingData);
+
+    res.json({
+      success: true,
+      message: "Booking sync tested and updated successfully",
+      bookingId: testBookingId,
+      results: {
+        originalExtras: booking.extras?.length || 0,
+        processedExtras: processedExtras.extras.length,
+        originalPriceElements: booking.priceDetails?.priceElements?.length || 0,
+        updatedPriceElements: updatedPriceElements.length,
+        originalExtrasTotal: booking.priceDetails?.extrasTotal || 0,
+        newExtrasTotal: newExtrasTotal,
+        addedPersonEntries: updatedPriceElements.length - priceElements.length,
+      },
+      processedExtras: processedExtras.extras.map((e) => ({
+        name: e.name,
+        amount: e.amount,
+        quantity: e.quantity,
+        hasExtraPerson: e.hasExtraPerson,
+        extraPersonQuantity: e.extraPersonQuantity,
+        extraPersonAmount: e.extraPersonAmount,
+      })),
+    });
+  } catch (error) {
+    console.error("🟥 Error testing Mandy's booking sync:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: "Failed to test Mandy's booking sync",
+    });
+  }
+});
 app.post("/api/create-gift-voucher", handleCreateGiftVoucher);
 app.post("/api/validate-voucher", validateVoucher);
 app.get("/api/direct-bookings", fetchDirectBookings);
@@ -108,8 +368,6 @@ app.delete(
         numericSmoobuId.toString()
       );
 
-
-
       const bookingsRef = db.collection("bookings");
       // Query using the NUMERIC smoobuReservationId field
       const querySnapshot = await bookingsRef
@@ -117,7 +375,6 @@ app.delete(
         .get();
 
       if (querySnapshot.empty) {
-
         return res.status(200).json({
           message: `${smoobuResult.message} No corresponding booking found in Firebase (it may have already been removed or never existed there).`,
           smoobuSuccess: true,
@@ -128,7 +385,6 @@ app.delete(
       const batch = db.batch();
       let deletedFirebaseCount = 0;
       querySnapshot.forEach((doc) => {
-
         batch.delete(doc.ref);
         deletedFirebaseCount++;
       });

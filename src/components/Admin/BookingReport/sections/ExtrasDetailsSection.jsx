@@ -16,11 +16,8 @@ const ExtrasDetailsSection = ({ booking }) => {
   // If we have price elements, use those for a consistent display
   if (booking.priceDetails?.priceElements?.length > 0) {
     const priceElements = booking.priceDetails.priceElements;
-    // console.log("🔍 ExtrasDetailsSection - Raw priceElements:", priceElements);
-    // console.log("🔍 ExtrasDetailsSection - Portal name:", portalName);
 
     displayExtras = getCleanExtrasFromPriceElements(priceElements, portalName);
-    // console.log("🔍 ExtrasDetailsSection - After getCleanExtrasFromPriceElements:", displayExtras);
 
     // For Booking.com, remove TVA and taxe de séjour from extras
     if (isBookingCom) {
@@ -33,7 +30,31 @@ const ExtrasDetailsSection = ({ booking }) => {
   }
   // Otherwise fall back to the extras array
   else if (booking.extras?.length > 0) {
-    displayExtras = booking.extras;
+    displayExtras = [...booking.extras];
+
+    // For web app bookings, we need to expand extras that have hasExtraPerson: true
+    // into separate display items for the extra person
+    const expandedExtras = [];
+
+    displayExtras.forEach((extra) => {
+      // Add the main extra
+      expandedExtras.push(extra);
+
+      // If this extra has extra person data, add it as a separate item
+      if (extra.hasExtraPerson && extra.extraPersonAmount > 0) {
+        const extraPersonItem = {
+          name: `${extra.name} - Personne supplémentaire`,
+          amount: extra.extraPersonAmount,
+          quantity: extra.extraPersonQuantity || 1,
+          id: `${extra.id}-person`,
+          type: "addon",
+          currencyCode: extra.currencyCode || "EUR",
+        };
+        expandedExtras.push(extraPersonItem);
+      }
+    });
+
+    displayExtras = expandedExtras;
 
     // For Booking.com, filter out TVA from extras
     if (isBookingCom) {
@@ -47,7 +68,6 @@ const ExtrasDetailsSection = ({ booking }) => {
 
   // Merge duplicate extras and sort them
   const mergedAndSortedExtras = mergeAndSortExtras(displayExtras);
-  // console.log("🔍 ExtrasDetailsSection - Final mergedAndSortedExtras:", mergedAndSortedExtras);
 
   // Calculate total
   const extrasTotal = mergedAndSortedExtras.reduce(
