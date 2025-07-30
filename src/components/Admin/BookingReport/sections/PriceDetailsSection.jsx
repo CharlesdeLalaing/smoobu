@@ -22,6 +22,7 @@ const PriceDetailsSection = ({ booking }) => {
   let couponDiscountAmount = 0;
   let actualCouponCode = "";
   let taxeDeSejour = 0;
+  let guestFees = 0;
 
   // --- Determine the actual coupon code used ---
   // Priority: booking.coupon (from useBookingsData processing), then fallbacks.
@@ -80,24 +81,40 @@ const PriceDetailsSection = ({ booking }) => {
     }
   }
 
+  // --- Determine which priceElements to use ---
+  // Check both priceDetails.priceElements and priceBreakdown.priceElementsForSmoobu
+  const priceElementsToCheck =
+    booking.priceDetails?.priceElements?.length > 0
+      ? booking.priceDetails.priceElements
+      : booking.priceBreakdown?.priceElementsForSmoobu || [];
+
   // --- Check priceElements for coupon/discount entries ---
   // This is critical for bookings where coupon info is stored in priceElements
-  if (
-    couponDiscountAmount === 0 &&
-    booking.priceDetails?.priceElements?.length > 0
-  ) {
-    const priceElements = booking.priceDetails.priceElements;
+  if (couponDiscountAmount === 0 && priceElementsToCheck.length > 0) {
+    const priceElements = priceElementsToCheck;
 
-    // Look for coupon entries in priceElements
+    // Look for coupon entries in priceElements (exclude long stay discounts)
     const couponElement = priceElements.find(
       (el) =>
         el &&
         el.name &&
         el.amount &&
+        // Exclude long stay discounts first
+        !el.name.toLowerCase().includes("long séjour") &&
+        !el.name.toLowerCase().includes("longstay") &&
+        !(
+          typeof el.id === "string" && el.id.toLowerCase().includes("longstay")
+        ) &&
         (el.type === "coupon" ||
+          (el.type === "discount" &&
+            !el.name.toLowerCase().includes("réduction long séjour")) ||
           el.name.toLowerCase().includes("coupon") ||
           el.name.toLowerCase().includes("code promo") ||
-          el.name.toLowerCase().includes("réduction") ||
+          el.name.toLowerCase().includes("chèque cadeau") ||
+          el.name.toLowerCase().includes("gift") ||
+          (el.name.toLowerCase().includes("réduction") &&
+            !el.name.toLowerCase().includes("long séjour") &&
+            !el.name.toLowerCase().includes("longstay")) ||
           el.name.toLowerCase().includes("promo"))
     );
 
@@ -106,7 +123,12 @@ const PriceDetailsSection = ({ booking }) => {
 
       // Extract coupon code from the name if not already set
       if (!actualCouponCode) {
-        if (
+        if (couponElement.name.includes("Chèque Cadeau: ")) {
+          const match = couponElement.name.match(/Chèque Cadeau: ([^(]+)/);
+          if (match) {
+            actualCouponCode = match[1].trim();
+          }
+        } else if (
           couponElement.name.includes("Gift.") ||
           couponElement.name.includes("GIFT.")
         ) {
@@ -121,12 +143,57 @@ const PriceDetailsSection = ({ booking }) => {
           if (match) {
             actualCouponCode = match[1].trim();
           }
+        } else {
+          // If no specific pattern matches, use generic text
+          actualCouponCode = "PROMO APPLIQUÉ";
         }
       }
     }
   }
+
+  // Additional check: If no actual coupon was applied, reset coupon values
+  if (
+    !booking.couponApplied &&
+    !booking.appliedCoupon &&
+    (!booking.priceBreakdown?.appliedCouponDiscount ||
+      booking.priceBreakdown.appliedCouponDiscount === 0) &&
+    !booking.priceDetails?.couponDiscount &&
+    !booking.priceDetails?.promoCode
+  ) {
+    couponDiscountAmount = 0;
+    actualCouponCode = "";
+  }
   // Ensure the discount is stored as a positive value for calculations; it will be displayed as negative.
   couponDiscountAmount = Math.abs(couponDiscountAmount);
+
+  // --- Extract Guest Fees ---
+  // Try multiple sources for guest fees
+  if (booking.guestFees) {
+    guestFees = parseFloat(booking.guestFees) || 0;
+  } else if (booking.priceBreakdown?.calculatedGuestFees) {
+    guestFees = parseFloat(booking.priceBreakdown.calculatedGuestFees) || 0;
+  } else if (booking.priceDetailsSnapshot?.guestFees) {
+    guestFees = parseFloat(booking.priceDetailsSnapshot.guestFees) || 0;
+  } else if (priceElementsToCheck.length > 0) {
+    // Look for guest fees in price elements
+    const guestFeeElement = priceElementsToCheck.find(
+      (el) =>
+        el &&
+        el.name &&
+        el.amount &&
+        (el.type === "guests" ||
+          el.name.toLowerCase().includes("frais voyageurs") ||
+          el.name.toLowerCase().includes("guest") ||
+          (el.name.toLowerCase().includes("personne supplémentaire") &&
+            !el.name.toLowerCase().includes("l'essentiel")) ||
+          el.name.toLowerCase().includes("extra guest") ||
+          el.name.toLowerCase().includes("additional guest"))
+    );
+
+    if (guestFeeElement) {
+      guestFees = parseFloat(guestFeeElement.amount) || 0;
+    }
+  }
 
   // --- Determine Base Price and other fees based on portal ---
   if (isAirbnb) {
@@ -146,6 +213,23 @@ const PriceDetailsSection = ({ booking }) => {
           el.name.includes("Linen Fee"))
     );
     if (linenFeeElement) linenFee = parseFloat(linenFeeElement.amount) || 0;
+
+    // Check for long stay discount in priceElements
+    const longStayElement = priceElements.find(
+      (el) =>
+        el &&
+        el.name &&
+        (el.name.toLowerCase().includes("long stay discount") ||
+          el.name.toLowerCase().includes("réduction long séjour") ||
+          el.name.toLowerCase().includes("longstay") ||
+          el.type === "longStayDiscount" ||
+          (el.type === "discount" &&
+            !el.name.toLowerCase().includes("coupon") &&
+            !el.name.toLowerCase().includes("code promo") &&
+            !el.name.toLowerCase().includes("promo")))
+    );
+    if (longStayElement)
+      longStayDiscount = Math.abs(parseFloat(longStayElement.amount) || 0);
 
     // For commission display (not calculation of total)
     // const commissionElement = priceElements.find(el => el && el.name && (el.name.includes("Cancellation Host Fee") || el.name.includes("Host Fee")));
@@ -191,6 +275,23 @@ const PriceDetailsSection = ({ booking }) => {
       (el) => el && el.name && el.name.toLowerCase().includes("taxe de séjour")
     );
     if (taxeElement) taxeDeSejour = parseFloat(taxeElement.amount) || 0;
+
+    // Check for long stay discount in priceElements
+    const longStayElement = priceElements.find(
+      (el) =>
+        el &&
+        el.name &&
+        (el.name.toLowerCase().includes("long stay discount") ||
+          el.name.toLowerCase().includes("réduction long séjour") ||
+          el.name.toLowerCase().includes("longstay") ||
+          el.type === "longStayDiscount" ||
+          (el.type === "discount" &&
+            !el.name.toLowerCase().includes("coupon") &&
+            !el.name.toLowerCase().includes("code promo") &&
+            !el.name.toLowerCase().includes("promo")))
+    );
+    if (longStayElement)
+      longStayDiscount = Math.abs(parseFloat(longStayElement.amount) || 0);
   } else {
     // For non-Airbnb/non-Booking.com (e.g., Direct/Website)
     basePrice = parseFloat(
@@ -231,12 +332,39 @@ const PriceDetailsSection = ({ booking }) => {
     linenFee = parseFloat(
       booking.priceDetails?.linenFee || booking.linenFee || 0
     );
-    longStayDiscount = parseFloat(booking.priceDetails?.longStayDiscount || 0);
+    longStayDiscount = parseFloat(
+      booking.priceBreakdown?.appliedLongStayDiscount ||
+        booking.priceDetailsSnapshot?.discount ||
+        booking.priceDetails?.longStayDiscount ||
+        booking.longStayDiscount ||
+        0
+    );
+
+    // If no discount found, check priceElements as fallback
+    if (longStayDiscount === 0 && priceElementsToCheck.length > 0) {
+      const priceElements = priceElementsToCheck;
+      const longStayElement = priceElements.find(
+        (el) =>
+          el &&
+          el.name &&
+          (el.name.toLowerCase().includes("long stay discount") ||
+            el.name.toLowerCase().includes("réduction long séjour") ||
+            el.name.toLowerCase().includes("longstay") ||
+            el.type === "longStayDiscount" ||
+            (el.type === "discount" &&
+              !el.name.toLowerCase().includes("coupon") &&
+              !el.name.toLowerCase().includes("code promo") &&
+              !el.name.toLowerCase().includes("promo")))
+      );
+      if (longStayElement) {
+        longStayDiscount = Math.abs(parseFloat(longStayElement.amount) || 0);
+      }
+    }
   }
 
   // Calculate total room price logic
   const totalRoomPriceBeforeDiscountsAndTaxes =
-    basePrice + linenFee + (isBookingCom ? taxeDeSejour : 0);
+    basePrice + linenFee + guestFees + (isBookingCom ? taxeDeSejour : 0);
   const totalDiscountsApplicable = longStayDiscount + couponDiscountAmount; // Both are positive values representing reduction
   const finalTotalRoomPrice =
     totalRoomPriceBeforeDiscountsAndTaxes - totalDiscountsApplicable;
@@ -259,6 +387,15 @@ const PriceDetailsSection = ({ booking }) => {
           </p>
         )}
 
+        {guestFees > 0 && (
+          <p className="text-sm">
+            <span className="block font-medium">
+              Frais voyageurs supplémentaires:
+            </span>
+            {formatPrice(guestFees)}
+          </p>
+        )}
+
         {isBookingCom && taxeDeSejour > 0 && (
           <p className="text-sm">
             <span className="block font-medium">Taxe de séjour:</span>
@@ -277,7 +414,10 @@ const PriceDetailsSection = ({ booking }) => {
         {couponDiscountAmount > 0.001 && ( // Use a small epsilon for float comparison
           <p className="text-sm text-green-600">
             <span className="block font-medium">
-              {`Code promo: ${actualCouponCode || "PROMO APPLIQUÉ"}:`}
+              {booking.couponApplied?.isGiftVoucher ||
+              actualCouponCode?.startsWith("GIFT")
+                ? `Chèque Cadeau: ${actualCouponCode || "CADEAU APPLIQUÉ"}:`
+                : `Code promo: ${actualCouponCode || "PROMO APPLIQUÉ"}:`}
             </span>
             {formatPrice(-couponDiscountAmount)}{" "}
             {/* Display discount as negative */}

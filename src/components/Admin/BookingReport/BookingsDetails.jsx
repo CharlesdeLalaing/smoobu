@@ -105,7 +105,10 @@ export function calculateBookingTotal(booking) {
     booking.priceDetails?.linenFee || booking.linenFee || 0
   );
   let longStayDiscount = parseFloat(
-    booking.priceDetails?.longStayDiscount || 0
+    booking.priceBreakdown?.appliedLongStayDiscount ||
+      booking.priceDetailsSnapshot?.discount ||
+      booking.priceDetails?.longStayDiscount ||
+      0
   );
 
   // =================================================================
@@ -114,7 +117,10 @@ export function calculateBookingTotal(booking) {
   // This new code checks the correct location first.
   // =================================================================
   let couponDiscount = parseFloat(
-    booking.couponApplied?.discount || // CHECK HERE FIRST: This is where modern bookings save it.
+    // Only use coupon discount if there's actually a coupon applied (not null)
+    (booking.couponApplied
+      ? booking.coupon?.discount || booking.couponApplied?.discount
+      : 0) ||
       booking.priceDetails?.couponDiscount || // Fallback for older data structures.
       booking.priceDetails?.promoCode?.amount || // Another fallback.
       0 // Default to 0 if nothing is found.
@@ -122,8 +128,13 @@ export function calculateBookingTotal(booking) {
 
   // --- Check priceElements for coupon/discount entries ---
   // This is critical for bookings where coupon info is stored in priceElements
-  if (couponDiscount === 0 && priceElements.length > 0) {
-    const couponElement = priceElements.find(
+  const priceElementsToCheck =
+    priceElements.length > 0
+      ? priceElements
+      : booking.priceBreakdown?.priceElementsForSmoobu || [];
+
+  if (couponDiscount === 0 && priceElementsToCheck.length > 0) {
+    const couponElement = priceElementsToCheck.find(
       (el) =>
         el &&
         el.name &&
@@ -131,7 +142,11 @@ export function calculateBookingTotal(booking) {
         (el.type === "coupon" ||
           el.name.toLowerCase().includes("coupon") ||
           el.name.toLowerCase().includes("code promo") ||
-          el.name.toLowerCase().includes("réduction") ||
+          el.name.toLowerCase().includes("chèque cadeau") ||
+          el.name.toLowerCase().includes("gift") ||
+          (el.name.toLowerCase().includes("réduction") &&
+            !el.name.toLowerCase().includes("long séjour") &&
+            !el.name.toLowerCase().includes("longstay")) ||
           el.name.toLowerCase().includes("promo"))
     );
 
@@ -164,6 +179,26 @@ export function calculateBookingTotal(booking) {
     }
   }
 
+  // Check for longStayDiscount in priceElements if not found elsewhere
+  if (longStayDiscount === 0 && priceElementsToCheck.length > 0) {
+    const longStayElement = priceElementsToCheck.find(
+      (el) =>
+        el &&
+        el.name &&
+        (el.name.toLowerCase().includes("long stay discount") ||
+          el.name.toLowerCase().includes("réduction long séjour") ||
+          el.name.toLowerCase().includes("longstay") ||
+          el.type === "longStayDiscount" ||
+          (el.type === "discount" &&
+            !el.name.toLowerCase().includes("coupon") &&
+            !el.name.toLowerCase().includes("code promo") &&
+            !el.name.toLowerCase().includes("promo")))
+    );
+    if (longStayElement) {
+      longStayDiscount = Math.abs(parseFloat(longStayElement.amount) || 0);
+    }
+  }
+
   // Calculate room subtotal (Base + Fees - Discounts)
   let roomTotal = basePrice + linenFee - longStayDiscount - couponDiscount;
 
@@ -173,8 +208,11 @@ export function calculateBookingTotal(booking) {
 
   // --- Extras Calculation ---
   let displayExtras = [];
-  if (priceElements.length > 0) {
-    displayExtras = getCleanExtrasFromPriceElements(priceElements, portalName);
+  if (priceElementsToCheck.length > 0) {
+    displayExtras = getCleanExtrasFromPriceElements(
+      priceElementsToCheck,
+      portalName
+    );
     // If priceElements didn't yield any extras, fallback to booking.extras
     if (displayExtras.length === 0 && booking.extras?.length > 0) {
       displayExtras = booking.extras;
@@ -201,40 +239,32 @@ export function calculateBookingTotal(booking) {
   const calculatedTotal = roomTotal + extrasTotal;
   const storedPrice = parseFloat(booking.price || 0);
 
-  // Debug for Laura using correct field names
-  if (booking.id === "97079768" && booking.guest === "Laura Serra") {
-    console.log("Laura Debug - priceElements:", priceElements);
-    console.log("Laura Debug (ID: 97079768):", {
-      guest: booking.guest,
-      rawBasePrice: booking.priceDetails?.basePrice || booking.basePrice,
-      basePriceFromPriceDetails: booking.priceDetails?.basePrice,
-      basePriceFromBooking: booking.basePrice,
-      priceElementsLength: priceElements.length,
-      finalBasePrice: basePrice,
-      couponDiscount,
-      roomTotal,
-      extrasTotal,
-      calculatedTotal,
-      storedPrice,
-      condition1: !isAirbnb,
-      condition2: storedPrice > 0,
-      condition3: storedPrice > roomTotal,
-      condition4: extrasTotal > 0,
-      priceDifference: Math.abs(storedPrice - calculatedTotal),
-      allowedDifference: Math.max(5, calculatedTotal * 0.05),
-      willUseStoredPrice:
-        !isAirbnb &&
-        storedPrice > 0 &&
-        storedPrice > roomTotal &&
-        extrasTotal > 0 &&
-        Math.abs(storedPrice - calculatedTotal) <=
-          Math.max(5, calculatedTotal * 0.05),
-    });
+  // Debug logging for specific bookings
+  if (booking.id === "104351664" || booking.smoobuId === "104351664") {
+    console.log("=== DEBUGGING TOTAL CALCULATION FOR BOOKING 104351664 ===");
+    console.log("basePrice:", basePrice);
+    console.log("linenFee:", linenFee);
+    console.log("longStayDiscount:", longStayDiscount);
+    console.log("couponDiscount:", couponDiscount);
+    console.log("roomTotal (base + linen - longStay - coupon):", roomTotal);
+    console.log("extrasTotal:", extrasTotal);
+    console.log("calculatedTotal (room + extras):", calculatedTotal);
+    console.log("storedPrice (from booking.price):", storedPrice);
   }
+
+  // Debug logging removed - issue resolved for booking 96356178
+
+  // Debug logs removed - issue resolved
 
   // For newer bookings, if stored price is reasonable and includes extras, use it
   // But only if it's very close to our calculated total (within 5% or €5)
   // However, for Airbnb bookings, always use calculated total since stored price often excludes extras
+
+  // If we have detailed priceElements/priceBreakdown data, prefer calculated total
+  // as it's more accurate than stored price which might be outdated
+  const hasDetailedPriceData =
+    priceElementsToCheck.length > 0 && extrasTotal > 0;
+
   if (
     !isAirbnb &&
     storedPrice > 0 &&
@@ -244,21 +274,35 @@ export function calculateBookingTotal(booking) {
     const priceDifference = Math.abs(storedPrice - calculatedTotal);
     const allowedDifference = Math.max(5, calculatedTotal * 0.05);
 
-    if (priceDifference <= allowedDifference) {
-      // console.log("Using stored price:", storedPrice);
+    // If we have detailed price breakdown data, prefer calculated total even if stored price is close
+    // This ensures we use the most accurate calculation when we have complete data
+    if (hasDetailedPriceData) {
+      // Only use stored price if it's EXACTLY the same as calculated (no tolerance)
+      if (priceDifference === 0) {
+        if (booking.id === "104351664" || booking.smoobuId === "104351664") {
+          console.log("RETURNING storedPrice (exact match):", storedPrice);
+        }
+        return storedPrice;
+      }
+      // Otherwise use calculated total when we have detailed data
+    } else if (priceDifference <= allowedDifference) {
+      // Only use tolerance logic when we don't have detailed price breakdown
+      if (booking.id === "104351664" || booking.smoobuId === "104351664") {
+        console.log(
+          "RETURNING storedPrice (within tolerance, no detailed data):",
+          storedPrice
+        );
+      }
       return storedPrice;
-    } else {
-      // console.log("Stored price differs too much from calculated, using calculated:", {
-      //   storedPrice,
-      //   calculatedTotal,
-      //   difference: priceDifference,
-      //   allowedDifference
-      // });
     }
   }
 
   // Otherwise, use our calculated total
   // console.log("Using calculated total:", calculatedTotal);
+  if (booking.id === "104351664" || booking.smoobuId === "104351664") {
+    console.log("RETURNING calculatedTotal:", calculatedTotal);
+  }
+  // Debug logging removed - issue resolved for booking 96356178
   return calculatedTotal;
 }
 

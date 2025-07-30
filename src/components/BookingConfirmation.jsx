@@ -7,8 +7,6 @@ import { addMinutes, format as formatFn } from "date-fns";
 import { fr, enUS, nl } from "date-fns/locale"; // Import all required locales
 import "../assets/bookingConfirmation.css"; // Verify path
 
-
-
 import {
   CalendarClock,
   ShoppingBagIcon,
@@ -116,22 +114,8 @@ const BookingConfirmation = () => {
 
   const calculateAndSetFinalPrice = useCallback((data) => {
     if (!data) return;
-    if (
-      data.priceBreakdown?.finalPayableAmount !== undefined &&
-      !isNaN(parseFloat(data.priceBreakdown.finalPayableAmount))
-    ) {
-      setDisplayPrice(parseFloat(data.priceBreakdown.finalPayableAmount));
-      return;
-    }
-    if (
-      data.price !== null &&
-      data.price !== undefined &&
-      !isNaN(parseFloat(data.price))
-    ) {
-      setDisplayPrice(parseFloat(data.price));
-      return;
-    }
-    // Fallback calculation if the primary fields are missing (should be rare with areBookingDetailsSufficient)
+
+    // Always calculate manually to ensure all components are included
     const basePrice = parseFloat(
       data.priceBreakdown?.roomBasePrice || data.basePrice || 0
     );

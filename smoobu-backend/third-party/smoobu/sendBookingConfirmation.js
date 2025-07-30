@@ -4,7 +4,6 @@ import { fr, enUS, nl } from "date-fns/locale";
 // NEW: Import the timezone-aware formatting function
 import { formatInTimeZone } from "date-fns-tz";
 
-
 // Helper to get date-fns locale for email
 const emailTexts = {
   fr: {
@@ -594,8 +593,8 @@ export const sendBookingConfirmation = async (bookingData) => {
   const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     T.propertyAddress
   )}`;
-  const finalPrice =
-    bookingData.priceBreakdown?.finalPayableAmount || bookingData.price || 0;
+
+  // Calculate final price manually to ensure all components are included
   const basePriceForEmail =
     bookingData.priceBreakdown?.roomBasePrice || bookingData.basePrice || 0;
   const guestFeesForEmail =
@@ -605,6 +604,26 @@ export const sendBookingConfirmation = async (bookingData) => {
   const longStayDiscountForEmail =
     bookingData.priceBreakdown?.appliedLongStayDiscount || 0;
   const couponDiscountForEmail = bookingData.couponApplied?.discount || 0;
+
+  // Calculate extras total
+  let extrasTotal = 0;
+  if (bookingData.extras && Array.isArray(bookingData.extras)) {
+    extrasTotal = bookingData.extras.reduce((sum, extra) => {
+      const extraAmount = parseFloat(extra.amount || 0);
+      const extraPersonAmount =
+        extra.extraPersonQuantity > 0 && extra.extraPersonAmount !== undefined
+          ? parseFloat(extra.extraPersonAmount)
+          : 0;
+      return sum + extraAmount + extraPersonAmount;
+    }, 0);
+  }
+
+  const finalPrice =
+    basePriceForEmail +
+    guestFeesForEmail +
+    extrasTotal -
+    longStayDiscountForEmail -
+    couponDiscountForEmail;
 
   let glampingInfoHtml = "";
   const glampingIds = ["2565753", "1644643", "1946282"];

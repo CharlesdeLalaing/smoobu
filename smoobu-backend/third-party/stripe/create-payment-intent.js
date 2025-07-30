@@ -7,6 +7,60 @@ import { formatInTimeZone } from "date-fns-tz";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// Test function to verify timezone formatting
+function testTimezoneFormatting() {
+  const timeZone = "Europe/Brussels";
+
+  // Test with a sample SPA datetime (11:00 - 13:00)
+  const testSpaDateTime = "2024-01-15T11:00:00.000Z"; // UTC time
+
+  console.log("=== TIMEZONE FORMATTING TEST ===");
+  console.log("Original UTC datetime:", testSpaDateTime);
+  console.log("Original Date object:", new Date(testSpaDateTime));
+
+  // Old method (what was showing 09:00 instead of 11:00)
+  const oldFormatting = new Date(testSpaDateTime).toLocaleString("fr-BE", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+  console.log("Old formatting (toLocaleString):", oldFormatting);
+
+  // New method (should show correct time)
+  const newFormatting = formatInTimeZone(
+    new Date(testSpaDateTime),
+    timeZone,
+    "dd/MM/yyyy HH:mm"
+  );
+  console.log("New formatting (formatInTimeZone):", newFormatting);
+
+  // Test with different times
+  const testTimes = [
+    "2024-01-15T09:00:00.000Z", // 9 AM UTC
+    "2024-01-15T11:00:00.000Z", // 11 AM UTC
+    "2024-01-15T13:00:00.000Z", // 1 PM UTC
+    "2024-01-15T15:00:00.000Z", // 3 PM UTC
+  ];
+
+  console.log("\n=== Multiple Time Tests ===");
+  testTimes.forEach((time) => {
+    const oldFormat = new Date(time).toLocaleString("fr-BE", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+    const newFormat = formatInTimeZone(
+      new Date(time),
+      timeZone,
+      "dd/MM/yyyy HH:mm"
+    );
+    console.log(`UTC: ${time} | Old: ${oldFormat} | New: ${newFormat}`);
+  });
+
+  console.log("=== END TEST ===\n");
+}
+
+// Uncomment the line below to run the test
+// testTimezoneFormatting();
+
 export async function createPaymentIntent(req, res) {
   try {
     const { price, bookingData } = req.body;
@@ -30,8 +84,8 @@ export async function createPaymentIntent(req, res) {
     if (bookingData.couponApplied) {
       totalPrice -= Number(bookingData.couponApplied.discount || 0);
     }
-    if (bookingData.priceDetails?.discount) {
-      totalPrice -= Number(bookingData.priceDetails.discount);
+    if (bookingData.priceDetailsSnapshot?.discount) {
+      totalPrice -= Number(bookingData.priceDetailsSnapshot.discount);
     }
 
     const bookingReference = `BOOKING-${Date.now()}-${Math.random()

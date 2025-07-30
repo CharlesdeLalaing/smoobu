@@ -74,6 +74,8 @@ export const useBookingsData = () => {
           commission,
           extras,
           priceDetails,
+          priceBreakdown,
+          priceDetailsSnapshot,
           couponApplied,
           createdAt,
           updatedAt,
@@ -178,6 +180,8 @@ export const useBookingsData = () => {
           commission: Number(commission) || 0,
           extras: extras || [],
           priceDetails: priceDetails || {},
+          priceBreakdown: priceBreakdown || null,
+          priceDetailsSnapshot: priceDetailsSnapshot || null,
           coupon: extractedCoupon,
           created: createdAt,
           updated: updatedAt || lastSyncedAt,
@@ -470,26 +474,32 @@ export const useBookingsData = () => {
         const portalName =
           booking.portalName || booking.channelName || booking.portal;
         const isBookingCom = portalName === "Booking.com";
+        // Use same logic as UI calculation for consistency
+        const priceElementsToCheck =
+          booking.priceDetails?.priceElements?.length > 0
+            ? booking.priceDetails.priceElements
+            : booking.priceBreakdown?.priceElementsForSmoobu || [];
+
         let displayPaidExtras = [];
-        if (booking.priceDetails?.priceElements?.length > 0) {
+        if (priceElementsToCheck.length > 0) {
           displayPaidExtras = getCleanExtrasFromPriceElements(
-            booking.priceDetails.priceElements,
+            priceElementsToCheck,
             portalName
           );
-          if (isBookingCom)
-            displayPaidExtras = displayPaidExtras.filter(
-              (extra) =>
-                !extra.name.includes("TVA") &&
-                !extra.name.toLowerCase().includes("taxe de séjour")
-            );
+          // If priceElements didn't yield any extras, fallback to booking.extras
+          if (displayPaidExtras.length === 0 && booking.extras?.length > 0) {
+            displayPaidExtras = booking.extras;
+          }
         } else if (booking.extras?.length > 0) {
           displayPaidExtras = booking.extras;
-          if (isBookingCom)
-            displayPaidExtras = displayPaidExtras.filter(
-              (extra) =>
-                !extra.name.includes("TVA") &&
-                !extra.name.toLowerCase().includes("taxe de séjour")
-            );
+        }
+
+        if (isBookingCom) {
+          displayPaidExtras = displayPaidExtras.filter(
+            (extra) =>
+              !extra.name.includes("TVA") &&
+              !extra.name.toLowerCase().includes("taxe de séjour")
+          );
         }
         const mergedAndSortedPaidExtras = mergeAndSortExtras(displayPaidExtras);
         const paidExtrasTotal = mergedAndSortedPaidExtras.reduce(
@@ -509,6 +519,7 @@ export const useBookingsData = () => {
 
         let exportCouponName = "";
         let exportCouponValue = 0;
+        // Process coupon info if there's any coupon data available (for export we want to be more inclusive)
         const mainCouponObject =
           booking.coupon ||
           booking.appliedCoupon ||
@@ -536,26 +547,30 @@ export const useBookingsData = () => {
           exportCouponName = "PROMO APPLIQUÉ";
         }
 
-        if (typeof booking.priceDetails?.couponDiscount === "number") {
+        // Try to get coupon value from multiple sources
+        if (
+          typeof booking.priceDetails?.couponDiscount === "number" &&
+          booking.priceDetails.couponDiscount !== 0
+        ) {
           exportCouponValue = parseFloat(booking.priceDetails.couponDiscount);
         } else if (
-          typeof booking.priceDetails?.promoCode?.amount === "number"
+          typeof booking.priceDetails?.promoCode?.amount === "number" &&
+          booking.priceDetails.promoCode.amount !== 0
         ) {
           exportCouponValue = parseFloat(booking.priceDetails.promoCode.amount);
-        } else if (
-          mainCouponObject?.discount &&
-          mainCouponObject?.type !== "percentage"
-        ) {
+        } else if (mainCouponObject?.discount) {
+          // Include both fixed and percentage discounts for export
           exportCouponValue = parseFloat(mainCouponObject.discount);
         }
 
         // --- Check priceElements for coupon/discount entries (CRITICAL FOR EXPORT) ---
+        // For export, check priceElements if we haven't found coupon value yet and there's coupon data
         if (
           exportCouponValue === 0 &&
-          booking.priceDetails?.priceElements?.length > 0
+          mainCouponObject &&
+          priceElementsToCheck.length > 0
         ) {
-          const priceElements = booking.priceDetails.priceElements;
-          const couponElement = priceElements.find(
+          const couponElement = priceElementsToCheck.find(
             (el) =>
               el &&
               el.name &&
@@ -563,7 +578,11 @@ export const useBookingsData = () => {
               (el.type === "coupon" ||
                 el.name.toLowerCase().includes("coupon") ||
                 el.name.toLowerCase().includes("code promo") ||
-                el.name.toLowerCase().includes("réduction") ||
+                el.name.toLowerCase().includes("chèque cadeau") ||
+                el.name.toLowerCase().includes("gift") ||
+                (el.name.toLowerCase().includes("réduction") &&
+                  !el.name.toLowerCase().includes("long séjour") &&
+                  !el.name.toLowerCase().includes("longstay")) ||
                 el.name.toLowerCase().includes("promo"))
           );
 
@@ -572,7 +591,14 @@ export const useBookingsData = () => {
 
             // Extract coupon code from the name if not already set
             if (!exportCouponName) {
-              if (
+              if (couponElement.name.includes("Chèque Cadeau: ")) {
+                const match = couponElement.name.match(
+                  /Chèque Cadeau: ([^(]+)/
+                );
+                if (match) {
+                  exportCouponName = match[1].trim();
+                }
+              } else if (
                 couponElement.name.includes("Gift.") ||
                 couponElement.name.includes("GIFT.")
               ) {
@@ -628,13 +654,10 @@ export const useBookingsData = () => {
           booking.priceDetails?.basePrice || booking.basePrice || 0
         );
 
-        // If basePrice is 0, try to calculate it from the total price minus extras
-        if (
-          exportBasePrice === 0 &&
-          booking.priceDetails?.priceElements?.length > 0
-        ) {
-          // Look for base price in priceElements first
-          const basePriceElement = booking.priceDetails.priceElements.find(
+        // If basePrice is 0, try to calculate it from priceElementsToCheck
+        if (exportBasePrice === 0 && priceElementsToCheck.length > 0) {
+          // Look for base price in priceElementsToCheck first
+          const basePriceElement = priceElementsToCheck.find(
             (element) =>
               element.name === "Prix de base" ||
               element.type === "base" ||
@@ -646,10 +669,12 @@ export const useBookingsData = () => {
           } else if (booking.price) {
             // Fallback to original logic if no base price element found
             const totalPrice = parseFloat(booking.price);
-            const priceElementsTotal =
-              booking.priceDetails.priceElements.reduce((sum, element) => {
+            const priceElementsTotal = priceElementsToCheck.reduce(
+              (sum, element) => {
                 return sum + (parseFloat(element.amount) || 0);
-              }, 0);
+              },
+              0
+            );
 
             // If total price seems too low compared to extras, assume the stored price is just the base price
             if (totalPrice < priceElementsTotal) {

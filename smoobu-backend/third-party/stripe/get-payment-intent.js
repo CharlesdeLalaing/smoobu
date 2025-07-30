@@ -37,7 +37,9 @@ export async function getBookingByPaymentIntentId(req, res) {
         return sum + baseAmount + extraPersonAmount;
       }, 0) || 0;
 
-    const longStayDiscount = parseFloat(bookingDoc.priceDetails?.discount || 0);
+    const longStayDiscount = parseFloat(
+      bookingDoc.priceDetailsSnapshot?.discount || 0
+    );
     const couponDiscount = parseFloat(bookingDoc.appliedCoupon?.discount || 0);
 
     const subtotalBeforeDiscounts = basePrice + guestFees + extrasTotal;
@@ -75,7 +77,7 @@ export async function getBookingByPaymentIntentId(req, res) {
                 parseInt(extra.extraPersonQuantity)
               : 0),
         })),
-        longStayDiscount,
+        appliedLongStayDiscount: longStayDiscount,
         couponDiscount,
         subtotalBeforeDiscounts,
         totalDiscounts,
