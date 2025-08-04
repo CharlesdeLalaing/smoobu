@@ -35,7 +35,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       // Fallback UI
       return (
-        <div className="flex flex-col items-center justify-center min-h-[400px] p-6 text-center">
+        <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
           <div className="max-w-md p-6 border border-red-200 rounded-lg bg-red-50">
             <h2 className="mb-4 text-xl font-semibold text-red-800">
               {this.props.title || "Something went wrong"}
