@@ -14,7 +14,7 @@ export const DebugErrorTrigger = ({
 
   const stressTestDateSelection = async () => {
     setIsStressing(true);
-    console.log("🔥 Starting stress test to trigger DOM error...");
+    console.log("🔥 Starting stress test to trigger DOM errorrrrr...");
 
     // Create multiple rapid date selections that can cause DOM conflicts
     const dates = [
@@ -88,10 +88,10 @@ export const DebugErrorTrigger = ({
               );
               if (
                 e.message.includes("insertBefore") ||
-                e.message.includes("not a child of this node")
+                e.message.includes("not a child of this nodeee")
               ) {
                 console.log(
-                  "🎯 This is the exact error we wanted to reproduce!"
+                  "🎯 This is the exact error we wanted to reproduceeee!"
                 );
               }
             }
