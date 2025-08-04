@@ -19,4 +19,4 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
   }
-})
+})// Trigger deployment Mon, Aug  4, 2025 11:21:47 AM
