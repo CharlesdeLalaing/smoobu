@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HeaderSection } from "./HeaderSection";
 import { SearchSection, RoomNavigation } from "./SearchSection";
@@ -16,6 +16,8 @@ import { LoadingSpinner } from "./LoadingSpinner";
 import StripeWrapper from "../StripeWrapper";
 import { isRoomAvailable } from "../hooks/roomUtils"; // Add this line
 import { roomsData } from "../hooks/roomsData";
+import DebugErrorTrigger from "../DebugErrorTrigger";
+import { BookingErrorBoundary } from "../ErrorBoundry";
 
 const BookingForm = () => {
   // Added calendar view month state
@@ -220,6 +222,8 @@ const BookingForm = () => {
       }
 
       try {
+        // Add a small delay to ensure DOM is stable before any operations
+        await new Promise((resolve) => setTimeout(resolve, 10));
         // Handle date clearing
         if (!date) {
           if (isStart) {
@@ -278,8 +282,16 @@ const BookingForm = () => {
           });
         }
 
-        // Defer heavy operations to avoid DOM conflicts with react-datepicker
-        setTimeout(async () => {
+        // Use requestIdleCallback or fallback to ensure DOM stability
+        const scheduleWork = (callback) => {
+          if (window.requestIdleCallback) {
+            window.requestIdleCallback(callback, { timeout: 100 });
+          } else {
+            setTimeout(callback, 16); // Next frame
+          }
+        };
+
+        scheduleWork(async () => {
           try {
             // IMPORTANT: Only update the selected room if selectedRoomId is provided
             // and the user explicitly clicked the "Select this room" button
@@ -354,16 +366,30 @@ const BookingForm = () => {
             }
           } catch (err) {
             console.error("Error in deferred availability check:", err);
-            setError("Error checking availability");
-            // Keep showing the UI with the error message
-            setShowPriceDetails(true);
+            // Use React.unstable_batchedUpdates to prevent DOM conflicts
+            if (React.unstable_batchedUpdates) {
+              React.unstable_batchedUpdates(() => {
+                setError("Error checking availability");
+                setShowPriceDetails(true);
+              });
+            } else {
+              setError("Error checking availability");
+              setShowPriceDetails(true);
+            }
           }
-        }, 0);
+        });
       } catch (error) {
         console.error("Error in handleDateSelect:", error);
-        setError("An error occurred while processing the date selection");
-        // Maintain UI visibility even on error
-        setShowPriceDetails(true);
+        // Use batched updates to prevent DOM manipulation conflicts
+        if (React.unstable_batchedUpdates) {
+          React.unstable_batchedUpdates(() => {
+            setError("An error occurred while processing the date selection");
+            setShowPriceDetails(true);
+          });
+        } else {
+          setError("An error occurred while processing the date selection");
+          setShowPriceDetails(true);
+        }
       }
     },
     [
@@ -391,21 +417,41 @@ const BookingForm = () => {
     // If no room is selected, it's not available
     if (!formData.apartmentId) return false;
 
+    // IMPORTANT: Check if dates were properly searched for
+    if (!hasSearched) return false;
+
     // If no dates are selected, default to false
-    if (!startDate && !endDate) return false;
+    if (!startDate || !endDate) return false;
 
-    // KEY FIX: If only one date is selected, consider the room available
-    if (startDate && !endDate) return true;
-    if (!startDate && endDate) return true;
-
-    // Both dates selected, check actual availability
-    return isRoomAvailable(
+    // Check actual room availability first
+    const roomAvailable = isRoomAvailable(
       formData.apartmentId,
       startDate,
       endDate,
       availableDates,
       hasSearched
     );
+
+    // If room is not available, return false
+    if (!roomAvailable) return false;
+
+    // For legitimate UI selections, we should have price details
+    // If we don't have price details, it might be a programmatic selection (debug trigger)
+    if (!priceDetails || !priceDetails[formData.apartmentId]) {
+      // In development, this could be from debug triggers - allow but warn
+      if (process.env.NODE_ENV === "development") {
+        console.warn(
+          "Room selected but no price details found - likely from debug trigger"
+        );
+        return false; // Block debug trigger selections
+      }
+
+      // In production, allow time for price details to load
+      console.log("Room available but price details not yet loaded");
+      return true;
+    }
+
+    return true;
   };
 
   const searchSectionProps = {
@@ -497,117 +543,160 @@ const BookingForm = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#fbfdfb]">
-      <HeaderSection />
-      <div className=" mx-auto h-[100vh] w-full">
-        {error && <ErrorMessage message={error} />}
-        {availabilityError && <ErrorMessage message={availabilityError} />}
-        {successMessage && (
-          <div className="mb-4 text-green-500">{successMessage}</div>
-        )}
-        {(loading || availabilityLoading) && <LoadingSpinner />}
+    <BookingErrorBoundary
+      title="Booking System Error"
+      message="There was an error with the booking system. Please refresh the page to try again."
+    >
+      <div className="flex flex-col min-h-screen bg-[#fbfdfb]">
+        <HeaderSection />
+        <div className=" mx-auto h-[100vh] w-full">
+          {error && <ErrorMessage message={error} />}
+          {availabilityError && <ErrorMessage message={availabilityError} />}
+          {successMessage && (
+            <div className="mb-4 text-green-500">{successMessage}</div>
+          )}
+          {(loading || availabilityLoading) && <LoadingSpinner />}
 
-        {!showPayment ? (
-          <form onSubmit={handleSubmit} className="mx-auto space-y-4">
-            <div style={{ backgroundColor: "#668E73" }}>
-              <SearchSection {...searchSectionProps} />
-              <RoomNavigation {...roomNavigationProps} />
-            </div>
+          {!showPayment ? (
+            <form onSubmit={handleSubmit} className="mx-auto space-y-4">
+              <div style={{ backgroundColor: "#668E73" }}>
+                <BookingErrorBoundary
+                  title="Search Error"
+                  message="There was an error with the search section. Please refresh to try again."
+                >
+                  <SearchSection {...searchSectionProps} />
+                  <RoomNavigation {...roomNavigationProps} />
+                </BookingErrorBoundary>
+              </div>
 
-            <div
-              className="space-y-8 px-[2%] md:px-[5%] py-[1%]"
-              style={{ backgroundColor: "#FBFDFB" }}
-            >
-              {formData.apartmentId && (
-                <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-100px)]">
-                  <div className="w-full h-full lg:w-1/2">
-                    <div className="h-full overflow-auto">
-                      <PropertyDetails
-                        {...propertyDetailsProps}
-                        showOnlySelected={true}
-                        selectedRoomId={formData.apartmentId}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="w-full h-full lg:w-1/2">
-                    <div className="border border-[#668E73] p-4 rounded h-full max-h-[100vh] lg:max-h-none flex flex-col">
-                      <h2
-                        className="text-xl font-semibold text-[#668E73] mb-6"
-                        id="extra_top"
-                      >
-                        {t("booking.sections.extras.title")}
-                      </h2>
-                      <BookingSteps
-                        currentStep={currentStep}
-                        formData={formData}
-                        selectedRoom={roomsData[formData.apartmentId]}
-                        setCurrentStep={setCurrentStep}
-                      />
-                      <div className="flex-1 mt-4 overflow-y-auto">
-                        {!isSelectedRoomAvailable() ? (
-                          <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                            <div className="w-full max-w-md p-6 border border-red-200 rounded-md bg-red-50">
-                              <p className="mb-2 font-medium text-red-600">
-                                {t("booking.errors.roomUnavailable.title")}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {t("booking.errors.roomUnavailable.message")}
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            {currentStep === 1 && (
-                              <ExtrasSection {...extrasSectionProps} />
-                            )}
-                            {currentStep === 2 && (
-                              <InfoSupSection {...infoSupSectionProps} />
-                            )}
-                            {currentStep === 3 && (
-                              <ContactSection {...contactSectionProps} />
-                            )}
-                          </>
-                        )}
+              <div
+                className="space-y-8 px-[2%] md:px-[5%] py-[1%]"
+                style={{ backgroundColor: "#FBFDFB" }}
+              >
+                {formData.apartmentId && (
+                  <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-100px)]">
+                    <div className="w-full h-full lg:w-1/2">
+                      <div className="h-full overflow-auto">
+                        <BookingErrorBoundary
+                          title="Property Details Error"
+                          message="There was an error loading property details."
+                        >
+                          <PropertyDetails
+                            {...propertyDetailsProps}
+                            showOnlySelected={true}
+                            selectedRoomId={formData.apartmentId}
+                          />
+                        </BookingErrorBoundary>
                       </div>
-                      <div className="pt-4 mt-4 border-t border-gray-200">
-                        <NavigationButtons
-                          {...navigationButtonsProps}
-                          disabled={!isSelectedRoomAvailable()}
+                    </div>
+
+                    <div className="w-full h-full lg:w-1/2">
+                      <div className="border border-[#668E73] p-4 rounded h-full max-h-[100vh] lg:max-h-none flex flex-col">
+                        <h2
+                          className="text-xl font-semibold text-[#668E73] mb-6"
+                          id="extra_top"
+                        >
+                          {t("booking.sections.extras.title")}
+                        </h2>
+                        <BookingSteps
+                          currentStep={currentStep}
+                          formData={formData}
+                          selectedRoom={roomsData[formData.apartmentId]}
+                          setCurrentStep={setCurrentStep}
                         />
+                        <div className="flex-1 mt-4 overflow-y-auto">
+                          {!isSelectedRoomAvailable() ? (
+                            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                              <div className="w-full max-w-md p-6 border border-red-200 rounded-md bg-red-50">
+                                <p className="mb-2 font-medium text-red-600">
+                                  {!hasSearched
+                                    ? "Please search for available dates first"
+                                    : !startDate || !endDate
+                                    ? "Please complete your date selection"
+                                    : !formData.apartmentId
+                                    ? "Please select a room"
+                                    : "Selected room is not available for these dates"}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {!hasSearched
+                                    ? "Use the search section above to check room availability"
+                                    : !startDate || !endDate
+                                    ? "Select both arrival and departure dates to continue"
+                                    : !formData.apartmentId
+                                    ? "Choose an accommodation from the list below"
+                                    : "Please select different dates or choose another room"}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              {currentStep === 1 && (
+                                <ExtrasSection {...extrasSectionProps} />
+                              )}
+                              {currentStep === 2 && (
+                                <InfoSupSection {...infoSupSectionProps} />
+                              )}
+                              {currentStep === 3 && (
+                                <ContactSection {...contactSectionProps} />
+                              )}
+                            </>
+                          )}
+                        </div>
+                        <div className="pt-4 mt-4 border-t border-gray-200">
+                          <NavigationButtons
+                            {...navigationButtonsProps}
+                            disabled={!isSelectedRoomAvailable()}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
+                )}
+                <div className="w-full">
+                  <BookingErrorBoundary
+                    title="Property Listing Error"
+                    message="There was an error loading the property listings."
+                  >
+                    <PropertyDetails
+                      {...propertyDetailsProps}
+                      showOnlyUnselected={true}
+                    />
+                  </BookingErrorBoundary>
                 </div>
-              )}
-              <div className="w-full">
-                <PropertyDetails
-                  {...propertyDetailsProps}
-                  showOnlyUnselected={true}
-                />
+              </div>
+            </form>
+          ) : (
+            <div className="fixed inset-0 flex items-center justify-center">
+              <div className="w-full p-5 mx-auto md:w-1/2">
+                <h3 className="mb-4 text-lg font-medium">
+                  {t("booking.payment.title")}
+                </h3>
+                {clientSecret && (
+                  <StripeWrapper
+                    clientSecret={clientSecret}
+                    onSuccess={handlePaymentSuccess}
+                    onError={(error) => setError(error)}
+                  >
+                    <PaymentForm />
+                  </StripeWrapper>
+                )}
               </div>
             </div>
-          </form>
-        ) : (
-          <div className="fixed inset-0 flex items-center justify-center">
-            <div className="w-full p-5 mx-auto md:w-1/2">
-              <h3 className="mb-4 text-lg font-medium">
-                {t("booking.payment.title")}
-              </h3>
-              {clientSecret && (
-                <StripeWrapper
-                  clientSecret={clientSecret}
-                  onSuccess={handlePaymentSuccess}
-                  onError={(error) => setError(error)}
-                >
-                  <PaymentForm />
-                </StripeWrapper>
-              )}
-            </div>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Debug tool - only shows in development */}
+        <DebugErrorTrigger
+          onDateSelect={handleDateSelect}
+          availableDates={availableDates}
+          formData={formData}
+          priceDetails={priceDetails}
+          hasSearched={hasSearched}
+          startDate={startDate}
+          endDate={endDate}
+        />
       </div>
-    </div>
+    </BookingErrorBoundary>
   );
 };
 

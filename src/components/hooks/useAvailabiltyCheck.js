@@ -40,14 +40,14 @@ export const useAvailabilityCheck = (formData) => {
       : {};
 
     try {
-const apartmentIds = [
-  "2565753", // La Cabane du Chêne
-  "1946282", // Le Dôme des Libellules
-  "1644643", // La Bulle du Ruisseau
-  "1946279", // Le Moulin
-  "1946276", // La Chambre de Blé
-  "1946270", // Le Logis
-];
+      const apartmentIds = [
+        "2565753", // La Cabane du Chêne
+        "1946282", // Le Dôme des Libellules
+        "1644643", // La Bulle du Ruisseau
+        "1946279", // Le Moulin
+        "1946276", // La Chambre de Blé
+        "1946270", // Le Logis
+      ];
       const formatDate = (date) => {
         const d = new Date(date);
         return `${d.getFullYear()}-${(d.getMonth() + 1)
