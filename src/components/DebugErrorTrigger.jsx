@@ -21,8 +21,8 @@ export const DebugErrorTrigger = ({
       new Date(2025, 12, 10), // Dec 10
       new Date(2025, 12, 15), // Dec 15
       new Date(2025, 12, 20), // Dec 20
-      new Date(2025, 12, 25), // Dec 25
-      new Date(2025, 12, 5), // Jan 5
+      new Date(2025, 12, 26), // Dec 25
+      new Date(2025, 12, 6), // Jan 5
       new Date(2025, 12, 15), // Jan 10
     ];
 
