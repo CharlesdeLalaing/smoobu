@@ -156,9 +156,31 @@ export class BookingProcessor {
    * @returns {Promise<Object>} - Updated stats
    */
   async processBooking(booking, existingBookingMap, stats) {
+    // Check if this booking is for La Chambre de Blé (apartment 1946276)
+    // It could be either direct apartment assignment OR in related apartments
+    const isChambeDeBleBooking =
+      booking.apartment?.id === 1946276 ||
+      booking.related?.some((rel) => rel.id === 1946276);
+
     try {
       // Normalize booking ID
       const smoobuId = normalizeBookingId(booking.id);
+
+      // Debug logging for La Chambre de Blé (apartment 1946276)
+      if (isChambeDeBleBooking) {
+        console.log(
+          `[BookingProcessor] Processing booking for La Chambre de Blé - ID: ${
+            booking.id
+          }, Channel: ${booking.channel?.name}, Guest: ${
+            booking["guest-name"] || booking.firstName + " " + booking.lastName
+          }`
+        );
+        if (booking.related?.some((rel) => rel.id === 1946276)) {
+          console.log(
+            `[BookingProcessor] 🔍 This booking has La Chambre de Blé (1946276) in RELATED apartments, main apartment is: ${booking.apartment?.id} (${booking.apartment?.name})`
+          );
+        }
+      }
 
       // Check for existing booking
       const existingBookings = existingBookingMap.get(smoobuId) || [];
@@ -208,6 +230,13 @@ export class BookingProcessor {
         // Add new booking
         await this.repository.createBooking(cleanBookingDoc);
 
+        // Debug logging for La Chambre de Blé
+        if (isChambeDeBleBooking) {
+          console.log(
+            `[BookingProcessor] ✅ Successfully ADDED new booking for La Chambre de Blé - ID: ${booking.id}`
+          );
+        }
+
         stats.added++;
       } else if (existingBookings.length === 1) {
         // Update single existing booking
@@ -217,6 +246,14 @@ export class BookingProcessor {
           portalName,
           extrasData
         );
+
+        // Debug logging for La Chambre de Blé
+        if (isChambeDeBleBooking) {
+          console.log(
+            `[BookingProcessor] ✅ Successfully UPDATED existing booking for La Chambre de Blé - ID: ${booking.id}`
+          );
+        }
+
         stats.updated++;
       } else {
         // Handle duplicate bookings
@@ -226,15 +263,33 @@ export class BookingProcessor {
           portalName,
           extrasData
         );
+
+        // Debug logging for La Chambre de Blé
+        if (isChambeDeBleBooking) {
+          console.log(
+            `[BookingProcessor] ✅ Successfully UPDATED duplicate booking for La Chambre de Blé - ID: ${booking.id}`
+          );
+        }
+
         stats.updated++;
       }
 
       return stats;
     } catch (error) {
-      console.error(
-        `🟥 Error processing booking ${booking.id}:`,
-        error.message
-      );
+      // Enhanced error logging for La Chambre de Blé
+      if (isChambeDeBleBooking) {
+        console.error(
+          `🟥 CRITICAL: Error processing La Chambre de Blé booking ${booking.id}:`,
+          error.message,
+          error.stack
+        );
+      } else {
+        console.error(
+          `🟥 Error processing booking ${booking.id}:`,
+          error.message
+        );
+      }
+
       stats.errors++;
       return stats;
     }
@@ -386,9 +441,8 @@ export class BookingProcessor {
       departureDate: booking.departure,
       checkInTime: booking["check-in"] || "",
       checkOutTime: booking["check-out"] || "",
-      apartmentId: booking.apartment?.id,
-      property:
-        roomNames[booking.apartment?.id] || booking.apartment?.name || "",
+      apartmentId: this._getEffectiveApartmentId(booking),
+      property: this._getEffectiveApartmentName(booking),
       channelId: booking.channel?.id,
       channelName: booking.channel?.name || "",
       portalName: portalName,
@@ -406,7 +460,7 @@ export class BookingProcessor {
         couponDiscount: pricingInfo.couponDiscount,
         discount: pricingInfo.longStayDiscount,
         extrasTotal: enhancedExtrasTotal, // Use the recalculated total
-        priceElements: enhancedPriceElements,
+        priceElements: priceElements,
         promoCode: pricingInfo.promoCode,
         calculatedDiscounts: {
           longStay: pricingInfo.longStayDiscount,
@@ -481,6 +535,43 @@ export class BookingProcessor {
   }
 
   /**
+   * Gets the effective apartment ID for a booking
+   * For multi-apartment bookings, prioritizes La Chambre de Blé (1946276) if present
+   * @param {Object} booking - Booking data from API
+   * @returns {number} - Effective apartment ID
+   * @private
+   */
+  _getEffectiveApartmentId(booking) {
+    // If this booking has La Chambre de Blé in related apartments, use that
+    if (booking.related?.some((rel) => rel.id === 1946276)) {
+      return 1946276;
+    }
+    // Otherwise use the main apartment ID
+    return booking.apartment?.id;
+  }
+
+  /**
+   * Gets the effective apartment name for a booking
+   * For multi-apartment bookings, prioritizes La Chambre de Blé (1946276) if present
+   * @param {Object} booking - Booking data from API
+   * @returns {string} - Effective apartment name
+   * @private
+   */
+  _getEffectiveApartmentName(booking) {
+    // If this booking has La Chambre de Blé in related apartments, use that
+    const chambeDeBleRelated = booking.related?.find(
+      (rel) => rel.id === 1946276
+    );
+    if (chambeDeBleRelated) {
+      return (
+        roomNames[1946276] || chambeDeBleRelated.name || "La Chambre de Blé"
+      );
+    }
+    // Otherwise use the main apartment name
+    return roomNames[booking.apartment?.id] || booking.apartment?.name || "";
+  }
+
+  /**
    * Handles updating when multiple bookings exist with same ID
    * @param {Array} existingBookings - Array of existing bookings
    * @param {Object} newBookingData - New booking data
@@ -494,6 +585,16 @@ export class BookingProcessor {
     portalName,
     extrasData
   ) {
+    // Ensure existingBookings is an array
+    if (!Array.isArray(existingBookings)) {
+      console.error(
+        `[BookingProcessor] ERROR: existingBookings is not an array:`,
+        typeof existingBookings,
+        existingBookings
+      );
+      return;
+    }
+
     // Sort by updatedAt (newest first)
     existingBookings.sort((a, b) => {
       const dateA = new Date(a.updatedAt || a.createdAt || 0);

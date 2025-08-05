@@ -29,6 +29,14 @@ export class SmoobuClient {
     }
 
     try {
+      console.log(`[SmoobuClient] Making API call with params:`, {
+        arrivalFrom: startDate,
+        arrivalTo: endDate,
+        showCancellation: false,
+        excludeBlocked: true,
+        pageSize: 100,
+      });
+
       const response = await axios.get(
         "https://login.smoobu.com/api/reservations",
         {
@@ -45,7 +53,175 @@ export class SmoobuClient {
           },
         }
       );
-      const bookings = response.data.bookings || [];
+
+      let bookings = response.data.bookings || [];
+
+      // Debug logging for La Chambre de Blé (apartment 1946276)
+      // Check both direct apartment assignment AND related apartments
+      const bleBookings = bookings.filter(
+        (booking) =>
+          booking.apartment?.id === 1946276 ||
+          booking.related?.some((rel) => rel.id === 1946276)
+      );
+
+      // Also log all apartment IDs to see what's available
+      const allApartmentIds = [
+        ...new Set(bookings.map((b) => b.apartment?.id).filter(Boolean)),
+      ];
+      console.log(
+        `[SmoobuClient] All apartment IDs in active bookings: [${allApartmentIds.join(
+          ", "
+        )}]`
+      );
+      console.log(
+        `[SmoobuClient] Total bookings returned by API: ${bookings.length}`
+      );
+
+      // Log all Airbnb bookings to see what apartments they're for
+      const airbnbBookings = bookings.filter(
+        (booking) =>
+          booking.channel?.name?.toLowerCase().includes("airbnb") ||
+          booking.channel?.id === 2323543 ||
+          booking.channel?.id === "2323543"
+      );
+      if (airbnbBookings.length > 0) {
+        console.log(
+          `[SmoobuClient] Found ${airbnbBookings.length} Airbnb bookings for these apartments:`
+        );
+        airbnbBookings.forEach((booking) => {
+          console.log(
+            `  - ID: ${booking.id}, ApartmentID: ${
+              booking.apartment?.id
+            }, ApartmentName: "${booking.apartment?.name}", Channel: ${
+              booking.channel?.name
+            } (${booking.channel?.id}), Guest: ${
+              booking["guest-name"] ||
+              booking.firstName + " " + booking.lastName
+            }`
+          );
+        });
+
+        // Specifically check if any Airbnb bookings are for apartment 1946276
+        const airbnbBleBookings = airbnbBookings.filter(
+          (booking) => booking.apartment?.id === 1946276
+        );
+        if (airbnbBleBookings.length === 0) {
+          console.log(
+            `  ❌ ISSUE: No Airbnb bookings found for La Chambre de Blé (1946276) even though other Airbnb bookings exist`
+          );
+          console.log(
+            `  🔧 WORKAROUND: Attempting to fetch missing Airbnb bookings for La Chambre de Blé...`
+          );
+
+          // Attempt workaround: fetch missing Airbnb bookings for apartment 1946276
+          const supplementaryBookings =
+            await this.fetchMissingAirbnbBookingsForBle(startDate, endDate);
+          if (supplementaryBookings.length > 0) {
+            console.log(
+              `  ✅ WORKAROUND SUCCESS: Found ${supplementaryBookings.length} missing Airbnb booking(s) for La Chambre de Blé`
+            );
+            supplementaryBookings.forEach((booking) => {
+              console.log(
+                `    - ID: ${booking.id}, Guest: ${booking["guest-name"]}, Arrival: ${booking.arrival}`
+              );
+            });
+            // Add these bookings to the main list
+            bookings = [...bookings, ...supplementaryBookings];
+          } else {
+            console.log(
+              `  ❌ WORKAROUND: No additional Airbnb bookings found for La Chambre de Blé`
+            );
+          }
+        }
+      } else {
+        console.log(
+          `[SmoobuClient] No Airbnb bookings found in this date range`
+        );
+      }
+
+      // Re-check bleBookings after potential supplementary additions
+      const finalBleBookings = bookings.filter(
+        (booking) =>
+          booking.apartment?.id === 1946276 ||
+          booking.related?.some((rel) => rel.id === 1946276)
+      );
+
+      if (finalBleBookings.length > 0) {
+        console.log(
+          `[SmoobuClient] Found ${finalBleBookings.length} active booking(s) for La Chambre de Blé (1946276):`
+        );
+        finalBleBookings.forEach((booking) => {
+          console.log(
+            `  - ID: ${booking.id}, Channel: ${booking.channel?.name}, Guest: ${
+              booking["guest-name"] ||
+              booking.firstName + " " + booking.lastName
+            }`
+          );
+        });
+      } else {
+        console.log(
+          `[SmoobuClient] No active bookings found for La Chambre de Blé (1946276) in date range ${startDate} to ${endDate}`
+        );
+
+        // Check if there are any bookings with similar apartment names
+        const apartmentNameBookings = bookings.filter(
+          (booking) =>
+            booking.apartment?.name?.toLowerCase().includes("chambre") ||
+            booking.apartment?.name?.toLowerCase().includes("blé") ||
+            booking.apartment?.name?.toLowerCase().includes("ble")
+        );
+        if (apartmentNameBookings.length > 0) {
+          console.log(
+            `[SmoobuClient] Found bookings with 'chambre' or 'blé'/'ble' in apartment name:`
+          );
+          apartmentNameBookings.forEach((booking) => {
+            console.log(
+              `  - ID: ${booking.id}, ApartmentID: ${booking.apartment?.id}, ApartmentName: "${booking.apartment?.name}", Channel: ${booking.channel?.name} (${booking.channel?.id}), Arrival: ${booking.arrival}`
+            );
+          });
+        }
+
+        // SPECIFIC CHECK: Look for any bookings arriving on July 29, 2025
+        const jul29Bookings = bookings.filter(
+          (booking) => booking.arrival === "2025-07-29"
+        );
+        if (jul29Bookings.length > 0) {
+          console.log(
+            `[SmoobuClient] 🎯 Found bookings arriving on 2025-07-29:`
+          );
+          jul29Bookings.forEach((booking) => {
+            console.log(
+              `  - ID: ${booking.id}, ApartmentID: ${
+                booking.apartment?.id
+              }, ApartmentName: "${booking.apartment?.name}", Channel: ${
+                booking.channel?.name
+              } (${booking.channel?.id}), Guest: ${
+                booking["guest-name"] ||
+                booking.firstName + " " + booking.lastName
+              }`
+            );
+          });
+        } else {
+          console.log(
+            `[SmoobuClient] ❌ No bookings found arriving on 2025-07-29`
+          );
+        }
+
+        // Also check for any July 2025 bookings
+        const julyBookings = bookings.filter((booking) =>
+          booking.arrival?.startsWith("2025-07")
+        );
+        if (julyBookings.length > 0) {
+          console.log(
+            `[SmoobuClient] Found ${julyBookings.length} bookings arriving in July 2025:`
+          );
+          julyBookings.forEach((booking) => {
+            console.log(
+              `  - ID: ${booking.id}, ApartmentID: ${booking.apartment?.id}, ApartmentName: "${booking.apartment?.name}", Channel: ${booking.channel?.name}, Arrival: ${booking.arrival}`
+            );
+          });
+        }
+      }
 
       return bookings;
     } catch (error) {
@@ -122,6 +298,65 @@ export class SmoobuClient {
       );
       const bookings = response.data.bookings || [];
 
+      // Debug logging for La Chambre de Blé (apartment 1946276)
+      const bleBookings = bookings.filter(
+        (booking) => booking.apartment?.id === 1946276
+      );
+
+      // Also check Airbnb bookings in modified list
+      const airbnbBookings = bookings.filter(
+        (booking) =>
+          booking.channel?.name?.toLowerCase().includes("airbnb") ||
+          booking.channel?.id === 2323543 ||
+          booking.channel?.id === "2323543"
+      );
+      if (airbnbBookings.length > 0) {
+        console.log(
+          `[SmoobuClient] Found ${airbnbBookings.length} modified Airbnb bookings:`
+        );
+        airbnbBookings.forEach((booking) => {
+          console.log(
+            `  - ID: ${booking.id}, ApartmentID: ${
+              booking.apartment?.id
+            }, ApartmentName: "${booking.apartment?.name}", Type: ${
+              booking.type
+            }, Guest: ${
+              booking["guest-name"] ||
+              booking.firstName + " " + booking.lastName
+            }`
+          );
+        });
+
+        const airbnbBleBookings = airbnbBookings.filter(
+          (booking) => booking.apartment?.id === 1946276
+        );
+        if (airbnbBleBookings.length > 0) {
+          console.log(
+            `  ✅ Found ${airbnbBleBookings.length} Airbnb booking(s) for La Chambre de Blé in modified list!`
+          );
+        }
+      }
+
+      if (bleBookings.length > 0) {
+        console.log(
+          `[SmoobuClient] Found ${bleBookings.length} modified booking(s) for La Chambre de Blé (1946276):`
+        );
+        bleBookings.forEach((booking) => {
+          console.log(
+            `  - ID: ${booking.id}, Channel: ${booking.channel?.name}, Type: ${
+              booking.type
+            }, Guest: ${
+              booking["guest-name"] ||
+              booking.firstName + " " + booking.lastName
+            }`
+          );
+        });
+      } else {
+        console.log(
+          `[SmoobuClient] No modified bookings found for La Chambre de Blé (1946276) in date range ${modifiedSinceDate} to ${modifiedUntilDate}`
+        );
+      }
+
       return bookings;
     } catch (error) {
       console.error(
@@ -129,5 +364,272 @@ export class SmoobuClient {
       );
       return []; // Return empty array on error
     }
+  }
+
+  /**
+   * CRITICAL WORKAROUND: Fetch missing Airbnb bookings for La Chambre de Blé (apartment 1946276).
+   *
+   * ROOT CAUSE: Smoobu API has a systemic issue where some Airbnb bookings for apartment 1946276
+   * are completely missing from ALL bulk API endpoints (/api/reservations), regardless of parameters.
+   * These bookings only exist when fetched individually by booking ID.
+   *
+   * INVESTIGATION RESULTS:
+   * - Strategy 1 (apartmentId query): Returns 0 bookings - apartmentId filter doesn't work for 1946276
+   * - Strategy 2 (channelId query): Finds some bookings but still misses specific ones (Anne Vicente, Baya Cheikh)
+   * - Strategy 3 (broad query): Same as main API call - missing the problematic bookings
+   * - Strategy 4 (direct fetch): ONLY way to get missing bookings like 105719121, 105608666
+   *
+   * FUTURE-PROOFING LIMITATION:
+   * This workaround can only recover KNOWN missing booking IDs. New missing bookings won't be detected
+   * unless we implement a more advanced detection mechanism.
+   *
+   * @param {string} startDate - Arrival start date in YYYY-MM-DD format
+   * @param {string} endDate - Arrival end date in YYYY-MM-DD format
+   * @returns {Promise<Array>} - Array of found booking objects
+   */
+  async fetchMissingAirbnbBookingsForBle(startDate, endDate) {
+    if (!this.apiKey) {
+      console.error(
+        "[SmoobuClient] Cannot fetch missing bookings: API key missing."
+      );
+      return [];
+    }
+
+    const foundBookings = [];
+
+    try {
+      // Strategy 1: Query specifically for apartment 1946276
+      // NOTE: Investigation shows this returns 0 bookings - apartmentId filter is broken for 1946276
+      console.log(
+        `[SmoobuClient] Strategy 1: Querying specifically for apartment 1946276...`
+      );
+
+      const apartmentSpecificResponse = await axios.get(
+        "https://login.smoobu.com/api/reservations",
+        {
+          headers: {
+            "Api-Key": this.apiKey,
+            "Cache-Control": "no-cache",
+          },
+          params: {
+            apartmentId: 1946276,
+            arrivalFrom: startDate,
+            arrivalTo: endDate,
+            showCancellation: false,
+            excludeBlocked: true,
+            pageSize: 100,
+          },
+        }
+      );
+
+      const apartmentBookings = apartmentSpecificResponse.data.bookings || [];
+      const airbnbApartmentBookings = apartmentBookings.filter(
+        (booking) =>
+          booking.channel?.name?.toLowerCase().includes("airbnb") ||
+          booking.channel?.id === 2323543 ||
+          booking.channel?.id === "2323543"
+      );
+
+      if (airbnbApartmentBookings.length > 0) {
+        console.log(
+          `[SmoobuClient] Strategy 1 SUCCESS: Found ${airbnbApartmentBookings.length} Airbnb bookings for apartment 1946276`
+        );
+        foundBookings.push(...airbnbApartmentBookings);
+      } else {
+        console.log(
+          `[SmoobuClient] Strategy 1: No Airbnb bookings found for apartment 1946276 (EXPECTED - apartmentId filter broken)`
+        );
+      }
+    } catch (error) {
+      console.error(`[SmoobuClient] Strategy 1 failed:`, error.message);
+    }
+
+    try {
+      // Strategy 2: Query for Airbnb channel specifically
+      // NOTE: This finds SOME bookings but still misses problematic ones
+      console.log(
+        `[SmoobuClient] Strategy 2: Querying for Airbnb channel (2323543)...`
+      );
+
+      const channelSpecificResponse = await axios.get(
+        "https://login.smoobu.com/api/reservations",
+        {
+          headers: {
+            "Api-Key": this.apiKey,
+            "Cache-Control": "no-cache",
+          },
+          params: {
+            channelId: 2323543, // Airbnb channel ID
+            arrivalFrom: startDate,
+            arrivalTo: endDate,
+            showCancellation: false,
+            excludeBlocked: true,
+            pageSize: 100,
+          },
+        }
+      );
+
+      const channelBookings = channelSpecificResponse.data.bookings || [];
+      const channelBleBookings = channelBookings.filter(
+        (booking) =>
+          booking.apartment?.id === 1946276 ||
+          booking.related?.some((rel) => rel.id === 1946276)
+      );
+
+      if (channelBleBookings.length > 0) {
+        console.log(
+          `[SmoobuClient] Strategy 2 SUCCESS: Found ${channelBleBookings.length} Airbnb bookings for La Chambre de Blé from channel query`
+        );
+        // Avoid duplicates
+        channelBleBookings.forEach((booking) => {
+          if (!foundBookings.some((fb) => fb.id === booking.id)) {
+            foundBookings.push(booking);
+          }
+        });
+      } else {
+        console.log(
+          `[SmoobuClient] Strategy 2: No Airbnb bookings found for La Chambre de Blé from channel query`
+        );
+      }
+    } catch (error) {
+      console.error(`[SmoobuClient] Strategy 2 failed:`, error.message);
+    }
+
+    try {
+      // Strategy 3: Query without filters and search for known bookings
+      // NOTE: Same as main API call - still misses the problematic bookings
+      console.log(
+        `[SmoobuClient] Strategy 3: Broad query to find any missing bookings...`
+      );
+
+      const broadResponse = await axios.get(
+        "https://login.smoobu.com/api/reservations",
+        {
+          headers: {
+            "Api-Key": this.apiKey,
+            "Cache-Control": "no-cache",
+          },
+          params: {
+            arrivalFrom: startDate,
+            arrivalTo: endDate,
+            showCancellation: false,
+            pageSize: 100,
+          },
+        }
+      );
+
+      const broadBookings = broadResponse.data.bookings || [];
+      const broadBleAirbnbBookings = broadBookings.filter(
+        (booking) =>
+          (booking.apartment?.id === 1946276 ||
+            booking.related?.some((rel) => rel.id === 1946276)) &&
+          (booking.channel?.name?.toLowerCase().includes("airbnb") ||
+            booking.channel?.id === 2323543)
+      );
+
+      if (broadBleAirbnbBookings.length > 0) {
+        console.log(
+          `[SmoobuClient] Strategy 3 SUCCESS: Found ${broadBleAirbnbBookings.length} Airbnb bookings for La Chambre de Blé from broad query`
+        );
+        // Avoid duplicates
+        broadBleAirbnbBookings.forEach((booking) => {
+          if (!foundBookings.some((fb) => fb.id === booking.id)) {
+            foundBookings.push(booking);
+          }
+        });
+      } else {
+        console.log(
+          `[SmoobuClient] Strategy 3: No additional Airbnb bookings found for La Chambre de Blé`
+        );
+      }
+    } catch (error) {
+      console.error(`[SmoobuClient] Strategy 3 failed:`, error.message);
+    }
+
+    // Strategy 4: CRITICAL - Direct fetch of known missing bookings
+    // NOTE: This is the ONLY way to get bookings like 105719121 and 105608666
+    // LIMITATION: Only works for KNOWN missing booking IDs - can't detect NEW missing ones
+    const knownMissingIds = [105719121, 105608666]; // Add any other known missing booking IDs here
+
+    console.log(
+      `[SmoobuClient] Strategy 4: CRITICAL direct fetch for known missing bookings`
+    );
+    console.log(
+      `[SmoobuClient] WARNING: This strategy only works for KNOWN missing IDs: [${knownMissingIds.join(
+        ", "
+      )}]`
+    );
+    console.log(
+      `[SmoobuClient] Future missing Airbnb bookings for apartment 1946276 may not be detected automatically!`
+    );
+
+    for (const bookingId of knownMissingIds) {
+      try {
+        console.log(
+          `[SmoobuClient] Strategy 4: Directly fetching known missing booking ${bookingId}...`
+        );
+
+        const directResponse = await axios.get(
+          `https://login.smoobu.com/api/reservations/${bookingId}`,
+          {
+            headers: {
+              "Api-Key": this.apiKey,
+              "Cache-Control": "no-cache",
+            },
+          }
+        );
+
+        const directBooking = directResponse.data;
+        if (
+          directBooking &&
+          (directBooking.apartment?.id === 1946276 ||
+            directBooking.related?.some((rel) => rel.id === 1946276)) &&
+          (directBooking.channel?.name?.toLowerCase().includes("airbnb") ||
+            directBooking.channel?.id === 2323543)
+        ) {
+          // Check if this booking falls within our date range
+          const arrivalDate = new Date(directBooking.arrival);
+          const rangeStart = new Date(startDate);
+          const rangeEnd = new Date(endDate);
+
+          if (arrivalDate >= rangeStart && arrivalDate <= rangeEnd) {
+            console.log(
+              `[SmoobuClient] Strategy 4 SUCCESS: Found missing booking ${bookingId} for La Chambre de Blé`
+            );
+            // Avoid duplicates
+            if (!foundBookings.some((fb) => fb.id === directBooking.id)) {
+              foundBookings.push(directBooking);
+            }
+          } else {
+            console.log(
+              `[SmoobuClient] Strategy 4: Booking ${bookingId} found but outside date range (${directBooking.arrival})`
+            );
+          }
+        } else {
+          console.log(
+            `[SmoobuClient] Strategy 4: Booking ${bookingId} found but not for La Chambre de Blé or not Airbnb`
+          );
+        }
+      } catch (error) {
+        console.log(
+          `[SmoobuClient] Strategy 4: Could not fetch booking ${bookingId} - ${error.message}`
+        );
+      }
+    }
+
+    if (foundBookings.length > 0) {
+      console.log(
+        `[SmoobuClient] WORKAROUND SUMMARY: Found ${foundBookings.length} missing Airbnb booking(s) for La Chambre de Blé using supplementary strategies`
+      );
+      console.log(
+        `[SmoobuClient] ⚠️  IMPORTANT: This workaround has limitations - see method documentation`
+      );
+    } else {
+      console.log(
+        `[SmoobuClient] WORKAROUND SUMMARY: No missing Airbnb bookings found for La Chambre de Blé despite trying multiple strategies`
+      );
+    }
+
+    return foundBookings;
   }
 }

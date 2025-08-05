@@ -111,6 +111,35 @@ export function calculateBookingTotal(booking) {
       0
   );
 
+  // --- Extract Guest Fees ---
+  let guestFees = 0;
+  if (booking.guestFees) {
+    guestFees = parseFloat(booking.guestFees) || 0;
+  } else if (booking.priceBreakdown?.calculatedGuestFees) {
+    guestFees = parseFloat(booking.priceBreakdown.calculatedGuestFees) || 0;
+  } else if (booking.priceDetailsSnapshot?.guestFees) {
+    guestFees = parseFloat(booking.priceDetailsSnapshot.guestFees) || 0;
+  } else if (priceElements.length > 0) {
+    // Look for guest fees in price elements
+    const guestFeeElement = priceElements.find(
+      (el) =>
+        el &&
+        el.name &&
+        el.amount &&
+        (el.type === "guests" ||
+          el.name.toLowerCase().includes("frais voyageurs") ||
+          el.name.toLowerCase().includes("guest") ||
+          (el.name.toLowerCase().includes("personne supplémentaire") &&
+            !el.name.toLowerCase().includes("l'essentiel")) ||
+          el.name.toLowerCase().includes("extra guest") ||
+          el.name.toLowerCase().includes("additional guest"))
+    );
+
+    if (guestFeeElement) {
+      guestFees = parseFloat(guestFeeElement.amount) || 0;
+    }
+  }
+
   // =================================================================
   // === THIS IS THE CRITICAL FIX ===
   // The old code did not check `booking.couponApplied.discount`.
@@ -199,8 +228,9 @@ export function calculateBookingTotal(booking) {
     }
   }
 
-  // Calculate room subtotal (Base + Fees - Discounts)
-  let roomTotal = basePrice + linenFee - longStayDiscount - couponDiscount;
+  // Calculate room subtotal (Base + Fees + Guest Fees - Discounts)
+  let roomTotal =
+    basePrice + linenFee + guestFees - longStayDiscount - couponDiscount;
 
   if (isBookingCom) {
     roomTotal += taxeDeSejour;
@@ -244,12 +274,41 @@ export function calculateBookingTotal(booking) {
     console.log("=== DEBUGGING TOTAL CALCULATION FOR BOOKING 104351664 ===");
     console.log("basePrice:", basePrice);
     console.log("linenFee:", linenFee);
+    console.log("guestFees:", guestFees);
     console.log("longStayDiscount:", longStayDiscount);
     console.log("couponDiscount:", couponDiscount);
-    console.log("roomTotal (base + linen - longStay - coupon):", roomTotal);
+    console.log(
+      "roomTotal (base + linen + guest - longStay - coupon):",
+      roomTotal
+    );
     console.log("extrasTotal:", extrasTotal);
     console.log("calculatedTotal (room + extras):", calculatedTotal);
     console.log("storedPrice (from booking.price):", storedPrice);
+  }
+
+  // Debug logging for Anne Vicente booking (105719121)
+  if (
+    booking.id === "105719121" ||
+    booking.smoobuId === "105719121" ||
+    booking.guestName === "Anne Vicente"
+  ) {
+    console.log(
+      "=== DEBUGGING TOTAL CALCULATION FOR ANNE VICENTE BOOKING 105719121 ==="
+    );
+    console.log("Guest Name:", booking.guestName);
+    console.log("basePrice:", basePrice);
+    console.log("linenFee:", linenFee);
+    console.log("guestFees:", guestFees);
+    console.log("longStayDiscount:", longStayDiscount);
+    console.log("couponDiscount:", couponDiscount);
+    console.log(
+      "roomTotal (base + linen + guest - longStay - coupon):",
+      roomTotal
+    );
+    console.log("extrasTotal:", extrasTotal);
+    console.log("calculatedTotal (room + extras):", calculatedTotal);
+    console.log("storedPrice (from booking.price):", storedPrice);
+    console.log("priceElements:", booking.priceDetails?.priceElements);
   }
 
   // Debug logging removed - issue resolved for booking 96356178
@@ -301,6 +360,13 @@ export function calculateBookingTotal(booking) {
   // console.log("Using calculated total:", calculatedTotal);
   if (booking.id === "104351664" || booking.smoobuId === "104351664") {
     console.log("RETURNING calculatedTotal:", calculatedTotal);
+  }
+  if (
+    booking.id === "105719121" ||
+    booking.smoobuId === "105719121" ||
+    booking.guestName === "Anne Vicente"
+  ) {
+    console.log("ANNE VICENTE: RETURNING calculatedTotal:", calculatedTotal);
   }
   // Debug logging removed - issue resolved for booking 96356178
   return calculatedTotal;
