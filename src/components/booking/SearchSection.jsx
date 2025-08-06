@@ -112,22 +112,25 @@ export const SearchSection = ({
             <label className="block mb-1 text-sm font-medium text-gray-600">
               {t("search.arrival")}
             </label>
-            <DatePicker
-              selected={startDate}
-              onChange={(date) => handleDateChange(date, true)}
-              selectsStart
-              startDate={startDate}
-              endDate={endDate}
-              // --- MODIFICATION ---
-              // The minimum selectable date is now tomorrow.
-              minDate={tomorrow}
-              maxDate={endDate}
-              locale={datePickerLocaleObject}
-              dateFormat="dd/MM/yyyy"
-              placeholderText={t("search.selectDate")}
-              className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
-              isClearable={true}
-            />
+            <div className="datepicker-wrapper">
+              <DatePicker
+                key="arrival-datepicker"
+                selected={startDate}
+                onChange={(date) => handleDateChange(date, true)}
+                selectsStart
+                startDate={startDate}
+                endDate={endDate}
+                // --- MODIFICATION ---
+                // The minimum selectable date is now tomorrow.
+                minDate={tomorrow}
+                maxDate={endDate}
+                locale={datePickerLocaleObject}
+                dateFormat="dd/MM/yyyy"
+                placeholderText={t("search.selectDate")}
+                className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
+                isClearable={true}
+              />
+            </div>
           </div>
 
           {/* Departure */}
@@ -135,19 +138,23 @@ export const SearchSection = ({
             <label className="block mb-1 text-sm font-medium text-gray-600">
               {t("search.departure")}
             </label>
-            <DatePicker
-              selected={endDate}
-              onChange={(date) => handleDateChange(date, false)}
-              selectsEnd
-              startDate={startDate}
-              endDate={endDate}
-              minDate={getNextDay(startDate)}
-              dateFormat="dd/MM/yyyy"
-              placeholderText={t("search.selectDate")}
-              className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
-              isClearable={true}
-              disabled={!startDate}
-            />
+            <div className="datepicker-wrapper">
+              <DatePicker
+                key="departure-datepicker"
+                selected={endDate}
+                onChange={(date) => handleDateChange(date, false)}
+                selectsEnd
+                startDate={startDate}
+                endDate={endDate}
+                minDate={getNextDay(startDate)}
+                locale={datePickerLocaleObject}
+                dateFormat="dd/MM/yyyy"
+                placeholderText={t("search.selectDate")}
+                className="w-full rounded border-[#668E73] border text-base placeholder:text-base md:text-[16px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-[#fbfdfb] h-12 p-2 pl-5"
+                isClearable={true}
+                disabled={!startDate}
+              />
+            </div>
           </div>
 
           {/* Adults (original working code) */}
@@ -213,7 +220,7 @@ export const SearchSection = ({
             >
               <div className="relative">
                 <Listbox.Button
-                  id="adults" // Note: This ID is duplicated but reflects your original working code
+                  id="children-selector"
                   className="mt-1 block w-full rounded border-[#668E73] border text-[14px] md:text-[16px] placeholder:text-[14px] md:placeholder:text-[16px] shadow-sm focus:border-[#668E73] focus:ring-1 focus:ring-[#668E73] text-black bg-white h-12 p-2"
                 >
                   <span className="flex items-center">

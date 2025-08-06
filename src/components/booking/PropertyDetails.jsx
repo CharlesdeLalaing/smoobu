@@ -6,7 +6,6 @@ import { isRoomAvailable } from "../hooks/roomUtils";
 import { PriceDetails } from "./PriceDetails";
 import { CalendarRoom } from "./CustomRoom";
 
-
 import Fox from "../../assets/GlobalImg/fox.webp";
 
 import Calendar from "../../assets/icons8-calendar-50.png";
@@ -29,20 +28,23 @@ export const PropertyDetails = ({
   showOnlyUnselected = false,
   hasSearched,
   handleDateSelect,
-
+  roomRefs,
 }) => {
   const { t } = useTranslation();
   const totalGuests =
     (parseInt(formData.adults) || 0) + (parseInt(formData.children) || 0);
 
-  const scrollTo = () => {
+  const scrollToContainer = useCallback(() => {
     setTimeout(() => {
-      const element = document.getElementById("main-container");
+      // Use a more specific selector or ref instead of getElementById
+      const element = document.querySelector(
+        '[data-scroll-target="main-container"]'
+      );
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 100);
-  };
+  }, []);
 
   const sortRooms = (rooms) => {
     const customOrder = [2565753, 1946282, 1644643, 1946279, 1946276, 1946270];
@@ -118,403 +120,411 @@ export const PropertyDetails = ({
     return `${day}.${month}.${year}`;
   };
 
-const RoomCard = ({ room, isAvailable }) => {
-  const [sliderRef, setSliderRef] = useState(null);
-  const [activeTab, setActiveTab] = useState("priceDetails");
-  const roomPriceDetails = priceDetails && priceDetails[room.id];
-  const isOverCapacity = totalGuests > room.maxGuests;
+  const RoomCard = ({ room, isAvailable }) => {
+    const [sliderRef, setSliderRef] = useState(null);
+    const [activeTab, setActiveTab] = useState("priceDetails");
+    const roomPriceDetails = priceDetails && priceDetails[room.id];
+    const isOverCapacity = totalGuests > room.maxGuests;
 
-  // SOLUTION: Use localStorage to remember calendar view for each room
-  const getRoomCalendarKey = (roomId) => `room-calendar-view-${roomId}`;
+    // SOLUTION: Use localStorage to remember calendar view for each room
+    const getRoomCalendarKey = (roomId) => `room-calendar-view-${roomId}`;
 
-  // Initialize with saved view or default to current date
-  const [roomCalendarViewMonth, setRoomCalendarViewMonth] = useState(() => {
-    try {
-      const savedView = localStorage.getItem(getRoomCalendarKey(room.id));
-      return savedView ? new Date(savedView) : new Date();
-    } catch (e) {
-      console.error("Error retrieving calendar view:", e);
-      return new Date();
-    }
-  });
-
-  // Save the view whenever it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        getRoomCalendarKey(room.id),
-        roomCalendarViewMonth.toISOString()
-      );
-    } catch (e) {
-      console.error("Error saving calendar view:", e);
-    }
-  }, [roomCalendarViewMonth, room.id]);
-
-  // Handler for calendar view changes
-  const handleRoomCalendarViewChange = useCallback((newViewMonth) => {
-    setRoomCalendarViewMonth(newViewMonth);
-  }, []);
-
-  // Use useCallback to prevent recreation of this function on every render
-  const handleCalendarDateSelect = useCallback(
-    (date, isStart) => {
-      if (handleDateSelect) {
-        // Pass the date and isStart flag but NOT the view month
-        // This prevents interference with the parent's view state
-        handleDateSelect(date, isStart);
+    // Initialize with saved view or default to current date
+    const [roomCalendarViewMonth, setRoomCalendarViewMonth] = useState(() => {
+      try {
+        const savedView = localStorage.getItem(getRoomCalendarKey(room.id));
+        return savedView ? new Date(savedView) : new Date();
+      } catch (e) {
+        console.error("Error retrieving calendar view:", e);
+        return new Date();
       }
-    },
-    [handleDateSelect]
-  );
+    });
 
-  const getCapacityMessage = () => {
-    if (isOverCapacity) {
-      return (
-        <div className="p-4 mb-4 border border-red-200 rounded-md bg-red-50">
-          <p className="font-medium text-red-600">
-            {t("propertyDetails.capacityExceeded.title")}
-          </p>
-          <p className="mt-2 text-sm text-gray-600">
-            {t("propertyDetails.capacityExceeded.message", {
-              maxGuests: room.maxGuests,
-              selectedGuests: totalGuests,
-            })}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
+    // Save the view whenever it changes
+    useEffect(() => {
+      try {
+        localStorage.setItem(
+          getRoomCalendarKey(room.id),
+          roomCalendarViewMonth.toISOString()
+        );
+      } catch (e) {
+        console.error("Error saving calendar view:", e);
+      }
+    }, [roomCalendarViewMonth, room.id]);
 
-  const getGuestFeeInfo = () => {
-    if (!roomPriceDetails?.settings) return null;
+    // Handler for calendar view changes
+    const handleRoomCalendarViewChange = useCallback((newViewMonth) => {
+      setRoomCalendarViewMonth(newViewMonth);
+    }, []);
 
-    const settings = roomPriceDetails.settings;
-    const extraGuests = Math.max(0, totalGuests - settings.startingAtGuest);
+    // Use useCallback to prevent recreation of this function on every render
+    const handleCalendarDateSelect = useCallback(
+      (date, isStart) => {
+        if (handleDateSelect) {
+          // Pass the date and isStart flag but NOT the view month
+          // This prevents interference with the parent's view state
+          handleDateSelect(date, isStart);
+        }
+      },
+      [handleDateSelect]
+    );
 
-    if (extraGuests > 0) {
-      return (
-        <div className="mt-2 text-sm text-gray-600">
-          {t("propertyDetails.extraGuestFee", {
-            count: extraGuests,
-            fee: settings.extraGuestsPerNight,
-            threshold: settings.startingAtGuest,
-          })}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const sliderSettings = {
-    dots: false,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    asNavFor: sliderRef,
-  };
-
-  const thumbnailSettings = {
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    focusOnSelect: true,
-    infinite: false,
-    asNavFor: sliderRef,
-  };
-
-  return (
-    <div
-      id={`room-${room.id}`}
-      className={`py-8 ${
-        formData.apartmentId === room.id
-          ? "border border-[#668E73] p-4 rounded "
-          : ""
-      } ${
-        formData.apartmentId === room.id && showOnlySelected
-          ? "h-fit sm:h-[calc(100vh-100px)] overflow-y-auto "
-          : "h-fit "
-      }`}
-    >
-      {getCapacityMessage()}
-
-      {startDate &&
-        endDate &&
-        !isAvailable &&
-        room.unavailableReason === "dates" && (
+    const getCapacityMessage = () => {
+      if (isOverCapacity) {
+        return (
           <div className="p-4 mb-4 border border-red-200 rounded-md bg-red-50">
             <p className="font-medium text-red-600">
-              {t("propertyDetails.roomUnavailable.title")}
+              {t("propertyDetails.capacityExceeded.title")}
             </p>
             <p className="mt-2 text-sm text-gray-600">
-              {t("propertyDetails.roomUnavailable.message")}
+              {t("propertyDetails.capacityExceeded.message", {
+                maxGuests: room.maxGuests,
+                selectedGuests: totalGuests,
+              })}
             </p>
           </div>
-        )}
+        );
+      }
+      return null;
+    };
 
-      {formData.apartmentId === room.id ? (
-        <div className="flex flex-col h-full">
-          <div className="flex justify-around mb-4 border-b border-grey-300">
-            <button
-              type="button"
-              className={`py-2 px-4 ${
-                activeTab === "priceDetails"
-                  ? "text-[#668E73] border-b-2 border-[#668E73]"
-                  : ""
-              }`}
-              onClick={() => setActiveTab("priceDetails")}
-            >
-              {t("propertyDetails.tabs.bookingDetails")}
-            </button>
-            <button
-              type="button"
-              className={`py-2 px-4 ${
-                activeTab === "roomInfo"
-                  ? "text-[#668E73] border-b-2 border-[#668E73]"
-                  : ""
-              }`}
-              onClick={() => setActiveTab("roomInfo")}
-            >
-              {t("propertyDetails.tabs.roomInfo")}
-            </button>
+    const getGuestFeeInfo = () => {
+      if (!roomPriceDetails?.settings) return null;
+
+      const settings = roomPriceDetails.settings;
+      const extraGuests = Math.max(0, totalGuests - settings.startingAtGuest);
+
+      if (extraGuests > 0) {
+        return (
+          <div className="mt-2 text-sm text-gray-600">
+            {t("propertyDetails.extraGuestFee", {
+              count: extraGuests,
+              fee: settings.extraGuestsPerNight,
+              threshold: settings.startingAtGuest,
+            })}
           </div>
+        );
+      }
+      return null;
+    };
 
-          <div className="flex-1 overflow-y-none">
-            {activeTab === "roomInfo" && (
-              <div className="flex flex-col h-full">
-                <Slider
-                  {...sliderSettings}
-                  ref={(slider) => setSliderRef(slider)}
-                >
-                  {Object.values(room.images).map((image, index) => (
-                    <img
-                      key={index}
-                      src={image}
-                      alt={`${room.name} ${index + 1}`}
-                      className="w-full h-[450px] sm:h-[350px] md:h-[350px] lg:h-[350px] xl:h-[350px] object-cover"
-                    />
-                  ))}
-                </Slider>
+    const sliderSettings = {
+      dots: false,
+      infinite: true,
+      speed: 500,
+      slidesToShow: 1,
+      slidesToScroll: 1,
+      asNavFor: sliderRef,
+    };
 
-                <div className="mt-4">
-                  <Slider {...thumbnailSettings}>
+    const thumbnailSettings = {
+      slidesToShow: 3,
+      slidesToScroll: 1,
+      focusOnSelect: true,
+      infinite: false,
+      asNavFor: sliderRef,
+    };
+
+    return (
+      <div
+        id={`room-${room.id}`}
+        ref={(el) => {
+          if (roomRefs && roomRefs.current) {
+            roomRefs.current[room.id] = el;
+          }
+        }}
+        className={`py-8 ${
+          formData.apartmentId === room.id
+            ? "border border-[#668E73] p-4 rounded "
+            : ""
+        } ${
+          formData.apartmentId === room.id && showOnlySelected
+            ? "h-fit sm:h-[calc(100vh-100px)] overflow-y-auto "
+            : "h-fit "
+        }`}
+      >
+        {getCapacityMessage()}
+
+        {startDate &&
+          endDate &&
+          !isAvailable &&
+          room.unavailableReason === "dates" && (
+            <div className="p-4 mb-4 border border-red-200 rounded-md bg-red-50">
+              <p className="font-medium text-red-600">
+                {t("propertyDetails.roomUnavailable.title")}
+              </p>
+              <p className="mt-2 text-sm text-gray-600">
+                {t("propertyDetails.roomUnavailable.message")}
+              </p>
+            </div>
+          )}
+
+        {formData.apartmentId === room.id ? (
+          <div className="flex flex-col h-full">
+            <div className="flex justify-around mb-4 border-b border-grey-300">
+              <button
+                type="button"
+                className={`py-2 px-4 ${
+                  activeTab === "priceDetails"
+                    ? "text-[#668E73] border-b-2 border-[#668E73]"
+                    : ""
+                }`}
+                onClick={() => setActiveTab("priceDetails")}
+              >
+                {t("propertyDetails.tabs.bookingDetails")}
+              </button>
+              <button
+                type="button"
+                className={`py-2 px-4 ${
+                  activeTab === "roomInfo"
+                    ? "text-[#668E73] border-b-2 border-[#668E73]"
+                    : ""
+                }`}
+                onClick={() => setActiveTab("roomInfo")}
+              >
+                {t("propertyDetails.tabs.roomInfo")}
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-none">
+              {activeTab === "roomInfo" && (
+                <div className="flex flex-col h-full">
+                  <Slider
+                    {...sliderSettings}
+                    ref={(slider) => setSliderRef(slider)}
+                  >
                     {Object.values(room.images).map((image, index) => (
-                      <div key={index} className="px-2">
-                        <img
-                          src={image}
-                          alt={`${room.name} Thumbnail ${index + 1}`}
-                          className="object-cover cursor-pointer h-[50px] w-full"
-                        />
-                      </div>
+                      <img
+                        key={index}
+                        src={image}
+                        alt={`${room.name} ${index + 1}`}
+                        className="w-full h-[450px] sm:h-[350px] md:h-[350px] lg:h-[350px] xl:h-[350px] object-cover"
+                      />
                     ))}
                   </Slider>
-                </div>
 
-                <div className="w-full mt-4 overflow-x-auto features-container font-cormorant">
-                  <div className="flex w-full features-list">
-                    {room.features.map((feature, index) => {
-                      let translatedTitle = feature.value
-                        ? Array.isArray(feature.value)
-                          ? t(feature.title, {
-                              value: feature.value[0],
-                              value2: feature.value[1],
-                            })
-                          : t(feature.title, { value: feature.value })
-                        : t(feature.title);
-
-                      return (
-                        <div
-                          key={index}
-                          className="feature-item flex flex-col items-center justify-center text-center p-3 bg-[#668E73] min-w-auto"
-                        >
+                  <div className="mt-4">
+                    <Slider {...thumbnailSettings}>
+                      {Object.values(room.images).map((image, index) => (
+                        <div key={index} className="px-2">
                           <img
-                            src={feature.icon}
-                            alt={translatedTitle}
-                            className="w-6 h-6"
-                            style={{
-                              filter: "invert(100%)",
-                            }}
+                            src={image}
+                            alt={`${room.name} Thumbnail ${index + 1}`}
+                            className="object-cover cursor-pointer h-[50px] w-full"
                           />
-                          <span className="mt-2 text-sm text-white whitespace-nowrap">
-                            {translatedTitle}
-                          </span>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </Slider>
+                  </div>
+
+                  <div className="w-full mt-4 overflow-x-auto features-container font-cormorant">
+                    <div className="flex w-full features-list">
+                      {room.features.map((feature, index) => {
+                        let translatedTitle = feature.value
+                          ? Array.isArray(feature.value)
+                            ? t(feature.title, {
+                                value: feature.value[0],
+                                value2: feature.value[1],
+                              })
+                            : t(feature.title, { value: feature.value })
+                          : t(feature.title);
+
+                        return (
+                          <div
+                            key={index}
+                            className="feature-item flex flex-col items-center justify-center text-center p-3 bg-[#668E73] min-w-auto"
+                          >
+                            <img
+                              src={feature.icon}
+                              alt={translatedTitle}
+                              className="w-6 h-6"
+                              style={{
+                                filter: "invert(100%)",
+                              }}
+                            />
+                            <span className="mt-2 text-sm text-white whitespace-nowrap">
+                              {translatedTitle}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeTab === "priceDetails" && roomPriceDetails && (
-              <div className="relative h-full overflow-y-auto sm:overflow-visible md:overflow-y-auto">
-                <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[130px] xl:left-[450px]">
-                  <img
-                    src={Fox}
-                    alt="Squirrel"
-                    className="w-24 h-auto md:w-32 lg:w-40"
-                  />
-                </div>
-                <div className="my-5">
-                  <p className="text-lg sm:text-base md:text-lg font-montserrat text-[#D3B574]">
-                    {t(room.type)}
-                  </p>
-                  <h2 className="text-lg sm:text-base md:text-[25px] font-medium uppercase sm:mb-2 md:mb-10 sm:my-3 md:my-4 font-cormorant">
-                    {t(room.nameKey)}
-                  </h2>
-                </div>
-                <div className="flex items-center justify-left sm:mb-2 md:mb-4 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
-                  <img
-                    src={Group}
-                    alt="Profile Icon"
-                    className="w-6 h-6 mr-4 sm:w-4 sm:h-4 md:w-5 md:h-5"
-                  />
-                  <span className="text-[18px] sm:text-sm md:text-base font-light text-black">
-                    {totalGuests}{" "}
-                    {totalGuests > 1
-                      ? t("propertyDetails.guests.plural")
-                      : t("propertyDetails.guests.singular")}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-left sm:mb-2 md:mb-10 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
-                  <img
-                    src={Calendar}
-                    alt="Calendar Icon"
-                    className="w-6 h-6 mr-4 sm:w-4 sm:h-4 md:w-5 md:h-5"
-                  />
-                  <div className="flex items-center text-[18px] sm:text-sm md:text-base font-light text-black">
-                    {startDate && <span>{formatDate(startDate)}</span>}
-                    {(startDate || endDate) && (
-                      <span className="mx-2 sm:mx-1 md:mx-1.5">→</span>
-                    )}
-                    {endDate && <span>{formatDate(endDate)}</span>}
-                  </div>
-                </div>
-
-                {getGuestFeeInfo()}
-
-                <PriceDetails
-                  priceDetails={roomPriceDetails}
-                  selectedExtras={selectedExtras}
-                  appliedCoupon={appliedCoupon}
-                  formData={formData}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col xl:flex-row gap-10 w-[94%] mx-auto">
-          <div className="w-full xl:w-2/5">
-            <Slider {...sliderSettings} ref={(slider) => setSliderRef(slider)}>
-              {Object.values(room.images).map((image, index) => (
-                <img
-                  key={index}
-                  src={image}
-                  alt={`${room.name} ${index + 1}`}
-                  className="w-full h-[400px] object-cover"
-                />
-              ))}
-            </Slider>
-
-            <div className="mt-4">
-              <Slider {...thumbnailSettings}>
-                {Object.values(room.images).map((image, index) => (
-                  <div key={index} className="px-2">
+              {activeTab === "priceDetails" && roomPriceDetails && (
+                <div className="relative h-full overflow-y-auto sm:overflow-visible md:overflow-y-auto">
+                  <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[130px] xl:left-[450px]">
                     <img
-                      src={image}
-                      alt={`${room.name} Thumbnail ${index + 1}`}
-                      className="object-cover cursor-pointer h-[57px] w-full"
+                      src={Fox}
+                      alt="Squirrel"
+                      className="w-24 h-auto md:w-32 lg:w-40"
                     />
                   </div>
+                  <div className="my-5">
+                    <p className="text-lg sm:text-base md:text-lg font-montserrat text-[#D3B574]">
+                      {t(room.type)}
+                    </p>
+                    <h2 className="text-lg sm:text-base md:text-[25px] font-medium uppercase sm:mb-2 md:mb-10 sm:my-3 md:my-4 font-cormorant">
+                      {t(room.nameKey)}
+                    </h2>
+                  </div>
+                  <div className="flex items-center justify-left sm:mb-2 md:mb-4 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
+                    <img
+                      src={Group}
+                      alt="Profile Icon"
+                      className="w-6 h-6 mr-4 sm:w-4 sm:h-4 md:w-5 md:h-5"
+                    />
+                    <span className="text-[18px] sm:text-sm md:text-base font-light text-black">
+                      {totalGuests}{" "}
+                      {totalGuests > 1
+                        ? t("propertyDetails.guests.plural")
+                        : t("propertyDetails.guests.singular")}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-left sm:mb-2 md:mb-10 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
+                    <img
+                      src={Calendar}
+                      alt="Calendar Icon"
+                      className="w-6 h-6 mr-4 sm:w-4 sm:h-4 md:w-5 md:h-5"
+                    />
+                    <div className="flex items-center text-[18px] sm:text-sm md:text-base font-light text-black">
+                      {startDate && <span>{formatDate(startDate)}</span>}
+                      {(startDate || endDate) && (
+                        <span className="mx-2 sm:mx-1 md:mx-1.5">→</span>
+                      )}
+                      {endDate && <span>{formatDate(endDate)}</span>}
+                    </div>
+                  </div>
+
+                  {getGuestFeeInfo()}
+
+                  <PriceDetails
+                    priceDetails={roomPriceDetails}
+                    selectedExtras={selectedExtras}
+                    appliedCoupon={appliedCoupon}
+                    formData={formData}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col xl:flex-row gap-10 w-[94%] mx-auto">
+            <div className="w-full xl:w-2/5">
+              <Slider
+                {...sliderSettings}
+                ref={(slider) => setSliderRef(slider)}
+              >
+                {Object.values(room.images).map((image, index) => (
+                  <img
+                    key={index}
+                    src={image}
+                    alt={`${room.name} ${index + 1}`}
+                    className="w-full h-[400px] object-cover"
+                  />
                 ))}
               </Slider>
-            </div>
 
-            <div className="w-full mt-4 overflow-x-auto features-container font-cormorant">
-              <div className="flex w-full features-list">
-                {room.features.map((feature, index) => {
-                  let translatedTitle = feature.value
-                    ? Array.isArray(feature.value)
-                      ? t(feature.title, {
-                          value: feature.value[0],
-                          value2: feature.value[1],
-                        })
-                      : t(feature.title, { value: feature.value })
-                    : t(feature.title);
-
-                  return (
-                    <div
-                      key={index}
-                      className="feature-item flex flex-col items-center justify-center text-center p-3 bg-[#668E73] min-w-[auto]"
-                    >
+              <div className="mt-4">
+                <Slider {...thumbnailSettings}>
+                  {Object.values(room.images).map((image, index) => (
+                    <div key={index} className="px-2">
                       <img
-                        src={feature.icon}
-                        alt={translatedTitle}
-                        className="w-6 h-6"
-                        style={{
-                          filter: "invert(100%)",
-                        }}
+                        src={image}
+                        alt={`${room.name} Thumbnail ${index + 1}`}
+                        className="object-cover cursor-pointer h-[57px] w-full"
                       />
-                      <span className="mt-2 text-sm text-white whitespace-nowrap">
-                        {translatedTitle}
-                      </span>
                     </div>
-                  );
-                })}
+                  ))}
+                </Slider>
+              </div>
+
+              <div className="w-full mt-4 overflow-x-auto features-container font-cormorant">
+                <div className="flex w-full features-list">
+                  {room.features.map((feature, index) => {
+                    let translatedTitle = feature.value
+                      ? Array.isArray(feature.value)
+                        ? t(feature.title, {
+                            value: feature.value[0],
+                            value2: feature.value[1],
+                          })
+                        : t(feature.title, { value: feature.value })
+                      : t(feature.title);
+
+                    return (
+                      <div
+                        key={index}
+                        className="feature-item flex flex-col items-center justify-center text-center p-3 bg-[#668E73] min-w-[auto]"
+                      >
+                        <img
+                          src={feature.icon}
+                          alt={translatedTitle}
+                          className="w-6 h-6"
+                          style={{
+                            filter: "invert(100%)",
+                          }}
+                        />
+                        <span className="mt-2 text-sm text-white whitespace-nowrap">
+                          {translatedTitle}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="w-full xl:w-3/5">
-            {/* Update CalendarRoom with view state props */}
-            <CalendarRoom
-              roomId={String(room.id)}
-              availableDates={availableDates}
-              startDate={startDate}
-              endDate={endDate}
-              onDateSelect={handleCalendarDateSelect}
-              hasSearched={hasSearched}
-              controlledViewMonth={roomCalendarViewMonth}
-              onViewMonthChange={handleRoomCalendarViewChange}
-            />
-            
-            <p className="my-4 text-gray-600 font-cormorant">
-              {t(room.description)}
-            </p>
-            {getGuestFeeInfo()}
-            <button
-              type="button"
-              onClick={() => {
-                if (hasSearched && isAvailable && !isOverCapacity) {
-                  onRoomSelect(room.id);
-                  scrollTo(10);
-                }
-              }}
-              disabled={!hasSearched || !isAvailable || isOverCapacity}
-              className={`w-fit mt-5 py-2 px-5 rounded-full font-medium transition-colors ${
-                !hasSearched
-                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                  : isAvailable && !isOverCapacity
-                  ? "bg-[#668E73] text-white hover:bg-opacity-90"
-                  : "bg-gray-300 text-gray-600 cursor-not-allowed"
-              }`}
-            >
-              {!hasSearched
-                ? t("propertyDetails.selectDatePrompt")
-                : isOverCapacity
-                ? t("propertyDetails.capacityExceeded.title")
-                : isAvailable
-                ? t("propertyDetails.selectRoom")
-                : t("propertyDetails.unavailableForDates")}
-            </button>
+            <div className="w-full xl:w-3/5">
+              {/* Update CalendarRoom with view state props */}
+              <CalendarRoom
+                roomId={String(room.id)}
+                availableDates={availableDates}
+                startDate={startDate}
+                endDate={endDate}
+                onDateSelect={handleCalendarDateSelect}
+                hasSearched={hasSearched}
+                controlledViewMonth={roomCalendarViewMonth}
+                onViewMonthChange={handleRoomCalendarViewChange}
+              />
+
+              <p className="my-4 text-gray-600 font-cormorant">
+                {t(room.description)}
+              </p>
+              {getGuestFeeInfo()}
+              <button
+                type="button"
+                onClick={() => {
+                  if (hasSearched && isAvailable && !isOverCapacity) {
+                    onRoomSelect(room.id);
+                    scrollTo(10);
+                  }
+                }}
+                disabled={!hasSearched || !isAvailable || isOverCapacity}
+                className={`w-fit mt-5 py-2 px-5 rounded-full font-medium transition-colors ${
+                  !hasSearched
+                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                    : isAvailable && !isOverCapacity
+                    ? "bg-[#668E73] text-white hover:bg-opacity-90"
+                    : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                }`}
+              >
+                {!hasSearched
+                  ? t("propertyDetails.selectDatePrompt")
+                  : isOverCapacity
+                  ? t("propertyDetails.capacityExceeded.title")
+                  : isAvailable
+                  ? t("propertyDetails.selectRoom")
+                  : t("propertyDetails.unavailableForDates")}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-};
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4 bg-[#fbfdfb]">

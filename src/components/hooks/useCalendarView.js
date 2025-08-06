@@ -1,21 +1,20 @@
 import { useState, useEffect } from "react";
 
 export const useCalendarView = (roomId) => {
-  // Get stored calendar view or use current date
+  // Always start with current date instead of localStorage to ensure fresh view
   const [viewMonth, setViewMonth] = useState(() => {
-    try {
-      const storedView = localStorage.getItem(`calendar-view-${roomId}`);
-      return storedView ? new Date(storedView) : new Date();
-    } catch (e) {
-      console.log("Error retrieving stored calendar view:", e);
-      return new Date();
-    }
+    // Always return current date - don't use localStorage on initial load
+    return new Date();
   });
 
-  // Save the view month whenever it changes
+  // Save the view month whenever it changes (only for session, cleared on page refresh)
   useEffect(() => {
     try {
-      localStorage.setItem(`calendar-view-${roomId}`, viewMonth.toISOString());
+      // Use sessionStorage instead of localStorage so it resets on page refresh
+      sessionStorage.setItem(
+        `calendar-view-${roomId}`,
+        viewMonth.toISOString()
+      );
     } catch (e) {
       console.log("Error storing calendar view:", e);
     }
@@ -50,3 +49,4 @@ export const useCalendarView = (roomId) => {
     nextMonthPair,
   };
 };
+

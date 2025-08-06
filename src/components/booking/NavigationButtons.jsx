@@ -7,17 +7,15 @@ export const NavigationButtons = ({
   isStepValid,
   loading,
   disabled,
+  extrasRef,
 }) => {
   const { t } = useTranslation();
 
   const handleNext = () => {
     nextStep();
     // Only scroll on mobile devices (screen width less than 640px - Tailwind's sm breakpoint)
-    if (window.innerWidth < 640) {
-      const element = document.getElementById("extra_top");
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+    if (window.innerWidth < 640 && extrasRef?.current) {
+      extrasRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
 

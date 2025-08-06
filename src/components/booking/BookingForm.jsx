@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { HeaderSection } from "./HeaderSection";
 import { SearchSection, RoomNavigation } from "./SearchSection";
@@ -22,6 +22,10 @@ import { BookingErrorBoundary } from "../ErrorBoundry";
 const BookingForm = () => {
   // Added calendar view month state
   const [calendarViewMonth, setCalendarViewMonth] = useState(new Date());
+
+  // Refs for scrolling to replace getElementById
+  const roomRefs = useRef({});
+  const extrasRef = useRef(null);
 
   const {
     formData,
@@ -131,18 +135,27 @@ const BookingForm = () => {
         setCurrentStep(1);
       }
 
-      // Scroll to room
-      const roomElement = document.getElementById(`room-${roomId}`);
-      if (roomElement) {
-        const offset = 100;
-        const elementPosition = roomElement.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - offset;
+      // Scroll to room using ref instead of getElementById
+      // Small delay to ensure DOM has updated after room selection
+      setTimeout(() => {
+        const roomElement = roomRefs.current[roomId];
+        if (roomElement) {
+          const offset = 100;
+          const elementPosition = roomElement.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - offset;
 
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth",
-        });
-      }
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth",
+          });
+        } else {
+          // Fallback: scroll to top if ref not found
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+          });
+        }
+      }, 100);
     } catch (err) {
       console.error("Errors in handleRoomSelect:", err);
       setError("Failed to update room selection. Please try again.");
@@ -487,6 +500,7 @@ const BookingForm = () => {
     handleDateSelect,
     calendarViewMonth, // Add this prop
     onCalendarViewChange: handleCalendarViewChange, // Add this prop
+    roomRefs, // Add this prop to pass refs to PropertyDetails
   };
 
   const extrasSectionProps = {
@@ -524,6 +538,7 @@ const BookingForm = () => {
     nextStep,
     isStepValid,
     loading,
+    extrasRef,
   };
 
   const roomNavigationProps = {
@@ -535,10 +550,8 @@ const BookingForm = () => {
     formData,
     selectedRoomId: formData.apartmentId,
     onRoomSelect: (roomId) => {
-      const element = document.getElementById(`room-${roomId}`);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+      // Call the main room selection handler which includes scrolling
+      handleRoomSelect(roomId);
     },
   };
 
@@ -595,6 +608,7 @@ const BookingForm = () => {
                         <h2
                           className="text-xl font-semibold text-[#668E73] mb-6"
                           id="extra_top"
+                          ref={extrasRef}
                         >
                           {t("booking.sections.extras.title")}
                         </h2>
@@ -685,19 +699,22 @@ const BookingForm = () => {
           )}
         </div>
 
-        {/* Debug tool - only shows in development */}
-        <DebugErrorTrigger
-          onDateSelect={handleDateSelect}
-          availableDates={availableDates}
-          formData={formData}
-          priceDetails={priceDetails}
-          hasSearched={hasSearched}
-          startDate={startDate}
-          endDate={endDate}
-        />
+        {/* Debug tool - disabled to prevent DOM conflicts */}
+        {process.env.NODE_ENV === "development" && false && (
+          <DebugErrorTrigger
+            onDateSelect={handleDateSelect}
+            availableDates={availableDates}
+            formData={formData}
+            priceDetails={priceDetails}
+            hasSearched={hasSearched}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        )}
       </div>
     </BookingErrorBoundary>
   );
 };
 
 export default BookingForm;
+
