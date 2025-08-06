@@ -29,6 +29,7 @@ export const PropertyDetails = ({
   hasSearched,
   handleDateSelect,
   roomRefs,
+  viewingRoomId,
 }) => {
   const { t } = useTranslation();
   const totalGuests =
@@ -71,6 +72,15 @@ export const PropertyDetails = ({
     }
 
     if (showOnlyUnselected) {
+      // Show room if it's being viewed but not actually selected/booked
+      if (
+        viewingRoomId &&
+        room.id === viewingRoomId &&
+        room.id !== formData.apartmentId
+      ) {
+        return true;
+      }
+      // Don't show selected rooms in unselected section
       return room.id !== formData.apartmentId;
     }
 
@@ -236,6 +246,8 @@ export const PropertyDetails = ({
         className={`py-8 ${
           formData.apartmentId === room.id
             ? "border border-[#668E73] p-4 rounded "
+            : viewingRoomId === room.id
+            ? "border border-gray-300 p-4 rounded "
             : ""
         } ${
           formData.apartmentId === room.id && showOnlySelected

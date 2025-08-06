@@ -27,6 +27,9 @@ const BookingForm = () => {
   const roomRefs = useRef({});
   const extrasRef = useRef(null);
 
+  // State to track which room to show details for (without booking)
+  const [viewingRoomId, setViewingRoomId] = useState(null);
+
   const {
     formData,
     currentStep,
@@ -109,8 +112,37 @@ const BookingForm = () => {
     loadInitialAvailability();
   }, []);
 
+  // Function to view room details without booking/selecting
+  const handleRoomView = (roomId) => {
+    setViewingRoomId(roomId);
+
+    // Scroll to room details
+    setTimeout(() => {
+      const roomElement = roomRefs.current[roomId];
+      if (roomElement) {
+        const offset = 100;
+        const elementPosition = roomElement.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth",
+        });
+      } else {
+        // Fallback: scroll to top if ref not found
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }
+    }, 100);
+  };
+
   const handleRoomSelect = async (roomId) => {
     try {
+      // Clear viewing state when actually selecting a room
+      setViewingRoomId(null);
+
       setFormData((prev) => ({
         ...prev,
         apartmentId: roomId,
@@ -501,6 +533,7 @@ const BookingForm = () => {
     calendarViewMonth, // Add this prop
     onCalendarViewChange: handleCalendarViewChange, // Add this prop
     roomRefs, // Add this prop to pass refs to PropertyDetails
+    viewingRoomId, // Add this to show room details without booking
   };
 
   const extrasSectionProps = {
@@ -550,8 +583,8 @@ const BookingForm = () => {
     formData,
     selectedRoomId: formData.apartmentId,
     onRoomSelect: (roomId) => {
-      // Call the main room selection handler which includes scrolling
-      handleRoomSelect(roomId);
+      // Just view room details, don't book/select it
+      handleRoomView(roomId);
     },
   };
 
@@ -718,4 +751,3 @@ const BookingForm = () => {
 
 export default BookingForm;
 
-// Trigger deployment
