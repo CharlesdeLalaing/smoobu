@@ -16,6 +16,7 @@ export class SmoobuClient {
 
   /**
    * Fetches active bookings within an arrival date range.
+   * This method now combines multiple fetching strategies to ensure all bookings are captured.
    * @param {string} startDate - Arrival start date in YYYY-MM-DD format
    * @param {string} endDate - Arrival end date in YYYY-MM-DD format
    * @returns {Promise<Array>} - Array of active booking objects
@@ -29,15 +30,15 @@ export class SmoobuClient {
     }
 
     try {
-      console.log(`[SmoobuClient] Making API call with params:`, {
-        arrivalFrom: startDate,
-        arrivalTo: endDate,
-        showCancellation: false,
-        excludeBlocked: true,
-        pageSize: 100,
-      });
+      console.log(
+        `[SmoobuClient] ENHANCED FETCH: Starting comprehensive booking fetch for arrival range ${startDate} to ${endDate}`
+      );
 
-      const response = await axios.get(
+      // Strategy 1: Original arrival-based fetch (arrivalFrom/arrivalTo)
+      console.log(
+        `[SmoobuClient] Strategy 1: Fetching by arrival date range...`
+      );
+      const arrivalResponse = await axios.get(
         "https://login.smoobu.com/api/reservations",
         {
           headers: {
@@ -54,7 +55,74 @@ export class SmoobuClient {
         }
       );
 
-      let bookings = response.data.bookings || [];
+      let arrivalBookings = arrivalResponse.data.bookings || [];
+      console.log(
+        `[SmoobuClient] Strategy 1 result: ${arrivalBookings.length} bookings found by arrival date`
+      );
+
+      // Strategy 2: Enhanced departure-based fetch
+      // Calculate departure date range - bookings arriving in our range will likely depart within a reasonable window
+      // Add some buffer to catch bookings that arrive at the end of our range but depart after
+      const bufferDays = 30; // 30-day buffer for longer stays
+      const departureStartDate = new Date(startDate);
+      const departureEndDate = new Date(endDate);
+      departureEndDate.setDate(departureEndDate.getDate() + bufferDays);
+
+      const departureStartStr = departureStartDate.toISOString().split("T")[0];
+      const departureEndStr = departureEndDate.toISOString().split("T")[0];
+
+      console.log(
+        `[SmoobuClient] Strategy 2: Fetching by departure date range (${departureStartStr} to ${departureEndStr})...`
+      );
+      const departureBookings = await this.fetchBookingsByDepartureDate(
+        departureStartStr,
+        departureEndStr
+      );
+      console.log(
+        `[SmoobuClient] Strategy 2 result: ${departureBookings.length} bookings found by departure date`
+      );
+
+      // Combine and deduplicate bookings from both strategies
+      const combinedBookingsMap = new Map();
+
+      // Add arrival-based bookings
+      arrivalBookings.forEach((booking) => {
+        combinedBookingsMap.set(booking.id, booking);
+      });
+
+      // Add departure-based bookings (only if they overlap with our arrival range)
+      let supplementaryCount = 0;
+      departureBookings.forEach((booking) => {
+        // Only include if the booking arrives within our requested range
+        if (booking.arrival >= startDate && booking.arrival <= endDate) {
+          if (!combinedBookingsMap.has(booking.id)) {
+            combinedBookingsMap.set(booking.id, booking);
+            supplementaryCount++;
+          }
+        }
+      });
+
+      let bookings = Array.from(combinedBookingsMap.values());
+      console.log(
+        `[SmoobuClient] COMBINATION RESULT: ${bookings.length} total unique bookings (${supplementaryCount} additional found via departure-date strategy)`
+      );
+
+      if (supplementaryCount > 0) {
+        console.log(
+          `[SmoobuClient] 🎯 CRITICAL FIND: Found ${supplementaryCount} bookings that were missing from the arrival-date API call!`
+        );
+        const missingBookings = departureBookings.filter(
+          (b) =>
+            b.arrival >= startDate &&
+            b.arrival <= endDate &&
+            !arrivalBookings.some((ab) => ab.id === b.id)
+        );
+        missingBookings.forEach((booking) => {
+          console.log(
+            `  - RESCUED BOOKING: ID ${booking.id}, Guest: ${booking["guest-name"]}, Arrival: ${booking.arrival}, Departure: ${booking.departure}, Apartment: ${booking.apartment?.name}`
+          );
+        });
+      }
 
       // Debug logging for La Chambre de Blé (apartment 1946276)
       // Check both direct apartment assignment AND related apartments
@@ -229,6 +297,64 @@ export class SmoobuClient {
         `[SmoobuClient] Error fetching active bookings: ${error.message}`
       );
       return []; // Return empty array on error
+    }
+  }
+
+  /**
+   * Fetches active bookings within a departure date range.
+   * This method is more reliable than arrivalFrom/arrivalTo for certain bookings.
+   * @param {string} startDate - Departure start date in YYYY-MM-DD format
+   * @param {string} endDate - Departure end date in YYYY-MM-DD format
+   * @returns {Promise<Array>} - Array of active booking objects
+   */
+  async fetchBookingsByDepartureDate(startDate, endDate) {
+    if (!this.apiKey) {
+      console.error(
+        "[SmoobuClient] Cannot fetch bookings by departure date: API key missing."
+      );
+      return [];
+    }
+
+    try {
+      console.log(
+        `[SmoobuClient] Making API call with departureFrom/departureTo params:`,
+        {
+          departureFrom: startDate,
+          departureTo: endDate,
+          showCancellation: false,
+          excludeBlocked: true,
+          pageSize: 100,
+        }
+      );
+
+      const response = await axios.get(
+        "https://login.smoobu.com/api/reservations",
+        {
+          headers: {
+            "Api-Key": this.apiKey,
+            "Cache-Control": "no-cache",
+          },
+          params: {
+            departureFrom: startDate,
+            departureTo: endDate,
+            showCancellation: false,
+            excludeBlocked: true,
+            pageSize: 100,
+          },
+        }
+      );
+
+      const bookings = response.data.bookings || [];
+      console.log(
+        `[SmoobuClient] fetchBookingsByDepartureDate returned ${bookings.length} bookings for departure range ${startDate} to ${endDate}`
+      );
+
+      return bookings;
+    } catch (error) {
+      console.error(
+        `[SmoobuClient] Error fetching bookings by departure date: ${error.message}`
+      );
+      return [];
     }
   }
 
