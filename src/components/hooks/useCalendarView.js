@@ -1,9 +1,25 @@
 import { useState, useEffect } from "react";
 
 export const useCalendarView = (roomId) => {
-  // Always start with current date instead of localStorage to ensure fresh view
+  // Start with saved view month if available, otherwise current date
   const [viewMonth, setViewMonth] = useState(() => {
-    // Always return current date - don't use localStorage on initial load
+    try {
+      // Try to restore the view month from sessionStorage
+      const savedViewMonth = sessionStorage.getItem(`calendar-view-${roomId}`);
+      if (savedViewMonth) {
+        const savedDate = new Date(savedViewMonth);
+        // Validate the saved date is reasonable (not too old or in invalid format)
+        if (
+          !isNaN(savedDate.getTime()) &&
+          savedDate.getFullYear() >= new Date().getFullYear() - 1
+        ) {
+          return savedDate;
+        }
+      }
+    } catch (e) {
+      console.log("Error restoring calendar view:", e);
+    }
+    // Fallback to current date if no valid saved view exists
     return new Date();
   });
 
@@ -49,4 +65,3 @@ export const useCalendarView = (roomId) => {
     nextMonthPair,
   };
 };
-
