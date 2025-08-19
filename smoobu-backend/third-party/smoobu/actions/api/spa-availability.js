@@ -32,11 +32,9 @@ export async function handleGetSpaAvailability(req, res) {
   } = req.query;
 
   if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-    return res
-      .status(400)
-      .json({
-        message: "Invalid or missing 'date' query parameter (YYYY-MM-DD).",
-      });
+    return res.status(400).json({
+      message: "Invalid or missing 'date' query parameter (YYYY-MM-DD).",
+    });
   }
 
   try {
@@ -145,7 +143,14 @@ export async function handleGetSpaAvailability(req, res) {
       .where("date", "==", dateString)
       .get();
     spaBookingsSnap.forEach((doc) => {
-      if (doc.data().time) bookedSlots.add(doc.data().time);
+      const bookingData = doc.data();
+      // Only add to booked slots if it's not a test booking
+      if (
+        bookingData.time &&
+        !(bookingData.isTemporary === true && bookingData.testBooking === true)
+      ) {
+        bookedSlots.add(bookingData.time);
+      }
     });
 
     // --- Generate Slots based on the determined time window ---
@@ -172,12 +177,17 @@ export async function handleGetSpaAvailability(req, res) {
 
     const wordpressBookingsList = [];
     spaBookingsSnap.forEach((doc) => {
-      wordpressBookingsList.push({
-        id: doc.id, // The Firestore Document ID
-        ...doc.data(), // The data: { date, time, createdAt }
-      });
+      const bookingData = doc.data();
+      // Filter out test bookings that have isTemporary=true and testBooking=true
+      if (
+        !(bookingData.isTemporary === true && bookingData.testBooking === true)
+      ) {
+        wordpressBookingsList.push({
+          id: doc.id, // The Firestore Document ID
+          ...bookingData, // The data: { date, time, createdAt }
+        });
+      }
     });
-
 
     res.status(200).json({
       availableSlots: availableSlotsResult,

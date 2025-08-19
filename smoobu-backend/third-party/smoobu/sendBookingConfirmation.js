@@ -29,6 +29,8 @@ const emailTexts = {
     spaScheduleLaterPriority:
       "Note : Les créneaux sont attribués selon le principe du premier arrivé, premier servi.",
     priceDetails: "Détails des prix",
+    addExtrasText:
+      'Si vous souhaitez ajouter des suppléments à votre réservation, il est possible de le faire via ce lien : <a href="https://fermedebasseilles.be/reservation-extras-supplementaires/" target="_blank" style="color: #668E73; text-decoration:none;">https://fermedebasseilles.be/reservation-extras-supplementaires/</a>',
     basePrice: "Prix de base",
     guestFees: "Frais pour {{persons}} personnes supplémentaires",
     longStayDiscount: "Réduction long séjour ({{percentage}}%)",
@@ -133,6 +135,8 @@ const emailTexts = {
     spaScheduleLaterPriority:
       "Note: Slots are assigned on a first-come, first-served basis.",
     priceDetails: "Price Details",
+    addExtrasText:
+      'If you wish to add extras to your reservation, it is possible to do so via this link: <a href="https://fermedebasseilles.be/en/booking-additional-extras/" target="_blank" style="color: #668E73; text-decoration:none;">https://fermedebasseilles.be/en/booking-additional-extras/</a>',
     basePrice: "Base Price",
     guestFees: "Fee for {{persons}} extra persons",
     longStayDiscount: "Long stay discount ({{percentage}}%)",
@@ -234,6 +238,8 @@ const emailTexts = {
     spaScheduleLaterPriority:
       "Let op: Tijdsloten worden toegewezen op basis van wie het eerst komt, het eerst maalt.",
     priceDetails: "Prijsdetails",
+    addExtrasText:
+      'Als u extra\'s wilt toevoegen aan uw reservering, kunt u dit doen via deze link: <a href="https://fermedebasseilles.be/nl/extra-toeslagen-boeken/" target="_blank" style="color: #668E73; text-decoration:none;">https://fermedebasseilles.be/nl/extra-toeslagen-boeken/</a>',
     basePrice: "Basisprijs",
     guestFees: "Kosten voor {{persons}} extra personen",
     longStayDiscount: "Korting voor lang verblijf ({{percentage}}%)",
@@ -810,6 +816,10 @@ export const sendBookingConfirmation = async (bookingData) => {
               <p class="total-price">${T.total}: ${finalPrice.toFixed(
       2
     )} EUR</p>
+            </div>
+
+            <div class="section">
+                <p>${T.addExtrasText}</p>
             </div>
 
             <div class="section">
