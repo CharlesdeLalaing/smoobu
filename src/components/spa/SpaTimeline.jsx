@@ -200,7 +200,7 @@ const SpaTimeline = ({
 
   // The final hour index to display is the maximum of the calculated latest booking index and the default latest index.
   // We need to display up to this hour index *plus one* to show the space after the latest booking/default end.
-  const finalTimelineDisplayEndHourIndex = Math.max(
+  let finalTimelineDisplayEndHourIndex = Math.max(
     defaultLatestHourIndex,
     latestBookingEndHourIndex
   );

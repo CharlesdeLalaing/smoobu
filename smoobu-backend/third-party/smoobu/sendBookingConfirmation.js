@@ -419,12 +419,15 @@ export const sendBookingConfirmation = async (bookingData) => {
   if (displaySpaInfoInEmail) {
     if (
       bookingData.spaBookingPreference === "scheduled" &&
-      bookingData.spaInfo?.scheduledDateTime
+      (bookingData.spaDateTime || bookingData.spaInfo?.scheduledDateTime)
     ) {
+      // Prioritize spaDateTime over spaInfo.scheduledDateTime for the most current date
       const spaStartJsDate = getJsDateForEmail(
-        bookingData.spaInfo.scheduledDateTime
+        bookingData.spaDateTime || bookingData.spaInfo.scheduledDateTime
       );
-      let spaEndJsDate = getJsDateForEmail(bookingData.spaInfo.endDateTime);
+      let spaEndJsDate = getJsDateForEmail(
+        bookingData.spaEndDateTime || bookingData.spaInfo.endDateTime
+      );
       if (
         !spaEndJsDate &&
         spaStartJsDate &&

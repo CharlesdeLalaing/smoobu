@@ -461,6 +461,42 @@ const SpaScheduler = ({
     t,
   ]);
 
+  // Effect 3: Validates selected date when minDate/maxDate changes
+  useEffect(() => {
+    if (!selectedSpaDateString || !minDate || !maxDate || chooseLaterChecked) {
+      return;
+    }
+
+    try {
+      const selectedDate = new Date(selectedSpaDateString);
+      const minDateOnly = startOfDay(minDate);
+      const maxDateOnly = startOfDay(maxDate);
+      const selectedDateOnly = startOfDay(selectedDate);
+
+      // Check if selected date is now outside the valid range
+      if (isBefore(selectedDateOnly, minDateOnly) || isBefore(maxDateOnly, selectedDateOnly)) {
+        console.warn(
+          `SpaScheduler: Selected date ${selectedSpaDateString} is now outside valid range (${formatDateForAPI(minDate)} to ${formatDateForAPI(maxDate)}). Resetting selection.`
+        );
+        
+        // Clear the selection
+        setSelectedSpaDateString("");
+        setSelectedSlots([]);
+        setAvailableSlots([]);
+        setSlotDuration(null);
+        setError("");
+        setSlotsLoadedForCurrentDate(false);
+        
+        // Notify parent that selection is now invalid
+        if (typeof onScheduleChange === "function") {
+          onScheduleChange(null);
+        }
+      }
+    } catch (e) {
+      console.error("SpaScheduler: Error validating selected date against new range:", e);
+    }
+  }, [minDate, maxDate, selectedSpaDateString, chooseLaterChecked, onScheduleChange]);
+
   const handleDateChange = useCallback(
     (event) => {
       const newDateString = event.target.value;
