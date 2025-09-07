@@ -5,9 +5,21 @@ import { db } from "../../../../firebase-config.js";
 import { normalizeBookingId } from "../../../../helpers/normalize-booking-id.js";
 
 export async function fetchAndSync(req, res) {
-  // Date range for fetching ACTIVE bookings by arrival date (Optional via query params, useful for manual sync)
-  // Frontend hook sends startDate/endDate params based on the report date range.
-  const { startDate, endDate } = req.query;
+  // Date range for fetching ACTIVE bookings by arrival date
+  // If not provided, use a reasonable default range to ensure we catch all relevant bookings
+  let { startDate, endDate } = req.query;
+  
+  // If no dates provided (manual sync button), use a 6-month window around current date
+  if (!startDate || !endDate) {
+    const now = new Date();
+    const threeMonthsAgo = new Date(now.getTime() - (90 * 24 * 60 * 60 * 1000));
+    const threeMonthsFromNow = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000));
+    
+    startDate = threeMonthsAgo.toISOString().split('T')[0];
+    endDate = threeMonthsFromNow.toISOString().split('T')[0];
+    
+    console.log(`[Sync] No date range provided. Using default range: ${startDate} to ${endDate}`);
+  }
 
   // Date range for fetching RECENTLY MODIFIED bookings (Crucial for cancellations/updates, uses a lookback window)
   // Determine the start date for checking modifications/cancellations.
@@ -25,13 +37,9 @@ export async function fetchAndSync(req, res) {
   modifiedUntil.setDate(modifiedUntil.getDate() + 1); // Get tomorrow's date
   const modifiedUntilDate = modifiedUntil.toISOString().split("T")[0]; // Format as YYYY-MM-DD
 
-  if (startDate && endDate) {
-    console.log(
-      `[Sync] Phase 1 active sync range (Arrival: ${startDate} to ${endDate}).`
-    );
-  } else {
-    console.log(`[Sync] Phase 1 active sync by arrival date skipped.`);
-  }
+  console.log(
+    `[Sync] Phase 1 active sync range (Arrival: ${startDate} to ${endDate}).`
+  );
 
   try {
     // --- Initialize Dependencies ---
@@ -100,51 +108,73 @@ export async function fetchAndSync(req, res) {
     // 2. departureFrom/departureTo - Catches bookings missed by arrival filtering
     // This ensures reliable capture of all bookings, especially problematic ones like:
     // Guillaume Hardy (105818136), Annelies Venema (104800543), Machiel Van Der Meer (104375789)
-    if (startDate && endDate) {
-      console.log(
-        `[Sync] Phase 1: Starting Enhanced Active Bookings Sync (Arrival: ${startDate} to ${endDate})...`
-      );
-      const activeBookings = await smoobuClient.fetchBookings(
-        startDate,
-        endDate
-      );
-      stats.fetchedActive = activeBookings.length;
+    console.log(
+      `[Sync] Phase 1: Starting Enhanced Active Bookings Sync (Arrival: ${startDate} to ${endDate})...`
+    );
+    const activeBookings = await smoobuClient.fetchBookings(
+      startDate,
+      endDate
+    );
+    stats.fetchedActive = activeBookings.length;
 
-      for (const booking of activeBookings) {
-        // Should be redundant due to showCancellation: false in fetchBookings, but a check is safe
-        if (booking.type && booking.type.toLowerCase() === "cancellation") {
-          stats.skippedActive++;
-          console.log(
-            `[Sync] Skipped active booking ${booking.id} as it is a cancellation (should not appear in Phase 1 fetch).`
-          );
-          continue; // Skip cancellations in Phase 1
-        }
-        try {
-          // processor.processBooking will find/update/add in Firebase using the existingBookingMap
-          // existingBookingMap is accessible here
-          stats = await processor.processBooking(
-            booking,
-            existingBookingMap,
-            stats
-          );
-        } catch (procError) {
-          console.error(
-            `🟥 [Sync] Error processing active booking ${booking.id} during Phase 1:`,
-            procError.message
-          );
-          stats.errorsProcessingActive++;
-        }
+    for (const booking of activeBookings) {
+      // Should be redundant due to showCancellation: false in fetchBookings, but a check is safe
+      if (booking.type && booking.type.toLowerCase() === "cancellation") {
+        stats.skippedActive++;
+        console.log(
+          `[Sync] Skipped active booking ${booking.id} as it is a cancellation (should not appear in Phase 1 fetch).`
+        );
+        continue; // Skip cancellations in Phase 1
       }
-      console.log(
-        "[Sync] Phase 1 (Active Bookings) Complete. Stats after Phase 1:",
-        stats
-      );
-    } else {
-      console.log(
-        "[Sync] Phase 1 (Active Bookings by Arrival) skipped - no startDate/endDate query params provided."
-      );
-      // existingBookingMap was already fetched above
+      
+      try {
+        let bookingToProcess = booking;
+        
+        // Check if this booking exists in Firebase and has extras, or if bulk API shows incomplete priceElements
+        const existingFirebaseBooking = existingBookingMap.get(booking.id.toString());
+        const hasExtrasInFirebase = existingFirebaseBooking && existingFirebaseBooking.extras && existingFirebaseBooking.extras.length > 0;
+        const bulkPriceElementsCount = booking.priceElements ? booking.priceElements.length : 0;
+        
+        // If booking has extras in Firebase or very few priceElements from bulk API, fetch detailed data
+        if (hasExtrasInFirebase || bulkPriceElementsCount <= 2) {
+          console.log(
+            `[Sync] Phase 1: Booking ${booking.id} needs detailed fetch (Firebase extras: ${hasExtrasInFirebase}, bulk priceElements: ${bulkPriceElementsCount})`
+          );
+          
+          try {
+            const detailedBooking = await smoobuClient.fetchIndividualBooking(booking.id);
+            if (detailedBooking) {
+              bookingToProcess = detailedBooking;
+              console.log(
+                `[Sync] Phase 1: ✅ Enhanced booking ${booking.id} with detailed priceElements: ${detailedBooking.priceElements?.length || 0}`
+              );
+            }
+          } catch (detailError) {
+            console.warn(
+              `[Sync] Phase 1: ⚠️  Could not fetch detailed booking ${booking.id}: ${detailError.message}, using bulk data`
+            );
+            // Continue with bulk data if individual fetch fails
+          }
+        }
+        
+        // processor.processBooking will find/update/add in Firebase using the existingBookingMap
+        stats = await processor.processBooking(
+          bookingToProcess,
+          existingBookingMap,
+          stats
+        );
+      } catch (procError) {
+        console.error(
+          `🟥 [Sync] Error processing active booking ${booking.id} during Phase 1:`,
+          procError.message
+        );
+        stats.errorsProcessingActive++;
+      }
     }
+    console.log(
+      "[Sync] Phase 1 (Active Bookings) Complete. Stats after Phase 1:",
+      stats
+    );
 
     // --- Phase 2: Reconcile Recently Modified Bookings (Including Cancellations) ---
     // This phase catches:
@@ -290,6 +320,133 @@ export async function fetchAndSync(req, res) {
       console.log(
         "[Sync] No recently modified bookings found in Smoobu to process for cancellations/updates in Phase 2."
       );
+    }
+
+    // --- Phase 3: Fallback for Past Bookings with Extras ---
+    // This addresses the Smoobu API limitation where adding/removing extras
+    // doesn't trigger "recently modified" status for existing bookings
+    console.log(
+      `[Sync] Phase 3 starting: Checking past bookings with extras for updates...`
+    );
+
+    try {
+      // Find Firebase bookings with extras that might need updating
+      const bookingsWithExtrasSnapshot = await db
+        .collection("bookings")
+        .where("extras", "!=", [])
+        .get();
+
+      const bookingsWithExtras = [];
+      bookingsWithExtrasSnapshot.forEach((doc) => {
+        const data = doc.data();
+        bookingsWithExtras.push({
+          firebaseId: doc.id,
+          smoobuId: data.smoobuId,
+          smoobuReservationId: data.smoobuReservationId,
+          extrasCount: data.extras?.length || 0,
+          lastSyncedAt: data.lastSyncedAt,
+          arrivalDate: data.arrivalDate
+        });
+      });
+
+      console.log(
+        `[Sync] Phase 3: Found ${bookingsWithExtras.length} Firebase bookings with extras to verify`
+      );
+
+      let phase3Processed = 0;
+      let phase3Updated = 0;
+      let phase3Errors = 0;
+
+      // Process a limited number of past bookings to avoid overwhelming the API
+      const maxPastBookingsToCheck = 10;
+      
+      // Prioritize bookings that were not found in Phase 1 (active bookings)
+      const activeBookingIds = new Set(
+        await smoobuClient.fetchBookings(startDate, endDate)
+          .then(bookings => bookings.map(b => b.id.toString()))
+      );
+      
+      // Sort bookings: first those NOT in active bookings, then by most recent sync
+      const bookingsToCheck = bookingsWithExtras
+        .sort((a, b) => {
+          const aInActive = activeBookingIds.has(a.smoobuId);
+          const bInActive = activeBookingIds.has(b.smoobuId);
+          
+          // Prioritize bookings NOT found in active fetch
+          if (!aInActive && bInActive) return -1;
+          if (aInActive && !bInActive) return 1;
+          
+          // Then sort by most recent sync
+          return new Date(b.lastSyncedAt || 0) - new Date(a.lastSyncedAt || 0);
+        })
+        .slice(0, maxPastBookingsToCheck);
+
+      console.log(
+        `[Sync] Phase 3: Will check these bookings:`,
+        bookingsToCheck.map(b => `${b.smoobuId} (${b.extrasCount} extras, in active: ${activeBookingIds.has(b.smoobuId)})`).join(', ')
+      );
+
+      for (const fbBooking of bookingsToCheck) {
+        try {
+          const inActiveBookings = activeBookingIds.has(fbBooking.smoobuId);
+          console.log(
+            `[Sync] Phase 3: Verifying booking ${fbBooking.smoobuId} (${fbBooking.extrasCount} extras in Firebase, found in active: ${inActiveBookings})`
+          );
+
+          // Fetch current state from Smoobu
+          const currentSmoobuBooking = await smoobuClient.fetchIndividualBooking(
+            fbBooking.smoobuId
+          );
+
+          if (currentSmoobuBooking) {
+            // Process the booking to get current extras
+            const tempStats = { added: 0, updated: 0, skipped: 0, errors: 0 };
+            const updatedTempStats = await processor.processBooking(
+              currentSmoobuBooking,
+              existingBookingMap,
+              tempStats
+            );
+
+            phase3Processed++;
+            if (updatedTempStats.updated > 0) {
+              phase3Updated++;
+              console.log(
+                `[Sync] Phase 3: ✅ Updated booking ${fbBooking.smoobuId} (extras may have changed)`
+              );
+            }
+
+            // Add to main stats
+            stats.updated += updatedTempStats.updated;
+            stats.added += updatedTempStats.added;
+          } else {
+            console.log(
+              `[Sync] Phase 3: ⚠️ Could not fetch booking ${fbBooking.smoobuId} from Smoobu API`
+            );
+          }
+        } catch (phase3Error) {
+          phase3Errors++;
+          console.error(
+            `[Sync] Phase 3: ❌ Error processing booking ${fbBooking.smoobuId}:`,
+            phase3Error.message
+          );
+        }
+      }
+
+      console.log(
+        `[Sync] Phase 3 completed: Processed ${phase3Processed}, Updated ${phase3Updated}, Errors ${phase3Errors}`
+      );
+
+      // Add Phase 3 stats to main stats object
+      stats.phase3Processed = phase3Processed;
+      stats.phase3Updated = phase3Updated;
+      stats.phase3Errors = phase3Errors;
+
+    } catch (phase3Error) {
+      console.error(
+        `[Sync] Phase 3: Error in past bookings verification:`,
+        phase3Error.message
+      );
+      stats.phase3Errors = 1;
     }
 
     console.log("[Sync] Sync Process Finished. Final Stats:", stats);

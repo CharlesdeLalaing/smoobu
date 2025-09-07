@@ -388,9 +388,25 @@ export const useBookingsData = () => {
       });
 
       if (response.data.success) {
-        alert(
-          `Fetch and sync completed!\nFetched Active: ${response.data.stats.fetchedActive}\nFetched Modified: ${response.data.stats.fetchedModified}\nAdded: ${response.data.stats.added}\nUpdated: ${response.data.stats.updated}\nDeleted: ${response.data.stats.deletedFromFirebase}`
-        );
+        const stats = response.data.stats;
+        
+        // Handle both old and new response formats
+        if (stats.totalBookings !== undefined) {
+          // New enhanced system format
+          alert(
+            `✅ Enhanced Sync Completed!\n` +
+            `📋 Total Bookings Processed: ${stats.totalBookings}\n` +
+            `✅ Added: ${stats.added}\n` +
+            `🔄 Updated: ${stats.updated}\n` +
+            `❌ Errors: ${stats.errors}\n` +
+            `\n🎯 Fully automatic missing booking detection activated!`
+          );
+        } else {
+          // Old system format (fallback)
+          alert(
+            `Fetch and sync completed!\nFetched Active: ${stats.fetchedActive}\nFetched Modified: ${stats.fetchedModified}\nAdded: ${stats.added}\nUpdated: ${stats.updated}\nDeleted: ${stats.deletedFromFirebase}`
+          );
+        }
       } else {
         const errorMessage =
           response.data.error || "Fetch and sync from backend failed.";

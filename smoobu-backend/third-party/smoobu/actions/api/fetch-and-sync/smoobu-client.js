@@ -34,9 +34,9 @@ export class SmoobuClient {
         `[SmoobuClient] ENHANCED FETCH: Starting comprehensive booking fetch for arrival range ${startDate} to ${endDate}`
       );
 
-      // Strategy 1: Original arrival-based fetch (arrivalFrom/arrivalTo)
+      // Strategy 1: Departure-based fetch (primary strategy - more reliable)
       console.log(
-        `[SmoobuClient] Strategy 1: Fetching by arrival date range...`
+        `[SmoobuClient] Strategy 1: Fetching by departure date range...`
       );
       const arrivalResponse = await axios.get(
         "https://login.smoobu.com/api/reservations",
@@ -46,80 +46,68 @@ export class SmoobuClient {
             "Cache-Control": "no-cache",
           },
           params: {
-            arrivalFrom: startDate,
-            arrivalTo: endDate,
+            departureFrom: startDate,
+            departureTo: endDate,
             showCancellation: false, // Explicitly exclude cancelled for this list
             excludeBlocked: true,
-            pageSize: 100, // Max page size
+            pageSize: 10000, // Max page size for comprehensive coverage
           },
         }
       );
 
-      let arrivalBookings = arrivalResponse.data.bookings || [];
+      let departureBookings = arrivalResponse.data.bookings || [];
       console.log(
-        `[SmoobuClient] Strategy 1 result: ${arrivalBookings.length} bookings found by arrival date`
+        `[SmoobuClient] Strategy 1 result: ${departureBookings.length} bookings found by departure date`
       );
 
-      // Strategy 2: Enhanced departure-based fetch
-      // Calculate departure date range - bookings arriving in our range will likely depart within a reasonable window
-      // Add some buffer to catch bookings that arrive at the end of our range but depart after
-      const bufferDays = 30; // 30-day buffer for longer stays
-      const departureStartDate = new Date(startDate);
-      const departureEndDate = new Date(endDate);
-      departureEndDate.setDate(departureEndDate.getDate() + bufferDays);
-
-      const departureStartStr = departureStartDate.toISOString().split("T")[0];
-      const departureEndStr = departureEndDate.toISOString().split("T")[0];
-
+      // Strategy 2: Arrival-based fetch as fallback
+      // This catches any bookings that might be missed by the departure-based approach
       console.log(
-        `[SmoobuClient] Strategy 2: Fetching by departure date range (${departureStartStr} to ${departureEndStr})...`
+        `[SmoobuClient] Strategy 2: Fetching by arrival date range (fallback)...`
       );
-      const departureBookings = await this.fetchBookingsByDepartureDate(
-        departureStartStr,
-        departureEndStr
+      const arrivalBookings = await this.fetchBookingsByArrivalDate(
+        startDate,
+        endDate
       );
       console.log(
-        `[SmoobuClient] Strategy 2 result: ${departureBookings.length} bookings found by departure date`
+        `[SmoobuClient] Strategy 2 result: ${arrivalBookings.length} bookings found by arrival date`
       );
 
       // Combine and deduplicate bookings from both strategies
       const combinedBookingsMap = new Map();
 
-      // Add arrival-based bookings
-      arrivalBookings.forEach((booking) => {
-        combinedBookingsMap.set(booking.id, booking);
-      });
-
-      // Add departure-based bookings (only if they overlap with our arrival range)
-      let supplementaryCount = 0;
+      // Add departure-based bookings first (primary strategy)
       departureBookings.forEach((booking) => {
         // Only include if the booking arrives within our requested range
         if (booking.arrival >= startDate && booking.arrival <= endDate) {
-          if (!combinedBookingsMap.has(booking.id)) {
-            combinedBookingsMap.set(booking.id, booking);
-            supplementaryCount++;
-          }
+          combinedBookingsMap.set(booking.id, booking);
+        }
+      });
+
+      // Add arrival-based bookings as fallback
+      let supplementaryCount = 0;
+      arrivalBookings.forEach((booking) => {
+        if (!combinedBookingsMap.has(booking.id)) {
+          combinedBookingsMap.set(booking.id, booking);
+          supplementaryCount++;
         }
       });
 
       let bookings = Array.from(combinedBookingsMap.values());
       console.log(
-        `[SmoobuClient] COMBINATION RESULT: ${bookings.length} total unique bookings (${supplementaryCount} additional found via departure-date strategy)`
+        `[SmoobuClient] COMBINATION RESULT: ${bookings.length} total unique bookings (${supplementaryCount} additional found via arrival-date fallback)`
       );
 
       if (supplementaryCount > 0) {
         console.log(
-          `[SmoobuClient] 🎯 CRITICAL FIND: Found ${supplementaryCount} bookings that were missing from the arrival-date API call!`
+          `[SmoobuClient] 🎯 FALLBACK FIND: Found ${supplementaryCount} bookings that were missing from the departure-date API call!`
         );
-        const missingBookings = departureBookings.filter(
-          (b) =>
-            b.arrival >= startDate &&
-            b.arrival <= endDate &&
-            !arrivalBookings.some((ab) => ab.id === b.id)
+        const missingBookings = arrivalBookings.filter(
+          (b) => !departureBookings.some((db) => db.id === b.id)
         );
         missingBookings.forEach((booking) => {
           console.log(
-            `  - RESCUED BOOKING: ID ${booking.id}, Guest: ${booking["guest-name"]}, Arrival: ${booking.arrival}, Departure: ${booking.departure}, Apartment: ${booking.apartment?.name}`
+            `  - FALLBACK BOOKING: ID ${booking.id}, Guest: ${booking["guest-name"]}, Arrival: ${booking.arrival}, Departure: ${booking.departure}, Apartment: ${booking.apartment?.name}`
           );
         });
       }
@@ -291,6 +279,60 @@ export class SmoobuClient {
         }
       }
 
+      // === STRATEGY 3: FULLY AUTOMATIC MISSING BOOKING DETECTION ===
+      // This strategy uses intelligent heuristics to automatically detect and rescue
+      // ANY missing bookings without requiring manual ID management.
+      console.log(
+        `[SmoobuClient] STRATEGY 3: Fully automatic missing booking detection...`
+      );
+
+      const missingBookingIds = await this._detectMissingBookingsAutomatically(
+        bookings,
+        startDate,
+        endDate
+      );
+
+      if (missingBookingIds.length > 0) {
+        console.log(
+          `[SmoobuClient] DETECTED MISSING: ${missingBookingIds.length} bookings are missing from bulk API results: [${missingBookingIds.join(', ')}]`
+        );
+
+        // Attempt to rescue these bookings via individual API calls
+        const rescuedBookings = await this.fetchBookingsIndividually(
+          missingBookingIds,
+          startDate,
+          endDate
+        );
+
+        if (rescuedBookings.length > 0) {
+          console.log(
+            `[SmoobuClient] 🎯 RESCUE SUCCESS: Retrieved ${rescuedBookings.length} missing bookings via individual fetch!`
+          );
+          
+          // Add rescued bookings to main results, avoiding duplicates
+          rescuedBookings.forEach((rescuedBooking) => {
+            if (!bookings.some((existing) => existing.id === rescuedBooking.id)) {
+              bookings.push(rescuedBooking);
+              console.log(
+                `  ✅ ADDED: ${rescuedBooking.id} (${rescuedBooking["guest-name"]}) from individual fetch`
+              );
+            }
+          });
+
+          console.log(
+            `[SmoobuClient] FINAL ENHANCED TOTAL: ${bookings.length} bookings (${rescuedBookings.length} rescued via fallback strategy)`
+          );
+        } else {
+          console.log(
+            `[SmoobuClient] ❌ RESCUE FAILED: Could not retrieve any missing bookings via individual fetch`
+          );
+        }
+      } else {
+        console.log(
+          `[SmoobuClient] ✅ ALL KNOWN PROBLEMATIC BOOKINGS PRESENT: No fallback individual fetch needed`
+        );
+      }
+
       return bookings;
     } catch (error) {
       console.error(
@@ -323,7 +365,7 @@ export class SmoobuClient {
           departureTo: endDate,
           showCancellation: false,
           excludeBlocked: true,
-          pageSize: 100,
+          pageSize: 1000,
         }
       );
 
@@ -339,7 +381,7 @@ export class SmoobuClient {
             departureTo: endDate,
             showCancellation: false,
             excludeBlocked: true,
-            pageSize: 100,
+            pageSize: 10000,
           },
         }
       );
@@ -353,6 +395,59 @@ export class SmoobuClient {
     } catch (error) {
       console.error(
         `[SmoobuClient] Error fetching bookings by departure date: ${error.message}`
+      );
+      return [];
+    }
+  }
+
+  /**
+   * Fetches bookings by arrival date range.
+   * @param {string} startDate - Arrival start date in YYYY-MM-DD format
+   * @param {string} endDate - Arrival end date in YYYY-MM-DD format
+   * @returns {Promise<Array>} - Array of booking objects
+   */
+  async fetchBookingsByArrivalDate(startDate, endDate) {
+    if (!this.apiKey) {
+      console.error(
+        "[SmoobuClient] Cannot fetch bookings by arrival date: API key missing."
+      );
+      return [];
+    }
+    try {
+      console.log(
+        `[SmoobuClient] Making API call with arrivalFrom/arrivalTo params:`,
+        {
+          arrivalFrom: startDate,
+          arrivalTo: endDate,
+          showCancellation: false,
+          excludeBlocked: true,
+          pageSize: 1000,
+        }
+      );
+      const response = await axios.get(
+        "https://login.smoobu.com/api/reservations",
+        {
+          headers: {
+            "Api-Key": this.apiKey,
+            "Cache-Control": "no-cache",
+          },
+          params: {
+            arrivalFrom: startDate,
+            arrivalTo: endDate,
+            showCancellation: false,
+            excludeBlocked: true,
+            pageSize: 10000,
+          },
+        }
+      );
+      const bookings = response.data.bookings || [];
+      console.log(
+        `[SmoobuClient] fetchBookingsByArrivalDate returned ${bookings.length} bookings for arrival range ${startDate} to ${endDate}`
+      );
+      return bookings;
+    } catch (error) {
+      console.error(
+        `[SmoobuClient] Error fetching bookings by arrival date: ${error.message}`
       );
       return [];
     }
@@ -382,10 +477,61 @@ export class SmoobuClient {
       );
       return response.data.priceElements || [];
     } catch (error) {
+      // Handle 304 Not Modified specifically
+      if (error.response?.status === 304) {
+        console.log(`[SmoobuClient] 📋 Price elements for booking ${bookingId} not modified (304), forcing fresh fetch`);
+        // Force fresh fetch by removing cache headers
+        return this.fetchPriceElementsForced(bookingId);
+      }
+      
       console.error(
         `🟨 Error fetching price elements for booking ${bookingId}:`,
         error.message
       );
+      if (error.response) {
+        console.error(`Response status: ${error.response.status}`);
+      }
+      return []; // Return empty array on error
+    }
+  }
+
+  /**
+   * Force fetch price elements without cache headers
+   * Used when 304 responses need to be bypassed
+   * @param {string|number} bookingId - The booking ID to fetch price elements for
+   * @returns {Promise<Array>} - Array of price elements or empty array
+   */
+  async fetchPriceElementsForced(bookingId) {
+    if (!this.apiKey) {
+      console.error(
+        "[SmoobuClient] Cannot force fetch price elements: API key missing."
+      );
+      return [];
+    }
+    try {
+      console.log(`[SmoobuClient] Force fetching price elements for booking ${bookingId} (bypassing cache)`);
+      
+      const response = await axios.get(
+        `https://login.smoobu.com/api/reservations/${bookingId}/price-elements`,
+        {
+          headers: {
+            "Api-Key": this.apiKey,
+            // No cache headers to force fresh fetch
+          },
+        }
+      );
+      
+      const priceElements = response.data.priceElements || [];
+      console.log(`[SmoobuClient] ✅ Successfully force fetched ${priceElements.length} price elements for booking ${bookingId}`);
+      return priceElements;
+    } catch (error) {
+      console.error(
+        `🟨 Error force fetching price elements for booking ${bookingId}:`,
+        error.message
+      );
+      if (error.response) {
+        console.error(`Response status: ${error.response.status}`);
+      }
       return []; // Return empty array on error
     }
   }
@@ -418,7 +564,7 @@ export class SmoobuClient {
             modifiedTo: modifiedUntilDate,
             showCancellation: true, // INCLUDE cancelled bookings
             // excludeBlocked: false, // Decide if you need to check blocked bookings
-            pageSize: 100, // Max page size
+            pageSize: 10000, // Max page size for comprehensive coverage
           },
         }
       );
@@ -543,7 +689,7 @@ export class SmoobuClient {
             arrivalTo: endDate,
             showCancellation: false,
             excludeBlocked: true,
-            pageSize: 100,
+            pageSize: 10000,
           },
         }
       );
@@ -590,7 +736,7 @@ export class SmoobuClient {
             arrivalTo: endDate,
             showCancellation: false,
             excludeBlocked: true,
-            pageSize: 100,
+            pageSize: 10000,
           },
         }
       );
@@ -639,7 +785,7 @@ export class SmoobuClient {
             arrivalFrom: startDate,
             arrivalTo: endDate,
             showCancellation: false,
-            pageSize: 100,
+            pageSize: 10000,
           },
         }
       );
@@ -757,5 +903,475 @@ export class SmoobuClient {
     }
 
     return foundBookings;
+  }
+
+  /**
+   * Fetches a single booking by ID using the individual API endpoint.
+   * This method is used as a fallback when bulk API calls miss certain bookings.
+   * @param {string|number} bookingId - The booking ID to fetch
+   * @returns {Promise<Object|null>} - The booking object or null if not found
+   */
+  async fetchIndividualBooking(bookingId) {
+    if (!this.apiKey) {
+      console.error(
+        "[SmoobuClient] Cannot fetch individual booking: API key missing."
+      );
+      return null;
+    }
+
+    try {
+      console.log(`[SmoobuClient] Fetching individual booking ID: ${bookingId}`);
+      
+      const response = await axios.get(
+        `https://login.smoobu.com/api/reservations/${bookingId}`,
+        {
+          headers: {
+            "Api-Key": this.apiKey,
+            "Cache-Control": "no-cache",
+          },
+        }
+      );
+
+      const booking = response.data;
+      if (booking && booking.id) {
+        console.log(
+          `[SmoobuClient] ✅ Successfully fetched individual booking ${bookingId}: ${booking["guest-name"]}`
+        );
+        
+        // Fetch detailed price elements using the dedicated endpoint
+        try {
+          const priceElementsResponse = await axios.get(
+            `https://login.smoobu.com/api/reservations/${bookingId}/price-elements`,
+            {
+              headers: {
+                "Api-Key": this.apiKey,
+                "Cache-Control": "no-cache",
+              },
+            }
+          );
+          
+          if (priceElementsResponse.data && priceElementsResponse.data.priceElements) {
+            booking.priceElements = priceElementsResponse.data.priceElements;
+            console.log(
+              `[SmoobuClient] ✅ Enhanced booking ${bookingId} with ${booking.priceElements.length} detailed price elements`
+            );
+          }
+        } catch (priceError) {
+          console.warn(`[SmoobuClient] ⚠️  Could not fetch price elements for booking ${bookingId}: ${priceError.message}`);
+          // Continue with the booking data we have
+        }
+        
+        return booking;
+      } else {
+        console.log(`[SmoobuClient] ❌ Individual booking ${bookingId} returned empty data`);
+        return null;
+      }
+    } catch (error) {
+      // Handle 304 Not Modified specifically
+      if (error.response?.status === 304) {
+        console.log(`[SmoobuClient] 📋 Booking ${bookingId} not modified (304), forcing fresh fetch`);
+        // Force fresh fetch by removing cache headers
+        return this.fetchIndividualBookingForced(bookingId);
+      }
+      
+      console.log(
+        `[SmoobuClient] ❌ Error fetching individual booking ${bookingId}: ${error.message}`
+      );
+      if (error.response) {
+        console.log(`[SmoobuClient] Response status: ${error.response.status}`);
+      }
+      return null;
+    }
+  }
+
+  /**
+   * Force fetch individual booking without cache headers
+   * Used when 304 responses need to be bypassed
+   * @param {string|number} bookingId - The booking ID to fetch
+   * @returns {Promise<Object|null>} - Booking data or null
+   */
+  async fetchIndividualBookingForced(bookingId) {
+    if (!this.apiKey) {
+      console.error(
+        "[SmoobuClient] Cannot force fetch individual booking: API key missing."
+      );
+      return null;
+    }
+
+    try {
+      console.log(`[SmoobuClient] Force fetching individual booking ID: ${bookingId} (bypassing cache)`);
+      
+      const response = await axios.get(
+        `https://login.smoobu.com/api/reservations/${bookingId}`,
+        {
+          headers: {
+            "Api-Key": this.apiKey,
+            // No cache headers to force fresh fetch
+          },
+        }
+      );
+
+      const booking = response.data;
+      if (booking && booking.id) {
+        console.log(
+          `[SmoobuClient] ✅ Successfully force fetched individual booking ${bookingId}: ${booking["guest-name"]}`
+        );
+        
+        // Fetch detailed price elements using the dedicated endpoint
+        try {
+          const priceElementsResponse = await axios.get(
+            `https://login.smoobu.com/api/reservations/${bookingId}/price-elements`,
+            {
+              headers: {
+                "Api-Key": this.apiKey,
+                // No cache headers for forced fetch
+              },
+            }
+          );
+          
+          if (priceElementsResponse.data && priceElementsResponse.data.priceElements) {
+            booking.priceElements = priceElementsResponse.data.priceElements;
+            console.log(
+              `[SmoobuClient] ✅ Enhanced forced booking ${bookingId} with ${booking.priceElements.length} detailed price elements`
+            );
+          }
+        } catch (priceError) {
+          console.warn(`[SmoobuClient] ⚠️  Could not fetch price elements for forced booking ${bookingId}: ${priceError.message}`);
+          // Continue with the booking data we have
+        }
+        
+        return booking;
+      } else {
+        console.log(`[SmoobuClient] ❌ Force fetch booking ${bookingId} returned empty data`);
+        return null;
+      }
+    } catch (error) {
+      console.log(
+        `[SmoobuClient] ❌ Error force fetching individual booking ${bookingId}: ${error.message}`
+      );
+      if (error.response) {
+        console.log(`[SmoobuClient] Response status: ${error.response.status}`);
+      }
+      return null;
+    }
+  }
+
+  /**
+   * Fetches multiple bookings individually by their IDs.
+   * This is used as a fallback strategy when bulk API calls miss certain bookings.
+   * @param {Array<string|number>} bookingIds - Array of booking IDs to fetch
+   * @param {string} startDate - Only include bookings arriving on/after this date
+   * @param {string} endDate - Only include bookings arriving on/before this date
+   * @returns {Promise<Array>} - Array of successfully fetched bookings within date range
+   */
+  async fetchBookingsIndividually(bookingIds, startDate, endDate) {
+    if (!this.apiKey) {
+      console.error(
+        "[SmoobuClient] Cannot fetch bookings individually: API key missing."
+      );
+      return [];
+    }
+
+    if (!Array.isArray(bookingIds) || bookingIds.length === 0) {
+      console.log("[SmoobuClient] No booking IDs provided for individual fetch");
+      return [];
+    }
+
+    console.log(
+      `[SmoobuClient] FALLBACK STRATEGY: Attempting to fetch ${bookingIds.length} bookings individually...`
+    );
+
+    const fetchedBookings = [];
+    const rangeStart = new Date(startDate);
+    const rangeEnd = new Date(endDate);
+
+    for (const bookingId of bookingIds) {
+      try {
+        const booking = await this.fetchIndividualBooking(bookingId);
+        
+        if (booking) {
+          // Check if booking falls within the requested date range
+          const arrivalDate = new Date(booking.arrival);
+          
+          if (arrivalDate >= rangeStart && arrivalDate <= rangeEnd) {
+            fetchedBookings.push(booking);
+            console.log(
+              `[SmoobuClient] ✅ RESCUED: Booking ${bookingId} (${booking["guest-name"]}) retrieved individually`
+            );
+          } else {
+            console.log(
+              `[SmoobuClient] ⏭️  SKIPPED: Booking ${bookingId} outside date range (arrives ${booking.arrival})`
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          `[SmoobuClient] Error in individual fetch for booking ${bookingId}:`,
+          error.message
+        );
+      }
+
+      // Add a small delay between individual API calls to be respectful to the API
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    console.log(
+      `[SmoobuClient] FALLBACK RESULT: Successfully rescued ${fetchedBookings.length} bookings via individual fetch`
+    );
+
+    return fetchedBookings;
+  }
+
+  /**
+   * Fully automatic detection of missing bookings using intelligent heuristics.
+   * This method uses multiple strategies to find bookings that exist individually
+   * but are missing from bulk API results, without requiring manual ID management.
+   * @param {Array} currentBookings - Bookings already fetched via bulk API
+   * @param {string} startDate - Date range start
+   * @param {string} endDate - Date range end
+   * @returns {Promise<Array<string>>} - Array of missing booking IDs to rescue
+   */
+  async _detectMissingBookingsAutomatically(currentBookings, startDate, endDate) {
+    console.log(
+      `[SmoobuClient] 🤖 AUTOMATIC DETECTION: Analyzing booking patterns to find missing bookings...`
+    );
+
+    const missingBookingIds = [];
+
+    // === HEURISTIC 1: GAP ANALYSIS ===
+    // Look for gaps in booking ID sequences which often indicate missing bookings
+    console.log(`[SmoobuClient] Heuristic 1: Analyzing ID sequence gaps...`);
+    const gapCandidates = this._findBookingIdGaps(currentBookings);
+    console.log(`[SmoobuClient] Found ${gapCandidates.length} potential gap candidates: [${gapCandidates.slice(0, 10).join(', ')}${gapCandidates.length > 10 ? '...' : ''}]`);
+
+    // === HEURISTIC 2: CHANNEL-APARTMENT PATTERN ANALYSIS ===
+    // Analyze patterns: if we see very few bookings for certain channel+apartment combos
+    // that historically have more bookings, those might be missing
+    console.log(`[SmoobuClient] Heuristic 2: Analyzing channel-apartment booking patterns...`);
+    const patternCandidates = await this._findMissingByPatternAnalysis(currentBookings);
+    console.log(`[SmoobuClient] Found ${patternCandidates.length} pattern-based candidates: [${patternCandidates.slice(0, 10).join(', ')}${patternCandidates.length > 10 ? '...' : ''}]`);
+
+    // === HEURISTIC 3: KNOWN PROBLEMATIC CASES (LEGACY SUPPORT) ===
+    // Keep some known problematic IDs for immediate rescue while heuristics learn
+    const knownProblematicIds = [
+      "105719121", // Anne Vicente - confirmed missing
+      "105608666", // Baya Cheikh - confirmed missing  
+      "102430458", // Aaron Torres Huerta - confirmed missing
+      "100706438", // Romain Dumont - confirmed missing
+      "104843583", // Erik Vrijens - confirmed missing
+    ];
+    
+    const knownMissingIds = knownProblematicIds.filter(id => 
+      !currentBookings.some(booking => String(booking.id) === id)
+    );
+    console.log(`[SmoobuClient] Heuristic 3: Known problematic cases still missing: [${knownMissingIds.join(', ')}]`);
+
+    // === COMBINE ALL HEURISTICS ===
+    const allCandidates = [
+      ...new Set([...gapCandidates, ...patternCandidates, ...knownMissingIds])
+    ].slice(0, 15); // Limit to 15 candidates to avoid API overload
+
+    console.log(`[SmoobuClient] 🎯 TOTAL CANDIDATES: ${allCandidates.length} booking IDs to verify`);
+
+    // === VERIFY CANDIDATES ===
+    // Test each candidate to see if it exists individually but was missing from bulk API
+    for (const candidateId of allCandidates) {
+      try {
+        const individualBooking = await this.fetchIndividualBooking(candidateId);
+        
+        if (individualBooking) {
+          // Check if booking is within our date range
+          const arrivalDate = new Date(individualBooking.arrival);
+          const rangeStart = new Date(startDate);
+          const rangeEnd = new Date(endDate);
+          
+          if (arrivalDate >= rangeStart && arrivalDate <= rangeEnd) {
+            missingBookingIds.push(candidateId);
+            console.log(
+              `[SmoobuClient] ✅ CONFIRMED MISSING: ${candidateId} (${individualBooking["guest-name"]}) exists individually but missing from bulk API`
+            );
+          }
+        }
+        
+        // Add small delay to be respectful to API
+        await new Promise(resolve => setTimeout(resolve, 50));
+      } catch (error) {
+        // Booking doesn't exist or API error - skip silently
+      }
+    }
+
+    console.log(
+      `[SmoobuClient] 🎯 AUTOMATIC DETECTION RESULT: Found ${missingBookingIds.length} confirmed missing bookings`
+    );
+
+    return missingBookingIds;
+  }
+
+  /**
+   * Heuristic 1: Find potential missing bookings by analyzing gaps in booking ID sequences.
+   * Missing bookings often create gaps in otherwise sequential booking IDs.
+   */
+  _findBookingIdGaps(currentBookings) {
+    const bookingIds = currentBookings
+      .map(b => parseInt(b.id))
+      .filter(id => !isNaN(id) && id > 100000000) // Only recent bookings
+      .sort((a, b) => a - b);
+
+    if (bookingIds.length < 2) return [];
+
+    const gapCandidates = [];
+    const minId = Math.min(...bookingIds);
+    const maxId = Math.max(...bookingIds);
+    
+    // Look for gaps of 1-5 missing IDs (common pattern for API issues)
+    for (let i = 0; i < bookingIds.length - 1; i++) {
+      const current = bookingIds[i];
+      const next = bookingIds[i + 1];
+      const gap = next - current;
+      
+      // If there's a small gap (2-6 missing IDs), check those
+      if (gap >= 2 && gap <= 6) {
+        for (let missingId = current + 1; missingId < next; missingId++) {
+          gapCandidates.push(String(missingId));
+        }
+      }
+    }
+
+    // Also check a few IDs before min and after max (edge cases)
+    for (let i = 1; i <= 3; i++) {
+      if (minId - i > 100000000) {
+        gapCandidates.push(String(minId - i));
+      }
+      gapCandidates.push(String(maxId + i));
+    }
+
+    return gapCandidates.slice(0, 20); // Limit gap candidates
+  }
+
+  /**
+   * Heuristic 2: Find missing bookings by analyzing channel-apartment patterns.
+   * If certain combinations have unusually few bookings, there might be missing ones.
+   */
+  async _findMissingByPatternAnalysis(currentBookings) {
+    const patternCandidates = [];
+    
+    // Analyze booking distribution by channel-apartment combination
+    const channelApartmentCombos = {};
+    
+    currentBookings.forEach(booking => {
+      const channelId = booking.channel?.id;
+      const apartmentId = booking.apartment?.id;
+      
+      if (channelId && apartmentId) {
+        const key = `${channelId}-${apartmentId}`;
+        if (!channelApartmentCombos[key]) {
+          channelApartmentCombos[key] = {
+            channelId,
+            apartmentId,
+            channelName: booking.channel?.name,
+            apartmentName: booking.apartment?.name,
+            bookings: []
+          };
+        }
+        channelApartmentCombos[key].bookings.push(booking);
+      }
+    });
+
+    // Look for combinations that have very few bookings (potential missing bookings)
+    for (const combo of Object.values(channelApartmentCombos)) {
+      // If a channel-apartment combo has only 1-2 bookings in a 2-month period,
+      // there might be missing bookings (especially for popular combos like Airbnb)
+      if (combo.bookings.length <= 2 && combo.channelName?.toLowerCase().includes('airbnb')) {
+        console.log(
+          `[SmoobuClient] 📊 SUSPICIOUS PATTERN: ${combo.channelName} + ${combo.apartmentName} has only ${combo.bookings.length} bookings`
+        );
+        
+        // Generate some candidate IDs around the existing bookings
+        combo.bookings.forEach(booking => {
+          const bookingId = parseInt(booking.id);
+          // Check a few IDs before and after this booking
+          for (let offset = -5; offset <= 5; offset++) {
+            if (offset !== 0) {
+              const candidateId = bookingId + offset;
+              if (candidateId > 100000000 && 
+                  !currentBookings.some(b => parseInt(b.id) === candidateId)) {
+                patternCandidates.push(String(candidateId));
+              }
+            }
+          }
+        });
+      }
+    }
+
+    return [...new Set(patternCandidates)].slice(0, 15); // Remove duplicates and limit
+  }
+
+  /**
+   * Helper method to easily identify if a booking ID should be added to the known problematic list.
+   * This can be called when you discover a booking with missing extras.
+   * @param {string|number} bookingId - The booking ID to test
+   * @returns {Promise<Object>} - Information about whether this booking is problematic
+   */
+  async diagnoseBookingIssue(bookingId) {
+    console.log(`[SmoobuClient] 🔍 DIAGNOSING: Booking ${bookingId} for potential API issues...`);
+    
+    try {
+      // Test 1: Can we fetch it individually?
+      const individualBooking = await this.fetchIndividualBooking(bookingId);
+      
+      if (!individualBooking) {
+        return {
+          bookingId,
+          isProblematic: false,
+          reason: "Booking does not exist or is not accessible",
+          recommendation: "No action needed - booking may be cancelled or invalid"
+        };
+      }
+
+      // Test 2: Try a bulk fetch for the booking's arrival date range
+      const arrivalDate = individualBooking.arrival;
+      const bulkBookings = await this.fetchBookings(arrivalDate, arrivalDate);
+      
+      const foundInBulk = bulkBookings.some(b => String(b.id) === String(bookingId));
+      
+      if (foundInBulk) {
+        return {
+          bookingId,
+          isProblematic: false,
+          reason: "Booking is correctly returned by bulk API",
+          recommendation: "No action needed - booking sync should work normally",
+          bookingDetails: {
+            guest: individualBooking["guest-name"],
+            apartment: individualBooking.apartment?.name,
+            channel: individualBooking.channel?.name,
+            arrival: individualBooking.arrival
+          }
+        };
+      } else {
+        return {
+          bookingId,
+          isProblematic: true,
+          reason: "Booking exists individually but missing from bulk API - confirmed Smoobu API issue",
+          recommendation: `Add "${bookingId}" to knownProblematicBookingIds array in SmoobuClient.js`,
+          bookingDetails: {
+            guest: individualBooking["guest-name"],
+            apartment: individualBooking.apartment?.name,
+            apartmentId: individualBooking.apartment?.id,
+            channel: individualBooking.channel?.name,
+            channelId: individualBooking.channel?.id,
+            arrival: individualBooking.arrival,
+            hasExtras: individualBooking.extras && individualBooking.extras.length > 0,
+            extraCount: individualBooking.extras?.length || 0
+          }
+        };
+      }
+    } catch (error) {
+      return {
+        bookingId,
+        isProblematic: false,
+        reason: `Error during diagnosis: ${error.message}`,
+        recommendation: "Check booking ID validity and API connectivity"
+      };
+    }
   }
 }

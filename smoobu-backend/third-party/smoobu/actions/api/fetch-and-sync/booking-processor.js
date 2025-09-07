@@ -189,10 +189,15 @@ export class BookingProcessor {
       const channelName = booking.channel?.name || "Website";
       const portalName = getPortalName(channelName);
 
-      // Fetch and process price elements
-      const priceElements = await this.smoobuClient.fetchPriceElements(
-        smoobuId
-      );
+      // Use existing priceElements from booking if available, otherwise fetch them
+      let priceElements;
+      if (booking.priceElements && Array.isArray(booking.priceElements) && booking.priceElements.length > 0) {
+        console.log(`[BookingProcessor] Using priceElements from booking object (${booking.priceElements.length} elements)`);
+        priceElements = booking.priceElements;
+      } else {
+        console.log(`[BookingProcessor] Fetching priceElements via API for booking ${smoobuId}`);
+        priceElements = await this.smoobuClient.fetchPriceElements(smoobuId);
+      }
 
       // Merge duplicate price elements first
       const mergedPriceElements = mergeDuplicatePriceElements(priceElements);
@@ -346,9 +351,21 @@ export class BookingProcessor {
    * @private
    */
   _handleAirbnbExtras(extrasData) {
-    // Only keep anniversary-related extras for Airbnb bookings
+    // Keep all legitimate extras for Airbnb bookings, including:
+    // - anniversaire extras
+    // - barbecue détente 
+    // - other addon-type extras from Smoobu
     const filteredExtras = extrasData.extras.filter(
-      (extra) => extra.name && extra.name.includes("anniversaire")
+      (extra) => 
+        extra.name && (
+          extra.name.includes("anniversaire") ||
+          extra.name.includes("barbecue") ||
+          extra.name.includes("détente") ||
+          extra.name.includes("formule") ||
+          extra.name.includes("spa") ||
+          extra.name.includes("massage") ||
+          extra.type === "addon"
+        )
     );
 
     // Replace the extras in extrasData
@@ -498,15 +515,12 @@ export class BookingProcessor {
     const docId = existingBooking.id;
     const existingData = existingBooking;
 
-    // Merge extras
-    const mergedExtras = mergeExtras(
-      existingData,
-      extrasData.extras,
-      portalName
-    );
+    // Replace extras entirely with fresh data from Smoobu (don't merge)
+    // This ensures deletions are properly reflected
+    const updatedExtras = extrasData.extras;
 
     // Calculate extras total
-    const mergedExtrasTotal = calculateExtrasTotal(mergedExtras);
+    const updatedExtrasTotal = calculateExtrasTotal(updatedExtras);
 
     // Create updated booking doc
     const updatedBookingDoc = {
@@ -514,7 +528,7 @@ export class BookingProcessor {
       ...newBookingData, // Add/overwrite with new data
 
       type: newBookingData.type || existingData.type || "reservation",
-      extras: mergedExtras,
+      extras: updatedExtras,
 
       // Preserve critical fields
       createdAt: existingData.createdAt || newBookingData.createdAt,
@@ -522,10 +536,10 @@ export class BookingProcessor {
       stripePaymentStatus: existingData.stripePaymentStatus || null,
       updatedAt: new Date().toISOString(),
 
-      // Update price details with merged extras
+      // Update price details with updated extras
       priceDetails: {
         ...newBookingData.priceDetails,
-        extrasTotal: mergedExtrasTotal,
+        extrasTotal: updatedExtrasTotal,
       },
     };
 

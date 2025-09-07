@@ -12,7 +12,6 @@ import {
   pendingBookings,
 } from "./third-party/stripe/webhook/index.js";
 import { deduplicateBookings } from "./third-party/firebase/deduplicate-bookings.js";
-import { fetchAndSync } from "./third-party/smoobu/actions/api/fetch-and-sync.js";
 import { setupScheduledTasks } from "./third-party/smoobu/schedule.js";
 import { handleCreateGiftVoucher } from "./third-party/wordpress/create-gift-voucher.js";
 import { validateVoucher } from "./third-party/smoobu/actions/api/voucherValidation.js";
@@ -62,55 +61,94 @@ app.use(
 
 // Your existing routes
 app.get("/api/deduplicate-bookings", deduplicateBookings);
-app.get("/api/fetch-and-sync", fetchAndSync);
-
-// Safe fetch-and-sync with backup
-app.get("/api/safe-fetch-and-sync", async (req, res) => {
+// New reliable sync endpoint that processes all bookings individually
+// Main fetch-and-sync endpoint (using proven simplified logic)
+app.get("/api/fetch-and-sync", async (req, res) => {
+  console.log("🚀 Starting fetch-and-sync with proven logic...");
+  
   try {
-    // Step 1: Create backup
-    console.log("🔄 Creating backup before sync...");
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const backupData = {};
-
-    const bookingsSnapshot = await db.collection("bookings").get();
-    backupData.bookings = {};
-
-    bookingsSnapshot.forEach((doc) => {
-      backupData.bookings[doc.id] = doc.data();
-    });
-
-    // Save backup to file
-    const backupFilename = `backup-before-sync-${timestamp}.json`;
-    const fs = await import("fs");
-    fs.writeFileSync(backupFilename, JSON.stringify(backupData, null, 2));
-
-    console.log(`✅ Backup created: ${bookingsSnapshot.size} bookings`);
-    console.log(`📁 Backup saved to: ${backupFilename}`);
-
-    // Step 2: Run fetch-and-sync
-    console.log("🔄 Running fetch-and-sync...");
-    const syncResult = await fetchAndSync(req, res);
-
+    const { SmoobuClient } = await import('./third-party/smoobu/actions/api/fetch-and-sync/smoobu-client.js');
+    const { BookingRepository } = await import('./third-party/smoobu/actions/api/fetch-and-sync/booking-repository.js');
+    const { BookingProcessor } = await import('./third-party/smoobu/actions/api/fetch-and-sync/booking-processor.js');
+    
+    // Initialize clients
+    const smoobuClient = new SmoobuClient();
+    const repository = new BookingRepository();
+    const processor = new BookingProcessor(smoobuClient, repository);
+    
+    // Date range - August to end of year 2025 (working logic with extended range)
+    const startDate = '2025-08-01';
+    const endDate = '2025-12-31';
+    
+    console.log(`📅 Date range: ${startDate} to ${endDate}`);
+    
+    // Fetch existing bookings from Firebase
+    console.log("🔍 Fetching existing bookings from Firebase...");
+    const existingBookingMap = await repository.fetchExistingBookings();
+    console.log(`📋 Found ${existingBookingMap.size} existing bookings in Firebase`);
+    
+    // Fetch bookings using departure dates (more reliable)
+    console.log("🌐 Fetching bookings from Smoobu using departure dates...");
+    const bulkBookings = await smoobuClient.fetchBookingsByDepartureDate(startDate, endDate);
+    console.log(`📦 Fetched ${bulkBookings.length} bookings from Smoobu`);
+    
+    let stats = {
+      totalBookings: bulkBookings.length,
+      processed: 0,
+      updated: 0,
+      added: 0,
+      errors: 0
+    };
+    
+    // Process each booking
+    for (const bulkBooking of bulkBookings) {
+      try {
+        console.log(`🔄 Processing booking ${bulkBooking.id} (${bulkBooking['guest-name']})...`);
+        
+        // Always fetch detailed priceElements for accurate data
+        const detailedBooking = await smoobuClient.fetchIndividualBooking(bulkBooking.id);
+        const bookingToProcess = detailedBooking || bulkBooking;
+        
+        console.log(`  📊 PriceElements: ${bookingToProcess.priceElements?.length || 0}`);
+        
+        // Process the booking
+        const tempStats = { added: 0, updated: 0, skipped: 0, errors: 0 };
+        await processor.processBooking(bookingToProcess, existingBookingMap, tempStats);
+        
+        stats.processed++;
+        stats.added += tempStats.added;
+        stats.updated += tempStats.updated;
+        
+        console.log(`  ✅ Processed: ${tempStats.added ? 'ADDED' : tempStats.updated ? 'UPDATED' : 'UNCHANGED'}`);
+        
+      } catch (bookingError) {
+        console.error(`❌ Error processing booking ${bulkBooking.id}:`, bookingError.message);
+        stats.errors++;
+      }
+    }
+    
+    console.log("🎉 Fetch-and-sync completed!");
+    console.log("📊 Final stats:", stats);
+    
     res.json({
       success: true,
-      message: "Safe fetch-and-sync completed successfully",
-      backup: {
-        timestamp: timestamp,
-        filename: backupFilename,
-        bookingsCount: bookingsSnapshot.size,
-        location: `${process.cwd()}/${backupFilename}`,
-      },
-      sync: syncResult,
+      message: "Fetch-and-sync completed successfully",
+      stats: stats,
+      dateRange: { startDate, endDate }
     });
+    
   } catch (error) {
-    console.error("🟥 Safe fetch-and-sync failed:", error);
+    console.error("🟥 Fetch-and-sync failed:", error);
     res.status(500).json({
       success: false,
       error: error.message,
-      message: "Failed to perform safe fetch-and-sync",
+      message: "Failed to perform fetch-and-sync"
     });
   }
 });
+
+
+
 
 // Backup database endpoint
 app.get("/api/backup-database", async (req, res) => {
@@ -323,6 +361,211 @@ app.get("/api/test-booking-sync/:bookingId", async (req, res) => {
     });
   }
 });
+
+// Bulk re-process bookings with missing extras
+app.get("/api/fix-missing-extras", async (req, res) => {
+  try {
+    const { SmoobuClient } = await import(
+      "./third-party/smoobu/actions/api/fetch-and-sync/smoobu-client.js"
+    );
+    const { processExtrasWithPersons } = await import(
+      "./third-party/smoobu/process-extras-with-persons.js"
+    );
+
+    const smoobuClient = new SmoobuClient();
+    let processedCount = 0;
+    let updatedCount = 0;
+    let errorCount = 0;
+
+    console.log("🔄 Starting bulk fix for missing extras...");
+
+    // Get all bookings that might have missing extras (Airbnb bookings with no extras)
+    const bookingsQuery = await db
+      .collection("bookings")
+      .where("portalName", "==", "Airbnb")
+      .get();
+
+    const bookingsWithNoExtras = [];
+    bookingsQuery.forEach((doc) => {
+      const booking = doc.data();
+      if (!booking.extras || booking.extras.length === 0) {
+        bookingsWithNoExtras.push({ id: doc.id, ...booking });
+      }
+    });
+
+    console.log(`Found ${bookingsWithNoExtras.length} Airbnb bookings with no extras to process`);
+
+    for (const booking of bookingsWithNoExtras) {
+      try {
+        console.log(`🔍 Processing booking ${booking.smoobuId} - ${booking.guestName}`);
+        
+        // Fetch price elements from Smoobu
+        const priceElements = await smoobuClient.fetchPriceElements(booking.smoobuId);
+        
+        if (priceElements.length === 0) {
+          console.log(`⚠️ No price elements found for booking ${booking.smoobuId}`);
+          processedCount++;
+          continue;
+        }
+
+        // Process extras
+        const processedExtras = processExtrasWithPersons(priceElements);
+        
+        if (processedExtras.extras.length === 0) {
+          console.log(`ℹ️ No extras found in price elements for booking ${booking.smoobuId}`);
+          processedCount++;
+          continue;
+        }
+
+        // Apply Airbnb filtering
+        const filteredExtras = processedExtras.extras.filter(
+          (extra) => 
+            extra.name && (
+              extra.name.includes("anniversaire") ||
+              extra.name.includes("barbecue") ||
+              extra.name.includes("détente") ||
+              extra.name.includes("formule") ||
+              extra.name.includes("spa") ||
+              extra.name.includes("massage") ||
+              extra.type === "addon"
+            )
+        );
+
+        if (filteredExtras.length === 0) {
+          console.log(`ℹ️ No extras passed Airbnb filter for booking ${booking.smoobuId}`);
+          processedCount++;
+          continue;
+        }
+
+        console.log(`✅ Found ${filteredExtras.length} extras for booking ${booking.smoobuId}:`, 
+          filteredExtras.map(e => `${e.name} (${e.amount}€)`).join(", "));
+
+        // Calculate extras total
+        const extrasTotal = filteredExtras.reduce((sum, extra) => {
+          return sum + parseFloat(extra.amount || 0);
+        }, 0);
+
+        // Update the booking
+        const updatedData = {
+          extras: filteredExtras,
+          priceDetails: {
+            ...booking.priceDetails,
+            priceElements: priceElements,
+            extrasTotal: extrasTotal,
+          },
+          lastSyncedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        await db.collection("bookings").doc(booking.id).update(updatedData);
+        
+        updatedCount++;
+        processedCount++;
+        
+        console.log(`✅ Updated booking ${booking.smoobuId} with ${filteredExtras.length} extras (${extrasTotal}€)`);
+
+      } catch (error) {
+        console.error(`🟥 Error processing booking ${booking.smoobuId}:`, error.message);
+        errorCount++;
+        processedCount++;
+      }
+    }
+
+    console.log(`🎉 Bulk fix completed: ${processedCount} processed, ${updatedCount} updated, ${errorCount} errors`);
+
+    res.json({
+      success: true,
+      message: "Bulk fix for missing extras completed",
+      stats: {
+        totalFound: bookingsWithNoExtras.length,
+        processed: processedCount,
+        updated: updatedCount,
+        errors: errorCount,
+      }
+    });
+
+  } catch (error) {
+    console.error("🟥 Bulk fix failed:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: "Failed to fix missing extras",
+    });
+  }
+});
+
+// Debug fetch-and-sync for specific booking
+app.get("/api/debug-fetch-sync/:bookingId", async (req, res) => {
+  try {
+    const targetBookingId = req.params.bookingId;
+    console.log(`🔍 DEBUG: Looking for booking ${targetBookingId} in fetch-and-sync process`);
+    
+    const { SmoobuClient } = await import(
+      "./third-party/smoobu/actions/api/fetch-and-sync/smoobu-client.js"
+    );
+    
+    const smoobuClient = new SmoobuClient();
+    
+    // Check recently modified bookings (same logic as fetch-and-sync Phase 2)
+    const lookbackHours = 25;
+    const modifiedSince = new Date();
+    modifiedSince.setHours(modifiedSince.getHours() - lookbackHours);
+    const modifiedSinceDate = modifiedSince.toISOString().split("T")[0];
+    
+    const modifiedUntil = new Date();
+    modifiedUntil.setDate(modifiedUntil.getDate() + 1);
+    const modifiedUntilDate = modifiedUntil.toISOString().split("T")[0];
+    
+    console.log(`🔍 Checking recently modified bookings from ${modifiedSinceDate} to ${modifiedUntilDate}`);
+    
+    const recentlyModifiedBookings = await smoobuClient.fetchRecentlyModifiedBookings(
+      modifiedSinceDate,
+      modifiedUntilDate
+    );
+    
+    console.log(`📋 Found ${recentlyModifiedBookings.length} recently modified bookings`);
+    
+    // Look for our target booking
+    const targetBooking = recentlyModifiedBookings.find(booking => booking.id.toString() === targetBookingId);
+    
+    if (targetBooking) {
+      console.log(`✅ Found target booking ${targetBookingId} in recently modified list!`);
+      console.log(`📋 Booking details:`, {
+        id: targetBooking.id,
+        type: targetBooking.type,
+        channel: targetBooking.channel?.name,
+        guest: targetBooking["guest-name"],
+        arrival: targetBooking.arrival
+      });
+      
+      // Test price elements fetch
+      const priceElements = await smoobuClient.fetchPriceElements(targetBookingId);
+      console.log(`📋 Price elements (${priceElements.length}):`, 
+        priceElements.map(pe => ({ name: pe.name, amount: pe.amount, type: pe.type }))
+      );
+      
+    } else {
+      console.log(`❌ Target booking ${targetBookingId} NOT found in recently modified list`);
+      console.log(`📋 Available booking IDs:`, recentlyModifiedBookings.map(b => b.id).slice(0, 10));
+    }
+    
+    res.json({
+      success: true,
+      found: !!targetBooking,
+      totalModifiedBookings: recentlyModifiedBookings.length,
+      bookingDetails: targetBooking || null,
+      priceElementsCount: targetBooking ? (await smoobuClient.fetchPriceElements(targetBookingId)).length : 0
+    });
+    
+  } catch (error) {
+    console.error("🟥 Debug fetch-sync failed:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.post("/api/create-gift-voucher", handleCreateGiftVoucher);
 app.post("/api/validate-voucher", validateVoucher);
 app.get("/api/direct-bookings", fetchDirectBookings);

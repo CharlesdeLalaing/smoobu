@@ -7,8 +7,8 @@ import { normalizeBookingId } from "../../../../../helpers/normalize-booking-id.
 export class BookingRepository {
   /**
    * Fetches all existing bookings from Firebase and creates a map.
-   * Each Smoobu ID maps to a SINGLE booking object.
-   * @returns {Promise<Map<string, object>>} - Map of Smoobu IDs to a single booking data object.
+   * Each Smoobu ID maps to an ARRAY of booking objects (to handle potential duplicates).
+   * @returns {Promise<Map<string, Array>>} - Map of Smoobu IDs to arrays of booking data objects.
    */
   async fetchExistingBookings() {
     const existingBookingsSnapshot = await db.collection("bookings").get();
@@ -22,20 +22,22 @@ export class BookingRepository {
       };
 
       // Use normalized ID to ensure consistent matching.
-      // We only store the FIRST booking found for a given ID to keep the map simple.
+      // Store bookings as arrays to handle potential duplicates (expected by BookingProcessor)
       if (data.smoobuId) {
         const normalizedId = normalizeBookingId(data.smoobuId);
         if (!existingBookingMap.has(normalizedId)) {
-          existingBookingMap.set(normalizedId, bookingWithId);
+          existingBookingMap.set(normalizedId, []);
         }
+        existingBookingMap.get(normalizedId).push(bookingWithId);
       }
 
       // Also add by smoobuReservationId if it exists
       if (data.smoobuReservationId) {
         const normalizedResId = normalizeBookingId(data.smoobuReservationId);
         if (!existingBookingMap.has(normalizedResId)) {
-          existingBookingMap.set(normalizedResId, bookingWithId);
+          existingBookingMap.set(normalizedResId, []);
         }
+        existingBookingMap.get(normalizedResId).push(bookingWithId);
       }
     });
 

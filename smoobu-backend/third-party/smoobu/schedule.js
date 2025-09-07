@@ -1,12 +1,11 @@
 import cron from "node-cron";
-import { fetchAndSync } from "./actions/api/fetch-and-sync.js";
 
 /**
  * Sets up cron jobs for regular Smoobu synchronization
  */
 export function setupScheduledTasks() {
-  // Schedule automatic sync every 12 hours
-  cron.schedule("0 */12 * * *", async () => {
+  // Schedule automatic sync every day at 1 AM
+  cron.schedule("0 1 * * *", async () => {
     try {
       
       // Calculate date range for the past 1 year (365 days)
@@ -38,11 +37,14 @@ export function setupScheduledTasks() {
         }
       };
       
-      await fetchAndSync(req, res);
+      // Call the reliable sync endpoint directly
+      const axios = await import("axios");
+      const response = await axios.default.get("http://localhost:3000/api/fetch-and-sync");
+      console.log("🟩 Scheduled reliable sync completed:", response.data.stats);
     } catch (error) {
       console.error("🟥 Scheduled sync failed:", error);
     }
   });
   
-  console.log("📅 Scheduled tasks have been set up - will run every 12 hours");
+  console.log("📅 Scheduled tasks have been set up - will run every day at 1 AM");
 }

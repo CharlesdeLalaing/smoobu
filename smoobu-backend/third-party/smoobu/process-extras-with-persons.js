@@ -11,6 +11,8 @@ export function processExtrasWithPersons(priceElements) {
 
     // Check if it's a clearly wanted extra (positive check)
     const isDefinitelyExtra =
+      // Include all addon types from Smoobu
+      type === "addon" ||
       // Formules and packages
       name.includes("formule") ||
       name.includes("essentiel") ||
