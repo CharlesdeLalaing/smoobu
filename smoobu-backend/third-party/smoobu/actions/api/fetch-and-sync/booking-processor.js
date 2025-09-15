@@ -512,7 +512,13 @@ export class BookingProcessor {
     portalName,
     extrasData
   ) {
-    const docId = existingBooking.id;
+    const docId = existingBooking.firebaseDocId;
+    
+    // Validate docId before proceeding
+    if (!docId || typeof docId !== 'string' || docId.trim() === '') {
+      throw new Error(`Invalid Firebase document ID for booking ${newBookingData.smoobuId}: docId is "${docId}" (type: ${typeof docId})`);
+    }
+    
     const existingData = existingBooking;
 
     // Replace extras entirely with fresh data from Smoobu (don't merge)
@@ -550,39 +556,47 @@ export class BookingProcessor {
 
   /**
    * Gets the effective apartment ID for a booking
-   * For multi-apartment bookings, prioritizes La Chambre de Blé (1946276) if present
+   * Prioritizes the main apartment ID over related apartments
    * @param {Object} booking - Booking data from API
    * @returns {number} - Effective apartment ID
    * @private
    */
   _getEffectiveApartmentId(booking) {
-    // If this booking has La Chambre de Blé in related apartments, use that
-    if (booking.related?.some((rel) => rel.id === 1946276)) {
-      return 1946276;
+    // Always use the main apartment ID first
+    if (booking.apartment?.id) {
+      return booking.apartment.id;
     }
-    // Otherwise use the main apartment ID
-    return booking.apartment?.id;
+
+    // Only fallback to related apartments if no main apartment is found
+    if (booking.related && booking.related.length > 0) {
+      return booking.related[0]?.id;
+    }
+
+    return null;
   }
 
   /**
    * Gets the effective apartment name for a booking
-   * For multi-apartment bookings, prioritizes La Chambre de Blé (1946276) if present
+   * Prioritizes the main apartment name over related apartments
    * @param {Object} booking - Booking data from API
    * @returns {string} - Effective apartment name
    * @private
    */
   _getEffectiveApartmentName(booking) {
-    // If this booking has La Chambre de Blé in related apartments, use that
-    const chambeDeBleRelated = booking.related?.find(
-      (rel) => rel.id === 1946276
-    );
-    if (chambeDeBleRelated) {
-      return (
-        roomNames[1946276] || chambeDeBleRelated.name || "La Chambre de Blé"
-      );
+    // Always use the main apartment name first
+    const mainApartmentName = roomNames[booking.apartment?.id] || booking.apartment?.name;
+    if (mainApartmentName) {
+      return mainApartmentName;
     }
-    // Otherwise use the main apartment name
-    return roomNames[booking.apartment?.id] || booking.apartment?.name || "";
+
+    // Only fallback to related apartments if no main apartment is found
+    if (booking.related && booking.related.length > 0) {
+      // Use the first related apartment as fallback
+      const firstRelated = booking.related[0];
+      return roomNames[firstRelated?.id] || firstRelated?.name || "";
+    }
+
+    return "";
   }
 
   /**

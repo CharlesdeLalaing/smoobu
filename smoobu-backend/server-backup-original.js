@@ -1,4 +1,5 @@
-// server.js
+// server.js - BACKUP COPY (Original before fixes)
+// Created on 2025-09-15 for safety before making changes to fetch-and-sync
 import express from "express";
 import cors from "cors";
 import * as dotenv from "dotenv";
@@ -65,33 +66,33 @@ app.get("/api/deduplicate-bookings", deduplicateBookings);
 // FIXED: Main fetch-and-sync endpoint (now uses correct price elements API)
 app.get("/api/fetch-and-sync", async (req, res) => {
   console.log("🚀 Starting fetch-and-sync with proven logic...");
-  
+
   try {
     const { SmoobuClient } = await import('./third-party/smoobu/actions/api/fetch-and-sync/smoobu-client.js');
     const { BookingRepository } = await import('./third-party/smoobu/actions/api/fetch-and-sync/booking-repository.js');
     const { BookingProcessor } = await import('./third-party/smoobu/actions/api/fetch-and-sync/booking-processor.js');
-    
+
     // Initialize clients
     const smoobuClient = new SmoobuClient();
     const repository = new BookingRepository();
     const processor = new BookingProcessor(smoobuClient, repository);
-    
+
     // Date range - August to September 2025
     const startDate = '2025-08-01';
     const endDate = '2025-09-30';
-B    
+
     console.log(`📅 Date range: ${startDate} to ${endDate}`);
-    
+
     // Fetch existing bookings from Firebase
     console.log("🔍 Fetching existing bookings from Firebase...");
     const existingBookingMap = await repository.fetchExistingBookings();
     console.log(`📋 Found ${existingBookingMap.size} existing bookings in Firebase`);
-    
+
     // Fetch bookings using arrival dates (more reliable)
     console.log("🌐 Fetching bookings from Smoobu using arrival dates...");
     let bulkBookings = await smoobuClient.fetchBookings(startDate, endDate);
     console.log(`📦 Fetched ${bulkBookings.length} bookings from Smoobu`);
-    
+
     // ENHANCED: Compare with Firebase to find missing bookings
     console.log("🔍 Comparing with Firebase to find missing bookings...");
     const firebaseBookingsInRange = [];
@@ -104,17 +105,17 @@ B
       });
     });
     console.log(`📋 Found ${firebaseBookingsInRange.length} bookings in Firebase within date range`);
-    
+
     // Find bookings that exist in Firebase but missing from Smoobu bulk API
     const smoobuIds = new Set(bulkBookings.map(b => b.id.toString()));
     const missingBookings = firebaseBookingsInRange.filter(fb => {
       const fbSmoobuId = fb.smoobuId || fb.smoobuReservationId;
       return fbSmoobuId && !smoobuIds.has(fbSmoobuId.toString());
     });
-    
-    console.log(`🎯 Found ${missingBookings.length} bookings missing from bulk API:`, 
+
+    console.log(`🎯 Found ${missingBookings.length} bookings missing from bulk API:`,
       missingBookings.map(b => `${b.smoobuId} (${b.guestName})`).join(', '));
-    
+
     // Fetch missing bookings individually
     let rescuedCount = 0;
     for (const missingBooking of missingBookings) {
@@ -130,9 +131,9 @@ B
         console.log(`  ❌ Could not rescue ${missingBooking.smoobuId}: ${error.message}`);
       }
     }
-    
+
     console.log(`🎉 Rescued ${rescuedCount} missing bookings! Total bookings: ${bulkBookings.length}`);
-    
+
     let stats = {
       totalBookings: bulkBookings.length,
       processed: 0,
@@ -140,43 +141,43 @@ B
       added: 0,
       errors: 0
     };
-    
+
     // Process each booking
     for (const bulkBooking of bulkBookings) {
       try {
         console.log(`🔄 Processing booking ${bulkBooking.id} (${bulkBooking['guest-name']})...`);
-        
+
         // Always fetch detailed priceElements for accurate data
         const detailedBooking = await smoobuClient.fetchIndividualBooking(bulkBooking.id);
         const bookingToProcess = detailedBooking || bulkBooking;
-        
+
         console.log(`  📊 PriceElements: ${bookingToProcess.priceElements?.length || 0}`);
-        
+
         // Process the booking
         const tempStats = { added: 0, updated: 0, skipped: 0, errors: 0 };
         await processor.processBooking(bookingToProcess, existingBookingMap, tempStats);
-        
+
         stats.processed++;
         stats.added += tempStats.added;
         stats.updated += tempStats.updated;
-        
+
         console.log(`  ✅ Processed: ${tempStats.added ? 'ADDED' : tempStats.updated ? 'UPDATED' : 'UNCHANGED'}`);
-        
+
       } catch (error) {
         console.error(`  🟥 Error processing booking ${bulkBooking.id}:`, error.message);
         stats.errors++;
       }
     }
-    
+
     console.log(`🏁 Fetch-and-sync completed!`);
     console.log(`📊 Final Stats:`, stats);
-    
+
     res.json({
       success: true,
       message: "Fetch-and-sync completed successfully",
       stats
     });
-    
+
   } catch (error) {
     console.error("🟥 Fetch-and-sync failed:", error);
     res.status(500).json({
@@ -451,10 +452,10 @@ app.get("/api/fix-missing-extras", async (req, res) => {
     for (const booking of bookingsWithNoExtras) {
       try {
         console.log(`🔍 Processing booking ${booking.smoobuId} - ${booking.guestName}`);
-        
+
         // Fetch price elements from Smoobu
         const priceElements = await smoobuClient.fetchPriceElements(booking.smoobuId);
-        
+
         if (priceElements.length === 0) {
           console.log(`⚠️ No price elements found for booking ${booking.smoobuId}`);
           processedCount++;
@@ -463,7 +464,7 @@ app.get("/api/fix-missing-extras", async (req, res) => {
 
         // Process extras
         const processedExtras = processExtrasWithPersons(priceElements);
-        
+
         if (processedExtras.extras.length === 0) {
           console.log(`ℹ️ No extras found in price elements for booking ${booking.smoobuId}`);
           processedCount++;
@@ -472,7 +473,7 @@ app.get("/api/fix-missing-extras", async (req, res) => {
 
         // Apply Airbnb filtering
         const filteredExtras = processedExtras.extras.filter(
-          (extra) => 
+          (extra) =>
             extra.name && (
               extra.name.includes("anniversaire") ||
               extra.name.includes("barbecue") ||
@@ -490,7 +491,7 @@ app.get("/api/fix-missing-extras", async (req, res) => {
           continue;
         }
 
-        console.log(`✅ Found ${filteredExtras.length} extras for booking ${booking.smoobuId}:`, 
+        console.log(`✅ Found ${filteredExtras.length} extras for booking ${booking.smoobuId}:`,
           filteredExtras.map(e => `${e.name} (${e.amount}€)`).join(", "));
 
         // Calculate extras total
@@ -511,10 +512,10 @@ app.get("/api/fix-missing-extras", async (req, res) => {
         };
 
         await db.collection("bookings").doc(booking.id).update(updatedData);
-        
+
         updatedCount++;
         processedCount++;
-        
+
         console.log(`✅ Updated booking ${booking.smoobuId} with ${filteredExtras.length} extras (${extrasTotal}€)`);
 
       } catch (error) {
@@ -552,35 +553,35 @@ app.get("/api/debug-fetch-sync/:bookingId", async (req, res) => {
   try {
     const targetBookingId = req.params.bookingId;
     console.log(`🔍 DEBUG: Looking for booking ${targetBookingId} in fetch-and-sync process`);
-    
+
     const { SmoobuClient } = await import(
       "./third-party/smoobu/actions/api/fetch-and-sync/smoobu-client.js"
     );
-    
+
     const smoobuClient = new SmoobuClient();
-    
+
     // Check recently modified bookings (same logic as fetch-and-sync Phase 2)
     const lookbackHours = 25;
     const modifiedSince = new Date();
     modifiedSince.setHours(modifiedSince.getHours() - lookbackHours);
     const modifiedSinceDate = modifiedSince.toISOString().split("T")[0];
-    
+
     const modifiedUntil = new Date();
     modifiedUntil.setDate(modifiedUntil.getDate() + 1);
     const modifiedUntilDate = modifiedUntil.toISOString().split("T")[0];
-    
+
     console.log(`🔍 Checking recently modified bookings from ${modifiedSinceDate} to ${modifiedUntilDate}`);
-    
+
     const recentlyModifiedBookings = await smoobuClient.fetchRecentlyModifiedBookings(
       modifiedSinceDate,
       modifiedUntilDate
     );
-    
+
     console.log(`📋 Found ${recentlyModifiedBookings.length} recently modified bookings`);
-    
+
     // Look for our target booking
     const targetBooking = recentlyModifiedBookings.find(booking => booking.id.toString() === targetBookingId);
-    
+
     if (targetBooking) {
       console.log(`✅ Found target booking ${targetBookingId} in recently modified list!`);
       console.log(`📋 Booking details:`, {
@@ -590,18 +591,18 @@ app.get("/api/debug-fetch-sync/:bookingId", async (req, res) => {
         guest: targetBooking["guest-name"],
         arrival: targetBooking.arrival
       });
-      
+
       // Test price elements fetch
       const priceElements = await smoobuClient.fetchPriceElements(targetBookingId);
-      console.log(`📋 Price elements (${priceElements.length}):`, 
+      console.log(`📋 Price elements (${priceElements.length}):`,
         priceElements.map(pe => ({ name: pe.name, amount: pe.amount, type: pe.type }))
       );
-      
+
     } else {
       console.log(`❌ Target booking ${targetBookingId} NOT found in recently modified list`);
       console.log(`📋 Available booking IDs:`, recentlyModifiedBookings.map(b => b.id).slice(0, 10));
     }
-    
+
     res.json({
       success: true,
       found: !!targetBooking,
@@ -609,7 +610,7 @@ app.get("/api/debug-fetch-sync/:bookingId", async (req, res) => {
       bookingDetails: targetBooking || null,
       priceElementsCount: targetBooking ? (await smoobuClient.fetchPriceElements(targetBookingId)).length : 0
     });
-    
+
   } catch (error) {
     console.error("🟥 Debug fetch-sync failed:", error);
     res.status(500).json({
