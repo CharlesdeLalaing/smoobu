@@ -583,19 +583,24 @@ export class BookingProcessor {
    * @private
    */
   _getEffectiveApartmentName(booking) {
-    // Always use the main apartment name first
+    // Always use the main apartment name first - this is the actually booked apartment
     const mainApartmentName = roomNames[booking.apartment?.id] || booking.apartment?.name;
     if (mainApartmentName) {
       return mainApartmentName;
     }
 
-    // Only fallback to related apartments if no main apartment is found
+    // IMPORTANT: For shared facilities like La Chambre de Blé / Le Logis,
+    // we should NOT fall back to related apartments as this causes incorrect display.
+    // The main apartment ID should always be correct and represent what was actually booked.
+
+    // Only use related apartments if absolutely no main apartment is found (rare edge case)
     if (booking.related && booking.related.length > 0) {
-      // Use the first related apartment as fallback
+      console.warn(`[BookingProcessor] WARNING: Using related apartment as fallback for booking ${booking.id} - this may indicate an issue with apartment mapping`);
       const firstRelated = booking.related[0];
       return roomNames[firstRelated?.id] || firstRelated?.name || "";
     }
 
+    console.warn(`[BookingProcessor] WARNING: No apartment name found for booking ${booking.id}`);
     return "";
   }
 

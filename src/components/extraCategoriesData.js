@@ -393,7 +393,6 @@ export const DRINK_OFFER_CONFIG_RAW = {
       "formuleBarbecue",
       "packDetenteGourmet",
       "packRacletteDetente",
-      "packBbqRomantique",
       "packBbqDetente",
     ],
     drinks: [

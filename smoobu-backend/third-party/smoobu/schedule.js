@@ -38,8 +38,13 @@ export function setupScheduledTasks() {
       };
       
       // Call the reliable sync endpoint directly
+      // Use environment variable for base URL to support both local and production deployments
+      const baseUrl = process.env.BACKEND_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000";
+      const syncUrl = `${baseUrl}/api/fetch-and-sync`;
+
+      console.log(`📡 Making scheduled sync request to: ${syncUrl}`);
       const axios = await import("axios");
-      const response = await axios.default.get("http://localhost:3000/api/fetch-and-sync");
+      const response = await axios.default.get(syncUrl);
       console.log("🟩 Scheduled reliable sync completed:", response.data.stats);
     } catch (error) {
       console.error("🟥 Scheduled sync failed:", error);

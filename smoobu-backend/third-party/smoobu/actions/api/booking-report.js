@@ -160,7 +160,10 @@ export async function generateBookingsReport(req, res) {
             booking.email?.split("@")[0] ||
             "Sans nom",
           property:
-            roomNames[booking.apartmentId] || booking.apartment?.name || "",
+            roomNames[booking.apartmentId] ||
+            roomNames[booking.apartment?.id] ||
+            booking.apartment?.name ||
+            "",
           portal:
             portalNames[booking.channel?.name] ||
             booking.channel?.name ||

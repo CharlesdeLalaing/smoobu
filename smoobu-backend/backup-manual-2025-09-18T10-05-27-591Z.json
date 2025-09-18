@@ -1,5 +1,115 @@
 {
   "bookings": {
+    "00sO9Daxf6XuupNLrZfW": {
+      "smoobuId": "111500266",
+      "smoobuReservationId": 111500266,
+      "firstName": "Virginie",
+      "lastName": "Wegnez",
+      "guestName": "Virginie Wegnez",
+      "email": "vi.wegnez@gmail.com",
+      "phone": "0493710478",
+      "street": "D Eupen 70 D",
+      "postalCode": "4950",
+      "location": "Waimes ",
+      "country": "Belgique ",
+      "adults": 2,
+      "children": 0,
+      "arrivalDate": "2025-10-01",
+      "departureDate": "2025-10-02",
+      "arrivalTime": "17:00",
+      "departureTime": "10:00",
+      "checkInTime": "17:00",
+      "checkOutTime": "10:00",
+      "nights": 1,
+      "notice": "",
+      "apartmentId": "1644643",
+      "property": "La Bulle du Ruisseau",
+      "channelId": 2323525,
+      "channelName": "Homepage",
+      "portalName": "Website",
+      "price": 180,
+      "basePrice": 180,
+      "guestFees": 0,
+      "deposit": 0,
+      "depositStatus": 1,
+      "priceStatus": 1,
+      "paymentIntentId": "pi_3S8duIHkTpmdfEQC0WEI5S3I",
+      "stripePaymentStatus": "succeeded",
+      "extras": [],
+      "processedFreeDrinks": [],
+      "priceBreakdown": {
+        "roomBasePrice": 180,
+        "calculatedExtrasTotal": 0,
+        "calculatedGuestFees": 0,
+        "subtotal": 180,
+        "appliedLongStayDiscount": 0,
+        "totalAfterLongStayDiscount": 180,
+        "appliedCouponDiscount": 0,
+        "finalPayableAmount": 180,
+        "priceElementsForSmoobu": [
+          {
+            "id": "1758186859512-base",
+            "amount": 180,
+            "currencyCode": "EUR",
+            "name": "Prix de base",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "base",
+            "priceIncludedInId": null
+          }
+        ]
+      },
+      "priceDetailsSnapshot": {
+        "originalPrice": 180,
+        "guestFees": 0,
+        "cleaningFee": 0,
+        "discount": 0,
+        "finalPrice": 180,
+        "numberOfNights": 1,
+        "priceElements": [
+          {
+            "type": "basePrice",
+            "name": "Prix de base",
+            "amount": 180,
+            "currencyCode": "EUR"
+          }
+        ],
+        "settings": {
+          "maxGuests": 2,
+          "startingAtGuest": 2,
+          "extraGuestsPerNight": 0,
+          "extraChildPerNight": 0,
+          "lengthOfStayDiscount": {
+            "minNights": 0,
+            "discountPercentage": 0
+          }
+        },
+        "isAvailable": true
+      },
+      "couponApplied": null,
+      "conditions": true,
+      "language": "fr",
+      "spaDateString": null,
+      "spaDateTime": null,
+      "spaEndDateTime": null,
+      "spaSlots": [],
+      "spaBookingPreference": null,
+      "spaInfo": null,
+      "freeDrinkInfo": null,
+      "createdAt": {
+        "_seconds": 1758186858,
+        "_nanoseconds": 807000000
+      },
+      "lastSyncedAt": {
+        "_seconds": 1758186858,
+        "_nanoseconds": 807000000
+      },
+      "updatedAt": {
+        "_seconds": 1758186858,
+        "_nanoseconds": 807000000
+      }
+    },
     "01Ewf8UnrAOtZfWrFdJa": {
       "smoobuId": "72051158",
       "smoobuReservationId": 72051158,
@@ -216,8 +326,8 @@
         }
       },
       "property": "Le Dôme des Libellules",
-      "lastSyncedAt": "2025-09-15T09:15:43.134Z",
-      "updatedAt": "2025-09-15T09:15:43.134Z"
+      "lastSyncedAt": "2025-09-15T14:08:21.426Z",
+      "updatedAt": "2025-09-15T14:08:21.426Z"
     },
     "0OIUz0S7S5k3F1xGRx6H": {
       "smoobuId": "103718798",
@@ -424,8 +534,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T12:47:47.338Z",
-      "updatedAt": "2025-09-15T12:47:47.338Z"
+      "lastSyncedAt": "2025-09-15T14:08:21.855Z",
+      "updatedAt": "2025-09-15T14:08:21.856Z"
     },
     "0QuPIsh53w00kiBINavp": {
       "smoobuId": "97345778",
@@ -1288,7 +1398,6 @@
       "smoobuId": "110239046",
       "smoobuReservationId": 110239046,
       "createdAt": "2025-09-07 14:21",
-      "updatedAt": "2025-09-15T12:34:17.730Z",
       "type": "reservation",
       "firstName": "réservation",
       "lastName": "bulle",
@@ -1399,7 +1508,11 @@
           "startingAtGuest": 2
         }
       },
-      "lastSyncedAt": "2025-09-15T12:34:17.730Z"
+      "paymentIntentId": null,
+      "firebaseDocId": "0zEb1EHCUIbGBeYA6opB",
+      "stripePaymentStatus": null,
+      "lastSyncedAt": "2025-09-15T14:08:22.379Z",
+      "updatedAt": "2025-09-15T14:08:22.379Z"
     },
     "16R7uJg8DvGtZYS7ijIN": {
       "arrivalDate": "2025-03-29",
@@ -2142,8 +2255,8 @@
         "_nanoseconds": 0
       },
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T09:15:49.519Z",
-      "updatedAt": "2025-09-15T09:15:49.520Z"
+      "lastSyncedAt": "2025-09-15T14:08:22.918Z",
+      "updatedAt": "2025-09-15T14:08:22.919Z"
     },
     "26Xjmf6WbYU54cjcFXFc": {
       "smoobuId": "100881298",
@@ -2351,8 +2464,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:47:48.428Z",
-      "updatedAt": "2025-09-15T12:47:48.428Z"
+      "lastSyncedAt": "2025-09-15T14:08:23.306Z",
+      "updatedAt": "2025-09-15T14:08:23.306Z"
     },
     "28oyAOftx4bEbkDXPccX": {
       "extras": [],
@@ -2740,8 +2853,8 @@
       "type": "reservation",
       "firebaseDocId": "2Z2pGPUHxbwna3MBt8YG",
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:47:49.223Z",
-      "updatedAt": "2025-09-15T12:47:49.224Z"
+      "lastSyncedAt": "2025-09-15T14:08:23.696Z",
+      "updatedAt": "2025-09-15T14:08:23.697Z"
     },
     "2c9DrDRSHEVBFOStIHxm": {
       "smoobuId": "102784188",
@@ -2989,10 +3102,10 @@
       "id": "2dBof2eZUxoMELJiX45J",
       "type": "modification of booking",
       "firebaseDocId": "2dBof2eZUxoMELJiX45J",
-      "property": "La Chambre de Blé",
-      "apartmentId": 1946276,
-      "lastSyncedAt": "2025-09-15T12:47:34.778Z",
-      "updatedAt": "2025-09-15T12:47:34.778Z"
+      "property": "Le Logis",
+      "apartmentId": 1946270,
+      "lastSyncedAt": "2025-09-15T14:08:12.039Z",
+      "updatedAt": "2025-09-15T14:08:12.039Z"
     },
     "2dfBBPZqt5FBQ0vWYgea": {
       "smoobuId": "102519858",
@@ -3488,8 +3601,8 @@
       "adults": 2,
       "stripePaymentStatus": null,
       "type": "modification of booking",
-      "lastSyncedAt": "2025-09-15T12:47:50.305Z",
-      "updatedAt": "2025-09-15T12:47:50.305Z"
+      "lastSyncedAt": "2025-09-15T14:08:24.125Z",
+      "updatedAt": "2025-09-15T14:08:24.125Z"
     },
     "2sTBdWmeA4siOeZHzPoR": {
       "smoobuId": "106429601",
@@ -4469,8 +4582,8 @@
       },
       "property": "La Bulle du Ruisseau",
       "basePrice": 210,
-      "lastSyncedAt": "2025-09-15T09:15:45.922Z",
-      "updatedAt": "2025-09-15T09:15:45.922Z"
+      "lastSyncedAt": "2025-09-15T14:08:24.519Z",
+      "updatedAt": "2025-09-15T14:08:24.519Z"
     },
     "3vklp6G3foKW7eDAEnZS": {
       "smoobuId": "74016348",
@@ -6147,65 +6260,6 @@
       "lastSyncedAt": "2025-05-16T12:00:01.036Z",
       "updatedAt": "2025-05-16T12:00:01.036Z"
     },
-    "50WLtnKwFi0610pFg9Tx": {
-      "smoobuId": "106657201",
-      "smoobuReservationId": 106657201,
-      "createdAt": "2025-08-06 16:43",
-      "firstName": "Unknown",
-      "lastName": "Guest",
-      "guestName": "Unknown Guest",
-      "email": "",
-      "phone": "",
-      "address": "",
-      "adults": 0,
-      "children": 0,
-      "arrivalDate": "2025-08-25",
-      "departureDate": "2025-08-26",
-      "checkInTime": "17:00",
-      "checkOutTime": "10:00",
-      "apartmentId": 1946282,
-      "property": "Le Dôme des Libellules",
-      "channelId": 2323516,
-      "channelName": "Blocked channel",
-      "portalName": "Blocked channel",
-      "price": 0,
-      "basePrice": 0,
-      "linenFee": 0,
-      "commission": 0,
-      "extras": [],
-      "nights": 1,
-      "priceDetails": {
-        "basePrice": 0,
-        "linenFee": 0,
-        "commission": 0,
-        "longStayDiscount": 0,
-        "couponDiscount": 0,
-        "discount": 0,
-        "extrasTotal": 0,
-        "priceElements": [],
-        "promoCode": null,
-        "calculatedDiscounts": {
-          "longStay": 0,
-          "coupon": 0
-        },
-        "settings": {
-          "extraChildPerNight": 20,
-          "extraGuestsPerNight": 20,
-          "lengthOfStayDiscount": {
-            "discountPercentage": 0,
-            "minNights": 2
-          },
-          "maxGuests": 4,
-          "startingAtGuest": 2
-        }
-      },
-      "paymentIntentId": null,
-      "firebaseDocId": "50WLtnKwFi0610pFg9Tx",
-      "stripePaymentStatus": null,
-      "type": "modification of booking",
-      "lastSyncedAt": "2025-09-15T12:47:51.216Z",
-      "updatedAt": "2025-09-15T12:47:51.216Z"
-    },
     "5LqSdn02l54n7uyciE6r": {
       "extras": [],
       "smoobuId": "90959703",
@@ -6844,14 +6898,11 @@
       "departureDate": "2025-09-20",
       "arrivalTime": "18:30",
       "departureTime": "10:00",
-      "checkInTime": "18:30",
       "checkOutTime": "10:00",
       "nights": 1,
       "notice": "Beste mevrouw\nBeste meneer\n\nBij het invoeren van de kortingscode \"LETSGOMYLOVE\" krijg ik de foutmelding \"Deze code is alleen geldig voor verblijven tussen Invalid Date en Invalid Date\". Graag had ik even nagevraagd of deze code nog geldig is, aangezien het gisteren lukte om de code in te voeren en 10 % korting te ontvangen zoals beschreven staat op de site \"https://www.letsgomylove.com/nl/plek/les-reperes-de-basseilles/\"\n\nGroetjes \nJana",
-      "apartmentId": "1644643",
       "property": "La Bulle du Ruisseau",
       "channelId": 2323525,
-      "channelName": "Homepage",
       "portalName": "Website",
       "price": 380,
       "basePrice": 210,
@@ -6861,23 +6912,6 @@
       "priceStatus": 1,
       "paymentIntentId": "pi_3S7bEYHkTpmdfEQC1CFP0RBf",
       "stripePaymentStatus": "succeeded",
-      "extras": [
-        {
-          "id": "packRomantiqueGourmet",
-          "name": "Le romantique gourmet (pour 2)",
-          "nameKeyForClient": "extras.packs.romanticGourmet.name",
-          "originalConfigNameKey": "extras.packs.romanticGourmet.name",
-          "quantity": 1,
-          "amount": 170,
-          "currencyCode": "EUR",
-          "type": "addon",
-          "extraPersonPrice": 40,
-          "extraPersonQuantity": 0,
-          "extraPersonAmount": 0,
-          "extraPersonName": "Personne supplémentaire",
-          "hasExtraPerson": false
-        }
-      ],
       "processedFreeDrinks": [],
       "priceBreakdown": {
         "roomBasePrice": 210,
@@ -6944,31 +6978,114 @@
       "conditions": true,
       "language": "nl",
       "spaDateString": null,
-      "spaDateTime": null,
-      "spaEndDateTime": null,
-      "spaSlots": [],
-      "spaBookingPreference": "later",
-      "spaInfo": {
-        "hasSpaTreatment": true,
-        "scheduledDateTime": null,
-        "endDateTime": null,
-        "preference": "later",
-        "formattedDateTime": null,
-        "slots": [],
-        "status": "to_be_scheduled"
-      },
       "freeDrinkInfo": null,
+      "address": "",
+      "checkInTime": "17:00",
+      "linenFee": 0,
+      "extras": [
+        {
+          "name": "Le romantique gourmet (pour 2)",
+          "amount": 170,
+          "quantity": 1,
+          "type": "addon",
+          "id": 324783751,
+          "currencyCode": "EUR",
+          "extraPersonQuantity": 0,
+          "extraPersonPrice": 0,
+          "extraPersonAmount": 0,
+          "extraPersonName": "Personne supplémentaire",
+          "hasExtraPerson": false
+        }
+      ],
+      "type": "modification of booking",
       "createdAt": {
         "_seconds": 1757938272,
         "_nanoseconds": 671000000
       },
-      "lastSyncedAt": {
-        "_seconds": 1757938272,
-        "_nanoseconds": 671000000
+      "firebaseDocId": "5rFZcT00PY8FUHX0FLVF",
+      "priceDetails": {
+        "basePrice": 210,
+        "linenFee": 0,
+        "commission": 0,
+        "longStayDiscount": 0,
+        "couponDiscount": 0,
+        "discount": 0,
+        "extrasTotal": 170,
+        "priceElements": [
+          {
+            "id": 324783651,
+            "type": null,
+            "name": "Prix de base",
+            "amount": 210,
+            "quantity": 1,
+            "tax": null,
+            "currencyCode": "EUR",
+            "sortOrder": null,
+            "priceIncludedInId": null
+          },
+          {
+            "id": 324783751,
+            "type": null,
+            "name": "Le romantique gourmet (pour 2)",
+            "amount": 170,
+            "quantity": 1,
+            "tax": null,
+            "currencyCode": "EUR",
+            "sortOrder": null,
+            "priceIncludedInId": null
+          }
+        ],
+        "promoCode": null,
+        "calculatedDiscounts": {
+          "longStay": 0,
+          "coupon": 0
+        },
+        "settings": {
+          "extraChildPerNight": 20,
+          "extraGuestsPerNight": 20,
+          "lengthOfStayDiscount": {
+            "discountPercentage": 0,
+            "minNights": 2
+          },
+          "maxGuests": 4,
+          "startingAtGuest": 2
+        }
       },
-      "updatedAt": {
-        "_seconds": 1757938272,
-        "_nanoseconds": 671000000
+      "commission": 0,
+      "channelName": "Website",
+      "apartmentId": 1644643,
+      "lastSyncedAt": "2025-09-15T14:08:25.678Z",
+      "updatedAt": "2025-09-15T14:08:25.678Z",
+      "spaEndDateTime": {
+        "_seconds": 1758312000,
+        "_nanoseconds": 0
+      },
+      "spaInfo": {
+        "hasSpaTreatment": true,
+        "scheduledDateTime": {
+          "_seconds": 1758304800,
+          "_nanoseconds": 0
+        },
+        "endDateTime": {
+          "_seconds": 1758312000,
+          "_nanoseconds": 0
+        },
+        "preference": "scheduled",
+        "formattedDateTime": "19 septembre 2025 à 20:00",
+        "slots": [
+          "20:00",
+          "21:00"
+        ],
+        "status": "scheduled"
+      },
+      "spaBookingPreference": "scheduled",
+      "spaSlots": [
+        "20:00",
+        "21:00"
+      ],
+      "spaDateTime": {
+        "_seconds": 1758304800,
+        "_nanoseconds": 0
       }
     },
     "5unuwHPlonYhmoE1HmY0": {
@@ -7541,8 +7658,8 @@
       },
       "property": "Le Dôme des Libellules",
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T09:15:46.340Z",
-      "updatedAt": "2025-09-15T09:15:46.340Z"
+      "lastSyncedAt": "2025-09-15T14:08:26.081Z",
+      "updatedAt": "2025-09-15T14:08:26.081Z"
     },
     "6VvBno3a9EcdgdqjBSTO": {
       "smoobuId": "94479569",
@@ -7899,8 +8016,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T09:15:51.124Z",
-      "updatedAt": "2025-09-15T09:15:51.124Z"
+      "lastSyncedAt": "2025-09-15T14:08:26.598Z",
+      "updatedAt": "2025-09-15T14:08:26.599Z"
     },
     "6Zd5HSLoHd0aPKQJpKNU": {
       "smoobuId": "93881474",
@@ -8427,8 +8544,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:47:52.345Z",
-      "updatedAt": "2025-09-15T12:47:52.345Z"
+      "lastSyncedAt": "2025-09-15T14:08:27.007Z",
+      "updatedAt": "2025-09-15T14:08:27.007Z"
     },
     "6jBSQOCX82K7RGBOUZ5U": {
       "smoobuId": "108653151",
@@ -9232,8 +9349,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:34:18.143Z",
-      "updatedAt": "2025-09-15T12:34:18.143Z"
+      "lastSyncedAt": "2025-09-15T14:08:27.609Z",
+      "updatedAt": "2025-09-15T14:08:27.609Z"
     },
     "71kmXh0PpCCOAxPrjMkh": {
       "smoobuId": "109964541",
@@ -9684,8 +9801,8 @@
         }
       ],
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:47:33.423Z",
-      "updatedAt": "2025-09-15T12:47:33.424Z"
+      "lastSyncedAt": "2025-09-15T14:08:10.412Z",
+      "updatedAt": "2025-09-15T14:08:10.412Z"
     },
     "77A9LbirVf37WZU10jGv": {
       "smoobuId": "105710691",
@@ -9927,8 +10044,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:47:53.283Z",
-      "updatedAt": "2025-09-15T12:47:53.283Z"
+      "lastSyncedAt": "2025-09-15T14:08:28.024Z",
+      "updatedAt": "2025-09-15T14:08:28.024Z"
     },
     "77xdTLbimwx6rdFJUFCM": {
       "smoobuId": "69259086",
@@ -10779,8 +10896,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:47:54.295Z",
-      "updatedAt": "2025-09-15T12:47:54.295Z"
+      "lastSyncedAt": "2025-09-15T14:08:28.460Z",
+      "updatedAt": "2025-09-15T14:08:28.460Z"
     },
     "7fJDVBAgnfUclGs51A5W": {
       "smoobuId": "100953873",
@@ -11348,8 +11465,8 @@
       "channelName": "Website",
       "type": "modification of booking",
       "apartmentId": 1946279,
-      "lastSyncedAt": "2025-09-15T12:47:55.233Z",
-      "updatedAt": "2025-09-15T12:47:55.233Z"
+      "lastSyncedAt": "2025-09-15T14:08:28.859Z",
+      "updatedAt": "2025-09-15T14:08:28.859Z"
     },
     "7wIvfGoYBboKWvxRcZKM": {
       "smoobuId": "94359689",
@@ -11756,8 +11873,8 @@
       "firebaseDocId": "89WGTpgLuagiFm0KxGGb",
       "stripePaymentStatus": null,
       "type": "modification of booking",
-      "lastSyncedAt": "2025-09-15T12:47:56.183Z",
-      "updatedAt": "2025-09-15T12:47:56.183Z"
+      "lastSyncedAt": "2025-09-15T14:08:29.376Z",
+      "updatedAt": "2025-09-15T14:08:29.376Z"
     },
     "8E1BS8AUiDyBte70NxM8": {
       "smoobuId": "88550663",
@@ -12384,67 +12501,8 @@
         "_nanoseconds": 0
       },
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T09:15:44.018Z",
-      "updatedAt": "2025-09-15T09:15:44.018Z"
-    },
-    "8QiuqxLce4Nf7Oq4WH3y": {
-      "smoobuId": "109694951",
-      "smoobuReservationId": 109694951,
-      "createdAt": "2025-09-02 15:29",
-      "type": "reservation",
-      "firstName": "Unknown",
-      "lastName": "Guest",
-      "guestName": "Unknown Guest",
-      "email": "",
-      "phone": "",
-      "address": "",
-      "adults": 0,
-      "children": 0,
-      "arrivalDate": "2025-11-03",
-      "departureDate": "2026-03-31",
-      "checkInTime": "17:00",
-      "checkOutTime": "10:00",
-      "apartmentId": 1644643,
-      "property": "La Bulle du Ruisseau",
-      "channelId": 2323516,
-      "channelName": "Blocked channel",
-      "portalName": "Blocked channel",
-      "price": 0,
-      "basePrice": 0,
-      "linenFee": 0,
-      "commission": 0,
-      "extras": [],
-      "nights": 148,
-      "priceDetails": {
-        "basePrice": 0,
-        "linenFee": 0,
-        "commission": 0,
-        "longStayDiscount": 0,
-        "couponDiscount": 0,
-        "discount": 0,
-        "extrasTotal": 0,
-        "priceElements": [],
-        "promoCode": null,
-        "calculatedDiscounts": {
-          "longStay": 0,
-          "coupon": 0
-        },
-        "settings": {
-          "extraChildPerNight": 20,
-          "extraGuestsPerNight": 20,
-          "lengthOfStayDiscount": {
-            "discountPercentage": 0,
-            "minNights": 2
-          },
-          "maxGuests": 4,
-          "startingAtGuest": 2
-        }
-      },
-      "paymentIntentId": null,
-      "firebaseDocId": "8QiuqxLce4Nf7Oq4WH3y",
-      "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T09:16:13.206Z",
-      "updatedAt": "2025-09-15T09:16:13.206Z"
+      "lastSyncedAt": "2025-09-15T14:08:29.811Z",
+      "updatedAt": "2025-09-15T14:08:29.811Z"
     },
     "8R0SarDKdMyWnhByMAzo": {
       "smoobuId": "104109708",
@@ -13642,8 +13700,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T12:34:13.115Z",
-      "updatedAt": "2025-09-15T12:34:13.115Z"
+      "lastSyncedAt": "2025-09-15T14:08:30.333Z",
+      "updatedAt": "2025-09-15T14:08:30.333Z"
     },
     "8yGncQ71JwUzSugiIWsu": {
       "smoobuId": "92972038",
@@ -14584,8 +14642,8 @@
           "startingAtGuest": 2
         }
       },
-      "lastSyncedAt": "2025-09-15T12:47:57.111Z",
-      "updatedAt": "2025-09-15T12:47:57.111Z"
+      "lastSyncedAt": "2025-09-15T14:08:30.735Z",
+      "updatedAt": "2025-09-15T14:08:30.735Z"
     },
     "9OZUcXaIocyiT32HNOSS": {
       "smoobuId": "78193188",
@@ -15333,8 +15391,8 @@
         }
       ],
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:47:58.301Z",
-      "updatedAt": "2025-09-15T12:47:58.301Z"
+      "lastSyncedAt": "2025-09-15T14:08:31.223Z",
+      "updatedAt": "2025-09-15T14:08:31.224Z"
     },
     "9iofS5fqu9XM9heeeY8Z": {
       "smoobuId": "71099481",
@@ -15752,8 +15810,8 @@
         "_nanoseconds": 0
       },
       "basePrice": 210,
-      "lastSyncedAt": "2025-09-15T09:15:52.965Z",
-      "updatedAt": "2025-09-15T09:15:52.965Z"
+      "lastSyncedAt": "2025-09-15T14:08:31.610Z",
+      "updatedAt": "2025-09-15T14:08:31.610Z"
     },
     "A8nzt7TjqEUF0nQ9WqHM": {
       "smoobuId": "103316858",
@@ -18155,8 +18213,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:47:59.565Z",
-      "updatedAt": "2025-09-15T12:47:59.565Z"
+      "lastSyncedAt": "2025-09-15T14:08:32.244Z",
+      "updatedAt": "2025-09-15T14:08:32.244Z"
     },
     "BDWp4TQfSbF0t7U7s97a": {
       "smoobuId": "92293778",
@@ -18419,8 +18477,8 @@
           "startingAtGuest": 2
         }
       },
-      "lastSyncedAt": "2025-09-15T12:47:43.199Z",
-      "updatedAt": "2025-09-15T12:47:43.199Z"
+      "lastSyncedAt": "2025-09-15T14:08:18.236Z",
+      "updatedAt": "2025-09-15T14:08:18.236Z"
     },
     "Bfno77eh0w1X23k1b3AG": {
       "smoobuId": "101800878",
@@ -19709,8 +19767,8 @@
       "channelName": "Website",
       "type": "modification of booking",
       "apartmentId": 1946279,
-      "lastSyncedAt": "2025-09-15T09:15:41.673Z",
-      "updatedAt": "2025-09-15T09:15:41.673Z"
+      "lastSyncedAt": "2025-09-15T14:08:32.662Z",
+      "updatedAt": "2025-09-15T14:08:32.662Z"
     },
     "CTMNYsFVCDkL7Uzev74B": {
       "smoobuId": "105700591",
@@ -19948,8 +20006,8 @@
       "commission": 0,
       "channelName": "Website",
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:48:00.773Z",
-      "updatedAt": "2025-09-15T12:48:00.773Z"
+      "lastSyncedAt": "2025-09-15T14:08:33.244Z",
+      "updatedAt": "2025-09-15T14:08:33.245Z"
     },
     "CY7fia1DIjAPP4pCgUOL": {
       "smoobuId": "106355761",
@@ -20094,8 +20152,8 @@
       },
       "property": "Le Dôme des Libellules",
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T12:34:14.150Z",
-      "updatedAt": "2025-09-15T12:34:14.150Z"
+      "lastSyncedAt": "2025-09-15T14:08:33.742Z",
+      "updatedAt": "2025-09-15T14:08:33.742Z"
     },
     "Cae8MXh9ry6vk7DDDd9v": {
       "smoobuId": "76115978",
@@ -20622,8 +20680,8 @@
       "channelName": "Website",
       "type": "modification of booking",
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T09:15:43.629Z",
-      "updatedAt": "2025-09-15T09:15:43.629Z"
+      "lastSyncedAt": "2025-09-15T14:08:34.239Z",
+      "updatedAt": "2025-09-15T14:08:34.239Z"
     },
     "Cis578mi2W8mXwgGvua2": {
       "smoobuId": "94999398",
@@ -21028,8 +21086,8 @@
         }
       ],
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:48:01.735Z",
-      "updatedAt": "2025-09-15T12:48:01.736Z"
+      "lastSyncedAt": "2025-09-15T14:08:34.702Z",
+      "updatedAt": "2025-09-15T14:08:34.702Z"
     },
     "DEQ1tR1YWjBXP77G4Jra": {
       "smoobuId": "93315583",
@@ -21699,8 +21757,8 @@
       "commission": 0,
       "channelName": "Website",
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:47:40.665Z",
-      "updatedAt": "2025-09-15T12:47:40.666Z"
+      "lastSyncedAt": "2025-09-15T14:08:15.593Z",
+      "updatedAt": "2025-09-15T14:08:15.593Z"
     },
     "DTTvZxuAIK9AvYfbeHFr": {
       "smoobuId": "109573266",
@@ -21976,8 +22034,8 @@
         "_nanoseconds": 0
       },
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T09:15:48.125Z",
-      "updatedAt": "2025-09-15T09:15:48.125Z"
+      "lastSyncedAt": "2025-09-15T14:08:35.213Z",
+      "updatedAt": "2025-09-15T14:08:35.213Z"
     },
     "DZaVw8oJGftVymbTUp47": {
       "smoobuId": "109959456",
@@ -22297,8 +22355,8 @@
       "firebaseDocId": "DZkGAwPq70dkx7RroMtZ",
       "stripePaymentStatus": null,
       "type": "modification of booking",
-      "lastSyncedAt": "2025-09-15T12:48:02.781Z",
-      "updatedAt": "2025-09-15T12:48:02.782Z"
+      "lastSyncedAt": "2025-09-15T14:08:35.769Z",
+      "updatedAt": "2025-09-15T14:08:35.769Z"
     },
     "DekuKOmHqazJFjovOrxX": {
       "smoobuId": "101531653",
@@ -22540,8 +22598,8 @@
         }
       ],
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:48:03.884Z",
-      "updatedAt": "2025-09-15T12:48:03.884Z"
+      "lastSyncedAt": "2025-09-15T14:08:36.166Z",
+      "updatedAt": "2025-09-15T14:08:36.166Z"
     },
     "DmpdiGkS2LpoOOwWwYtc": {
       "smoobuId": "98105138",
@@ -23748,8 +23806,8 @@
       },
       "property": "Le Dôme des Libellules",
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T09:15:47.293Z",
-      "updatedAt": "2025-09-15T09:15:47.293Z"
+      "lastSyncedAt": "2025-09-15T14:08:36.624Z",
+      "updatedAt": "2025-09-15T14:08:36.624Z"
     },
     "E8MuUe22OqVp0QNwl3xb": {
       "smoobuId": "104148848",
@@ -23863,8 +23921,8 @@
       "stripePaymentStatus": null,
       "type": "cancellation",
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:48:04.905Z",
-      "updatedAt": "2025-09-15T12:48:04.905Z"
+      "lastSyncedAt": "2025-09-15T14:08:37.189Z",
+      "updatedAt": "2025-09-15T14:08:37.189Z"
     },
     "EhEhC8LYxyL2RYTt8ViP": {
       "smoobuId": "93991284",
@@ -24288,8 +24346,8 @@
       "commission": 0,
       "channelName": "Website",
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T09:16:27.131Z",
-      "updatedAt": "2025-09-15T09:16:27.132Z"
+      "lastSyncedAt": "2025-09-15T14:08:37.646Z",
+      "updatedAt": "2025-09-15T14:08:37.646Z"
     },
     "EkScsWBhqHmbQey4SaQ7": {
       "smoobuId": "93343611",
@@ -25223,8 +25281,8 @@
         }
       ],
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:47:33.916Z",
-      "updatedAt": "2025-09-15T12:47:33.916Z"
+      "lastSyncedAt": "2025-09-15T14:08:10.946Z",
+      "updatedAt": "2025-09-15T14:08:10.947Z"
     },
     "Fns88sIJYExZMH0kdwsM": {
       "smoobuId": "103786413",
@@ -25562,8 +25620,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T12:34:17.126Z",
-      "updatedAt": "2025-09-15T12:34:17.126Z"
+      "lastSyncedAt": "2025-09-15T14:08:38.097Z",
+      "updatedAt": "2025-09-15T14:08:38.097Z"
     },
     "FoPHFfmMZP4tEQ89Le62": {
       "smoobuId": "102096748",
@@ -25743,8 +25801,8 @@
       "type": "modification of booking",
       "checkOutTime": "",
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:48:06.133Z",
-      "updatedAt": "2025-09-15T12:48:06.133Z"
+      "lastSyncedAt": "2025-09-15T14:08:38.608Z",
+      "updatedAt": "2025-09-15T14:08:38.608Z"
     },
     "Fq8EjPKuMLMZh2REosds": {
       "extras": [],
@@ -26008,65 +26066,6 @@
       "createdAt": "2025-02-08T15:11:23.107Z",
       "updatedAt": "2025-02-08T15:11:23.107Z",
       "appliedCoupon": null
-    },
-    "FzvmYYztbfUhEwP5eQ0h": {
-      "smoobuId": "107314516",
-      "smoobuReservationId": 107314516,
-      "createdAt": "2025-08-12 15:32",
-      "type": "reservation",
-      "firstName": "Influenceuse",
-      "lastName": "remke",
-      "guestName": "Influenceuse remke",
-      "email": "",
-      "phone": "",
-      "address": "",
-      "adults": 0,
-      "children": 0,
-      "arrivalDate": "2025-10-03",
-      "departureDate": "2025-10-04",
-      "checkInTime": "17:00",
-      "checkOutTime": "10:00",
-      "apartmentId": 1946282,
-      "property": "Le Dôme des Libellules",
-      "channelId": 2323516,
-      "channelName": "Blocked channel",
-      "portalName": "Blocked channel",
-      "price": 0,
-      "basePrice": 0,
-      "linenFee": 0,
-      "commission": 0,
-      "extras": [],
-      "nights": 1,
-      "priceDetails": {
-        "basePrice": 0,
-        "linenFee": 0,
-        "commission": 0,
-        "longStayDiscount": 0,
-        "couponDiscount": 0,
-        "discount": 0,
-        "extrasTotal": 0,
-        "priceElements": [],
-        "promoCode": null,
-        "calculatedDiscounts": {
-          "longStay": 0,
-          "coupon": 0
-        },
-        "settings": {
-          "extraChildPerNight": 20,
-          "extraGuestsPerNight": 20,
-          "lengthOfStayDiscount": {
-            "discountPercentage": 0,
-            "minNights": 2
-          },
-          "maxGuests": 4,
-          "startingAtGuest": 2
-        }
-      },
-      "paymentIntentId": null,
-      "firebaseDocId": "FzvmYYztbfUhEwP5eQ0h",
-      "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T09:16:30.143Z",
-      "updatedAt": "2025-09-15T09:16:30.143Z"
     },
     "G0bXK8fGKvluiWIu5xgB": {
       "smoobuId": "90303823",
@@ -26758,8 +26757,8 @@
       ],
       "type": "modification of booking",
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:48:07.148Z",
-      "updatedAt": "2025-09-15T12:48:07.148Z"
+      "lastSyncedAt": "2025-09-15T14:08:39.017Z",
+      "updatedAt": "2025-09-15T14:08:39.017Z"
     },
     "GKekcztqZRASAywXTeoF": {
       "smoobuId": "72812223",
@@ -27076,8 +27075,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T12:34:12.603Z",
-      "updatedAt": "2025-09-15T12:34:12.603Z"
+      "lastSyncedAt": "2025-09-15T14:08:39.522Z",
+      "updatedAt": "2025-09-15T14:08:39.522Z"
     },
     "GPjQsf3lznpuECv5Q7Ap": {
       "smoobuId": "73292873",
@@ -27495,8 +27494,8 @@
         }
       ],
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T12:34:16.165Z",
-      "updatedAt": "2025-09-15T12:34:16.165Z"
+      "lastSyncedAt": "2025-09-15T14:08:39.925Z",
+      "updatedAt": "2025-09-15T14:08:39.926Z"
     },
     "GWawfjFgKugSsqib4GCX": {
       "smoobuId": "105254346",
@@ -27781,8 +27780,8 @@
       "commission": 0,
       "channelName": "Website",
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:48:08.139Z",
-      "updatedAt": "2025-09-15T12:48:08.139Z"
+      "lastSyncedAt": "2025-09-15T14:08:40.344Z",
+      "updatedAt": "2025-09-15T14:08:40.344Z"
     },
     "GY44eMkKCw5SO0zV014W": {
       "smoobuId": "69008801",
@@ -28132,6 +28131,21 @@
       "id": "GbODjIy5b3VdvjAw5dTy",
       "checkOutTime": "",
       "apartmentId": 2565753,
+      "extras": [
+        {
+          "name": "L'essentiel (pour 2)",
+          "amount": 85,
+          "quantity": 1,
+          "type": "addon",
+          "id": 319597381,
+          "currencyCode": "EUR",
+          "extraPersonQuantity": 0,
+          "extraPersonPrice": 0,
+          "extraPersonAmount": 0,
+          "extraPersonName": "Personne supplémentaire",
+          "hasExtraPerson": false
+        }
+      ],
       "priceDetails": {
         "basePrice": 240,
         "linenFee": 0,
@@ -28197,23 +28211,8 @@
           "startingAtGuest": 2
         }
       },
-      "extras": [
-        {
-          "name": "L'essentiel (pour 2)",
-          "amount": 85,
-          "quantity": 1,
-          "type": "addon",
-          "id": 319597381,
-          "currencyCode": "EUR",
-          "extraPersonQuantity": 0,
-          "extraPersonPrice": 0,
-          "extraPersonAmount": 0,
-          "extraPersonName": "Personne supplémentaire",
-          "hasExtraPerson": false
-        }
-      ],
-      "lastSyncedAt": "2025-09-15T12:48:11.841Z",
-      "updatedAt": "2025-09-15T12:48:11.841Z"
+      "lastSyncedAt": "2025-09-15T14:08:40.774Z",
+      "updatedAt": "2025-09-15T14:08:40.774Z"
     },
     "GbeWbX3SFocgnkySldY1": {
       "smoobuId": "72355173",
@@ -29073,8 +29072,8 @@
       },
       "property": "Le Dôme des Libellules",
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T12:34:13.612Z",
-      "updatedAt": "2025-09-15T12:34:13.612Z"
+      "lastSyncedAt": "2025-09-15T14:08:41.294Z",
+      "updatedAt": "2025-09-15T14:08:41.294Z"
     },
     "H34XuTKOtILlagDLjsXx": {
       "smoobuId": "83786478",
@@ -29282,6 +29281,161 @@
         }
       },
       "lastSyncedAt": "2025-08-24T00:00:29.442Z"
+    },
+    "H5FJ1aKhNrKE1vC3Lv3l": {
+      "smoobuId": "111393221",
+      "smoobuReservationId": 111393221,
+      "firstName": "flavie",
+      "lastName": "loukili",
+      "guestName": "flavie loukili",
+      "email": "flavieguiller@gmail.com",
+      "phone": "0663185268",
+      "street": "1 ruelle aux loups",
+      "postalCode": "60000",
+      "location": "beauvais",
+      "country": "france",
+      "adults": 2,
+      "children": 0,
+      "arrivalDate": "2025-09-21",
+      "departureDate": "2025-09-22",
+      "arrivalTime": "17:00",
+      "departureTime": "10:00",
+      "checkInTime": "17:00",
+      "checkOutTime": "10:00",
+      "nights": 1,
+      "notice": "REGIME ALIMENTAIRE HALAL\nweek end de noce ",
+      "apartmentId": "1946282",
+      "property": "Le Dôme des Libellules",
+      "channelId": 2323525,
+      "channelName": "Homepage",
+      "portalName": "Website",
+      "price": 215,
+      "basePrice": 200,
+      "guestFees": 0,
+      "deposit": 0,
+      "depositStatus": 1,
+      "priceStatus": 1,
+      "paymentIntentId": "pi_3S8K2fHkTpmdfEQC1UQNvHud",
+      "stripePaymentStatus": "succeeded",
+      "extras": [
+        {
+          "id": "formulePetitDej",
+          "name": "Formule petit-déjeuner (2 pers)",
+          "nameKeyForClient": "extras.formulesRepas.breakfast.name",
+          "originalConfigNameKey": "extras.formulesRepas.breakfast.name",
+          "quantity": 1,
+          "amount": 35,
+          "currencyCode": "EUR",
+          "type": "addon",
+          "extraPersonPrice": 10,
+          "extraPersonQuantity": 0,
+          "extraPersonAmount": 0,
+          "extraPersonName": "Personne supplémentaire",
+          "hasExtraPerson": false
+        }
+      ],
+      "processedFreeDrinks": [],
+      "priceBreakdown": {
+        "roomBasePrice": 200,
+        "calculatedExtrasTotal": 35,
+        "calculatedGuestFees": 0,
+        "subtotal": 235,
+        "appliedLongStayDiscount": 0,
+        "totalAfterLongStayDiscount": 235,
+        "appliedCouponDiscount": 20,
+        "finalPayableAmount": 215,
+        "priceElementsForSmoobu": [
+          {
+            "id": "1758110619422-base",
+            "amount": 200,
+            "currencyCode": "EUR",
+            "name": "Prix de base",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "base",
+            "priceIncludedInId": null
+          },
+          {
+            "id": "formulePetitDej-mainItemSmoobu",
+            "amount": 35,
+            "currencyCode": "EUR",
+            "name": "Formule petit-déjeuner (2 pers)",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "addon",
+            "priceIncludedInId": null
+          },
+          {
+            "id": "1758110619458-coupon",
+            "amount": -20,
+            "currencyCode": "EUR",
+            "name": "Code Promo: LETSGOMYLOVE (-10%)",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "discount",
+            "priceIncludedInId": null
+          }
+        ]
+      },
+      "priceDetailsSnapshot": {
+        "originalPrice": 200,
+        "guestFees": 0,
+        "cleaningFee": 0,
+        "discount": 0,
+        "finalPrice": 200,
+        "numberOfNights": 1,
+        "priceElements": [
+          {
+            "type": "basePrice",
+            "name": "Prix de base",
+            "amount": 200,
+            "currencyCode": "EUR"
+          }
+        ],
+        "settings": {
+          "maxGuests": 4,
+          "startingAtGuest": 2,
+          "extraGuestsPerNight": 20,
+          "extraChildPerNight": 20,
+          "lengthOfStayDiscount": {
+            "minNights": 0,
+            "discountPercentage": 0
+          }
+        },
+        "isAvailable": true
+      },
+      "couponApplied": {
+        "code": "LETSGOMYLOVE",
+        "discount": 20,
+        "type": "percentage",
+        "isGiftVoucher": false,
+        "originalAmount": 0,
+        "percentageValue": 10
+      },
+      "conditions": true,
+      "language": "fr",
+      "spaDateString": null,
+      "spaDateTime": null,
+      "spaEndDateTime": null,
+      "spaSlots": [],
+      "spaBookingPreference": null,
+      "spaInfo": null,
+      "freeDrinkInfo": null,
+      "createdAt": {
+        "_seconds": 1758110618,
+        "_nanoseconds": 533000000
+      },
+      "lastSyncedAt": {
+        "_seconds": 1758110618,
+        "_nanoseconds": 533000000
+      },
+      "updatedAt": {
+        "_seconds": 1758110618,
+        "_nanoseconds": 533000000
+      }
     },
     "H7epVlzsyCztKP141Ha2": {
       "smoobuId": "89282868",
@@ -31011,8 +31165,8 @@
       "paymentIntentId": null,
       "firebaseDocId": "IaSoCFjIshWbLT1y9UfL",
       "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T09:16:39.599Z",
-      "updatedAt": "2025-09-15T09:16:39.599Z"
+      "lastSyncedAt": "2025-09-15T14:08:41.794Z",
+      "updatedAt": "2025-09-15T14:08:41.794Z"
     },
     "Ig7kYFX9VOLw7kWyBQsV": {
       "smoobuId": "97798098",
@@ -31363,8 +31517,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:47:43.836Z",
-      "updatedAt": "2025-09-15T12:47:43.836Z"
+      "lastSyncedAt": "2025-09-15T14:08:18.659Z",
+      "updatedAt": "2025-09-15T14:08:18.659Z"
     },
     "IrAUMhm1QoGtyseCVRox": {
       "smoobuId": "103045638",
@@ -31681,8 +31835,8 @@
       },
       "property": "Le Dôme des Libellules",
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T09:15:44.916Z",
-      "updatedAt": "2025-09-15T09:15:44.916Z"
+      "lastSyncedAt": "2025-09-15T14:08:42.188Z",
+      "updatedAt": "2025-09-15T14:08:42.188Z"
     },
     "IrxM3B0rlUxinrrC4q1F": {
       "smoobuId": "77323773",
@@ -32720,8 +32874,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 440,
-      "lastSyncedAt": "2025-09-15T12:48:12.787Z",
-      "updatedAt": "2025-09-15T12:48:12.788Z"
+      "lastSyncedAt": "2025-09-15T14:08:42.643Z",
+      "updatedAt": "2025-09-15T14:08:42.643Z"
     },
     "JyQFydWdUvaTfHcdWdVt": {
       "smoobuId": "100027448",
@@ -33881,8 +34035,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T12:48:13.865Z",
-      "updatedAt": "2025-09-15T12:48:13.865Z"
+      "lastSyncedAt": "2025-09-15T14:08:43.082Z",
+      "updatedAt": "2025-09-15T14:08:43.082Z"
     },
     "LAA1tk4j1ipRqxKP83AL": {
       "smoobuId": "105608666",
@@ -34429,6 +34583,34 @@
       "commission": 0,
       "channelName": "Website",
       "apartmentId": 2565753,
+      "extras": [
+        {
+          "name": "Formule SPA (2 pers)",
+          "amount": 50,
+          "quantity": 1,
+          "type": "addon",
+          "id": 318584211,
+          "currencyCode": "EUR",
+          "extraPersonQuantity": 0,
+          "extraPersonPrice": 0,
+          "extraPersonAmount": 0,
+          "extraPersonName": "Personne supplémentaire",
+          "hasExtraPerson": false
+        },
+        {
+          "name": "Formule gourmet (2 pers)",
+          "amount": 85,
+          "quantity": 1,
+          "type": "addon",
+          "id": 324784606,
+          "currencyCode": "EUR",
+          "extraPersonQuantity": 0,
+          "extraPersonPrice": 0,
+          "extraPersonAmount": 0,
+          "extraPersonName": "Personne supplémentaire",
+          "hasExtraPerson": false
+        }
+      ],
       "priceDetails": {
         "basePrice": 200,
         "linenFee": 0,
@@ -34488,36 +34670,8 @@
           "startingAtGuest": 2
         }
       },
-      "extras": [
-        {
-          "name": "Formule SPA (2 pers)",
-          "amount": 50,
-          "quantity": 1,
-          "type": "addon",
-          "id": 318584211,
-          "currencyCode": "EUR",
-          "extraPersonQuantity": 0,
-          "extraPersonPrice": 0,
-          "extraPersonAmount": 0,
-          "extraPersonName": "Personne supplémentaire",
-          "hasExtraPerson": false
-        },
-        {
-          "name": "Formule gourmet (2 pers)",
-          "amount": 85,
-          "quantity": 1,
-          "type": "addon",
-          "id": 324784606,
-          "currencyCode": "EUR",
-          "extraPersonQuantity": 0,
-          "extraPersonPrice": 0,
-          "extraPersonAmount": 0,
-          "extraPersonName": "Personne supplémentaire",
-          "hasExtraPerson": false
-        }
-      ],
-      "lastSyncedAt": "2025-09-15T12:48:14.819Z",
-      "updatedAt": "2025-09-15T12:48:14.819Z"
+      "lastSyncedAt": "2025-09-15T14:08:43.524Z",
+      "updatedAt": "2025-09-15T14:08:43.525Z"
     },
     "LMqoQ836zLPSCdadkVRF": {
       "smoobuId": "107963011",
@@ -34798,6 +34952,187 @@
       "lastSyncedAt": "2025-09-15T09:16:42.293Z",
       "updatedAt": "2025-09-15T09:16:42.293Z"
     },
+    "LU7UWMhVAHdzQxPmBzHq": {
+      "smoobuId": "111423996",
+      "smoobuReservationId": 111423996,
+      "firstName": "Guy",
+      "lastName": "Lauwers",
+      "guestName": "Guy Lauwers",
+      "email": "g.lauwers@hotmail.com",
+      "phone": "+32497161956",
+      "street": "Lindestraat 1",
+      "postalCode": "2300",
+      "location": "Turnhout",
+      "country": "België",
+      "adults": 2,
+      "children": 0,
+      "arrivalDate": "2025-10-30",
+      "departureDate": "2025-10-31",
+      "arrivalTime": "17:00",
+      "departureTime": "10:00",
+      "checkInTime": "17:00",
+      "checkOutTime": "10:00",
+      "nights": 1,
+      "notice": "Beste,\nIk zou graag de Spa boeken op 30 oktober van 16u tot 18u, maar ik zie dat het vroegste uur om in te checken pas 17u is. Is dit een probleem, of kunnen we toch al vroeger inchecken?\nAlvast bedankt voor uw antwoord!\nMet vriendelijke groeten,\nGuy Lauwers",
+      "apartmentId": "1946282",
+      "property": "Le Dôme des Libellules",
+      "channelId": 2323525,
+      "channelName": "Homepage",
+      "portalName": "Website",
+      "price": 265,
+      "basePrice": 200,
+      "guestFees": 0,
+      "deposit": 0,
+      "depositStatus": 1,
+      "priceStatus": 1,
+      "paymentIntentId": "pi_3S8NBJHkTpmdfEQC1eoJgg9M",
+      "stripePaymentStatus": "succeeded",
+      "extras": [
+        {
+          "id": "packEssentiel",
+          "name": "L'essentiel (pour 2)",
+          "nameKeyForClient": "extras.packs.essential.name",
+          "originalConfigNameKey": "extras.packs.essential.name",
+          "quantity": 1,
+          "amount": 85,
+          "currencyCode": "EUR",
+          "type": "addon",
+          "extraPersonPrice": 20,
+          "extraPersonQuantity": 0,
+          "extraPersonAmount": 0,
+          "extraPersonName": "Personne supplémentaire",
+          "hasExtraPerson": false
+        }
+      ],
+      "processedFreeDrinks": [],
+      "priceBreakdown": {
+        "roomBasePrice": 200,
+        "calculatedExtrasTotal": 85,
+        "calculatedGuestFees": 0,
+        "subtotal": 285,
+        "appliedLongStayDiscount": 0,
+        "totalAfterLongStayDiscount": 285,
+        "appliedCouponDiscount": 20,
+        "finalPayableAmount": 265,
+        "priceElementsForSmoobu": [
+          {
+            "id": "1758122602436-base",
+            "amount": 200,
+            "currencyCode": "EUR",
+            "name": "Prix de base",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "base",
+            "priceIncludedInId": null
+          },
+          {
+            "id": "packEssentiel-mainItemSmoobu",
+            "amount": 85,
+            "currencyCode": "EUR",
+            "name": "L'essentiel (pour 2)",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "addon",
+            "priceIncludedInId": null
+          },
+          {
+            "id": "1758122601588-coupon",
+            "amount": -20,
+            "currencyCode": "EUR",
+            "name": "Code Promo: LETSGOMYLOVE (-10%)",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "discount",
+            "priceIncludedInId": null
+          }
+        ]
+      },
+      "priceDetailsSnapshot": {
+        "originalPrice": 200,
+        "guestFees": 0,
+        "cleaningFee": 0,
+        "discount": 0,
+        "finalPrice": 200,
+        "numberOfNights": 1,
+        "priceElements": [
+          {
+            "type": "basePrice",
+            "name": "Prix de base",
+            "amount": 200,
+            "currencyCode": "EUR"
+          }
+        ],
+        "settings": {
+          "maxGuests": 4,
+          "startingAtGuest": 2,
+          "extraGuestsPerNight": 20,
+          "extraChildPerNight": 20,
+          "lengthOfStayDiscount": {
+            "minNights": 0,
+            "discountPercentage": 0
+          }
+        },
+        "isAvailable": true
+      },
+      "couponApplied": {
+        "code": "LETSGOMYLOVE",
+        "discount": 20,
+        "type": "percentage",
+        "isGiftVoucher": false,
+        "originalAmount": 0,
+        "percentageValue": 10
+      },
+      "conditions": true,
+      "language": "nl",
+      "spaDateString": null,
+      "freeDrinkInfo": null,
+      "createdAt": {
+        "_seconds": 1758122601,
+        "_nanoseconds": 545000000
+      },
+      "lastSyncedAt": {
+        "_seconds": 1758122601,
+        "_nanoseconds": 545000000
+      },
+      "updatedAt": {
+        "_seconds": 1758122601,
+        "_nanoseconds": 545000000
+      },
+      "spaEndDateTime": {
+        "_seconds": 1761843600,
+        "_nanoseconds": 0
+      },
+      "spaInfo": {
+        "hasSpaTreatment": true,
+        "scheduledDateTime": {
+          "_seconds": 1761836400,
+          "_nanoseconds": 0
+        },
+        "endDateTime": {
+          "_seconds": 1761843600,
+          "_nanoseconds": 0
+        },
+        "preference": "scheduled",
+        "formattedDateTime": "30 octobre 2025 à 16:00",
+        "slots": [
+          "16:00",
+          "17:00"
+        ],
+        "status": "scheduled"
+      },
+      "spaBookingPreference": "scheduled",
+      "spaSlots": [
+        "16:00",
+        "17:00"
+      ],
+      "spaDateTime": {
+        "_seconds": 1761836400,
+        "_nanoseconds": 0
+      }
+    },
     "LaBoy5YubzfKGkjdO0eO": {
       "arrivalDate": "2025-06-17",
       "departureDate": "2025-06-18",
@@ -34883,6 +35218,221 @@
       "stripePaymentStatus": "succeeded",
       "createdAt": "2024-12-30T19:20:02.766Z",
       "updatedAt": "2024-12-30T19:20:02.766Z"
+    },
+    "Lk4ApIDJIQZaS3Izb8SR": {
+      "smoobuId": "111263556",
+      "smoobuReservationId": 111263556,
+      "firstName": "Jérôme ",
+      "lastName": "Deom",
+      "guestName": "Jérôme  Deom",
+      "email": "deomjerome@gmail.com",
+      "phone": "0495712981",
+      "street": "Rue des sources 3",
+      "postalCode": "5080",
+      "location": "Emines",
+      "country": "Belgique",
+      "adults": 2,
+      "children": 0,
+      "arrivalDate": "2025-10-24",
+      "departureDate": "2025-10-25",
+      "arrivalTime": "17:30",
+      "departureTime": "10:00",
+      "checkInTime": "17:30",
+      "checkOutTime": "10:00",
+      "nights": 1,
+      "notice": "",
+      "apartmentId": "2565753",
+      "property": "La Cabane du Chêne",
+      "channelId": 2323525,
+      "channelName": "Homepage",
+      "portalName": "Website",
+      "price": 336,
+      "basePrice": 240,
+      "guestFees": 0,
+      "deposit": 0,
+      "depositStatus": 1,
+      "priceStatus": 1,
+      "paymentIntentId": "pi_3S7wkwHkTpmdfEQC0B4Obt2I",
+      "stripePaymentStatus": "succeeded",
+      "extras": [
+        {
+          "id": "formulePetitDej",
+          "name": "Formule petit-déjeuner (2 pers)",
+          "nameKeyForClient": "extras.formulesRepas.breakfast.name",
+          "originalConfigNameKey": "extras.formulesRepas.breakfast.name",
+          "quantity": 1,
+          "amount": 35,
+          "currencyCode": "EUR",
+          "type": "addon",
+          "extraPersonPrice": 10,
+          "extraPersonQuantity": 0,
+          "extraPersonAmount": 0,
+          "extraPersonName": "Personne supplémentaire",
+          "hasExtraPerson": false
+        },
+        {
+          "id": "formuleBarbecue",
+          "name": "Formule barbecue (2 pers)",
+          "nameKeyForClient": "extras.formulesRepas.barbecue.name",
+          "originalConfigNameKey": "extras.formulesRepas.barbecue.name",
+          "quantity": 1,
+          "amount": 85,
+          "currencyCode": "EUR",
+          "type": "addon",
+          "extraPersonPrice": 20,
+          "extraPersonQuantity": 0,
+          "extraPersonAmount": 0,
+          "extraPersonName": "Personne supplémentaire",
+          "hasExtraPerson": false
+        }
+      ],
+      "processedFreeDrinks": [
+        {
+          "id": "formuleBarbecue-WINE_OFFER_1-cortilBarco",
+          "name": "Formule barbecue (2 pers): Cortil Barco (rouge)",
+          "grantorNameKeyForClient": "extras.formulesRepas.barbecue.name",
+          "drinkNameKeyForClient": "drinkNames.cortilBarco",
+          "choiceNameKeyForClient": null,
+          "quantity": 1,
+          "isFree": true,
+          "paidExtraGrantor": "Formule barbecue (2 pers)",
+          "offerKey": "WINE_OFFER_1",
+          "offerType": "wine_choice",
+          "chooseNonAlcoholicLater": false,
+          "drinkDetails": "Cortil Barco (rouge)",
+          "drinkId": "cortilBarco"
+        }
+      ],
+      "priceBreakdown": {
+        "roomBasePrice": 240,
+        "calculatedExtrasTotal": 120,
+        "calculatedGuestFees": 0,
+        "subtotal": 360,
+        "appliedLongStayDiscount": 0,
+        "totalAfterLongStayDiscount": 360,
+        "appliedCouponDiscount": 24,
+        "finalPayableAmount": 336,
+        "priceElementsForSmoobu": [
+          {
+            "id": "1758021000672-base",
+            "amount": 240,
+            "currencyCode": "EUR",
+            "name": "Prix de base",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "base",
+            "priceIncludedInId": null
+          },
+          {
+            "id": "formulePetitDej-mainItemSmoobu",
+            "amount": 35,
+            "currencyCode": "EUR",
+            "name": "Formule petit-déjeuner (2 pers)",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "addon",
+            "priceIncludedInId": null
+          },
+          {
+            "id": "formuleBarbecue-mainItemSmoobu",
+            "amount": 85,
+            "currencyCode": "EUR",
+            "name": "Formule barbecue (2 pers)",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "addon",
+            "priceIncludedInId": null
+          },
+          {
+            "id": "1758021001081-coupon",
+            "amount": -24,
+            "currencyCode": "EUR",
+            "name": "Code Promo: LETSGOMYLOVE (-10%)",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "discount",
+            "priceIncludedInId": null
+          }
+        ]
+      },
+      "priceDetailsSnapshot": {
+        "originalPrice": 240,
+        "guestFees": 0,
+        "cleaningFee": 0,
+        "discount": 0,
+        "finalPrice": 240,
+        "numberOfNights": 1,
+        "priceElements": [
+          {
+            "type": "basePrice",
+            "name": "Prix de base",
+            "amount": 240,
+            "currencyCode": "EUR"
+          }
+        ],
+        "settings": {
+          "maxGuests": 2,
+          "startingAtGuest": 2,
+          "extraGuestsPerNight": 0,
+          "extraChildPerNight": 0,
+          "lengthOfStayDiscount": {
+            "minNights": 0,
+            "discountPercentage": 0
+          }
+        },
+        "isAvailable": true
+      },
+      "couponApplied": {
+        "code": "LETSGOMYLOVE",
+        "discount": 24,
+        "type": "percentage",
+        "isGiftVoucher": false,
+        "originalAmount": 0,
+        "percentageValue": 10
+      },
+      "conditions": true,
+      "language": "fr",
+      "spaDateString": null,
+      "spaDateTime": null,
+      "spaEndDateTime": null,
+      "spaSlots": [],
+      "spaBookingPreference": null,
+      "spaInfo": null,
+      "freeDrinkInfo": {
+        "hasFreeDrinks": true,
+        "items": [
+          {
+            "name": "Formule barbecue (2 pers): Cortil Barco (rouge)",
+            "grantorNameKeyForClient": "extras.formulesRepas.barbecue.name",
+            "choiceNameKeyForClient": null,
+            "drinkNameKeyForClient": "drinkNames.cortilBarco",
+            "quantity": 1,
+            "isFree": true,
+            "offerKey": "WINE_OFFER_1",
+            "offerType": "wine_choice",
+            "chooseNonAlcoholicLater": false,
+            "drinkId": "cortilBarco"
+          }
+        ],
+        "needsNonAlcoholicChoice": false,
+        "nonAlcoholicChoiceGrantors": []
+      },
+      "createdAt": {
+        "_seconds": 1758021001,
+        "_nanoseconds": 369000000
+      },
+      "lastSyncedAt": {
+        "_seconds": 1758021001,
+        "_nanoseconds": 369000000
+      },
+      "updatedAt": {
+        "_seconds": 1758021001,
+        "_nanoseconds": 369000000
+      }
     },
     "MChK1f9utdxrXSAy5hMP": {
       "smoobuId": "109863606",
@@ -35549,8 +36099,8 @@
       "firebaseDocId": "Ml0Id8TBtj0BbXQkCBiz",
       "stripePaymentStatus": null,
       "type": "modification of booking",
-      "lastSyncedAt": "2025-09-15T12:48:15.832Z",
-      "updatedAt": "2025-09-15T12:48:15.832Z"
+      "lastSyncedAt": "2025-09-15T14:08:43.933Z",
+      "updatedAt": "2025-09-15T14:08:43.933Z"
     },
     "MvYAF2qkLBvu3kQKJLLy": {
       "smoobuId": "70067251",
@@ -37051,67 +37601,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:48:16.805Z",
-      "updatedAt": "2025-09-15T12:48:16.806Z"
-    },
-    "O5u09zjC9Wy4C0kbBGRz": {
-      "smoobuId": "106401731",
-      "smoobuReservationId": 106401731,
-      "createdAt": "2025-08-04 15:19",
-      "firstName": "Unknown",
-      "lastName": "Guest",
-      "guestName": "Unknown Guest",
-      "email": "",
-      "phone": "",
-      "address": "",
-      "adults": 0,
-      "children": 0,
-      "arrivalDate": "2025-09-13",
-      "departureDate": "2025-09-14",
-      "checkInTime": "17:00",
-      "checkOutTime": "10:00",
-      "apartmentId": 1644643,
-      "property": "La Bulle du Ruisseau",
-      "channelId": 2323516,
-      "channelName": "Blocked channel",
-      "portalName": "Blocked channel",
-      "price": 0,
-      "basePrice": 0,
-      "linenFee": 0,
-      "commission": 0,
-      "extras": [],
-      "nights": 1,
-      "priceDetails": {
-        "basePrice": 0,
-        "linenFee": 0,
-        "commission": 0,
-        "longStayDiscount": 0,
-        "couponDiscount": 0,
-        "discount": 0,
-        "extrasTotal": 0,
-        "priceElements": [],
-        "promoCode": null,
-        "calculatedDiscounts": {
-          "longStay": 0,
-          "coupon": 0
-        },
-        "settings": {
-          "extraChildPerNight": 20,
-          "extraGuestsPerNight": 20,
-          "lengthOfStayDiscount": {
-            "discountPercentage": 0,
-            "minNights": 2
-          },
-          "maxGuests": 4,
-          "startingAtGuest": 2
-        }
-      },
-      "paymentIntentId": null,
-      "firebaseDocId": "O5u09zjC9Wy4C0kbBGRz",
-      "stripePaymentStatus": null,
-      "type": "modification of booking",
-      "lastSyncedAt": "2025-09-15T09:16:50.390Z",
-      "updatedAt": "2025-09-15T09:16:50.390Z"
+      "lastSyncedAt": "2025-09-15T14:08:44.361Z",
+      "updatedAt": "2025-09-15T14:08:44.361Z"
     },
     "O8WxOyNLh90XS3o1L8G6": {
       "smoobuId": "106314171",
@@ -37251,8 +37742,8 @@
       },
       "stripePaymentStatus": null,
       "type": "modification of booking",
-      "lastSyncedAt": "2025-09-15T12:47:41.198Z",
-      "updatedAt": "2025-09-15T12:47:41.198Z"
+      "lastSyncedAt": "2025-09-15T14:08:16.129Z",
+      "updatedAt": "2025-09-15T14:08:16.129Z"
     },
     "OUHiC5DsY71vMRnIVXXZ": {
       "smoobuId": "96639198",
@@ -37605,8 +38096,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:48:20.346Z",
-      "updatedAt": "2025-09-15T12:48:20.346Z"
+      "lastSyncedAt": "2025-09-15T14:08:45.316Z",
+      "updatedAt": "2025-09-15T14:08:45.316Z"
     },
     "ObwIErHapFuDxar5w8NK": {
       "smoobuId": "102377723",
@@ -38348,8 +38839,8 @@
       },
       "property": "La Chambre de Blé",
       "basePrice": 480,
-      "lastSyncedAt": "2025-09-15T09:15:53.956Z",
-      "updatedAt": "2025-09-15T09:15:53.956Z"
+      "lastSyncedAt": "2025-09-15T14:08:45.910Z",
+      "updatedAt": "2025-09-15T14:08:45.910Z"
     },
     "Osh61mvTp5SFB2zOKpdt": {
       "extras": [],
@@ -39275,67 +39766,8 @@
       "paymentIntentId": null,
       "firebaseDocId": "PSB8POot47f5YYUdSMey",
       "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T12:48:21.312Z",
-      "updatedAt": "2025-09-15T12:48:21.312Z"
-    },
-    "PZmokn8aMNQQRLVZzCDf": {
-      "smoobuId": "109047291",
-      "smoobuReservationId": 109047291,
-      "createdAt": "2025-08-28 13:30",
-      "type": "reservation",
-      "firstName": "Unknown",
-      "lastName": "Guest",
-      "guestName": "Unknown Guest",
-      "email": "",
-      "phone": "",
-      "address": "",
-      "adults": 0,
-      "children": 0,
-      "arrivalDate": "2025-09-17",
-      "departureDate": "2025-09-18",
-      "checkInTime": "17:00",
-      "checkOutTime": "10:00",
-      "apartmentId": 1946279,
-      "property": "Le Moulin",
-      "channelId": 2323516,
-      "channelName": "Blocked channel",
-      "portalName": "Blocked channel",
-      "price": 0,
-      "basePrice": 0,
-      "linenFee": 0,
-      "commission": 0,
-      "extras": [],
-      "nights": 1,
-      "priceDetails": {
-        "basePrice": 0,
-        "linenFee": 0,
-        "commission": 0,
-        "longStayDiscount": 0,
-        "couponDiscount": 0,
-        "discount": 0,
-        "extrasTotal": 0,
-        "priceElements": [],
-        "promoCode": null,
-        "calculatedDiscounts": {
-          "longStay": 0,
-          "coupon": 0
-        },
-        "settings": {
-          "extraChildPerNight": 20,
-          "extraGuestsPerNight": 20,
-          "lengthOfStayDiscount": {
-            "discountPercentage": 0,
-            "minNights": 2
-          },
-          "maxGuests": 4,
-          "startingAtGuest": 2
-        }
-      },
-      "paymentIntentId": null,
-      "firebaseDocId": "PZmokn8aMNQQRLVZzCDf",
-      "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T09:16:54.485Z",
-      "updatedAt": "2025-09-15T09:16:54.485Z"
+      "lastSyncedAt": "2025-09-15T14:08:46.333Z",
+      "updatedAt": "2025-09-15T14:08:46.333Z"
     },
     "PaiLSLGvJjO2DqHXMjem": {
       "smoobuId": "110930456",
@@ -39445,6 +39877,185 @@
       "updatedAt": {
         "_seconds": 1757763855,
         "_nanoseconds": 468000000
+      }
+    },
+    "PbSUW9ZYhJF3RsIInYKv": {
+      "smoobuId": "111267366",
+      "smoobuReservationId": 111267366,
+      "firstName": "Luna",
+      "lastName": "Caxton",
+      "guestName": "Luna Caxton",
+      "email": "luna-luca@hotmail.com",
+      "phone": "0479851175",
+      "street": "Rue Noël sart culpart 103",
+      "postalCode": "6060",
+      "location": "6060 - Gilly",
+      "country": "Belgique",
+      "adults": 2,
+      "children": 0,
+      "arrivalDate": "2026-05-16",
+      "departureDate": "2026-05-17",
+      "arrivalTime": "17:00",
+      "departureTime": "10:00",
+      "checkInTime": "17:00",
+      "checkOutTime": "10:00",
+      "nights": 1,
+      "notice": "",
+      "apartmentId": "2565753",
+      "property": "La Cabane du Chêne",
+      "channelId": 2323525,
+      "channelName": "Homepage",
+      "portalName": "Website",
+      "price": 390,
+      "basePrice": 240,
+      "guestFees": 0,
+      "deposit": 0,
+      "depositStatus": 1,
+      "priceStatus": 1,
+      "paymentIntentId": "pi_3S7xExHkTpmdfEQC1YhwXYQW",
+      "stripePaymentStatus": "succeeded",
+      "extras": [
+        {
+          "id": "packDetenteGourmet",
+          "name": "Le détente gourmet (pour 2)",
+          "nameKeyForClient": "extras.packs.relaxGourmet.name",
+          "originalConfigNameKey": "extras.packs.relaxGourmet.name",
+          "quantity": 1,
+          "amount": 150,
+          "currencyCode": "EUR",
+          "type": "addon",
+          "extraPersonPrice": 40,
+          "extraPersonQuantity": 0,
+          "extraPersonAmount": 0,
+          "extraPersonName": "Personne supplémentaire",
+          "hasExtraPerson": false
+        }
+      ],
+      "processedFreeDrinks": [
+        {
+          "id": "packDetenteGourmet-WINE_OFFER_1-terreCharlot",
+          "name": "Le détente gourmet (pour 2): Terre Charlot (blanc)",
+          "grantorNameKeyForClient": "extras.packs.relaxGourmet.name",
+          "drinkNameKeyForClient": "drinkNames.terreCharlot",
+          "choiceNameKeyForClient": null,
+          "quantity": 1,
+          "isFree": true,
+          "paidExtraGrantor": "Le détente gourmet (pour 2)",
+          "offerKey": "WINE_OFFER_1",
+          "offerType": "wine_choice",
+          "chooseNonAlcoholicLater": false,
+          "drinkDetails": "Terre Charlot (blanc)",
+          "drinkId": "terreCharlot"
+        }
+      ],
+      "priceBreakdown": {
+        "roomBasePrice": 240,
+        "calculatedExtrasTotal": 150,
+        "calculatedGuestFees": 0,
+        "subtotal": 390,
+        "appliedLongStayDiscount": 0,
+        "totalAfterLongStayDiscount": 390,
+        "appliedCouponDiscount": 0,
+        "finalPayableAmount": 390,
+        "priceElementsForSmoobu": [
+          {
+            "id": "1758022863649-base",
+            "amount": 240,
+            "currencyCode": "EUR",
+            "name": "Prix de base",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "base",
+            "priceIncludedInId": null
+          },
+          {
+            "id": "packDetenteGourmet-mainItemSmoobu",
+            "amount": 150,
+            "currencyCode": "EUR",
+            "name": "Le détente gourmet (pour 2)",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "addon",
+            "priceIncludedInId": null
+          }
+        ]
+      },
+      "priceDetailsSnapshot": {
+        "originalPrice": 240,
+        "guestFees": 0,
+        "cleaningFee": 0,
+        "discount": 0,
+        "finalPrice": 240,
+        "numberOfNights": 1,
+        "priceElements": [
+          {
+            "type": "basePrice",
+            "name": "Prix de base",
+            "amount": 240,
+            "currencyCode": "EUR"
+          }
+        ],
+        "settings": {
+          "maxGuests": 2,
+          "startingAtGuest": 2,
+          "extraGuestsPerNight": 0,
+          "extraChildPerNight": 0,
+          "lengthOfStayDiscount": {
+            "minNights": 0,
+            "discountPercentage": 0
+          }
+        },
+        "isAvailable": true
+      },
+      "couponApplied": null,
+      "conditions": true,
+      "language": "fr",
+      "spaDateString": null,
+      "spaDateTime": null,
+      "spaEndDateTime": null,
+      "spaSlots": [],
+      "spaBookingPreference": "later",
+      "spaInfo": {
+        "hasSpaTreatment": true,
+        "scheduledDateTime": null,
+        "endDateTime": null,
+        "preference": "later",
+        "formattedDateTime": null,
+        "slots": [],
+        "status": "to_be_scheduled"
+      },
+      "freeDrinkInfo": {
+        "hasFreeDrinks": true,
+        "items": [
+          {
+            "name": "Le détente gourmet (pour 2): Terre Charlot (blanc)",
+            "grantorNameKeyForClient": "extras.packs.relaxGourmet.name",
+            "choiceNameKeyForClient": null,
+            "drinkNameKeyForClient": "drinkNames.terreCharlot",
+            "quantity": 1,
+            "isFree": true,
+            "offerKey": "WINE_OFFER_1",
+            "offerType": "wine_choice",
+            "chooseNonAlcoholicLater": false,
+            "drinkId": "terreCharlot"
+          }
+        ],
+        "needsNonAlcoholicChoice": false,
+        "nonAlcoholicChoiceGrantors": []
+      },
+      "createdAt": {
+        "_seconds": 1758022863,
+        "_nanoseconds": 22000000
+      },
+      "lastSyncedAt": {
+        "_seconds": 1758022863,
+        "_nanoseconds": 22000000
+      },
+      "updatedAt": {
+        "_seconds": 1758022863,
+        "_nanoseconds": 22000000
       }
     },
     "PbvM7iAWiqEocKD1yKUX": {
@@ -39646,8 +40257,8 @@
       "paymentIntentId": null,
       "firebaseDocId": "PwCXalidyHaZzPXyPbwl",
       "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T12:47:32.290Z",
-      "updatedAt": "2025-09-15T12:47:32.290Z"
+      "lastSyncedAt": "2025-09-15T14:08:09.432Z",
+      "updatedAt": "2025-09-15T14:08:09.433Z"
     },
     "PwIB6kQQWrU3mLLZpcH7": {
       "smoobuId": "109653121",
@@ -40214,8 +40825,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:47:45.217Z",
-      "updatedAt": "2025-09-15T12:47:45.217Z"
+      "lastSyncedAt": "2025-09-15T14:08:19.978Z",
+      "updatedAt": "2025-09-15T14:08:19.978Z"
     },
     "Q0ZO8AReRqpP2QNP36NM": {
       "smoobuId": "69890021",
@@ -41087,8 +41698,189 @@
         }
       ],
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:48:22.356Z",
-      "updatedAt": "2025-09-15T12:48:22.356Z"
+      "lastSyncedAt": "2025-09-15T14:08:47.303Z",
+      "updatedAt": "2025-09-15T14:08:47.303Z"
+    },
+    "QEYnRhz9SfxaavM2nTEu": {
+      "smoobuId": "111186641",
+      "smoobuReservationId": 111186641,
+      "firstName": "Yanis",
+      "lastName": "Andréadakis",
+      "guestName": "Yanis Andréadakis",
+      "email": "yanis-giorgio@hotmail.com",
+      "phone": "0471284175",
+      "street": "Rue de Quièvremont 58b",
+      "postalCode": "7950",
+      "location": "Chièvres",
+      "country": "Belgique",
+      "adults": 2,
+      "children": 0,
+      "arrivalDate": "2025-10-24",
+      "departureDate": "2025-10-25",
+      "arrivalTime": "17:30",
+      "departureTime": "10:00",
+      "checkInTime": "17:30",
+      "checkOutTime": "10:00",
+      "nights": 1,
+      "notice": "",
+      "apartmentId": "1946282",
+      "property": "Le Dôme des Libellules",
+      "channelId": 2323525,
+      "channelName": "Homepage",
+      "portalName": "Website",
+      "price": 301,
+      "basePrice": 240,
+      "guestFees": 0,
+      "deposit": 0,
+      "depositStatus": 1,
+      "priceStatus": 1,
+      "paymentIntentId": "pi_3S7g2EHkTpmdfEQC0brZiXaA",
+      "stripePaymentStatus": "succeeded",
+      "extras": [
+        {
+          "id": "packEssentiel",
+          "name": "L'essentiel (pour 2)",
+          "nameKeyForClient": "extras.packs.essential.name",
+          "originalConfigNameKey": "extras.packs.essential.name",
+          "quantity": 1,
+          "amount": 85,
+          "currencyCode": "EUR",
+          "type": "addon",
+          "extraPersonPrice": 20,
+          "extraPersonQuantity": 0,
+          "extraPersonAmount": 0,
+          "extraPersonName": "Personne supplémentaire",
+          "hasExtraPerson": false
+        }
+      ],
+      "processedFreeDrinks": [],
+      "priceBreakdown": {
+        "roomBasePrice": 240,
+        "calculatedExtrasTotal": 85,
+        "calculatedGuestFees": 0,
+        "subtotal": 325,
+        "appliedLongStayDiscount": 0,
+        "totalAfterLongStayDiscount": 325,
+        "appliedCouponDiscount": 24,
+        "finalPayableAmount": 301,
+        "priceElementsForSmoobu": [
+          {
+            "id": "1757956717779-base",
+            "amount": 240,
+            "currencyCode": "EUR",
+            "name": "Prix de base",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "base",
+            "priceIncludedInId": null
+          },
+          {
+            "id": "packEssentiel-mainItemSmoobu",
+            "amount": 85,
+            "currencyCode": "EUR",
+            "name": "L'essentiel (pour 2)",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "addon",
+            "priceIncludedInId": null
+          },
+          {
+            "id": "1757956717615-coupon",
+            "amount": -24,
+            "currencyCode": "EUR",
+            "name": "Code Promo: LETSGOMYLOVE (-10%)",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "discount",
+            "priceIncludedInId": null
+          }
+        ]
+      },
+      "priceDetailsSnapshot": {
+        "originalPrice": 240,
+        "guestFees": 0,
+        "cleaningFee": 0,
+        "discount": 0,
+        "finalPrice": 240,
+        "numberOfNights": 1,
+        "priceElements": [
+          {
+            "type": "basePrice",
+            "name": "Prix de base",
+            "amount": 240,
+            "currencyCode": "EUR"
+          }
+        ],
+        "settings": {
+          "maxGuests": 4,
+          "startingAtGuest": 2,
+          "extraGuestsPerNight": 20,
+          "extraChildPerNight": 20,
+          "lengthOfStayDiscount": {
+            "minNights": 0,
+            "discountPercentage": 0
+          }
+        },
+        "isAvailable": true
+      },
+      "couponApplied": {
+        "code": "LETSGOMYLOVE",
+        "discount": 24,
+        "type": "percentage",
+        "isGiftVoucher": false,
+        "originalAmount": 0,
+        "percentageValue": 10
+      },
+      "conditions": true,
+      "language": "fr",
+      "spaDateString": "2025-10-25",
+      "spaDateTime": {
+        "_seconds": 1761382800,
+        "_nanoseconds": 0
+      },
+      "spaEndDateTime": {
+        "_seconds": 1761390000,
+        "_nanoseconds": 0
+      },
+      "spaSlots": [
+        "11:00",
+        "12:00"
+      ],
+      "spaBookingPreference": "scheduled",
+      "spaInfo": {
+        "hasSpaTreatment": true,
+        "scheduledDateTime": {
+          "_seconds": 1761382800,
+          "_nanoseconds": 0
+        },
+        "endDateTime": {
+          "_seconds": 1761390000,
+          "_nanoseconds": 0
+        },
+        "preference": "scheduled",
+        "formattedDateTime": "25 octobre 2025 à 11:00",
+        "slots": [
+          "11:00",
+          "12:00"
+        ],
+        "status": "scheduled"
+      },
+      "freeDrinkInfo": null,
+      "createdAt": {
+        "_seconds": 1757956717,
+        "_nanoseconds": 644000000
+      },
+      "lastSyncedAt": {
+        "_seconds": 1757956717,
+        "_nanoseconds": 644000000
+      },
+      "updatedAt": {
+        "_seconds": 1757956717,
+        "_nanoseconds": 644000000
+      }
     },
     "QEwvBzJYGwp8vCDFzlQn": {
       "smoobuId": "109482126",
@@ -41847,8 +42639,8 @@
       "commission": 0,
       "channelName": "Website",
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:48:23.302Z",
-      "updatedAt": "2025-09-15T12:48:23.302Z"
+      "lastSyncedAt": "2025-09-15T14:08:47.846Z",
+      "updatedAt": "2025-09-15T14:08:47.846Z"
     },
     "QU1lT7Uo3uFo3GMdmUO7": {
       "smoobuId": "100792438",
@@ -44299,8 +45091,8 @@
         "_nanoseconds": 0
       },
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T09:17:00.544Z",
-      "updatedAt": "2025-09-15T09:17:00.544Z"
+      "lastSyncedAt": "2025-09-15T14:08:48.288Z",
+      "updatedAt": "2025-09-15T14:08:48.288Z"
     },
     "SCXzJh2SXXwM3IDwaXfW": {
       "smoobuId": "94148334",
@@ -45100,8 +45892,8 @@
         "_nanoseconds": 0
       },
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T09:15:50.634Z",
-      "updatedAt": "2025-09-15T09:15:50.635Z"
+      "lastSyncedAt": "2025-09-15T14:08:48.731Z",
+      "updatedAt": "2025-09-15T14:08:48.731Z"
     },
     "Snn0YmFrkVHcCcUXkmtk": {
       "smoobuId": "70410651",
@@ -45792,8 +46584,8 @@
       "checkOutTime": "",
       "checkInTime": "",
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:48:26.996Z",
-      "updatedAt": "2025-09-15T12:48:26.996Z"
+      "lastSyncedAt": "2025-09-15T14:08:49.142Z",
+      "updatedAt": "2025-09-15T14:08:49.142Z"
     },
     "TOE1EPFOuTosmyRY9tNO": {
       "smoobuId": "109406506",
@@ -46357,8 +47149,8 @@
       ],
       "stripePaymentStatus": null,
       "type": "modification of booking",
-      "lastSyncedAt": "2025-09-15T09:17:03.440Z",
-      "updatedAt": "2025-09-15T09:17:03.440Z"
+      "lastSyncedAt": "2025-09-15T14:08:49.635Z",
+      "updatedAt": "2025-09-15T14:08:49.635Z"
     },
     "Tu1kf9Cha34jYqWSW04Z": {
       "smoobuId": "105897786",
@@ -46503,8 +47295,8 @@
       "channelName": "Website",
       "type": "modification of booking",
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:47:42.237Z",
-      "updatedAt": "2025-09-15T12:47:42.237Z"
+      "lastSyncedAt": "2025-09-15T14:08:17.224Z",
+      "updatedAt": "2025-09-15T14:08:17.224Z"
     },
     "TubqSQjALgeUb6zWJ0TJ": {
       "smoobuId": "92721228",
@@ -47035,8 +47827,8 @@
       "firebaseDocId": "UJvDbjSLqfyu2QrwpTuC",
       "stripePaymentStatus": null,
       "type": "modification of booking",
-      "lastSyncedAt": "2025-09-15T12:48:32.340Z",
-      "updatedAt": "2025-09-15T12:48:32.341Z"
+      "lastSyncedAt": "2025-09-15T14:08:50.042Z",
+      "updatedAt": "2025-09-15T14:08:50.043Z"
     },
     "UcIQOQMD32gUEak8mV1r": {
       "smoobuId": "94776023",
@@ -47485,8 +48277,8 @@
       "paymentIntentId": null,
       "firebaseDocId": "VQTju0c14mtTlIpnUXb2",
       "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T12:47:44.329Z",
-      "updatedAt": "2025-09-15T12:47:44.329Z"
+      "lastSyncedAt": "2025-09-15T14:08:19.144Z",
+      "updatedAt": "2025-09-15T14:08:19.144Z"
     },
     "VYhCcXa98G6q6uJlUT1N": {
       "smoobuId": "99910678",
@@ -47626,8 +48418,8 @@
       "checkInTime": "",
       "type": "modification of booking",
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:48:39.115Z",
-      "updatedAt": "2025-09-15T12:48:39.115Z"
+      "lastSyncedAt": "2025-09-15T14:08:50.523Z",
+      "updatedAt": "2025-09-15T14:08:50.523Z"
     },
     "Va7rYZFTvFYhGcgmW57h": {
       "smoobuId": "110075636",
@@ -47972,8 +48764,8 @@
       "stripePaymentStatus": null,
       "id": "VgXMMUhun05PPGal2Glr",
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:47:41.728Z",
-      "updatedAt": "2025-09-15T12:47:41.728Z"
+      "lastSyncedAt": "2025-09-15T14:08:16.631Z",
+      "updatedAt": "2025-09-15T14:08:16.631Z"
     },
     "VhDPQLHcXjyx9h49O0le": {
       "smoobuId": "53514917",
@@ -48376,65 +49168,6 @@
         "_nanoseconds": 522000000
       }
     },
-    "W3NeQO2lkRDb26JZD4O9": {
-      "smoobuId": "107192611",
-      "smoobuReservationId": 107192611,
-      "createdAt": "2025-08-11 15:13",
-      "firstName": "Unknown",
-      "lastName": "Guest",
-      "guestName": "Unknown Guest",
-      "email": "",
-      "phone": "",
-      "address": "",
-      "adults": 0,
-      "children": 0,
-      "arrivalDate": "2025-08-29",
-      "departureDate": "2025-08-30",
-      "checkInTime": "17:00",
-      "checkOutTime": "10:00",
-      "apartmentId": 1946282,
-      "property": "Le Dôme des Libellules",
-      "channelId": 2323516,
-      "channelName": "Blocked channel",
-      "portalName": "Blocked channel",
-      "price": 0,
-      "basePrice": 0,
-      "linenFee": 0,
-      "commission": 0,
-      "extras": [],
-      "nights": 1,
-      "priceDetails": {
-        "basePrice": 0,
-        "linenFee": 0,
-        "commission": 0,
-        "longStayDiscount": 0,
-        "couponDiscount": 0,
-        "discount": 0,
-        "extrasTotal": 0,
-        "priceElements": [],
-        "promoCode": null,
-        "calculatedDiscounts": {
-          "longStay": 0,
-          "coupon": 0
-        },
-        "settings": {
-          "extraChildPerNight": 20,
-          "extraGuestsPerNight": 20,
-          "lengthOfStayDiscount": {
-            "discountPercentage": 0,
-            "minNights": 2
-          },
-          "maxGuests": 4,
-          "startingAtGuest": 2
-        }
-      },
-      "paymentIntentId": null,
-      "firebaseDocId": "W3NeQO2lkRDb26JZD4O9",
-      "stripePaymentStatus": null,
-      "type": "modification of booking",
-      "lastSyncedAt": "2025-09-15T12:48:39.924Z",
-      "updatedAt": "2025-09-15T12:48:39.924Z"
-    },
     "W7Obgx3yb953pha2k2KA": {
       "smoobuId": "87199128",
       "createdAt": "2025-02-12 19:50",
@@ -48554,65 +49287,6 @@
         }
       ],
       "updatedAt": "2025-03-16T12:00:01.373Z"
-    },
-    "W81fHBk2YJc17RObtuIA": {
-      "smoobuId": "107314826",
-      "smoobuReservationId": 107314826,
-      "createdAt": "2025-08-12 15:34",
-      "type": "modification of booking",
-      "firstName": "Influenceuse",
-      "lastName": "remke",
-      "guestName": "Influenceuse remke",
-      "email": "",
-      "phone": "",
-      "address": "",
-      "adults": 0,
-      "children": 0,
-      "arrivalDate": "2025-10-04",
-      "departureDate": "2025-10-05",
-      "checkInTime": "",
-      "checkOutTime": "",
-      "apartmentId": 2565753,
-      "property": "La Cabane du Chêne",
-      "channelId": 2323516,
-      "channelName": "Blocked channel",
-      "portalName": "Blocked channel",
-      "price": 0,
-      "basePrice": 0,
-      "linenFee": 0,
-      "commission": 0,
-      "extras": [],
-      "nights": 1,
-      "priceDetails": {
-        "basePrice": 0,
-        "linenFee": 0,
-        "commission": 0,
-        "longStayDiscount": 0,
-        "couponDiscount": 0,
-        "discount": 0,
-        "extrasTotal": 0,
-        "priceElements": [],
-        "promoCode": null,
-        "calculatedDiscounts": {
-          "longStay": 0,
-          "coupon": 0
-        },
-        "settings": {
-          "extraChildPerNight": 20,
-          "extraGuestsPerNight": 20,
-          "lengthOfStayDiscount": {
-            "discountPercentage": 0,
-            "minNights": 2
-          },
-          "maxGuests": 4,
-          "startingAtGuest": 2
-        }
-      },
-      "paymentIntentId": null,
-      "firebaseDocId": "W81fHBk2YJc17RObtuIA",
-      "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T09:17:08.712Z",
-      "updatedAt": "2025-09-15T09:17:08.712Z"
     },
     "WHesv3u6xZgzGaazdnqJ": {
       "smoobuId": "90298973",
@@ -49891,8 +50565,8 @@
         "_nanoseconds": 0
       },
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T09:15:50.158Z",
-      "updatedAt": "2025-09-15T09:15:50.158Z"
+      "lastSyncedAt": "2025-09-15T14:08:51.289Z",
+      "updatedAt": "2025-09-15T14:08:51.290Z"
     },
     "X3lWWdpLfqAWlxOZSNyf": {
       "smoobuId": "74702363",
@@ -50177,8 +50851,8 @@
       "firebaseDocId": "X7TwkC6URhBAaf8fVCMT",
       "checkOutTime": "",
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:47:35.679Z",
-      "updatedAt": "2025-09-15T12:47:35.679Z"
+      "lastSyncedAt": "2025-09-15T14:08:13.073Z",
+      "updatedAt": "2025-09-15T14:08:13.073Z"
     },
     "X91lt0bVsWmYPqX1QXyg": {
       "smoobuId": "72427428",
@@ -51006,65 +51680,6 @@
       "lastSyncedAt": "2025-09-15T09:17:09.757Z",
       "updatedAt": "2025-09-15T09:17:09.757Z"
     },
-    "XpGjcnuwRhy7dVsmooL9": {
-      "smoobuId": "110018796",
-      "smoobuReservationId": 110018796,
-      "createdAt": "2025-09-05 10:28",
-      "type": "reservation",
-      "firstName": "Unknown",
-      "lastName": "Guest",
-      "guestName": "Unknown Guest",
-      "email": "",
-      "phone": "",
-      "address": "",
-      "adults": 0,
-      "children": 0,
-      "arrivalDate": "2025-09-11",
-      "departureDate": "2025-09-12",
-      "checkInTime": "17:00",
-      "checkOutTime": "10:00",
-      "apartmentId": 1644643,
-      "property": "La Bulle du Ruisseau",
-      "channelId": 4810028,
-      "channelName": "NatuurHuisje",
-      "portalName": "NatuurHuisje",
-      "price": 0,
-      "basePrice": 0,
-      "linenFee": 0,
-      "commission": 0,
-      "extras": [],
-      "nights": 1,
-      "priceDetails": {
-        "basePrice": 0,
-        "linenFee": 0,
-        "commission": 0,
-        "longStayDiscount": 0,
-        "couponDiscount": 0,
-        "discount": 0,
-        "extrasTotal": 0,
-        "priceElements": [],
-        "promoCode": null,
-        "calculatedDiscounts": {
-          "longStay": 0,
-          "coupon": 0
-        },
-        "settings": {
-          "extraChildPerNight": 20,
-          "extraGuestsPerNight": 20,
-          "lengthOfStayDiscount": {
-            "discountPercentage": 0,
-            "minNights": 2
-          },
-          "maxGuests": 4,
-          "startingAtGuest": 2
-        }
-      },
-      "paymentIntentId": null,
-      "firebaseDocId": "XpGjcnuwRhy7dVsmooL9",
-      "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T09:17:11.016Z",
-      "updatedAt": "2025-09-15T09:17:11.016Z"
-    },
     "XuHztWe2A0NhYqDd3WSb": {
       "extras": [],
       "arrivalDate": "2025-05-01",
@@ -51381,8 +51996,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T12:34:16.582Z",
-      "updatedAt": "2025-09-15T12:34:16.582Z"
+      "lastSyncedAt": "2025-09-15T14:08:52.203Z",
+      "updatedAt": "2025-09-15T14:08:52.203Z"
     },
     "YCM0q4bxsnPYNE3nfGpJ": {
       "smoobuId": "101468558",
@@ -51441,8 +52056,8 @@
       "stripePaymentStatus": null,
       "id": "YCM0q4bxsnPYNE3nfGpJ",
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:47:39.627Z",
-      "updatedAt": "2025-09-15T12:47:39.627Z"
+      "lastSyncedAt": "2025-09-15T14:08:14.479Z",
+      "updatedAt": "2025-09-15T14:08:14.479Z"
     },
     "YDrZIGnEv1itPBEy6xsn": {
       "smoobuId": "101306298",
@@ -52034,8 +52649,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T09:15:44.520Z",
-      "updatedAt": "2025-09-15T09:15:44.520Z"
+      "lastSyncedAt": "2025-09-15T14:08:52.666Z",
+      "updatedAt": "2025-09-15T14:08:52.666Z"
     },
     "YcGbwgpPRL4SZsCiQDMI": {
       "smoobuId": "93370319",
@@ -53132,8 +53747,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:47:45.758Z",
-      "updatedAt": "2025-09-15T12:47:45.758Z"
+      "lastSyncedAt": "2025-09-15T14:08:20.440Z",
+      "updatedAt": "2025-09-15T14:08:20.440Z"
     },
     "Z2Z9qVKZCgierwqoQkMQ": {
       "smoobuId": "93838104",
@@ -54416,8 +55031,8 @@
         }
       ],
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:48:43.894Z",
-      "updatedAt": "2025-09-15T12:48:43.894Z"
+      "lastSyncedAt": "2025-09-15T14:08:53.229Z",
+      "updatedAt": "2025-09-15T14:08:53.229Z"
     },
     "ZbyHamAm7ukXUHB7x0Bo": {
       "smoobuId": "102881358",
@@ -54958,8 +55573,8 @@
         }
       ],
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:48:44.799Z",
-      "updatedAt": "2025-09-15T12:48:44.799Z"
+      "lastSyncedAt": "2025-09-15T14:08:53.698Z",
+      "updatedAt": "2025-09-15T14:08:53.698Z"
     },
     "ZzG7Y9byse8m0HFsjife": {
       "smoobuId": "98766738",
@@ -55971,8 +56586,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T09:15:48.606Z",
-      "updatedAt": "2025-09-15T09:15:48.606Z"
+      "lastSyncedAt": "2025-09-15T14:08:54.306Z",
+      "updatedAt": "2025-09-15T14:08:54.306Z"
     },
     "aUGpLUWH2cZW7qR2hIe8": {
       "smoobuId": "96265723",
@@ -57190,8 +57805,8 @@
       "paymentIntentId": null,
       "firebaseDocId": "bHKoE8fuCUWukm89hmR7",
       "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T12:48:46.369Z",
-      "updatedAt": "2025-09-15T12:48:46.369Z"
+      "lastSyncedAt": "2025-09-15T14:08:54.991Z",
+      "updatedAt": "2025-09-15T14:08:54.991Z"
     },
     "bIzKcamo8UFeHwTe9M77": {
       "smoobuId": "80838683",
@@ -58169,8 +58784,8 @@
       },
       "property": "La Bulle du Ruisseau",
       "basePrice": 180,
-      "lastSyncedAt": "2025-09-15T09:15:49.096Z",
-      "updatedAt": "2025-09-15T09:15:49.096Z"
+      "lastSyncedAt": "2025-09-15T14:08:55.468Z",
+      "updatedAt": "2025-09-15T14:08:55.469Z"
     },
     "c0n2F7iUfN2JxCBytgbM": {
       "smoobuId": "108949821",
@@ -58350,7 +58965,6 @@
           "startingAtGuest": 2
         }
       },
-      "property": "La Chambre de Blé",
       "extras": [
         {
           "name": "Formule SPA (2 pers)",
@@ -58366,10 +58980,11 @@
           "hasExtraPerson": false
         }
       ],
-      "apartmentId": 1946276,
       "basePrice": 700,
-      "lastSyncedAt": "2025-09-15T12:34:15.053Z",
-      "updatedAt": "2025-09-15T12:34:15.053Z"
+      "property": "Le Logis",
+      "apartmentId": 1946270,
+      "lastSyncedAt": "2025-09-15T14:08:55.884Z",
+      "updatedAt": "2025-09-15T14:08:55.885Z"
     },
     "c4feATIQd8XJkAMaVaul": {
       "smoobuId": "106858536",
@@ -58886,8 +59501,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T12:34:18.633Z",
-      "updatedAt": "2025-09-15T12:34:18.633Z"
+      "lastSyncedAt": "2025-09-15T14:08:56.424Z",
+      "updatedAt": "2025-09-15T14:08:56.424Z"
     },
     "cCEcga1IZ3wvYJeDe1MI": {
       "smoobuId": "104351664",
@@ -59129,8 +59744,8 @@
         "_nanoseconds": 0
       },
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T09:17:20.426Z",
-      "updatedAt": "2025-09-15T09:17:20.426Z"
+      "lastSyncedAt": "2025-09-15T14:08:56.868Z",
+      "updatedAt": "2025-09-15T14:08:56.868Z"
     },
     "cCiQYPvgoAawFzfyd4pZ": {
       "smoobuId": "73857108",
@@ -60047,8 +60662,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:47:40.109Z",
-      "updatedAt": "2025-09-15T12:47:40.109Z"
+      "lastSyncedAt": "2025-09-15T14:08:15.091Z",
+      "updatedAt": "2025-09-15T14:08:15.091Z"
     },
     "cik75dzh5jCwzjAES7gy": {
       "smoobuId": "72945203",
@@ -60664,8 +61279,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T09:15:46.750Z",
-      "updatedAt": "2025-09-15T09:15:46.750Z"
+      "lastSyncedAt": "2025-09-15T14:08:57.265Z",
+      "updatedAt": "2025-09-15T14:08:57.265Z"
     },
     "dICtEp4fxJK0dSS2XqdL": {
       "smoobuId": "109730666",
@@ -60810,8 +61425,8 @@
       "channelName": "Website",
       "type": "modification of booking",
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T09:17:21.240Z",
-      "updatedAt": "2025-09-15T09:17:21.240Z"
+      "lastSyncedAt": "2025-09-15T14:08:57.848Z",
+      "updatedAt": "2025-09-15T14:08:57.849Z"
     },
     "dOQFWuDcsNWfI9ygTSoF": {
       "smoobuId": "103808843",
@@ -61052,8 +61667,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:48:49.802Z",
-      "updatedAt": "2025-09-15T12:48:49.802Z"
+      "lastSyncedAt": "2025-09-15T14:08:58.265Z",
+      "updatedAt": "2025-09-15T14:08:58.265Z"
     },
     "dQMXUgdEW9jCEtdRYtzf": {
       "smoobuId": "91342403",
@@ -61756,10 +62371,10 @@
       },
       "type": "modification of booking",
       "basePrice": 1075,
-      "property": "La Chambre de Blé",
-      "apartmentId": 1946276,
-      "lastSyncedAt": "2025-09-15T12:48:53.410Z",
-      "updatedAt": "2025-09-15T12:48:53.410Z"
+      "property": "Le Logis",
+      "apartmentId": 1946270,
+      "lastSyncedAt": "2025-09-15T14:08:58.739Z",
+      "updatedAt": "2025-09-15T14:08:58.740Z"
     },
     "dliEw7LeIaO3FZdWDGfd": {
       "smoobuId": "106725236",
@@ -61829,8 +62444,8 @@
         }
       },
       "property": "La Chambre de Blé",
-      "lastSyncedAt": "2025-09-15T09:15:53.467Z",
-      "updatedAt": "2025-09-15T09:15:53.467Z"
+      "lastSyncedAt": "2025-09-15T14:08:59.220Z",
+      "updatedAt": "2025-09-15T14:08:59.220Z"
     },
     "dw0B2pfT9y8QfWPYh78p": {
       "smoobuId": "94592264",
@@ -61941,8 +62556,8 @@
         }
       ],
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:47:44.811Z",
-      "updatedAt": "2025-09-15T12:47:44.811Z"
+      "lastSyncedAt": "2025-09-15T14:08:19.558Z",
+      "updatedAt": "2025-09-15T14:08:19.558Z"
     },
     "e0lVQ5iWDE32vm2Sk3jx": {
       "smoobuId": "102361053",
@@ -62897,65 +63512,6 @@
       "basePrice": 200,
       "updatedAt": "2025-09-02T09:50:42.917Z"
     },
-    "ekM5ff0gkaMxpRWme0sN": {
-      "smoobuId": "108940046",
-      "smoobuReservationId": 108940046,
-      "createdAt": "2025-08-27 14:59",
-      "type": "reservation",
-      "firstName": "Unknown",
-      "lastName": "Guest",
-      "guestName": "Unknown Guest",
-      "email": "",
-      "phone": "",
-      "address": "",
-      "adults": 0,
-      "children": 0,
-      "arrivalDate": "2025-09-07",
-      "departureDate": "2025-09-08",
-      "checkInTime": "17:00",
-      "checkOutTime": "10:00",
-      "apartmentId": 1946276,
-      "property": "La Chambre de Blé",
-      "channelId": 2323516,
-      "channelName": "Blocked channel",
-      "portalName": "Blocked channel",
-      "price": 0,
-      "basePrice": 0,
-      "linenFee": 0,
-      "commission": 0,
-      "extras": [],
-      "nights": 1,
-      "priceDetails": {
-        "basePrice": 0,
-        "linenFee": 0,
-        "commission": 0,
-        "longStayDiscount": 0,
-        "couponDiscount": 0,
-        "discount": 0,
-        "extrasTotal": 0,
-        "priceElements": [],
-        "promoCode": null,
-        "calculatedDiscounts": {
-          "longStay": 0,
-          "coupon": 0
-        },
-        "settings": {
-          "extraChildPerNight": 20,
-          "extraGuestsPerNight": 20,
-          "lengthOfStayDiscount": {
-            "discountPercentage": 0,
-            "minNights": 2
-          },
-          "maxGuests": 4,
-          "startingAtGuest": 2
-        }
-      },
-      "paymentIntentId": null,
-      "firebaseDocId": "ekM5ff0gkaMxpRWme0sN",
-      "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T09:17:24.394Z",
-      "updatedAt": "2025-09-15T09:17:24.394Z"
-    },
     "elpvx5664Y1khbjxIK7v": {
       "smoobuId": "77144753",
       "createdAt": "2024-11-01 18:56",
@@ -63400,8 +63956,8 @@
       "channelName": "Website",
       "type": "modification of booking",
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:47:31.837Z",
-      "updatedAt": "2025-09-15T12:47:31.839Z"
+      "lastSyncedAt": "2025-09-15T14:08:08.866Z",
+      "updatedAt": "2025-09-15T14:08:08.867Z"
     },
     "f0D1Q3o1XEG85AfFIR97": {
       "smoobuId": "100588958",
@@ -63583,8 +64139,8 @@
         }
       ],
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:48:59.579Z",
-      "updatedAt": "2025-09-15T12:48:59.579Z"
+      "lastSyncedAt": "2025-09-15T14:09:00.205Z",
+      "updatedAt": "2025-09-15T14:09:00.205Z"
     },
     "f0uCq41Nx2Ms10CKXUmE": {
       "smoobuId": "69380161",
@@ -66071,8 +66627,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:49:00.965Z",
-      "updatedAt": "2025-09-15T12:49:00.965Z"
+      "lastSyncedAt": "2025-09-15T14:09:00.689Z",
+      "updatedAt": "2025-09-15T14:09:00.689Z"
     },
     "gQJzOhUdrowccwvzOKL5": {
       "smoobuId": "111034181",
@@ -66994,8 +67550,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:49:01.789Z",
-      "updatedAt": "2025-09-15T12:49:01.789Z"
+      "lastSyncedAt": "2025-09-15T14:09:01.104Z",
+      "updatedAt": "2025-09-15T14:09:01.105Z"
     },
     "hRjh21FaxG1PbwRdSqdn": {
       "smoobuId": "109560026",
@@ -68467,7 +69023,6 @@
           "startingAtGuest": 2
         }
       },
-      "property": "La Chambre de Blé",
       "extras": [
         {
           "name": "Formule SPA (2 pers)",
@@ -68483,9 +69038,10 @@
           "hasExtraPerson": true
         }
       ],
-      "apartmentId": 1946276,
-      "lastSyncedAt": "2025-09-15T12:49:02.890Z",
-      "updatedAt": "2025-09-15T12:49:02.890Z"
+      "property": "Le Logis",
+      "apartmentId": 1946270,
+      "lastSyncedAt": "2025-09-15T14:09:01.699Z",
+      "updatedAt": "2025-09-15T14:09:01.699Z"
     },
     "iiRs92N5lsrYwclhGNWJ": {
       "smoobuId": "93686409",
@@ -69038,8 +69594,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:49:03.744Z",
-      "updatedAt": "2025-09-15T12:49:03.744Z"
+      "lastSyncedAt": "2025-09-15T14:09:02.378Z",
+      "updatedAt": "2025-09-15T14:09:02.378Z"
     },
     "ivnn0vHKUKC0XKdhhpVA": {
       "smoobuId": "95526528",
@@ -69400,8 +69956,8 @@
       "commission": 0,
       "channelName": "Website",
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T09:17:35.202Z",
-      "updatedAt": "2025-09-15T09:17:35.202Z"
+      "lastSyncedAt": "2025-09-15T14:09:02.871Z",
+      "updatedAt": "2025-09-15T14:09:02.871Z"
     },
     "jHNfS7Ol7uStQ4aqg2KH": {
       "smoobuId": "108894916",
@@ -69733,8 +70289,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:49:04.639Z",
-      "updatedAt": "2025-09-15T12:49:04.639Z"
+      "lastSyncedAt": "2025-09-15T14:09:03.280Z",
+      "updatedAt": "2025-09-15T14:09:03.280Z"
     },
     "jbBXe0R3Lsa95JTAFxDz": {
       "smoobuId": "77310343",
@@ -70113,8 +70669,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:49:08.033Z",
-      "updatedAt": "2025-09-15T12:49:08.033Z"
+      "lastSyncedAt": "2025-09-15T14:09:03.770Z",
+      "updatedAt": "2025-09-15T14:09:03.771Z"
     },
     "jsCGeExLhK7yqrc4Eokt": {
       "smoobuId": "101521698",
@@ -70392,8 +70948,8 @@
         }
       ],
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:49:11.487Z",
-      "updatedAt": "2025-09-15T12:49:11.488Z"
+      "lastSyncedAt": "2025-09-15T14:09:04.238Z",
+      "updatedAt": "2025-09-15T14:09:04.238Z"
     },
     "jwYjHZmatPS9Ik0QkZNu": {
       "smoobuId": "74896743",
@@ -70721,8 +71277,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:49:12.521Z",
-      "updatedAt": "2025-09-15T12:49:12.521Z"
+      "lastSyncedAt": "2025-09-15T14:09:04.748Z",
+      "updatedAt": "2025-09-15T14:09:04.748Z"
     },
     "k9tF9vrY7ovmTDYju403": {
       "smoobuId": "107593586",
@@ -70983,8 +71539,8 @@
       "firebaseDocId": "kSQoU09QUrUv0HdaK2yS",
       "checkOutTime": "",
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:49:13.332Z",
-      "updatedAt": "2025-09-15T12:49:13.332Z"
+      "lastSyncedAt": "2025-09-15T14:09:05.258Z",
+      "updatedAt": "2025-09-15T14:09:05.258Z"
     },
     "kX1iNeVMREAjSs1PPYc2": {
       "smoobuId": "91791333",
@@ -71441,8 +71997,8 @@
       "commission": 0,
       "channelName": "Website",
       "apartmentId": 1946279,
-      "lastSyncedAt": "2025-09-15T12:47:34.400Z",
-      "updatedAt": "2025-09-15T12:47:34.400Z"
+      "lastSyncedAt": "2025-09-15T14:08:11.592Z",
+      "updatedAt": "2025-09-15T14:08:11.592Z"
     },
     "kyFKODxVWENF6WHiDbtL": {
       "smoobuId": "66743176",
@@ -72648,8 +73204,8 @@
         }
       ],
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:49:14.248Z",
-      "updatedAt": "2025-09-15T12:49:14.248Z"
+      "lastSyncedAt": "2025-09-15T14:09:05.867Z",
+      "updatedAt": "2025-09-15T14:09:05.867Z"
     },
     "lTJdLesdhuuCeCNHRng9": {
       "smoobuId": "102979583",
@@ -73221,8 +73777,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:47:32.804Z",
-      "updatedAt": "2025-09-15T12:47:32.805Z"
+      "lastSyncedAt": "2025-09-15T14:08:09.970Z",
+      "updatedAt": "2025-09-15T14:08:09.970Z"
     },
     "lhJmd4TqDO6s5XexsQuO": {
       "smoobuId": "93687759",
@@ -73738,8 +74294,8 @@
         }
       },
       "property": "Le Dôme des Libellules",
-      "lastSyncedAt": "2025-09-15T12:49:15.366Z",
-      "updatedAt": "2025-09-15T12:49:15.366Z"
+      "lastSyncedAt": "2025-09-15T14:09:06.446Z",
+      "updatedAt": "2025-09-15T14:09:06.446Z"
     },
     "m4poR9yKs3awgJMJTZYI": {
       "smoobuId": "106807776",
@@ -73842,8 +74398,8 @@
       "paymentIntentId": null,
       "firebaseDocId": "m4poR9yKs3awgJMJTZYI",
       "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T12:49:16.483Z",
-      "updatedAt": "2025-09-15T12:49:16.483Z"
+      "lastSyncedAt": "2025-09-15T14:09:06.982Z",
+      "updatedAt": "2025-09-15T14:09:06.982Z"
     },
     "m6pubM5TgVqKva9IaYM1": {
       "smoobuId": "91301048",
@@ -74472,8 +75028,8 @@
         }
       ],
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:47:39.158Z",
-      "updatedAt": "2025-09-15T12:47:39.158Z"
+      "lastSyncedAt": "2025-09-15T14:08:14.080Z",
+      "updatedAt": "2025-09-15T14:08:14.080Z"
     },
     "mZshxyH3DWODF0yDJ65e": {
       "smoobuId": "70803451",
@@ -74850,8 +75406,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:49:19.977Z",
-      "updatedAt": "2025-09-15T12:49:19.977Z"
+      "lastSyncedAt": "2025-09-15T14:09:07.381Z",
+      "updatedAt": "2025-09-15T14:09:07.381Z"
     },
     "moJnofYagOwLuIEuAiWB": {
       "smoobuId": "100942203",
@@ -75659,8 +76215,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T09:15:52.542Z",
-      "updatedAt": "2025-09-15T09:15:52.543Z"
+      "lastSyncedAt": "2025-09-15T14:09:07.919Z",
+      "updatedAt": "2025-09-15T14:09:07.920Z"
     },
     "nEfiPu50n9tj6WI3hieO": {
       "smoobuId": "65889871",
@@ -76110,8 +76666,8 @@
         }
       ],
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:49:20.890Z",
-      "updatedAt": "2025-09-15T12:49:20.890Z"
+      "lastSyncedAt": "2025-09-15T14:09:08.349Z",
+      "updatedAt": "2025-09-15T14:09:08.349Z"
     },
     "nQktQMvQFyV3jCiJKe39": {
       "smoobuId": "99305568",
@@ -76256,8 +76812,8 @@
       "firebaseDocId": "nQktQMvQFyV3jCiJKe39",
       "checkOutTime": "",
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:47:42.728Z",
-      "updatedAt": "2025-09-15T12:47:42.728Z"
+      "lastSyncedAt": "2025-09-15T14:08:17.745Z",
+      "updatedAt": "2025-09-15T14:08:17.746Z"
     },
     "nZRS5GwT3OXwC4EWE1S7": {
       "smoobuId": "109628096",
@@ -77224,8 +77780,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T09:17:49.861Z",
-      "updatedAt": "2025-09-15T09:17:49.861Z"
+      "lastSyncedAt": "2025-09-15T14:09:08.756Z",
+      "updatedAt": "2025-09-15T14:09:08.756Z"
     },
     "oe5Q3x1ZfYBQVhK89kcz": {
       "smoobuId": "72068433",
@@ -77775,8 +78331,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:47:38.778Z",
-      "updatedAt": "2025-09-15T12:47:38.778Z"
+      "lastSyncedAt": "2025-09-15T14:08:13.578Z",
+      "updatedAt": "2025-09-15T14:08:13.578Z"
     },
     "pNFLCbuIdI1WLal6OSUm": {
       "extras": [],
@@ -78543,8 +79099,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:47:35.288Z",
-      "updatedAt": "2025-09-15T12:47:35.289Z"
+      "lastSyncedAt": "2025-09-15T14:08:12.637Z",
+      "updatedAt": "2025-09-15T14:08:12.637Z"
     },
     "ptk85BqUXV6PrgKT41kH": {
       "smoobuId": "67373431",
@@ -79013,8 +79569,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:49:21.832Z",
-      "updatedAt": "2025-09-15T12:49:21.832Z"
+      "lastSyncedAt": "2025-09-15T14:09:09.155Z",
+      "updatedAt": "2025-09-15T14:09:09.155Z"
     },
     "qIQjCPhKHUKuszgiEeQQ": {
       "smoobuId": "94211619",
@@ -79901,8 +80457,153 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1946276,
-      "lastSyncedAt": "2025-09-15T12:49:22.770Z",
-      "updatedAt": "2025-09-15T12:49:22.770Z"
+      "lastSyncedAt": "2025-09-15T14:09:09.668Z",
+      "updatedAt": "2025-09-15T14:09:09.668Z"
+    },
+    "qwjAzg7F9l4ptkvw2dIV": {
+      "smoobuId": "111320776",
+      "smoobuReservationId": 111320776,
+      "firstName": "Sandrine",
+      "lastName": "Mathieu",
+      "guestName": "Sandrine Mathieu",
+      "email": "sandriine_07@hotmail.com",
+      "phone": "0474872255",
+      "street": "Rue de la baronne Lemonnier 4A",
+      "postalCode": "5580",
+      "location": "Lavaux-Sainte-Anne ",
+      "country": "Belgique ",
+      "adults": 2,
+      "children": 0,
+      "arrivalDate": "2025-11-22",
+      "departureDate": "2025-11-23",
+      "arrivalTime": "18:00",
+      "departureTime": "10:00",
+      "checkInTime": "18:00",
+      "checkOutTime": "10:00",
+      "nights": 1,
+      "notice": "",
+      "apartmentId": "2565753",
+      "property": "La Cabane du Chêne",
+      "channelId": 2323525,
+      "channelName": "Homepage",
+      "portalName": "Website",
+      "price": 290,
+      "basePrice": 240,
+      "guestFees": 0,
+      "deposit": 0,
+      "depositStatus": 1,
+      "priceStatus": 1,
+      "paymentIntentId": "pi_3S83xuHkTpmdfEQC1xug56ee",
+      "stripePaymentStatus": "succeeded",
+      "extras": [
+        {
+          "id": "formuleSpa",
+          "name": "Formule SPA (2 pers)",
+          "nameKeyForClient": "extras.spa.basic.name",
+          "originalConfigNameKey": "extras.spa.basic.name",
+          "quantity": 1,
+          "amount": 50,
+          "currencyCode": "EUR",
+          "type": "addon",
+          "extraPersonPrice": 10,
+          "extraPersonQuantity": 0,
+          "extraPersonAmount": 0,
+          "extraPersonName": "Personne supplémentaire",
+          "hasExtraPerson": false
+        }
+      ],
+      "processedFreeDrinks": [],
+      "priceBreakdown": {
+        "roomBasePrice": 240,
+        "calculatedExtrasTotal": 50,
+        "calculatedGuestFees": 0,
+        "subtotal": 290,
+        "appliedLongStayDiscount": 0,
+        "totalAfterLongStayDiscount": 290,
+        "appliedCouponDiscount": 0,
+        "finalPayableAmount": 290,
+        "priceElementsForSmoobu": [
+          {
+            "id": "1758048732273-base",
+            "amount": 240,
+            "currencyCode": "EUR",
+            "name": "Prix de base",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "base",
+            "priceIncludedInId": null
+          },
+          {
+            "id": "formuleSpa-mainItemSmoobu",
+            "amount": 50,
+            "currencyCode": "EUR",
+            "name": "Formule SPA (2 pers)",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "addon",
+            "priceIncludedInId": null
+          }
+        ]
+      },
+      "priceDetailsSnapshot": {
+        "originalPrice": 240,
+        "guestFees": 0,
+        "cleaningFee": 0,
+        "discount": 0,
+        "finalPrice": 240,
+        "numberOfNights": 1,
+        "priceElements": [
+          {
+            "type": "basePrice",
+            "name": "Prix de base",
+            "amount": 240,
+            "currencyCode": "EUR"
+          }
+        ],
+        "settings": {
+          "maxGuests": 2,
+          "startingAtGuest": 2,
+          "extraGuestsPerNight": 0,
+          "extraChildPerNight": 0,
+          "lengthOfStayDiscount": {
+            "minNights": 0,
+            "discountPercentage": 0
+          }
+        },
+        "isAvailable": true
+      },
+      "couponApplied": null,
+      "conditions": true,
+      "language": "fr",
+      "spaDateString": null,
+      "spaDateTime": null,
+      "spaEndDateTime": null,
+      "spaSlots": [],
+      "spaBookingPreference": "later",
+      "spaInfo": {
+        "hasSpaTreatment": true,
+        "scheduledDateTime": null,
+        "endDateTime": null,
+        "preference": "later",
+        "formattedDateTime": null,
+        "slots": [],
+        "status": "to_be_scheduled"
+      },
+      "freeDrinkInfo": null,
+      "createdAt": {
+        "_seconds": 1758048731,
+        "_nanoseconds": 579000000
+      },
+      "lastSyncedAt": {
+        "_seconds": 1758048731,
+        "_nanoseconds": 579000000
+      },
+      "updatedAt": {
+        "_seconds": 1758048731,
+        "_nanoseconds": 579000000
+      }
     },
     "qzSYkfHPMZMUTzDfTswv": {
       "extras": [],
@@ -80467,8 +81168,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T09:15:47.721Z",
-      "updatedAt": "2025-09-15T09:15:47.722Z"
+      "lastSyncedAt": "2025-09-15T14:09:10.097Z",
+      "updatedAt": "2025-09-15T14:09:10.098Z"
     },
     "rOtJlR8cmGJqT6DzvGpY": {
       "smoobuId": "110229666",
@@ -81219,8 +81920,8 @@
       "commission": 0,
       "channelName": "Website",
       "apartmentId": 1946279,
-      "lastSyncedAt": "2025-09-15T12:49:26.347Z",
-      "updatedAt": "2025-09-15T12:49:26.347Z"
+      "lastSyncedAt": "2025-09-15T14:09:10.502Z",
+      "updatedAt": "2025-09-15T14:09:10.502Z"
     },
     "rlTffblqj3rj2QPMUM77": {
       "smoobuId": "104293098",
@@ -81470,8 +82171,8 @@
       "commission": 0,
       "channelName": "Website",
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:49:27.264Z",
-      "updatedAt": "2025-09-15T12:49:27.264Z"
+      "lastSyncedAt": "2025-09-15T14:09:11.017Z",
+      "updatedAt": "2025-09-15T14:09:11.017Z"
     },
     "rm9vTo6xUl7JrXYOzFiV": {
       "smoobuId": "91684858",
@@ -82312,8 +83013,8 @@
       "paymentIntentId": null,
       "firebaseDocId": "scoXQYOjpDQyQ7umGXMI",
       "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T09:17:57.815Z",
-      "updatedAt": "2025-09-15T09:17:57.815Z"
+      "lastSyncedAt": "2025-09-15T14:09:11.528Z",
+      "updatedAt": "2025-09-15T14:09:11.528Z"
     },
     "sgFQAEiLbWTzryFYzMJp": {
       "smoobuId": "100926288",
@@ -83166,6 +83867,116 @@
       "lastSyncedAt": "2025-09-15T09:17:58.888Z",
       "updatedAt": "2025-09-15T09:17:58.888Z"
     },
+    "tPsM85BdYSvieptkNpqt": {
+      "smoobuId": "111189511",
+      "smoobuReservationId": 111189511,
+      "firstName": "Jean-Thomas",
+      "lastName": "Cornelis",
+      "guestName": "Jean-Thomas Cornelis",
+      "email": "jtcornelis@gmail.com",
+      "phone": "0471785512",
+      "street": "Rue des Carillonneurs 44",
+      "postalCode": "1348",
+      "location": "LLN",
+      "country": "Belgique",
+      "adults": 2,
+      "children": 0,
+      "arrivalDate": "2025-10-31",
+      "departureDate": "2025-11-02",
+      "arrivalTime": "18:00",
+      "departureTime": "10:00",
+      "checkInTime": "18:00",
+      "checkOutTime": "10:00",
+      "nights": 2,
+      "notice": "Bonjour, nous nous rejouissons de venir découvrir votre coin de paradis. La bulle permet t-elle un accès à une salle de bain?  Tout le meilleur à vous et à bienôt. Jean-Thomas Cornelis (découvert par Let's Go My Love)",
+      "apartmentId": "1644643",
+      "property": "La Bulle du Ruisseau",
+      "channelId": 2323525,
+      "channelName": "Homepage",
+      "portalName": "Website",
+      "price": 420,
+      "basePrice": 420,
+      "guestFees": 0,
+      "deposit": 0,
+      "depositStatus": 1,
+      "priceStatus": 1,
+      "paymentIntentId": "pi_3S7g7CHkTpmdfEQC01Smo2fs",
+      "stripePaymentStatus": "succeeded",
+      "extras": [],
+      "processedFreeDrinks": [],
+      "priceBreakdown": {
+        "roomBasePrice": 420,
+        "calculatedExtrasTotal": 0,
+        "calculatedGuestFees": 0,
+        "subtotal": 420,
+        "appliedLongStayDiscount": 0,
+        "totalAfterLongStayDiscount": 420,
+        "appliedCouponDiscount": 0,
+        "finalPayableAmount": 420,
+        "priceElementsForSmoobu": [
+          {
+            "id": "1757958105764-base",
+            "amount": 420,
+            "currencyCode": "EUR",
+            "name": "Prix de base",
+            "quantity": 1,
+            "sortOrder": null,
+            "tax": null,
+            "type": "base",
+            "priceIncludedInId": null
+          }
+        ]
+      },
+      "priceDetailsSnapshot": {
+        "originalPrice": 420,
+        "guestFees": 0,
+        "cleaningFee": 0,
+        "discount": 0,
+        "finalPrice": 420,
+        "numberOfNights": 2,
+        "priceElements": [
+          {
+            "type": "basePrice",
+            "name": "Prix de base",
+            "amount": 420,
+            "currencyCode": "EUR"
+          }
+        ],
+        "settings": {
+          "maxGuests": 2,
+          "startingAtGuest": 2,
+          "extraGuestsPerNight": 0,
+          "extraChildPerNight": 0,
+          "lengthOfStayDiscount": {
+            "minNights": 0,
+            "discountPercentage": 0
+          }
+        },
+        "isAvailable": true
+      },
+      "couponApplied": null,
+      "conditions": true,
+      "language": "fr",
+      "spaDateString": null,
+      "spaDateTime": null,
+      "spaEndDateTime": null,
+      "spaSlots": [],
+      "spaBookingPreference": null,
+      "spaInfo": null,
+      "freeDrinkInfo": null,
+      "createdAt": {
+        "_seconds": 1757958105,
+        "_nanoseconds": 428000000
+      },
+      "lastSyncedAt": {
+        "_seconds": 1757958105,
+        "_nanoseconds": 428000000
+      },
+      "updatedAt": {
+        "_seconds": 1757958105,
+        "_nanoseconds": 428000000
+      }
+    },
     "tTA4VoobUu7xp7UzmrQU": {
       "smoobuId": "94109824",
       "smoobuReservationId": 94109824,
@@ -83947,8 +84758,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:49:28.268Z",
-      "updatedAt": "2025-09-15T12:49:28.268Z"
+      "lastSyncedAt": "2025-09-15T14:09:12.114Z",
+      "updatedAt": "2025-09-15T14:09:12.114Z"
     },
     "tr69mu8DuqtYliAjvfJ3": {
       "smoobuId": "107094956",
@@ -84224,8 +85035,8 @@
         "_nanoseconds": 0
       },
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T09:15:42.572Z",
-      "updatedAt": "2025-09-15T09:15:42.573Z"
+      "lastSyncedAt": "2025-09-15T14:09:12.650Z",
+      "updatedAt": "2025-09-15T14:09:12.650Z"
     },
     "trijL9cDet7gnVyXF0KF": {
       "smoobuId": "99962303",
@@ -84402,8 +85213,8 @@
         }
       ],
       "apartmentId": 1946282,
-      "lastSyncedAt": "2025-09-15T12:49:31.951Z",
-      "updatedAt": "2025-09-15T12:49:31.951Z"
+      "lastSyncedAt": "2025-09-15T14:09:13.062Z",
+      "updatedAt": "2025-09-15T14:09:13.062Z"
     },
     "u0AKEzluf1Pz6IpaEFw3": {
       "smoobuId": "80636453",
@@ -86178,8 +86989,8 @@
       "firebaseDocId": "vOPzqdzothzTNyq9mCGT",
       "stripePaymentStatus": null,
       "type": "modification of booking",
-      "lastSyncedAt": "2025-09-15T12:49:35.504Z",
-      "updatedAt": "2025-09-15T12:49:35.504Z"
+      "lastSyncedAt": "2025-09-15T14:09:13.463Z",
+      "updatedAt": "2025-09-15T14:09:13.463Z"
     },
     "vWJgPhEpATLDLfMNQnng": {
       "smoobuId": "95904303",
@@ -86710,8 +87521,8 @@
       "paymentIntentId": null,
       "firebaseDocId": "vn0yJ5NRRQIJgVskUZSk",
       "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T12:49:36.494Z",
-      "updatedAt": "2025-09-15T12:49:36.494Z"
+      "lastSyncedAt": "2025-09-15T14:09:13.982Z",
+      "updatedAt": "2025-09-15T14:09:13.982Z"
     },
     "vpI9PYzjzf1nr2XDy4FC": {
       "smoobuId": "96013868",
@@ -86854,11 +87665,11 @@
           "startingAtGuest": 2
         }
       },
-      "property": "La Chambre de Blé",
-      "apartmentId": 1946276,
       "basePrice": 700,
-      "lastSyncedAt": "2025-09-15T09:15:54.581Z",
-      "updatedAt": "2025-09-15T09:15:54.581Z"
+      "property": "Le Logis",
+      "apartmentId": 1946270,
+      "lastSyncedAt": "2025-09-15T14:09:14.392Z",
+      "updatedAt": "2025-09-15T14:09:14.392Z"
     },
     "vw9rRXDgV0hTLoeLUGqw": {
       "smoobuId": "73452733",
@@ -87607,8 +88418,8 @@
         }
       ],
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:49:37.337Z",
-      "updatedAt": "2025-09-15T12:49:37.337Z"
+      "lastSyncedAt": "2025-09-15T14:09:14.928Z",
+      "updatedAt": "2025-09-15T14:09:14.928Z"
     },
     "wS99IGRAz82UEiSVR4co": {
       "smoobuId": "97462843",
@@ -88021,8 +88832,8 @@
         }
       ],
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:49:40.871Z",
-      "updatedAt": "2025-09-15T12:49:40.871Z"
+      "lastSyncedAt": "2025-09-15T14:09:15.474Z",
+      "updatedAt": "2025-09-15T14:09:15.474Z"
     },
     "wuw8BFlLiaHFmzncDVg2": {
       "smoobuId": "101528933",
@@ -89737,8 +90548,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:49:41.670Z",
-      "updatedAt": "2025-09-15T12:49:41.670Z"
+      "lastSyncedAt": "2025-09-15T14:09:15.980Z",
+      "updatedAt": "2025-09-15T14:09:15.980Z"
     },
     "y2WQLyzAoN99sMIonf18": {
       "smoobuId": "108283306",
@@ -90016,8 +90827,8 @@
         "_nanoseconds": 0
       },
       "basePrice": 200,
-      "lastSyncedAt": "2025-09-15T09:18:08.208Z",
-      "updatedAt": "2025-09-15T09:18:08.208Z"
+      "lastSyncedAt": "2025-09-15T14:09:16.415Z",
+      "updatedAt": "2025-09-15T14:09:16.415Z"
     },
     "y3n503lIBUT0jGaKGmP1": {
       "smoobuId": "72736638",
@@ -90238,8 +91049,8 @@
         }
       },
       "property": "La Bulle du Ruisseau",
-      "lastSyncedAt": "2025-09-15T12:34:15.539Z",
-      "updatedAt": "2025-09-15T12:34:15.540Z"
+      "lastSyncedAt": "2025-09-15T14:09:16.905Z",
+      "updatedAt": "2025-09-15T14:09:16.905Z"
     },
     "yHSHKTWRorYlNoKkXsnq": {
       "smoobuId": "100491193",
@@ -90447,8 +91258,8 @@
         }
       ],
       "apartmentId": 1644643,
-      "lastSyncedAt": "2025-09-15T12:49:45.208Z",
-      "updatedAt": "2025-09-15T12:49:45.208Z"
+      "lastSyncedAt": "2025-09-15T14:09:17.432Z",
+      "updatedAt": "2025-09-15T14:09:17.432Z"
     },
     "yObSboTxvVYrTMMyGv8a": {
       "smoobuId": "97437378",
@@ -90635,8 +91446,8 @@
       },
       "property": "La Cabane du Chêne",
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T12:34:14.558Z",
-      "updatedAt": "2025-09-15T12:34:14.558Z"
+      "lastSyncedAt": "2025-09-15T14:09:17.923Z",
+      "updatedAt": "2025-09-15T14:09:17.923Z"
     },
     "ygaOs9ppkcGI0xtBj8Zf": {
       "smoobuId": "105678521",
@@ -90878,67 +91689,8 @@
         "_nanoseconds": 0
       },
       "apartmentId": 2565753,
-      "lastSyncedAt": "2025-09-15T12:47:46.197Z",
-      "updatedAt": "2025-09-15T12:47:46.198Z"
-    },
-    "yodxweh0YKaDq46UOdJ3": {
-      "smoobuId": "108940101",
-      "smoobuReservationId": 108940101,
-      "createdAt": "2025-08-27 14:59",
-      "type": "reservation",
-      "firstName": "Unknown",
-      "lastName": "Guest",
-      "guestName": "Unknown Guest",
-      "email": "",
-      "phone": "",
-      "address": "",
-      "adults": 0,
-      "children": 0,
-      "arrivalDate": "2025-09-07",
-      "departureDate": "2025-09-08",
-      "checkInTime": "17:00",
-      "checkOutTime": "10:00",
-      "apartmentId": 1946279,
-      "property": "Le Moulin",
-      "channelId": 2323516,
-      "channelName": "Blocked channel",
-      "portalName": "Blocked channel",
-      "price": 0,
-      "basePrice": 0,
-      "linenFee": 0,
-      "commission": 0,
-      "extras": [],
-      "nights": 1,
-      "priceDetails": {
-        "basePrice": 0,
-        "linenFee": 0,
-        "commission": 0,
-        "longStayDiscount": 0,
-        "couponDiscount": 0,
-        "discount": 0,
-        "extrasTotal": 0,
-        "priceElements": [],
-        "promoCode": null,
-        "calculatedDiscounts": {
-          "longStay": 0,
-          "coupon": 0
-        },
-        "settings": {
-          "extraChildPerNight": 20,
-          "extraGuestsPerNight": 20,
-          "lengthOfStayDiscount": {
-            "discountPercentage": 0,
-            "minNights": 2
-          },
-          "maxGuests": 4,
-          "startingAtGuest": 2
-        }
-      },
-      "paymentIntentId": null,
-      "firebaseDocId": "yodxweh0YKaDq46UOdJ3",
-      "stripePaymentStatus": null,
-      "lastSyncedAt": "2025-09-15T09:18:12.185Z",
-      "updatedAt": "2025-09-15T09:18:12.186Z"
+      "lastSyncedAt": "2025-09-15T14:08:20.948Z",
+      "updatedAt": "2025-09-15T14:08:20.948Z"
     },
     "yqQAKKXkcvq7ONs2SwTs": {
       "smoobuId": "63804076",
@@ -92063,8 +92815,8 @@
       "id": "zohuwhTQIpIiXGfa8iF7",
       "firebaseDocId": "zohuwhTQIpIiXGfa8iF7",
       "apartmentId": 1946279,
-      "lastSyncedAt": "2025-09-15T12:49:46.264Z",
-      "updatedAt": "2025-09-15T12:49:46.264Z"
+      "lastSyncedAt": "2025-09-15T14:09:18.841Z",
+      "updatedAt": "2025-09-15T14:09:18.841Z"
     },
     "zy5LbK1EMksMmufVw3UN": {
       "arrivalDate": "2025-09-27",
@@ -92213,8 +92965,8 @@
       },
       "property": "Le Dôme des Libellules",
       "basePrice": 240,
-      "lastSyncedAt": "2025-09-15T09:15:52.005Z",
-      "updatedAt": "2025-09-15T09:15:52.006Z"
+      "lastSyncedAt": "2025-09-15T14:09:19.231Z",
+      "updatedAt": "2025-09-15T14:09:19.231Z"
     }
   },
   "coupons": {
@@ -92350,7 +93102,21 @@
       "percentageValue": 10,
       "amount": null,
       "id": "2MrjBSoWDAlKxDgIMWk0",
-      "lastUsedBy": "111001141",
+      "expiryDate": {
+        "_seconds": 1801440000,
+        "_nanoseconds": 0
+      },
+      "validityStartDate": {
+        "_seconds": 1757894400,
+        "_nanoseconds": 0
+      },
+      "dateCreated": null,
+      "validityEndDate": {
+        "_seconds": 1767139200,
+        "_nanoseconds": 0
+      },
+      "lastUsedDate": "2025-09-17T15:23:30.160Z",
+      "lastUsedBy": "111423996",
       "usageHistory": [
         {
           "email": "c-angelee@live.be",
@@ -93317,27 +94083,46 @@
           "discountApplied": 20,
           "smoobuReservationId": null,
           "bookingLanguage": null
+        },
+        {
+          "email": "111186641",
+          "name": "Unknown User",
+          "bookingAmount": 0,
+          "usageDate": "2025-09-15T17:18:46.593Z",
+          "discountApplied": 24,
+          "smoobuReservationId": null,
+          "bookingLanguage": null
+        },
+        {
+          "email": "111263556",
+          "name": "Unknown User",
+          "bookingAmount": 0,
+          "usageDate": "2025-09-16T11:10:11.789Z",
+          "discountApplied": 24,
+          "smoobuReservationId": null,
+          "bookingLanguage": null
+        },
+        {
+          "email": "111393221",
+          "name": "Unknown User",
+          "bookingAmount": 0,
+          "usageDate": "2025-09-17T12:03:47.472Z",
+          "discountApplied": 20,
+          "smoobuReservationId": null,
+          "bookingLanguage": null
+        },
+        {
+          "email": "111423996",
+          "name": "Unknown User",
+          "bookingAmount": 0,
+          "usageDate": "2025-09-17T15:23:30.160Z",
+          "discountApplied": 20,
+          "smoobuReservationId": null,
+          "bookingLanguage": null
         }
       ],
-      "usedCount": 116,
-      "updatedAt": "2025-09-14T08:28:33.684Z",
-      "expiryDate": {
-        "_seconds": 1801440000,
-        "_nanoseconds": 0
-      },
-      "validityStartDate": {
-        "_seconds": 1757894400,
-        "_nanoseconds": 0
-      },
-      "dateCreated": null,
-      "lastUsedDate": {
-        "_seconds": 1757838513,
-        "_nanoseconds": 684000000
-      },
-      "validityEndDate": {
-        "_seconds": 1767139200,
-        "_nanoseconds": 0
-      }
+      "usedCount": 120,
+      "updatedAt": "2025-09-17T15:23:30.160Z"
     },
     "4rxT6Q7EfZGZTT5i2qSx": {
       "code": "GIFT-9UK11",
@@ -93882,6 +94667,22 @@
       },
       "percentageValue": 15,
       "amount": null
+    },
+    "VcXgMblSGRxtlOLUwJ9f": {
+      "code": "GIFT-TRZ4E",
+      "amount": 300,
+      "type": "fixed",
+      "isGiftVoucher": true,
+      "status": "active",
+      "orderId": 12154,
+      "customerEmail": "verdineddy@gmail.com",
+      "customerName": "EDDY VERDIN",
+      "customerPhone": "+32495535571",
+      "language": "french",
+      "dateCreated": "2025-09-16T17:47:40.286Z",
+      "expiryDate": "2026-09-16T17:47:40.286Z",
+      "usedCount": 0,
+      "usageHistory": []
     },
     "VqiSkKnm9PFlOU67jyMm": {
       "usedBy": [],
