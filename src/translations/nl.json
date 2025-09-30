@@ -172,7 +172,7 @@
         "formulesRepas": "Maaltijdformules",
         "spa": "Spa",
         "formulesDecouverte": "Ontdekkingsformules",
-        "meals": "Maaltijden van Bossimé",
+        "meals": "Repas Gourmart",
         "boissons": "Dranken"
       },
 
@@ -241,25 +241,21 @@
         "bookLaterInfo": "In uw boekingsbevestiging vindt u het e-mailadres van de host om uw tijdsloten te kiezen"
       },
       "meals": {
-        "meatballsLiege": {
-          "name": "Luikse gehaktballen",
-          "description": "Dit gerecht bestaat uit twee gehaktballen in Luikse saus geserveerd met huisgemaakte aardappelpuree."
+        "pouletTikkaMasala": {
+          "name": "Kip Tikka Masala",
+          "description": "Dit gerecht bestaat uit malse kip Tikka Masala, bereid met Griekse yoghurt en kruiden, geserveerd met geurige rijst"
         },
-        "meatballsTomato": {
-          "name": "Gehaktballen in tomatensaus",
-          "description": "Dit gerecht bestaat uit twee gehaktballen in huisgemaakte tomatensaus, geserveerd met aardappelpuree."
+        "boulettesSauceTomate": {
+          "name": "Balletjes in tomatensaus",
+          "description": "Dit gerecht bestaat uit gehaktballen in tomatensaus van een vark-rundvlees mengsel, geserveerd met linguine en op smaak gebracht met aromatische kruiden"
         },
-        "waterzooi": {
-          "name": "Waterzooi van kip",
-          "description": "Dit gerecht bestaat uit een heerlijke waterzooi van kip, geserveerd met krielaardappeltjes."
+        "linguinesAuSaumon": {
+          "name": "Linguine met gerookte zalm",
+          "description": "Dit gerecht bestaat uit linguine met gerookte zalm, geserveerd met een smaakvolle saus die de finesse van de zalm naar voren brengt"
         },
-        "chiliVeg": {
-          "name": "Vegetarische chili",
-          "description": "Deze bereiding is een combinatie van rode bonen, maïs en verse groenten, langzaam gestoofde in een tomatensaus op smaak gebracht met milde kruiden."
-        },
-        "carrotSoup": {
-          "name": "Wortel- en komijnsoep",
-          "description": "Deze combinatie van smaken biedt een eenvoudige en heerlijke smaakervaring, waar de zoetheid van wortelen de kruidige warmte van komijn ontmoet"
+        "risottoALaTartufata": {
+          "name": "Risotto met tartufata",
+          "description": "Dit gerecht bestaat uit een risotto met tartufata, bereid met Carnaroli rijst, champignons, knolselderij, knoflook en room."
         }
       },
       "drinks": {

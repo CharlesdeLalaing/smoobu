@@ -9,12 +9,11 @@ import barbecueromantique from "./assets/Packs/barbecue-romantique.png";
 import barbecuedetente from "./assets/Packs/barbecue-detente.png";
 import romantiquegourmet from "./assets/Packs/romantique-gourmet.webp";
 
-// --- Les plats de Bossimé ---
-import bouletteTomate from "./assets/repasBossimé/Boulette-de-viande-sauce-tomate-1.webp";
-import bouletteLiege from "./assets/repasBossimé/Boulettes-de-viande-sauce-liegeoise-1.webp";
-import waterzooi from "./assets/repasBossimé/Waterzooi-de-volaille-1.webp";
-import veloute from "./assets/repasBossimé/Veloute-de-carotte-et-cumin-1-150x150.webp";
-import chiliVeg from "./assets/repasBossimé/Chili-vegetarien-1-150x150.webp";
+// --- Repas Gourmart ---
+import poulettikkamasala from "./assets/repasGourmart/poulettikkamasala.jpg";
+import boulettesaucetomates from "./assets/repasGourmart/boulettesaucetomates.jpg";
+import linguineausaumons from "./assets/repasGourmart/linguineausaumons.jpg";
+import risottoalatruffe from "./assets/repasGourmart/risottoalatruffe.jpg";
 
 // --- Formule découverte ---
 import formulespa from "./assets/Découverte/formule-spa.webp";
@@ -52,11 +51,10 @@ const imageAssetMap = {
   barbecueromantique,
   barbecuedetente,
   romantiquegourmet,
-  bouletteTomate,
-  bouletteLiege,
-  waterzooi,
-  veloute,
-  chiliVeg,
+  poulettikkamasala,
+  boulettesaucetomates,
+  linguineausaumons,
+  risottoalatruffe,
   formulespa,
   formuleanniversaire,
   passion,

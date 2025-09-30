@@ -197,7 +197,7 @@
           "formulesRepas": "Meal formulas",
           "spa": "Spa",
           "formulesDecouverte": "Discovery formulas",
-          "meals": "Meals from Bossimé",
+          "meals": "Repas Gourmart",
           "boissons": "Drinks"
         },
 
@@ -266,25 +266,21 @@
           "bookLaterInfo": "In your booking confirmation, you will find the host's email to choose your time slots"
         },
         "meals": {
-          "meatballsLiege": {
-            "name": "Liege-style meatballs",
-            "description": "This dish consists of two meatballs in Liege sauce served with homemade mashed potatoes."
+          "pouletTikkaMasala": {
+            "name": "Chicken Tikka Masala",
+            "description": "This dish consists of tender Chicken Tikka Masala, prepared with Greek yogurt and spices, served with fragrant rice"
           },
-          "meatballsTomato": {
+          "boulettesSauceTomate": {
             "name": "Meatballs in tomato sauce",
-            "description": "This dish consists of two meatballs in homemade tomato sauce, served with mashed potatoes."
+            "description": "This dish consists of meatballs in tomato sauce made with a pork-beef blend, served with linguine and enhanced with aromatic herbs"
           },
-          "waterzooi": {
-            "name": "Chicken waterzooi",
-            "description": "This dish consists of a delicious chicken waterzooi, served with baby potatoes."
+          "linguinesAuSaumon": {
+            "name": "Linguine with smoked salmon",
+            "description": "This dish consists of linguine with smoked salmon, served with a flavorful sauce that highlights the delicacy of the salmon"
           },
-          "chiliVeg": {
-            "name": "Vegetarian chili",
-            "description": "This preparation is a combination of red beans, corn and fresh vegetables, slowly simmered in a tomato sauce flavored with mild spices."
-          },
-          "carrotSoup": {
-            "name": "Carrot and cumin soup",
-            "description": "This combination of flavors offers a simple and delicious taste experience, where the sweetness of carrots meets the spicy warmth of cumin"
+          "risottoALaTartufata": {
+            "name": "Risotto with tartufata",
+            "description": "This dish consists of a tartufata risotto, prepared with Carnaroli rice, mushrooms, celeriac, garlic and cream."
           }
         },
         "drinks": {

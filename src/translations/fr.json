@@ -195,7 +195,7 @@
       "extras": {
         "categories": {
           "packs": "Les packs",
-          "meals": "Les repas de Bossimé",
+          "meals": "Repas Gourmart",
           "spa": "Spa",
           "formulesRepas": "Les formules repas",
           "formulesDecouverte": "Les formules découverte",
@@ -267,25 +267,21 @@
           "bookLaterInfo": "Dans la confirmation de votre réservation, vous aurez le mail de l'hôte pour choisir vos créneaux"
         },
         "meals": {
-          "meatballsLiege": {
-            "name": "Boulettes de viande sauce liégeoise",
-            "description": "Ce plat est composé de deux boulettes de viande sauce liégeoise accompagnées d’une purée de pommes de terre maison."
+          "pouletTikkaMasala": {
+            "name": "Poulet Tikka Massala",
+            "description": "Ce plat est composé d'un poulet Tikka Massala tendre, préparé avec du yaourt grec et des épices, accompagné de riz parfumé"
           },
-          "meatballsTomato": {
-            "name": "Boulette de viande sauce tomate",
-            "description": "Ce plat est composé de deux boulettes de viande à la sauce tomate maison, accompagnées d’une purée de pommes de terre."
+          "boulettesSauceTomate": {
+            "name": "Boulettes sauce tomate",
+            "description": "Ce plat est composé de boulettes sauce tomate au mélange porc-bœuf, accompagnées de linguines et relevées d'herbes aromatiques"
           },
-          "waterzooi": {
-            "name": "Waterzooi de volaille",
-            "description": "Ce plat est composé d’un délicieux waterzooï de volaille, accompagné de pommes de terre grenailles."
+          "linguinesAuSaumon": {
+            "name": "Linguines au saumon fumé",
+            "description": "Ce plat est composé de linguines au saumon fumé, accompagnées d'une sauce savoureuse qui met en valeur la finesse du saumon"
           },
-          "chiliVeg": {
-            "name": "Chili végétarien",
-            "description": "Cette préparation est une combinaison de haricots rouges, de maïs et de légumes frais, mijotés lentement dans une sauce tomate parfumée aux épices douces."
-          },
-          "carrotSoup": {
-            "name": "Velouté de carotte et cumin",
-            "description": "Ce mariage de saveurs offre une expérience gustative simple et délicieuse, où la douceur des carottes rencontre la chaleur épicée du cumin"
+          "risottoALaTartufata": {
+            "name": "Risotto à la tartufata",
+            "description": "Ce plat est composé d'un risotto à la tartufata, préparé avec du riz Carnaroli, des champignons, du céleri rave, de l'ail et de la crème."
           }
         },
         "drinks": {

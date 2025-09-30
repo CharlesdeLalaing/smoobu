@@ -120,12 +120,11 @@ export const extrasFrenchNames = {
   "extras.spa.basic.name": "Formule SPA (2 pers)",
   "extras.spa.withBottle.name": "Formule SPA + bouteille (2 pers)",
 
-  // Meal Names (Bossimé)
-  "extras.meals.meatballsLiege.name": "Boulettes de viande sauce liégeoise",
-  "extras.meals.meatballsTomato.name": "Boulette de viande sauce tomate",
-  "extras.meals.waterzooi.name": "Waterzooi de volaille",
-  "extras.meals.chiliVeg.name": "Chili végétarien",
-  "extras.meals.carrotSoup.name": "Velouté de carotte et cumin",
+  // Meal Names (Repas Gourmart)
+  "extras.meals.pouletTikkaMasala.name": "Poulet Tikka Massala",
+  "extras.meals.boulettesSauceTomate.name": "Boulettes sauce tomate",
+  "extras.meals.linguinesAuSaumon.name": "Linguines au saumon fumé",
+  "extras.meals.risottoALaTartufata.name": "Risotto à la tartufata",
 
   // Meal Formula Names
   "extras.formulesRepas.breakfast.name": "Formule petit-déjeuner (2 pers)",
