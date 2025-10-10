@@ -44,7 +44,9 @@
         "partiallyAvailable": "Check-out only",
         "partiallyAvailableCheckIn": "Check-in only",
         "partiallyAvailableCheckOut": "Check-out only",
-        "instructions": "Select your check-in and check-out dates"
+        "instructions": "Select your check-in and check-out dates",
+        "checkInTime": "Check-in from 5:00 PM",
+        "checkOutTime": "Check-out before 10:00 AM"
       },
       "search": {
         "title": "Select your dates",

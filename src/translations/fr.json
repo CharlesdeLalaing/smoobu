@@ -44,7 +44,9 @@
       "partiallyAvailable": "Départ uniquement",
       "partiallyAvailableCheckIn": "Check-in uniquement",
       "partiallyAvailableCheckOut": "Check-out uniquement",
-      "instructions": "Sélectionnez vos dates d'arrivée et de départ"
+      "instructions": "Sélectionnez vos dates d'arrivée et de départ",
+      "checkInTime": "Arrivée à partir de 17h00",
+      "checkOutTime": "Départ avant 10h00"
     },
       "search": {
         "title": "Sélectionnez vos dates",

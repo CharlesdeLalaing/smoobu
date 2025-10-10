@@ -44,7 +44,9 @@
       "partiallyAvailable": "Alleen uitchecken",
       "partiallyAvailableCheckIn": "Alleen inchecken",
       "partiallyAvailableCheckOut": "Alleen uitchecken",
-      "instructions": "Selecteer uw aankomst- en vertrekdatum"
+      "instructions": "Selecteer uw aankomst- en vertrekdatum",
+      "checkInTime": "Inchecken vanaf 17:00",
+      "checkOutTime": "Uitchecken voor 10:00"
     },
     "search": {
       "title": "Selecteer uw data",
