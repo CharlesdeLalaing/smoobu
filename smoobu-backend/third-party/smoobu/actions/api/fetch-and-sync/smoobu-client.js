@@ -22,8 +22,9 @@ export class SmoobuClient {
 
     try {
       console.log(`[SmoobuClient] Fetching bookings from ${startDate} to ${endDate}`);
-      
-      const response = await axios.get("https://login.smoobu.com/api/reservations", {
+
+      // Fetch first page to get pagination info
+      const firstPageResponse = await axios.get("https://login.smoobu.com/api/reservations", {
         headers: {
           "Api-Key": this.apiKey,
           "Cache-Control": "no-cache",
@@ -33,14 +34,51 @@ export class SmoobuClient {
           until: endDate,
           showCancellation: false,
           excludeBlocked: true,
-          pageSize: 10000,
+          page: 1,
+          pageSize: 100,
         },
       });
 
-      const bookings = response.data.bookings || [];
-      console.log(`[SmoobuClient] Found ${bookings.length} bookings`);
-      return bookings;
-      
+      let allBookings = firstPageResponse.data.bookings || [];
+      const pageCount = firstPageResponse.data.page_count || 1;
+      const totalItems = firstPageResponse.data.total_items || allBookings.length;
+
+      console.log(`[SmoobuClient] Page 1/${pageCount}: ${allBookings.length} bookings (Total: ${totalItems})`);
+
+      // Fetch remaining pages if there are more
+      if (pageCount > 1) {
+        console.log(`[SmoobuClient] Fetching ${pageCount - 1} additional pages...`);
+
+        for (let page = 2; page <= pageCount; page++) {
+          try {
+            const pageResponse = await axios.get("https://login.smoobu.com/api/reservations", {
+              headers: {
+                "Api-Key": this.apiKey,
+                "Cache-Control": "no-cache",
+              },
+              params: {
+                from: startDate,
+                until: endDate,
+                showCancellation: false,
+                excludeBlocked: true,
+                page: page,
+                pageSize: 100,
+              },
+            });
+
+            const pageBookings = pageResponse.data.bookings || [];
+            allBookings = allBookings.concat(pageBookings);
+            console.log(`[SmoobuClient] Page ${page}/${pageCount}: ${pageBookings.length} bookings`);
+
+          } catch (pageError) {
+            console.error(`[SmoobuClient] Error fetching page ${page}:`, pageError.message);
+          }
+        }
+      }
+
+      console.log(`[SmoobuClient] ✅ Total bookings fetched: ${allBookings.length}`);
+      return allBookings;
+
     } catch (error) {
       console.error("[SmoobuClient] Error fetching bookings:", error.message);
       return [];
@@ -97,7 +135,7 @@ export class SmoobuClient {
 
     try {
       console.log(`[SmoobuClient] Fetching price elements for booking ID: ${bookingId}`);
-      
+
       const response = await axios.get(`https://login.smoobu.com/api/reservations/${bookingId}/price-elements`, {
         headers: {
           "Api-Key": this.apiKey,
@@ -108,7 +146,7 @@ export class SmoobuClient {
       const priceElements = response.data.priceElements || [];
       console.log(`[SmoobuClient] ✅ Successfully fetched ${priceElements.length} price elements for booking ${bookingId}`);
       return priceElements;
-      
+
     } catch (error) {
       console.error(`[SmoobuClient] ❌ Error fetching price elements for booking ${bookingId}:`, error.message);
       if (error.response) {
@@ -117,4 +155,5 @@ export class SmoobuClient {
       return [];
     }
   }
+
 }
