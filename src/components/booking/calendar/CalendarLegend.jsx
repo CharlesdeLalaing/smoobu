@@ -24,11 +24,11 @@ export const CalendarLegend = ({ t }) => {
       </div>
       <div className="calendar-times">
         <div className="time-item">
-          <div className="time-dot checkin-dot"></div>
+          <span>🕒</span>
           <span>{t("calendar.checkInTime")}</span>
         </div>
         <div className="time-item">
-          <div className="time-dot checkout-dot"></div>
+          <span>🕒</span>
           <span>{t("calendar.checkOutTime")}</span>
         </div>
       </div>
