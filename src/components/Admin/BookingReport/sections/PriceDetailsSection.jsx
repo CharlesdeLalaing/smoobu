@@ -176,6 +176,7 @@ const PriceDetailsSection = ({ booking }) => {
     guestFees = parseFloat(booking.priceDetailsSnapshot.guestFees) || 0;
   } else if (priceElementsToCheck.length > 0) {
     // Look for guest fees in price elements
+    // Exclude formula-specific extra person fees (they should be counted as extras, not guest fees)
     const guestFeeElement = priceElementsToCheck.find(
       (el) =>
         el &&
@@ -183,9 +184,13 @@ const PriceDetailsSection = ({ booking }) => {
         el.amount &&
         (el.type === "guests" ||
           el.name.toLowerCase().includes("frais voyageurs") ||
-          el.name.toLowerCase().includes("guest") ||
+          el.name.toLowerCase().includes("frais de personnes supplémentaires") ||
+          (el.name.toLowerCase().includes("guest") &&
+            !el.name.toLowerCase().includes("formule")) ||
           (el.name.toLowerCase().includes("personne supplémentaire") &&
-            !el.name.toLowerCase().includes("l'essentiel")) ||
+            !el.name.toLowerCase().includes("l'essentiel") &&
+            !el.name.toLowerCase().includes("formule") &&
+            !el.name.toLowerCase().includes("spa")) ||
           el.name.toLowerCase().includes("extra guest") ||
           el.name.toLowerCase().includes("additional guest"))
     );

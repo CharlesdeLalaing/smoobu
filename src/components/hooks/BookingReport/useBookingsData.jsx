@@ -296,6 +296,12 @@ export const useBookingsData = () => {
           // data.arrivalDate and data.departureDate are already strings from Firestore
           const rawDataForProcessing = { ...data };
 
+          // Skip cancelled bookings (type: "cancellation")
+          // These are bookings that were cancelled and should not appear in the report
+          if (rawDataForProcessing.type === "cancellation") {
+            return;
+          }
+
           // No conversion needed here for arrivalDate/departureDate if they are already strings
           // as processBookingData expects them as "YYYY-MM-DD" for parseISO.
 

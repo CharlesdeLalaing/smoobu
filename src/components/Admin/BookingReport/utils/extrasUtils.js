@@ -162,6 +162,23 @@ export function sortExtras(extras) {
 export function getCleanExtrasFromPriceElements(priceElements, portalName) {
   if (!priceElements || !Array.isArray(priceElements)) return [];
 
+  // First, identify if we have formulas with quantities > 1
+  // These should NOT also have separate extra person charges
+  // BUT we must exclude the extra person charges themselves from this check!
+  const formulasWithMultipleQuantities = new Set();
+
+  priceElements.forEach(el => {
+    if (el && el.name && el.quantity > 1) {
+      // Skip if this is already an extra person charge (it should have its own quantity)
+      if (el.name.includes("Personne supplémentaire") || el.name.includes("personne supplémentaire")) {
+        return; // Don't add extra person charges to the set
+      }
+      // Extract the base formula name
+      const baseName = el.name.split(" - ")[0].trim();
+      formulasWithMultipleQuantities.add(baseName.toLowerCase());
+    }
+  });
+
   // Define unwanted extras patterns
   const unwantedPatterns = [
     "cancellation",
@@ -194,7 +211,17 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
   // Only include relevant price elements
   const relevantElements = priceElements.filter((el) => {
     if (!el || !el.amount || !el.name) return false;
-    
+
+    // Check if this is an extra person charge for a formula that already has quantity > 1
+    // If so, skip it to avoid duplication
+    if (el.name.includes("Personne supplémentaire") || el.name.includes("personne supplémentaire")) {
+      const baseName = el.name.split(" - ")[0].trim().toLowerCase();
+      if (formulasWithMultipleQuantities.has(baseName)) {
+        // console.log(`⚠️ Skipping duplicate extra person charge: "${el.name}" because main formula has quantity > 1`);
+        return false;
+      }
+    }
+
     // console.log(`🔍 Filtering element: "${el.name}" (amount: ${el.amount})`);
 
     // For Airbnb, be very selective
@@ -261,13 +288,18 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
                           el.name.includes("Boulettes") ||
                           el.name.includes("Waterzooi") ||
                           el.name.includes("Chili") ||
-                          el.name.includes("Velouté");
+                          el.name.includes("Velouté") ||
+                          el.name.includes("Linguines") ||
+                          el.name.includes("Risotto") ||
+                          el.name.includes("Poulet");
 
       const shouldInclude = el.amount > 0 &&
         !el.name.includes("Prix de base") &&
         !el.name.includes("Base price") &&
         !el.name.includes("Code promo") &&
         !el.name.includes("Réduction") &&
+        !el.name.includes("Frais voyageurs") &&
+        !el.name.includes("Frais de personnes supplémentaires") &&
         !unwantedPatterns.some((pattern) => el.name.includes(pattern)) &&
         (isValidDrink || isValidExtra);
       

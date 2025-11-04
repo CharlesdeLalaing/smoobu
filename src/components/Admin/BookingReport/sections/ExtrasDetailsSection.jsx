@@ -34,6 +34,7 @@ const ExtrasDetailsSection = ({ booking }) => {
 
     // For web app bookings, we need to expand extras that have hasExtraPerson: true
     // into separate display items for the extra person
+    // BUT only if we're NOT already using priceElements (to avoid duplication)
     const expandedExtras = [];
 
     displayExtras.forEach((extra) => {

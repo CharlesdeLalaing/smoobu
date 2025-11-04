@@ -77,8 +77,8 @@ app.get("/api/fetch-and-sync", async (req, res) => {
     const processor = new BookingProcessor(smoobuClient, repository);
     
     // Date range - August to September 2025
-    const startDate = '2025-09-01';
-    const endDate = '2025-10-31';
+    const startDate = '2025-10-01';
+    const endDate = '2025-12-31';
     console.log(`📅 Date range: ${startDate} to ${endDate}`);
     
     // Fetch existing bookings from Firebase
