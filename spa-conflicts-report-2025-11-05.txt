@@ -1,0 +1,308 @@
+================================================================================
+           SPA BOOKING CONFLICTS - DETAILED RESOLUTION REPORT
+================================================================================
+
+
+Found 5 conflict(s) requiring manual resolution.
+
+================================================================================
+
+################################################################################
+CONFLICT #1
+################################################################################
+
+📅 DATE: mercredi 13 août 2025 (2025-08-13)
+⏰ CONFLICTING TIME SLOT: 21:00
+
+⚠️  TYPE: WordPress booking conflicts with Smoobu booking
+
+────────────────────────────────────────────────────────────────────────────────
+WORDPRESS BOOKING (External)
+────────────────────────────────────────────────────────────────────────────────
+
+🌐 SOURCE: WordPress / External System
+📝 DOCUMENT ID: 4f02Uelgpn0slnp4IPXH
+🕐 TIME SLOT: 21:00
+📅 CREATED: [object Object]
+
+⚠️  Note: Guest contact info not available for WordPress bookings.
+Check your WordPress system for guest details.
+
+────────────────────────────────────────────────────────────────────────────────
+CONFLICTING SMOOBU BOOKING
+────────────────────────────────────────────────────────────────────────────────
+
+📋 RESERVATION ID: 102931668
+👤 GUEST: Madina Amurlayeva
+📧 EMAIL: madina.amurlayeva@gmail.com
+📞 PHONE: 0479821518
+🏠 PROPERTY: La Bulle du Ruisseau
+📆 STAY: 2025-08-13 → 2025-08-14
+🕐 CURRENT SPA BOOKING: 20:00, 21:00
+🕐 TIME RANGE: 20:00 à 22:00 (2 slots)
+
+📝 Firebase Doc ID: 6gvioL4o2GcERetaXYq5
+
+────────────────────────────────────────────────────────────────────────────────
+💡 RECOMMENDED ACTION:
+────────────────────────────────────────────────────────────────────────────────
+1. Check which booking was made first (timestamps)
+2. Contact the Smoobu guest OR cancel WordPress booking
+3. Offer alternative time slots to the guest you contact
+
+────────────────────────────────────────────────────────────────────────────────
+🔄 SUGGESTED ALTERNATIVE TIME SLOTS:
+────────────────────────────────────────────────────────────────────────────────
+
+Available time slots on this date:
+  09:00   10:00   13:00   14:00   15:00   16:00
+  17:00   18:00   19:00
+
+💡 For a 2-hour booking, suggest consecutive pairs like:
+  09:00-11:00   13:00-15:00   14:00-16:00   15:00-17:00   16:00-18:00
+  ... and 2 more options
+
+################################################################################
+CONFLICT #2
+################################################################################
+
+📅 DATE: mercredi 13 août 2025 (2025-08-13)
+⏰ CONFLICTING TIME SLOT: 20:00
+
+⚠️  TYPE: WordPress booking conflicts with Smoobu booking
+
+────────────────────────────────────────────────────────────────────────────────
+WORDPRESS BOOKING (External)
+────────────────────────────────────────────────────────────────────────────────
+
+🌐 SOURCE: WordPress / External System
+📝 DOCUMENT ID: XDPzjxFGU11oWmEOnSxA
+🕐 TIME SLOT: 20:00
+📅 CREATED: [object Object]
+
+⚠️  Note: Guest contact info not available for WordPress bookings.
+Check your WordPress system for guest details.
+
+────────────────────────────────────────────────────────────────────────────────
+CONFLICTING SMOOBU BOOKING
+────────────────────────────────────────────────────────────────────────────────
+
+📋 RESERVATION ID: 102931668
+👤 GUEST: Madina Amurlayeva
+📧 EMAIL: madina.amurlayeva@gmail.com
+📞 PHONE: 0479821518
+🏠 PROPERTY: La Bulle du Ruisseau
+📆 STAY: 2025-08-13 → 2025-08-14
+🕐 CURRENT SPA BOOKING: 20:00, 21:00
+🕐 TIME RANGE: 20:00 à 22:00 (2 slots)
+
+📝 Firebase Doc ID: 6gvioL4o2GcERetaXYq5
+
+────────────────────────────────────────────────────────────────────────────────
+💡 RECOMMENDED ACTION:
+────────────────────────────────────────────────────────────────────────────────
+1. Check which booking was made first (timestamps)
+2. Contact the Smoobu guest OR cancel WordPress booking
+3. Offer alternative time slots to the guest you contact
+
+────────────────────────────────────────────────────────────────────────────────
+🔄 SUGGESTED ALTERNATIVE TIME SLOTS:
+────────────────────────────────────────────────────────────────────────────────
+
+Available time slots on this date:
+  09:00   10:00   13:00   14:00   15:00   16:00
+  17:00   18:00   19:00
+
+💡 For a 2-hour booking, suggest consecutive pairs like:
+  09:00-11:00   13:00-15:00   14:00-16:00   15:00-17:00   16:00-18:00
+  ... and 2 more options
+
+################################################################################
+CONFLICT #3
+################################################################################
+
+📅 DATE: vendredi 19 septembre 2025 (2025-09-19)
+⏰ CONFLICTING TIME SLOT: 21:00
+
+⚠️  TYPE: Multiple Smoobu bookings at the same time
+
+────────────────────────────────────────────────────────────────────────────────
+BOOKING 1/2
+────────────────────────────────────────────────────────────────────────────────
+
+📋 RESERVATION ID: 111146471
+👤 GUEST: Jana Vekeman
+📧 EMAIL: vekemanjana@gmail.com
+📞 PHONE: 0470432386
+🏠 PROPERTY: La Bulle du Ruisseau
+📆 STAY: 2025-09-19 → 2025-09-20
+🕐 CURRENT SPA BOOKING: 20:00, 21:00
+🕐 TIME RANGE: 20:00 à 22:00 (2 slots)
+
+📝 Firebase Doc ID: 5rFZcT00PY8FUHX0FLVF
+────────────────────────────────────────────────────────────────────────────────
+BOOKING 2/2
+────────────────────────────────────────────────────────────────────────────────
+
+📋 RESERVATION ID: 107576241
+👤 GUEST: Sarah Lefebvre
+📧 EMAIL: sarah.lefebvre011206@gmail.com
+📞 PHONE: 0470941954
+🏠 PROPERTY: Le Dôme des Libellules
+📆 STAY: 2025-09-19 → 2025-09-20
+🕐 CURRENT SPA BOOKING: 21:00, 22:00
+🕐 TIME RANGE: 21:00 à 23:00 (2 slots)
+
+📝 Firebase Doc ID: IrV4uqiqioAqEodCh0d5
+
+────────────────────────────────────────────────────────────────────────────────
+💡 RECOMMENDED ACTION:
+────────────────────────────────────────────────────────────────────────────────
+Contact ONE of the guests above and offer alternative time slots.
+Priority: Contact the guest with the most flexible schedule or
+the one who booked most recently.
+
+────────────────────────────────────────────────────────────────────────────────
+🔄 SUGGESTED ALTERNATIVE TIME SLOTS:
+────────────────────────────────────────────────────────────────────────────────
+
+Available time slots on this date:
+  09:00   10:00   11:00   12:00   13:00   14:00
+  15:00   16:00   17:00   18:00   19:00   23:00
+
+💡 For a 2-hour booking, suggest consecutive pairs like:
+  09:00-11:00   10:00-12:00   11:00-13:00   12:00-14:00   13:00-15:00
+  ... and 5 more options
+
+################################################################################
+CONFLICT #4
+################################################################################
+
+📅 DATE: dimanche 9 novembre 2025 (2025-11-09)
+⏰ CONFLICTING TIME SLOT: 18:00
+
+⚠️  TYPE: Multiple Smoobu bookings at the same time
+
+────────────────────────────────────────────────────────────────────────────────
+BOOKING 1/2
+────────────────────────────────────────────────────────────────────────────────
+
+📋 RESERVATION ID: 105624341
+👤 GUEST: Floriane Dermont
+📧 EMAIL: florianedermont@gmail.com
+📞 PHONE: 0032496028287
+🏠 PROPERTY: La Cabane du Chêne
+📆 STAY: 2025-11-09 → 2025-11-10
+🕐 CURRENT SPA BOOKING: 17:00, 18:00
+🕐 TIME RANGE: 17:00 à 19:00 (2 slots)
+
+📝 Firebase Doc ID: 8h3Fyip0znydKLjwE3s7
+────────────────────────────────────────────────────────────────────────────────
+BOOKING 2/2
+────────────────────────────────────────────────────────────────────────────────
+
+📋 RESERVATION ID: 112630706
+👤 GUEST: Margot Van Den Bossche
+📧 EMAIL: Vandenbosschemargot@hotmail.com
+📞 PHONE: 0472037223
+🏠 PROPERTY: Le Dôme des Libellules
+📆 STAY: 2025-11-09 → 2025-11-10
+🕐 CURRENT SPA BOOKING: 18:00, 19:00
+🕐 TIME RANGE: 18:00 à 20:00 (2 slots)
+
+📝 Firebase Doc ID: r3R28B5jaD56fuWdjStU
+
+────────────────────────────────────────────────────────────────────────────────
+💡 RECOMMENDED ACTION:
+────────────────────────────────────────────────────────────────────────────────
+Contact ONE of the guests above and offer alternative time slots.
+Priority: Contact the guest with the most flexible schedule or
+the one who booked most recently.
+
+────────────────────────────────────────────────────────────────────────────────
+🔄 SUGGESTED ALTERNATIVE TIME SLOTS:
+────────────────────────────────────────────────────────────────────────────────
+
+Available time slots on this date:
+  09:00   10:00   11:00   14:00   15:00   16:00
+  20:00   21:00   22:00   23:00
+
+💡 For a 2-hour booking, suggest consecutive pairs like:
+  09:00-11:00   10:00-12:00   14:00-16:00   15:00-17:00   20:00-22:00
+  ... and 2 more options
+
+################################################################################
+CONFLICT #5
+################################################################################
+
+📅 DATE: vendredi 14 novembre 2025 (2025-11-14)
+⏰ CONFLICTING TIME SLOT: 18:00
+
+⚠️  TYPE: WordPress booking conflicts with Smoobu booking
+
+────────────────────────────────────────────────────────────────────────────────
+WORDPRESS BOOKING (External)
+────────────────────────────────────────────────────────────────────────────────
+
+🌐 SOURCE: WordPress / External System
+📝 DOCUMENT ID: xZRAMUHNvUQcdFCkrQ6H
+🕐 TIME SLOT: 18:00
+📅 CREATED: [object Object]
+
+⚠️  Note: Guest contact info not available for WordPress bookings.
+Check your WordPress system for guest details.
+
+────────────────────────────────────────────────────────────────────────────────
+CONFLICTING SMOOBU BOOKING
+────────────────────────────────────────────────────────────────────────────────
+
+📋 RESERVATION ID: 114260361
+👤 GUEST: Marie Vidot
+📧 EMAIL: marie.ct.vidot@gmail.com
+📞 PHONE: 0469150352
+🏠 PROPERTY: Le Dôme des Libellules
+📆 STAY: 2025-11-14 → 2025-11-15
+🕐 CURRENT SPA BOOKING: 18:00, 19:00
+🕐 TIME RANGE: 18:00 à 20:00 (2 slots)
+
+📝 Firebase Doc ID: sal9hzyRlnw3hOKwT6u6
+
+────────────────────────────────────────────────────────────────────────────────
+💡 RECOMMENDED ACTION:
+────────────────────────────────────────────────────────────────────────────────
+1. Check which booking was made first (timestamps)
+2. Contact the Smoobu guest OR cancel WordPress booking
+3. Offer alternative time slots to the guest you contact
+
+────────────────────────────────────────────────────────────────────────────────
+🔄 SUGGESTED ALTERNATIVE TIME SLOTS:
+────────────────────────────────────────────────────────────────────────────────
+
+Available time slots on this date:
+  09:00   10:00   11:00   12:00   13:00   14:00
+  15:00   16:00   20:00   21:00
+
+💡 For a 2-hour booking, suggest consecutive pairs like:
+  09:00-11:00   10:00-12:00   11:00-13:00   12:00-14:00   13:00-15:00
+  ... and 3 more options
+
+
+================================================================================
+SUMMARY
+================================================================================
+
+Total Conflicts: 5
+  • Smoobu vs Smoobu: 2
+  • WordPress vs Smoobu: 3
+
+📋 NEXT STEPS:
+  1. Review each conflict above
+  2. Contact the guests using the email/phone provided
+  3. Offer alternative time slots from the suggestions
+  4. Update the bookings in your admin panel or Firebase
+  5. Verify no conflicts remain after changes
+
+================================================================================
+
+✅ Report generation complete!
+

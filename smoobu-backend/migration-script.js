@@ -42,15 +42,17 @@ async function runMigration() {
     const bookingsRef = db.collection("bookings");
 
     console.log(
-      "Querying for bookings that have 'spaDateTime' but are missing 'spaDateString'..."
+      "Querying for bookings that have 'spaDateTime' but have missing or null 'spaDateString'..."
     );
 
     // We still query this way to narrow down the documents we need to check
     const snapshot = await bookingsRef.where("spaDateTime", "!=", null).get();
 
-    const docsToUpdate = snapshot.docs.filter(
-      (doc) => doc.data().spaDateString === undefined
-    );
+    // Filter for documents where spaDateString is missing (undefined) OR null
+    const docsToUpdate = snapshot.docs.filter((doc) => {
+      const spaDateString = doc.data().spaDateString;
+      return spaDateString === undefined || spaDateString === null;
+    });
 
     if (docsToUpdate.length === 0) {
       console.log("✅ No documents found that need updating.");
