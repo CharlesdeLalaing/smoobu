@@ -5,6 +5,8 @@ import { roomsData } from "../hooks/roomsData";
 import { isRoomAvailable } from "../hooks/roomUtils";
 import { PriceDetails } from "./PriceDetails";
 import { CalendarRoom } from "./CustomRoom";
+import { GuestSelect } from "./GuestSelect";
+import { adultes, childrenOptions } from "../utils/constants";
 
 import Fox from "../../assets/GlobalImg/fox.webp";
 
@@ -30,6 +32,7 @@ export const PropertyDetails = ({
   handleDateSelect,
   roomRefs,
   viewingRoomId,
+  onGuestChange,
 }) => {
   const { t } = useTranslation();
   const totalGuests =
@@ -367,7 +370,7 @@ export const PropertyDetails = ({
 
               {activeTab === "priceDetails" && roomPriceDetails && (
                 <div className="relative h-full overflow-y-auto sm:overflow-visible md:overflow-y-auto">
-                  <div className="absolute top-[100px] left-[250px] sm:top-[100px] sm:left-[250px] md:top-[150px] md:left-[450px] lg:top-[120px] lg:left-[220px] xl:top-[130px] xl:left-[450px]">
+                  <div className="absolute top-[20px] left-[250px] sm:top-[20px] sm:left-[250px] md:top-[40px] md:left-[450px] lg:top-[30px] lg:left-[220px] xl:top-[40px] xl:left-[450px]">
                     <img
                       src={Fox}
                       alt="Squirrel"
@@ -382,19 +385,40 @@ export const PropertyDetails = ({
                       {t(room.nameKey)}
                     </h2>
                   </div>
-                  <div className="flex items-center justify-left sm:mb-2 md:mb-4 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
-                    <img
-                      src={Group}
-                      alt="Profile Icon"
-                      className="w-6 h-6 mr-4 sm:w-4 sm:h-4 md:w-5 md:h-5"
-                    />
-                    <span className="text-[18px] sm:text-sm md:text-base font-light text-black">
-                      {totalGuests}{" "}
-                      {totalGuests > 1
-                        ? t("propertyDetails.guests.plural")
-                        : t("propertyDetails.guests.singular")}
-                    </span>
-                  </div>
+                  {showOnlySelected && onGuestChange ? (
+                    <div className="mb-8 sm:mb-4 md:mb-4 mt-2 sm:mt-2 md:mt-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <GuestSelect
+                          label={t("search.adults")}
+                          name="adults"
+                          value={formData.adults}
+                          options={adultes}
+                          onChange={onGuestChange}
+                        />
+                        <GuestSelect
+                          label={t("search.children")}
+                          name="children"
+                          value={formData.children}
+                          options={childrenOptions}
+                          onChange={onGuestChange}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-left sm:mb-2 md:mb-4 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
+                      <img
+                        src={Group}
+                        alt="Profile Icon"
+                        className="w-6 h-6 mr-4 sm:w-4 sm:h-4 md:w-5 md:h-5"
+                      />
+                      <span className="text-[18px] sm:text-sm md:text-base font-light text-black">
+                        {totalGuests}{" "}
+                        {totalGuests > 1
+                          ? t("propertyDetails.guests.plural")
+                          : t("propertyDetails.guests.singular")}
+                      </span>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-left sm:mb-2 md:mb-10 sm:mt-2 md:mt-4 sm:my-3 md:my-4">
                     <img

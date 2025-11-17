@@ -457,6 +457,60 @@ const BookingForm = () => {
     ]
   );
 
+  // Handler for guest count changes in selected room view
+  const handleGuestChange = async (e) => {
+    const { name, value } = e.target;
+    const newValue = parseInt(value) || 0;
+
+    // Update formData state with new guest count
+    setFormData((prev) => ({
+      ...prev,
+      [name]: newValue,
+    }));
+
+    // Trigger availability check to update prices with NEW guest counts
+    // Use preserveExistingData to keep calendar availability indicators
+    if (startDate && endDate) {
+      try {
+        const createConsistentDate = (date) => {
+          if (!date) return null;
+          const d = new Date(date);
+          d.setHours(12, 0, 0, 0);
+          return d;
+        };
+
+        const startDateForCheck = createConsistentDate(startDate);
+        const endDateForCheck = createConsistentDate(endDate);
+
+        // Wait for state to update, then call availability check
+        setTimeout(async () => {
+          const availabilityData = await checkAvailability(
+            startDateForCheck,
+            endDateForCheck,
+            null, // roomId
+            true  // preserveExistingData - keeps calendar triangles visible
+          );
+
+          if (availabilityData && availabilityData.priceDetails) {
+            setPriceDetails(availabilityData.priceDetails);
+            setShowPriceDetails(true);
+            setIsAvailable(true);
+
+            // Update price for selected room if it exists
+            if (formData.apartmentId && availabilityData.priceDetails[formData.apartmentId]) {
+              setFormData((prev) => ({
+                ...prev,
+                price: availabilityData.priceDetails[formData.apartmentId].finalPrice,
+              }));
+            }
+          }
+        }, 100);
+      } catch (err) {
+        console.error("Error updating prices after guest change:", err);
+      }
+    }
+  };
+
   // Add this function to check if the currently selected room is available
   const isSelectedRoomAvailable = () => {
     // If no room is selected, it's not available
@@ -534,6 +588,7 @@ const BookingForm = () => {
     onCalendarViewChange: handleCalendarViewChange, // Add this prop
     roomRefs, // Add this prop to pass refs to PropertyDetails
     viewingRoomId, // Add this to show room details without booking
+    onGuestChange: handleGuestChange, // Add this to allow guest count changes in selected room
   };
 
   const extrasSectionProps = {

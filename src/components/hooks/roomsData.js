@@ -25,12 +25,16 @@ import Cabane_img_4 from "../../assets/Chambres/La Cabane/Cabane_4.webp";
 import Cabane_img_5 from "../../assets/Chambres/La Cabane/Cabane_5.webp";
 import Cabane_img_6 from "../../assets/Chambres/La Cabane/Cabane_6.webp";
 
+import Ble_ToBeAdded2 from "../../assets/Chambres/De Blé/ToBeAdded2.webp";
+import Ble_ToBeAdded3 from "../../assets/Chambres/De Blé/ToBeAdded3.webp";
 import Ble_img_1 from "../../assets/Chambres/De Blé/blé_1.webp";
 import Ble_img_2 from "../../assets/Chambres/De Blé/blé_2.webp";
 import Ble_img_3 from "../../assets/Chambres/De Blé/blé_3.webp";
 import Ble_img_4 from "../../assets/Chambres/De Blé/blé_4.webp";
 import Ble_img_5 from "../../assets/Chambres/De Blé/blé_5.webp";
 
+import Logis_ToBeAdded1 from "../../assets/Chambres/Le Logis/ToBeAdded1.webp";
+import Logis_ToBeAdded2 from "../../assets/Chambres/Le Logis/ToBeAdded2.webp";
 import Logis_img_1 from "../../assets/Chambres/Le Logis/logis_1.webp";
 import Logis_img_2 from "../../assets/Chambres/Le Logis/logis_2.webp";
 import Logis_img_3 from "../../assets/Chambres/Le Logis/logis_3.webp";
@@ -172,10 +176,12 @@ export const roomsData = {
     description: "rooms.descriptions.ble",
     images: {
       main: Ble_img_1,
-      secondary: Ble_img_2,
-      tertiary: Ble_img_3,
-      quaternary: Ble_img_4,
-      quinary: Ble_img_5,
+      secondary: Ble_ToBeAdded2,
+      tertiary: Ble_ToBeAdded3,
+      quaternary: Ble_img_2,
+      quinary: Ble_img_3,
+      senary: Ble_img_4,
+      septenary: Ble_img_5,
     },
     maxGuests: 4, // Updated to match correct capacity (4 total)
     features: [
@@ -207,12 +213,14 @@ export const roomsData = {
     description: "rooms.descriptions.logis",
     images: {
       main: Logis_img_1,
-      secondary: Logis_img_2,
-      tertiary: Logis_img_3,
-      quaternary: Logis_img_4,
-      quinary: Logis_img_5,
-      senary: Logis_img_6,
-      septenary: Logis_img_7,
+      secondary: Logis_ToBeAdded1,
+      tertiary: Logis_ToBeAdded2,
+      quaternary: Logis_img_2,
+      quinary: Logis_img_3,
+      senary: Logis_img_4,
+      septenary: Logis_img_5,
+      octenary: Logis_img_6,
+      nonary: Logis_img_7,
     },
     maxGuests: 8,
     features: [
