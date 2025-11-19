@@ -220,11 +220,11 @@
       "spa": {
         "basic": {
           "name": "SPA Formule (2 pers)",
-          "description": "Deze formule omvat 2 uur toegang tot de buitenspa met jacuzzi, sauna, warme douche met Noordse emmer, badjassen en slippers."
+          "description": "Deze formule omvat 2 uur toegang tot de buitenspa met jacuzzi, sauna, warme douche met Noordse emmer en badjassen."
         },
         "withBottle": {
           "name": "SPA Formule + fles (2 pers)",
-          "description": "Deze formule omvat 2 uur toegang tot de buitenspa met jacuzzi, sauna, warme douche met Noordse emmer, badjassen, slippers en een fles bubbels."
+          "description": "Deze formule omvat 2 uur toegang tot de buitenspa met jacuzzi, sauna, warme douche met Noordse emmer, badjassen en een fles bubbels."
         },
         "selectDate": "Selecteer een datum",
         "loading": "Tijdsloten laden...",

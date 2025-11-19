@@ -245,11 +245,11 @@
         "spa": {
           "basic": {
             "name": "SPA Package (2 pers)",
-            "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket, bathrobes and slippers."
+            "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket and bathrobes."
           },
           "withBottle": {
             "name": "SPA Package + bottle (2 pers)",
-            "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket, bathrobes, slippers, and a bottle of sparkling wine."
+            "description": "This package includes 2-hour access to the outdoor spa with jacuzzi, sauna, hot shower with Nordic bucket, bathrobes and a bottle of sparkling wine."
           },
           "selectDate": "Select a date",
           "greyedSlotInfoHelpText": "If the time slot is grayed out, it is available with the previous hour and not with the following hour (as the latter is not available).",

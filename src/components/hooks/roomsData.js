@@ -176,12 +176,12 @@ export const roomsData = {
     description: "rooms.descriptions.ble",
     images: {
       main: Ble_img_1,
-      secondary: Ble_ToBeAdded2,
-      tertiary: Ble_ToBeAdded3,
+      secondary: Ble_ToBeAdded3,
       quaternary: Ble_img_2,
-      quinary: Ble_img_3,
+      tertiary: Ble_ToBeAdded2,
       senary: Ble_img_4,
       septenary: Ble_img_5,
+      quinary: Ble_img_3,
     },
     maxGuests: 4, // Updated to match correct capacity (4 total)
     features: [
@@ -213,14 +213,14 @@ export const roomsData = {
     description: "rooms.descriptions.logis",
     images: {
       main: Logis_img_1,
-      secondary: Logis_ToBeAdded1,
-      tertiary: Logis_ToBeAdded2,
-      quaternary: Logis_img_2,
       quinary: Logis_img_3,
       senary: Logis_img_4,
-      septenary: Logis_img_5,
-      octenary: Logis_img_6,
+      tertiary: Logis_ToBeAdded2,
       nonary: Logis_img_7,
+      octenary: Logis_img_6,
+      secondary: Logis_ToBeAdded1,
+      septenary: Logis_img_5,
+      quaternary: Logis_img_2,
     },
     maxGuests: 8,
     features: [

@@ -246,11 +246,11 @@
         "spa": {
           "basic": {
             "name": "Formule SPA (2 pers)",
-            "description": "Cette formule comprend un accès de 2 heures au spa en plein air avec jacuzzi, sauna, douche chaude avec seau nordique, peignoirs et claquettes."
+            "description": "Cette formule comprend un accès de 2 heures au spa en plein air avec jacuzzi, sauna, douche chaude avec seau nordique et peignoirs."
           },
           "withBottle": {
             "name": "Formule SPA + bouteille (2 pers)",
-            "description": "Cette formule comprend un accès de 2 heures au spa en plein air avec jacuzzi, sauna, douche chaude avec seau nordique, peignoirs, claquettes, et une bouteille de crémant."
+            "description": "Cette formule comprend un accès de 2 heures au spa en plein air avec jacuzzi, sauna, douche chaude avec seau nordique, peignoirs et une bouteille de crémant."
           },
           "selectDate": "Seléctionnez une date",
           "loading": "Chargement des créneaux...",
