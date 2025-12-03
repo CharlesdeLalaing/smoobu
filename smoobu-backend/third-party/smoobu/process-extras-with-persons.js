@@ -286,10 +286,15 @@ export function processExtrasWithPersons(priceElements) {
     }
   }
 
-  // Calculate extras total including all extras
+  // Calculate extras total including all extras AND their extra person amounts
   const extrasTotal = finalExtras.reduce((sum, extra) => {
-    return sum + parseFloat(extra.amount || 0); // Only use base amount, not extraPersonAmount
+    const baseAmount = parseFloat(extra.amount || 0);
+    const personAmount = parseFloat(extra.extraPersonAmount || 0);
+    console.log(`[processExtrasWithPersons] Extra: "${extra.name}" - Base: €${baseAmount}, Person: €${personAmount}, Running Total: €${sum + baseAmount + personAmount}`);
+    return sum + baseAmount + personAmount; // Include BOTH base and extra person amounts
   }, 0);
+
+  console.log(`[processExtrasWithPersons] FINAL extrasTotal: €${extrasTotal}`);
 
   return {
     extras: finalExtras,

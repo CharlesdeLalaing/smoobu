@@ -121,24 +121,35 @@ export function calculateBookingTotal(booking) {
     guestFees = parseFloat(booking.priceDetailsSnapshot.guestFees) || 0;
   } else if (priceElements.length > 0) {
     // Look for guest fees in price elements
-    // Exclude formula-specific extra person fees (they should be counted as extras, not guest fees)
-    const guestFeeElement = priceElements.find(
-      (el) =>
-        el &&
-        el.name &&
-        el.amount &&
-        (el.type === "guests" ||
-          el.name.toLowerCase().includes("frais voyageurs") ||
-          el.name.toLowerCase().includes("frais de personnes supplémentaires") ||
-          (el.name.toLowerCase().includes("guest") &&
-            !el.name.toLowerCase().includes("formule")) ||
-          (el.name.toLowerCase().includes("personne supplémentaire") &&
-            !el.name.toLowerCase().includes("l'essentiel") &&
-            !el.name.toLowerCase().includes("formule") &&
-            !el.name.toLowerCase().includes("spa")) ||
-          el.name.toLowerCase().includes("extra guest") ||
-          el.name.toLowerCase().includes("additional guest"))
-    );
+    // CRITICAL: Exclude ALL extra-package-related "Personne supplémentaire" items
+    const guestFeeElement = priceElements.find((el) => {
+      if (!el || !el.name || !el.amount) return false;
+
+      const name = el.name.toLowerCase();
+
+      // Explicit guest fee types
+      if (el.type === "guests") return true;
+      if (name.includes("frais voyageurs")) return true;
+      if (name.includes("frais de personnes supplémentaires")) return true;
+      if (name.includes("extra guest") || name.includes("additional guest"))
+        return true;
+
+      // "guest" keyword (but not if part of an extra)
+      if (name.includes("guest") && !name.includes("formule")) return true;
+
+      // CRITICAL FIX: For "personne supplémentaire", check if it's part of an extra package
+      if (name.includes("personne supplémentaire")) {
+        // If the name includes " - personne supplémentaire", it's likely "[Extra Name] - Personne supplémentaire"
+        // This means it's part of an extra package, NOT a standalone guest fee
+        if (name.includes(" - personne supplémentaire")) {
+          return false; // Exclude - this is part of an extra package
+        }
+        // If it's standalone "Personne supplémentaire" without a parent, it's a guest fee
+        return true;
+      }
+
+      return false;
+    });
 
     if (guestFeeElement) {
       guestFees = parseFloat(guestFeeElement.amount) || 0;
@@ -265,10 +276,15 @@ export function calculateBookingTotal(booking) {
   }
 
   const mergedExtras = mergeAndSortExtras(displayExtras);
-  const extrasTotal = mergedExtras.reduce(
-    (sum, extra) => sum + parseFloat(extra.amount || 0),
-    0
-  );
+
+  // Use the pre-calculated extrasTotal from priceDetails if available (includes extra person amounts)
+  // Otherwise calculate from merged extras
+  const extrasTotal = booking.priceDetails?.extrasTotal
+    ? parseFloat(booking.priceDetails.extrasTotal)
+    : mergedExtras.reduce(
+        (sum, extra) => sum + parseFloat(extra.amount || 0),
+        0
+      );
 
   // --- FINAL CALCULATION ---
   const calculatedTotal = roomTotal + extrasTotal;

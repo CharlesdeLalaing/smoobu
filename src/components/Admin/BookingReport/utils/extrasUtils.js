@@ -162,23 +162,6 @@ export function sortExtras(extras) {
 export function getCleanExtrasFromPriceElements(priceElements, portalName) {
   if (!priceElements || !Array.isArray(priceElements)) return [];
 
-  // First, identify if we have formulas with quantities > 1
-  // These should NOT also have separate extra person charges
-  // BUT we must exclude the extra person charges themselves from this check!
-  const formulasWithMultipleQuantities = new Set();
-
-  priceElements.forEach(el => {
-    if (el && el.name && el.quantity > 1) {
-      // Skip if this is already an extra person charge (it should have its own quantity)
-      if (el.name.includes("Personne supplémentaire") || el.name.includes("personne supplémentaire")) {
-        return; // Don't add extra person charges to the set
-      }
-      // Extract the base formula name
-      const baseName = el.name.split(" - ")[0].trim();
-      formulasWithMultipleQuantities.add(baseName.toLowerCase());
-    }
-  });
-
   // Define unwanted extras patterns
   const unwantedPatterns = [
     "cancellation",
@@ -212,15 +195,9 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
   const relevantElements = priceElements.filter((el) => {
     if (!el || !el.amount || !el.name) return false;
 
-    // Check if this is an extra person charge for a formula that already has quantity > 1
-    // If so, skip it to avoid duplication
-    if (el.name.includes("Personne supplémentaire") || el.name.includes("personne supplémentaire")) {
-      const baseName = el.name.split(" - ")[0].trim().toLowerCase();
-      if (formulasWithMultipleQuantities.has(baseName)) {
-        // console.log(`⚠️ Skipping duplicate extra person charge: "${el.name}" because main formula has quantity > 1`);
-        return false;
-      }
-    }
+    // REMOVED: Old deduplication logic that was filtering out legitimate person charges
+    // Person charges should always be shown as separate line items
+    // The backend properly merges and calculates totals, so we should display all items from priceElements
 
     // console.log(`🔍 Filtering element: "${el.name}" (amount: ${el.amount})`);
 
@@ -466,11 +443,14 @@ export function calculateBookingTotal(booking) {
   // Merge duplicate extras
   const mergedExtras = mergeAndSortExtras(displayExtras);
 
-  // Calculate extras total
-  const extrasTotal = mergedExtras.reduce(
-    (sum, extra) => sum + parseFloat(extra.amount || 0),
-    0
-  );
+  // Use the pre-calculated extrasTotal from priceDetails if available (includes extra person amounts)
+  // Otherwise calculate from merged extras
+  const extrasTotal = booking.priceDetails?.extrasTotal
+    ? parseFloat(booking.priceDetails.extrasTotal)
+    : mergedExtras.reduce(
+        (sum, extra) => sum + parseFloat(extra.amount || 0),
+        0
+      );
 
   // Calculate total price
   return roomTotal + extrasTotal;

@@ -200,13 +200,14 @@ function shouldMergeExtras(extraName) {
 }
 
 /**
- * Calculates the total amount for extras
+ * Calculates the total amount for extras INCLUDING extra person amounts
  * @param {Array} extras - Array of extras
  * @returns {number} - Total amount
  */
 export function calculateExtrasTotal(extras) {
-  return extras.reduce(
-    (sum, extra) => sum + Math.abs(parseFloat(extra.amount) || 0),
-    0
-  );
+  return extras.reduce((sum, extra) => {
+    const baseAmount = Math.abs(parseFloat(extra.amount) || 0);
+    const personAmount = Math.abs(parseFloat(extra.extraPersonAmount) || 0);
+    return sum + baseAmount + personAmount; // Include BOTH base and extra person amounts
+  }, 0);
 }

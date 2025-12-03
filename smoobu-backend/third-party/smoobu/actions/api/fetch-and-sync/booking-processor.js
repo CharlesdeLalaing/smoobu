@@ -430,11 +430,9 @@ export class BookingProcessor {
       priceElements.find((el) => el.name?.toLowerCase().includes("commission"))
         ?.amount || 0;
 
-    // Recalculate extras total based on enhanced price elements
+    // Use the extras total from processExtrasWithPersons which correctly includes extra person amounts
     // This ensures the extras total reflects the corrected quantities and includes extra person entries
-    const enhancedExtrasTotal = priceElements
-      .filter((el) => el.type === "addon" && el.amount > 0)
-      .reduce((sum, el) => sum + Math.abs(parseFloat(el.amount) || 0), 0);
+    const enhancedExtrasTotal = extrasData.extrasTotal;
 
     return {
       smoobuId: smoobuId,
