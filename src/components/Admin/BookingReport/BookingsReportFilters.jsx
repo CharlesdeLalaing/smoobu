@@ -15,8 +15,8 @@ const BookingsReportFilters = ({
   setSearchTerm,
 }) => {
   const years = Array.from(
-    { length: 3 },
-    (_, i) => new Date().getFullYear() - i
+    { length: 4 },
+    (_, i) => new Date().getFullYear() + 1 - i
   );
   const months = Array.from({ length: 12 }, (_, i) => ({
     value: i + 1,
