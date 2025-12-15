@@ -4,18 +4,21 @@ import { api } from "../components/utils/api";
 /**
  * Hook to fetch rooms dynamically from Smoobu via backend API
  * This replaces the hardcoded roomsData.js approach
+ * @param {string} customApiKey - Optional API key for testing different Smoobu accounts
  */
-export function useDynamicRooms() {
+export function useDynamicRooms(customApiKey = null) {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchRooms = useCallback(async () => {
+  const fetchRooms = useCallback(async (apiKeyOverride = null) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await api.get("/dynamic-rooms");
+      const apiKey = apiKeyOverride || customApiKey;
+      const params = apiKey ? { apiKey } : {};
+      const response = await api.get("/dynamic-rooms", { params });
 
       if (response.data.success) {
         setRooms(response.data.rooms);
@@ -28,7 +31,7 @@ export function useDynamicRooms() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [customApiKey]);
 
   useEffect(() => {
     fetchRooms();
@@ -44,8 +47,9 @@ export function useDynamicRooms() {
 
 /**
  * Hook to fetch availability/rates for dynamic rooms
+ * @param {string} customApiKey - Optional API key for testing different Smoobu accounts
  */
-export function useDynamicRates(startDate, endDate, adults = 1, children = 0) {
+export function useDynamicRates(startDate, endDate, adults = 1, children = 0, customApiKey = null) {
   const [rates, setRates] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -61,14 +65,17 @@ export function useDynamicRates(startDate, endDate, adults = 1, children = 0) {
     setError(null);
 
     try {
-      const response = await api.get("/dynamic-rates", {
-        params: {
-          start_date: startDate,
-          end_date: endDate,
-          adults,
-          children,
-        },
-      });
+      const params = {
+        start_date: startDate,
+        end_date: endDate,
+        adults,
+        children,
+      };
+      if (customApiKey) {
+        params.apiKey = customApiKey;
+      }
+
+      const response = await api.get("/dynamic-rates", { params });
 
       if (response.data.success) {
         setRates(response.data.rates);
@@ -82,7 +89,7 @@ export function useDynamicRates(startDate, endDate, adults = 1, children = 0) {
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, adults, children]);
+  }, [startDate, endDate, adults, children, customApiKey]);
 
   useEffect(() => {
     fetchRates();

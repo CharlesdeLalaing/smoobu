@@ -26,7 +26,15 @@ import {
   testSmoobuConnection,
   saveRoomConfig,
   fetchDynamicRates,
+  debugSmoobu,
 } from "./third-party/smoobu/actions/api/dynamic-rooms.js";
+import {
+  getPricingConfig,
+  savePricingConfig,
+  getAllPricingConfigs,
+  deletePricingConfig,
+  batchSavePricingConfigs,
+} from "./third-party/smoobu/actions/api/pricing-config.js";
 import { createPaymentIntent } from "./third-party/stripe/create-payment-intent.js";
 import { getBookingByPaymentIntentId } from "./third-party/stripe/get-payment-intent.js";
 import { getBookingHistoryByEmail } from "./third-party/smoobu/actions/api/get-booking-history-email.js";
@@ -638,6 +646,14 @@ app.get("/api/dynamic-rooms", fetchDynamicRooms);
 app.get("/api/dynamic-rates", fetchDynamicRates);
 app.get("/api/test-smoobu-connection", testSmoobuConnection);
 app.post("/api/room-config/:roomId", saveRoomConfig);
+app.get("/api/debug-smoobu", debugSmoobu);
+
+// Pricing configuration endpoints (Firebase-based)
+app.get("/api/pricing-configs", getAllPricingConfigs);
+app.get("/api/pricing-config/:smoobuId", getPricingConfig);
+app.post("/api/pricing-config/:smoobuId", savePricingConfig);
+app.delete("/api/pricing-config/:smoobuId", deletePricingConfig);
+app.post("/api/pricing-configs/batch", batchSavePricingConfigs);
 app.post("/api/create-payment-intent", createPaymentIntent);
 app.post("/api/cancel-booking", handleCancelSpaBooking);
 app.get("/api/bookings/:paymentIntentId", getBookingByPaymentIntentId);

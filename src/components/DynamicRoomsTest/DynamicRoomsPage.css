@@ -56,6 +56,20 @@
   cursor: not-allowed;
 }
 
+.drp-button-primary {
+  background: #2e7d32;
+}
+
+.drp-button-primary:hover:not(:disabled) {
+  background: #1b5e20;
+}
+
+.drp-button-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .drp-input-group {
   display: flex;
   flex-direction: column;
@@ -266,6 +280,65 @@
   font-size: 0.8rem !important;
 }
 
+.drp-unavailable-reason {
+  color: #c62828;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.drp-message {
+  color: #e65100;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  background: #fff3e0;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.drp-no-addons {
+  color: #888;
+  font-style: italic;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.drp-addon-breakdown {
+  margin-top: 0.5rem;
+  text-align: left;
+}
+
+.drp-addon-breakdown summary {
+  cursor: pointer;
+  color: #1565c0;
+  font-size: 0.8rem;
+}
+
+.drp-addon-breakdown ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1rem;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.drp-addon-breakdown li {
+  margin: 0.25rem 0;
+}
+
+.drp-discount {
+  color: #2e7d32 !important;
+  font-weight: 500;
+}
+
+.drp-warning {
+  color: #e65100 !important;
+  font-size: 0.8rem !important;
+  background: #fff3e0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.5rem !important;
+}
+
 .drp-availability-form {
   background: #f5f5f5;
   padding: 1.5rem;
@@ -322,6 +395,190 @@
   max-height: 400px;
 }
 
+/* Badges container */
+.drp-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.drp-badge.warning {
+  background: #ffebee;
+  color: #c62828;
+}
+
+/* Config list */
+.drp-config-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.drp-config-list li {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.drp-config-list li:last-child {
+  border-bottom: none;
+}
+
+/* Small button variant */
+.drp-button-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+/* Modal styles */
+.drp-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.drp-modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.drp-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f9f9f9;
+  border-radius: 12px 12px 0 0;
+}
+
+.drp-modal-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.drp-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  line-height: 1;
+}
+
+.drp-modal-close:hover {
+  color: #333;
+}
+
+.drp-modal-body {
+  padding: 1.5rem;
+}
+
+.drp-modal-info {
+  margin: 0 0 1.5rem 0;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.drp-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  background: #f9f9f9;
+  border-radius: 0 0 12px 12px;
+}
+
+/* Config form styles */
+.drp-config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.drp-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.drp-form-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.drp-form-group small {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.drp-input-with-unit {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.drp-input-with-unit input,
+.drp-input-with-unit select {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.drp-input-with-unit input:focus,
+.drp-input-with-unit select:focus {
+  outline: none;
+  border-color: #4a90a4;
+  box-shadow: 0 0 0 2px rgba(74, 144, 164, 0.2);
+}
+
+.drp-unit {
+  color: #666;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+/* Config message */
+.drp-config-message {
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.drp-config-message.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.drp-config-message.error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
 @media (max-width: 768px) {
   .dynamic-rooms-page {
     padding: 1rem;
@@ -333,5 +590,18 @@
 
   .drp-form-row {
     grid-template-columns: 1fr;
+  }
+
+  .drp-modal {
+    max-width: 100%;
+    margin: 1rem;
+  }
+
+  .drp-modal-footer {
+    flex-direction: column;
+  }
+
+  .drp-modal-footer .drp-button {
+    width: 100%;
   }
 }
