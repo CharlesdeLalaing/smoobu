@@ -13,6 +13,7 @@ import BookingReport from "./components/Admin/BookingReport";
 import Login from "./components/Admin/Login";
 import AdminBookingCancellation from "./components/Admin/AdminBookingCancellation";
 import SpaCalendar from "./components/Admin/SpaCalendar";
+import DynamicRoomsPage from "./components/DynamicRoomsTest/DynamicRoomsPage";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
 import "./index.css";
@@ -30,6 +31,7 @@ function App() {
               element={<BookingConfirmation />}
             />
             <Route path="/" element={<Booking2 />} />
+            <Route path="/dynamic-rooms" element={<DynamicRoomsPage />} />
             <Route path="/admin/login" element={<Login />} />
             <Route
               element={

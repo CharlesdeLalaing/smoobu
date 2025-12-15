@@ -21,6 +21,12 @@ import { generateBookingsReport } from "./third-party/smoobu/actions/api/booking
 import { fetchApartments } from "./third-party/smoobu/actions/api/apartments.js";
 import { fetchApartmentsId } from "./third-party/smoobu/actions/api/apartment-id.js";
 import { fetchRates } from "./third-party/smoobu/actions/api/rates.js";
+import {
+  fetchDynamicRooms,
+  testSmoobuConnection,
+  saveRoomConfig,
+  fetchDynamicRates,
+} from "./third-party/smoobu/actions/api/dynamic-rooms.js";
 import { createPaymentIntent } from "./third-party/stripe/create-payment-intent.js";
 import { getBookingByPaymentIntentId } from "./third-party/stripe/get-payment-intent.js";
 import { getBookingHistoryByEmail } from "./third-party/smoobu/actions/api/get-booking-history-email.js";
@@ -626,6 +632,12 @@ app.get("/api/bookings-report", generateBookingsReport);
 app.get("/api/apartments", fetchApartments);
 app.get("/api/apartments/:id", fetchApartmentsId);
 app.get("/api/rates", fetchRates);
+
+// Dynamic rooms endpoints (new Smoobu integration)
+app.get("/api/dynamic-rooms", fetchDynamicRooms);
+app.get("/api/dynamic-rates", fetchDynamicRates);
+app.get("/api/test-smoobu-connection", testSmoobuConnection);
+app.post("/api/room-config/:roomId", saveRoomConfig);
 app.post("/api/create-payment-intent", createPaymentIntent);
 app.post("/api/cancel-booking", handleCancelSpaBooking);
 app.get("/api/bookings/:paymentIntentId", getBookingByPaymentIntentId);
