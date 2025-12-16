@@ -420,6 +420,8 @@
         "giftVoucher": "Gift card",
         "longStayDiscount": "Long stay discount",
         "guestFees": "{{count}} extra guest(s) × {{fee}}€",
+        "adultGuestFees": "Extra adult fees ({{extraAdults}} × {{feePerNight}}€ × {{nights}} night(s))",
+        "childGuestFees": "Extra child fees ({{extraChildren}} × {{feePerNight}}€ × {{nights}} night(s))",
         "nonAlcoholicChosenLater": "Non-alcoholic option ",
         "promoCode": {
           "fixed": "Promo code",
@@ -450,6 +452,8 @@
         "unavailableForDates": "Not available for these dates",
         "loading": "Loading...",
         "extraGuestFee": "Extra fee of {{fee}}€ per person after {{threshold}} guests ({{count}} extra guest(s))",
+        "extraAdultFee": "Extra {{fee}}€/night per adult after {{threshold}} guests ({{count}} extra adult(s))",
+        "extraChildFee": "Extra {{fee}}€/night per child ({{count}} extra child(ren))",
         "capacityExceeded": {
           "title": "Maximum capacity exceeded",
           "message": "This room can accommodate a maximum of {{maxGuests}} people (you have selected {{selectedGuests}} people)."
@@ -514,6 +518,8 @@
               "basePrice": "{{price}}€",
               "guestFees_label": "Fee for {{extraGuests}} extra person(s)",
               "guestFees": "{{amount}}€",
+              "adultGuestFees_label": "Extra adult fees ({{extraAdults}} × {{feePerNight}}€ × {{nights}} night(s))",
+              "childGuestFees_label": "Extra child fees ({{extraChildren}} × {{feePerNight}}€ × {{nights}} night(s))",
               "longStayDiscount_label": "Long Stay Discount",
               "longStayDiscount": "{{percentage}}%",
               "promoCode_label": "Promo Code ({{code}})",

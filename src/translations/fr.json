@@ -415,6 +415,8 @@
         "title": "Détail des prix:",
         "basePrice": "Prix de base",
         "guestFees": "{{count}} personne(s) supplémentaire(s) × {{fee}}€",
+        "adultGuestFees": "Frais adultes suppl. ({{extraAdults}} × {{feePerNight}}€ × {{nights}} nuit(s))",
+        "childGuestFees": "Frais enfants suppl. ({{extraChildren}} × {{feePerNight}}€ × {{nights}} nuit(s))",
         "longStayDiscount": "Réduction long séjour",
         "promoCode": {
           "fixed": "Code promo",
@@ -445,6 +447,8 @@
         "selectRoom": "Réserver cette chambre",
         "unavailableForDates": "Non disponible pour ces dates",
         "extraGuestFee": "Supplément de {{fee}}€ par personne au-delà de {{threshold}} personnes ({{count}} personne(s) supplémentaire(s))",
+        "extraAdultFee": "Supplément de {{fee}}€/nuit par adulte au-delà de {{threshold}} pers. ({{count}} adulte(s) suppl.)",
+        "extraChildFee": "Supplément de {{fee}}€/nuit par enfant ({{count}} enfant(s) suppl.)",
         "loading": "Chargement...",
         "capacityExceeded": {
           "title": "Capacité maximale dépassée",
@@ -510,6 +514,8 @@
         "basePrice": "{{price}}€",
         "guestFees_label": "Frais pour {{extraGuests}} personne(s) supplémentaire(s)",
         "guestFees": "{{amount}}€",
+        "adultGuestFees_label": "Frais adultes suppl. ({{extraAdults}} × {{feePerNight}}€ × {{nights}} nuit(s))",
+        "childGuestFees_label": "Frais enfants suppl. ({{extraChildren}} × {{feePerNight}}€ × {{nights}} nuit(s))",
         "longStayDiscount_label": "Réduction long séjour",
         "longStayDiscount": "{{percentage}}%",
         "promoCode_label": "Code promo ({{code}})",

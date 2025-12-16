@@ -2,8 +2,10 @@ import React from "react";
 import { useTranslation } from 'react-i18next';
 import { Listbox } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
+import { useCheckinSettings } from "../hooks/useCheckinSettings";
 
-const timeSlots = [
+// Fallback time slots in case API is not available
+const fallbackTimeSlots = [
   { id: 1, hour: "17:00" },
   { id: 2, hour: "17:30" },
   { id: 3, hour: "18:00" },
@@ -18,8 +20,13 @@ const timeSlots = [
 ];
 
 export const TimeSelect = ({ label, name, value, onChange }) => {
-
     const { t } = useTranslation();
+    const { timeSlots: dynamicTimeSlots, loading } = useCheckinSettings();
+
+    // Use dynamic time slots if available, otherwise fall back to hardcoded
+    const timeSlots = dynamicTimeSlots && dynamicTimeSlots.length > 0
+      ? dynamicTimeSlots
+      : fallbackTimeSlots;
   
 
   return (

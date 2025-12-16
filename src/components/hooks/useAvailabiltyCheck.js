@@ -1,14 +1,58 @@
 // useAvailabilityCheck.js
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { api } from "../utils/api";
 import { enhanceAvailabilityData } from "./availabilityTransformer"; // Import the transformer
 
+// Cache for apartment IDs to avoid fetching on every render
+let cachedApartmentIds = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Function to fetch apartment IDs from API
+async function fetchApartmentIds() {
+  // Return cached IDs if still valid
+  if (cachedApartmentIds && Date.now() - cacheTimestamp < CACHE_DURATION) {
+    return cachedApartmentIds;
+  }
+
+  try {
+    const response = await api.get("/dynamic-rooms");
+    if (response.data.success && response.data.rooms) {
+      cachedApartmentIds = response.data.rooms.map(room => String(room.id || room.smoobuId));
+      cacheTimestamp = Date.now();
+      return cachedApartmentIds;
+    }
+  } catch (error) {
+    console.warn("Failed to fetch dynamic rooms, using fallback:", error.message);
+  }
+
+  // Fallback to hardcoded IDs if API fails (for backwards compatibility)
+  return [
+    "2565753", // La Cabane du Chêne
+    "1946282", // Le Dôme des Libellules
+    "1644643", // La Bulle du Ruisseau
+    "1946279", // Le Moulin
+    "1946276", // La Chambre de Blé
+    "1946270", // Le Logis
+  ];
+}
+
 // Main hook for availability checking
-export const useAvailabilityCheck = (formData) => {
+export const useAvailabilityCheck = (formData, customApartmentIds = null) => {
   const [availableDates, setAvailableDates] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [apartmentIds, setApartmentIds] = useState(customApartmentIds || []);
+  const initialFetchDone = useRef(false);
+
+  // Fetch apartment IDs on mount if not provided
+  useEffect(() => {
+    if (!customApartmentIds && !initialFetchDone.current) {
+      initialFetchDone.current = true;
+      fetchApartmentIds().then(ids => setApartmentIds(ids));
+    }
+  }, [customApartmentIds]);
 
   const resetAvailability = () => {
     setAvailableDates({});
@@ -40,14 +84,13 @@ export const useAvailabilityCheck = (formData) => {
       : {};
 
     try {
-      const apartmentIds = [
-        "2565753", // La Cabane du Chêne
-        "1946282", // Le Dôme des Libellules
-        "1644643", // La Bulle du Ruisseau
-        "1946279", // Le Moulin
-        "1946276", // La Chambre de Blé
-        "1946270", // Le Logis
-      ];
+      // Get apartment IDs - either from state or fetch fresh
+      let idsToUse = apartmentIds;
+      if (!idsToUse || idsToUse.length === 0) {
+        idsToUse = await fetchApartmentIds();
+        setApartmentIds(idsToUse);
+      }
+
       const formatDate = (date) => {
         const d = new Date(date);
         return `${d.getFullYear()}-${(d.getMonth() + 1)
@@ -60,7 +103,7 @@ export const useAvailabilityCheck = (formData) => {
 
       const response = await api.get("/rates", {
         params: {
-          apartments: apartmentIds,
+          apartments: idsToUse,
           start_date: formattedStartDate,
           end_date: formattedEndDate,
           adults: formData.adults || 1,
@@ -156,11 +199,17 @@ export const useAvailabilityCheck = (formData) => {
       }
     } catch (error) {
       console.error("Error fetching availability:", error);
-      setError(
-        error.response?.data?.error || "Unable to fetch availability data"
-      );
-      // Potentially clear dates if error is critical? Or leave as is?
-      // setAvailableDates({}); // Optional: clear dates on error
+      // Only show error to user if we don't already have availability data
+      // This prevents showing timeout errors when data was already loaded
+      const hasExistingData = Object.keys(availableDates).length > 0;
+      if (!hasExistingData) {
+        setError(
+          error.response?.data?.error || "Unable to fetch availability data"
+        );
+      } else {
+        // Silently log the error since we have cached data
+        console.warn("Availability fetch failed but using existing data");
+      }
       return null;
     } finally {
       setLoading(false);

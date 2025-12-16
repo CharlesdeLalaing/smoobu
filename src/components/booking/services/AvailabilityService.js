@@ -146,7 +146,7 @@ export class AvailabilityService {
   }
 
   isDateClickable(date, startDate, endDate, hasSearched) {
-    // Calculate tomorrow (today + 1 day)
+    // Calculate tomorrow (today + 1 day) using consistent date comparison
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -154,9 +154,13 @@ export class AvailabilityService {
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
 
+    // Normalize the input date to midnight for accurate comparison
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+
     // Don't allow selecting today or dates in the past
     // Only allow selecting tomorrow and future dates
-    if (date < tomorrow) {
+    if (checkDate.getTime() < tomorrow.getTime()) {
       return false;
     }
 

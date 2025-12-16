@@ -43,15 +43,42 @@ export const PriceDetails = ({
     );
   }
 
-  // --- Calculate Guest Fees ---
-  const totalGuests =
-    (parseInt(formData?.adults) || 0) + (parseInt(formData?.children) || 0);
-  const extraGuests = Math.max(
-    0,
-    totalGuests - (priceDetails.settings.startingAtGuest || 2)
-  );
-  const totalGuestFees =
-    extraGuests * (priceDetails.settings.extraGuestsPerNight || 0);
+  // --- Calculate Guest Fees with Adult/Child Breakdown ---
+  const numAdults = parseInt(formData?.adults) || 0;
+  const numChildren = parseInt(formData?.children) || 0;
+  const totalGuests = numAdults + numChildren;
+  const startingAtGuest = priceDetails.settings.startingAtGuest || 2;
+  const extraGuestFeePerNight = priceDetails.settings.extraGuestsPerNight || priceDetails.settings.extraGuestFeePerNight || 0;
+  const extraChildFeePerNight = priceDetails.settings.extraChildPerNight || priceDetails.settings.extraChildFeePerNight || 0;
+
+  // Calculate number of nights
+  let nights = 1;
+  if (formData?.arrivalDate && formData?.departureDate) {
+    const arrivalDate = new Date(formData.arrivalDate);
+    const departureDate = new Date(formData.departureDate);
+    nights = Math.max(1, Math.round((departureDate - arrivalDate) / (1000 * 60 * 60 * 24)));
+  }
+
+  // Calculate extra adults and children
+  let extraAdults = 0;
+  let extraChildren = 0;
+
+  if (totalGuests > startingAtGuest) {
+    if (numAdults >= startingAtGuest) {
+      // All adults beyond startingAtGuest are extra, all children are extra
+      extraAdults = numAdults - startingAtGuest;
+      extraChildren = numChildren;
+    } else {
+      // Some children are included in base
+      extraAdults = 0;
+      const childrenIncludedInBase = startingAtGuest - numAdults;
+      extraChildren = Math.max(0, numChildren - childrenIncludedInBase);
+    }
+  }
+
+  const adultGuestFees = extraAdults * extraGuestFeePerNight * nights;
+  const childGuestFees = extraChildren * extraChildFeePerNight * nights;
+  const totalGuestFees = adultGuestFees + childGuestFees;
 
   const selectedPaidExtrasDetails = Object.entries(selectedExtras || {})
     .filter(([_, quantity]) => quantity > 0)
@@ -229,17 +256,34 @@ export const PriceDetails = ({
           </span>
         </div>
 
-        {/* Guest fees */}
-        {totalGuestFees > 0 && (
+        {/* Guest fees - Adults */}
+        {adultGuestFees > 0 && (
           <div className="flex items-center justify-between py-1 text-gray-600">
             <span>
-              {t("priceDetails.guestFees", {
-                count: extraGuests,
-                fee: priceDetails.settings.extraGuestsPerNight.toFixed(2),
+              {t("priceDetails.adultGuestFees", {
+                extraAdults: extraAdults,
+                feePerNight: extraGuestFeePerNight.toFixed(2),
+                nights: nights,
               })}
             </span>
             <span className="font-medium">
-              +{totalGuestFees.toFixed(2)} EUR
+              +{adultGuestFees.toFixed(2)} EUR
+            </span>
+          </div>
+        )}
+
+        {/* Guest fees - Children */}
+        {childGuestFees > 0 && (
+          <div className="flex items-center justify-between py-1 text-gray-600">
+            <span>
+              {t("priceDetails.childGuestFees", {
+                extraChildren: extraChildren,
+                feePerNight: extraChildFeePerNight.toFixed(2),
+                nights: nights,
+              })}
+            </span>
+            <span className="font-medium">
+              +{childGuestFees.toFixed(2)} EUR
             </span>
           </div>
         )}

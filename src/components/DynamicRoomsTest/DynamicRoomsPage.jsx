@@ -42,6 +42,15 @@ export default function DynamicRoomsPage() {
   const [savingConfig, setSavingConfig] = useState(false);
   const [configMessage, setConfigMessage] = useState(null);
 
+  // Check-in settings state
+  const [checkinSettings, setCheckinSettings] = useState({
+    checkinStartTime: "17:00",
+    checkinEndTime: "22:00",
+    checkinSlotInterval: 30,
+  });
+  const [savingCheckinSettings, setSavingCheckinSettings] = useState(false);
+  const [checkinSettingsMessage, setCheckinSettingsMessage] = useState(null);
+
   // Fetch rooms with optional API key
   const fetchRooms = useCallback(async (apiKey = null) => {
     setRoomsLoading(true);
@@ -113,6 +122,62 @@ export default function DynamicRoomsPage() {
     }
   }, []);
 
+  // Fetch check-in settings from API
+  const fetchCheckinSettings = useCallback(async () => {
+    try {
+      const response = await api.get("/settings");
+      if (response.data.settings) {
+        setCheckinSettings({
+          checkinStartTime: response.data.settings.checkinStartTime || "17:00",
+          checkinEndTime: response.data.settings.checkinEndTime || "22:00",
+          checkinSlotInterval: response.data.settings.checkinSlotInterval || 30,
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching check-in settings:", err);
+    }
+  }, []);
+
+  // Save check-in settings
+  const saveCheckinSettings = async () => {
+    setSavingCheckinSettings(true);
+    setCheckinSettingsMessage(null);
+
+    try {
+      const response = await api.post("/settings/checkin", {
+        checkinStartTime: checkinSettings.checkinStartTime,
+        checkinEndTime: checkinSettings.checkinEndTime,
+        checkinSlotInterval: checkinSettings.checkinSlotInterval,
+      });
+
+      if (response.data.success) {
+        setCheckinSettingsMessage({ type: "success", text: "Check-in settings saved successfully!" });
+        setTimeout(() => setCheckinSettingsMessage(null), 3000);
+      } else {
+        setCheckinSettingsMessage({ type: "error", text: response.data.error || "Failed to save" });
+      }
+    } catch (err) {
+      console.error("Error saving check-in settings:", err);
+      setCheckinSettingsMessage({ type: "error", text: err.response?.data?.error || err.message || "Failed to save settings" });
+    } finally {
+      setSavingCheckinSettings(false);
+    }
+  };
+
+  // Generate time options for dropdown
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const time = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+        options.push(time);
+      }
+    }
+    return options;
+  };
+
+  const timeOptions = generateTimeOptions();
+
   // Save pricing config for a room
   const savePricingConfig = async (roomId, config) => {
     setSavingConfig(true);
@@ -173,7 +238,8 @@ export default function DynamicRoomsPage() {
   useEffect(() => {
     fetchRooms();
     fetchPricingConfigs();
-  }, [fetchRooms, fetchPricingConfigs]);
+    fetchCheckinSettings();
+  }, [fetchRooms, fetchPricingConfigs, fetchCheckinSettings]);
 
   // Fetch rates when dates change
   useEffect(() => {
@@ -254,9 +320,89 @@ export default function DynamicRoomsPage() {
         </div>
       </section>
 
+      {/* Check-in Settings Section */}
+      <section className="drp-section">
+        <h2>2. Check-in Time Settings</h2>
+        <p className="drp-section-description">
+          Configure the available check-in time slots for the booking form.
+        </p>
+        <div className="drp-checkin-settings">
+          <div className="drp-form-row">
+            <div className="drp-input-group">
+              <label>Check-in Start Time:</label>
+              <select
+                value={checkinSettings.checkinStartTime}
+                onChange={(e) =>
+                  setCheckinSettings({ ...checkinSettings, checkinStartTime: e.target.value })
+                }
+              >
+                {timeOptions.map((time) => (
+                  <option key={time} value={time}>
+                    {time}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="drp-input-group">
+              <label>Check-in End Time:</label>
+              <select
+                value={checkinSettings.checkinEndTime}
+                onChange={(e) =>
+                  setCheckinSettings({ ...checkinSettings, checkinEndTime: e.target.value })
+                }
+              >
+                {timeOptions.map((time) => (
+                  <option key={time} value={time}>
+                    {time}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="drp-input-group">
+              <label>Time Slot Interval:</label>
+              <select
+                value={checkinSettings.checkinSlotInterval}
+                onChange={(e) =>
+                  setCheckinSettings({ ...checkinSettings, checkinSlotInterval: parseInt(e.target.value) })
+                }
+              >
+                <option value={15}>15 minutes</option>
+                <option value={30}>30 minutes</option>
+                <option value={60}>60 minutes</option>
+              </select>
+            </div>
+          </div>
+          <div className="drp-button-group">
+            <button
+              onClick={saveCheckinSettings}
+              disabled={savingCheckinSettings}
+              className="drp-button drp-button-primary"
+            >
+              {savingCheckinSettings ? "Saving..." : "Save Check-in Settings"}
+            </button>
+          </div>
+          {checkinSettingsMessage && (
+            <div className={`drp-status ${checkinSettingsMessage.type}`}>
+              {checkinSettingsMessage.type === "success" ? (
+                <span className="drp-status-icon">&#10003;</span>
+              ) : (
+                <span className="drp-status-icon">&#10007;</span>
+              )}
+              <span>{checkinSettingsMessage.text}</span>
+            </div>
+          )}
+          <div className="drp-checkin-preview">
+            <strong>Preview:</strong> Guests can select arrival times from{" "}
+            <span className="drp-highlight">{checkinSettings.checkinStartTime}</span> to{" "}
+            <span className="drp-highlight">{checkinSettings.checkinEndTime}</span> in{" "}
+            <span className="drp-highlight">{checkinSettings.checkinSlotInterval}-minute</span> intervals.
+          </div>
+        </div>
+      </section>
+
       {/* Rooms List Section */}
       <section className="drp-section">
-        <h2>2. Rooms from Smoobu</h2>
+        <h2>3. Rooms from Smoobu</h2>
         <button onClick={() => fetchRooms(activeApiKey || null)} disabled={roomsLoading} className="drp-button">
           {roomsLoading ? "Loading..." : "Refresh Rooms"}
         </button>
@@ -380,7 +526,7 @@ export default function DynamicRoomsPage() {
 
       {/* Availability Check Section */}
       <section className="drp-section">
-        <h2>3. Check Availability & Pricing</h2>
+        <h2>4. Check Availability & Pricing</h2>
         <div className="drp-availability-form">
           <div className="drp-form-row">
             <div className="drp-input-group">

@@ -1,8 +1,6 @@
 // src/components/hooks/useBookingForm.js
 import { useState, useCallback, useEffect } from "react";
 import { api } from "../utils/api"; // Ensure this path is correct
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../../firebase"; // Ensure this path is correct
 import { extraCategories } from "../extraCategories"; // Ensure this path is correct
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -60,6 +58,7 @@ export const useBookingForm = () => {
     departureDate: "",
     channelId: 2323525,
     apartmentId: "",
+    roomName: "", // Room name for display and storage
     arrivalTime: "",
     departureTime: "",
     firstName: "",
@@ -231,26 +230,65 @@ export const useBookingForm = () => {
   }, [selectedExtras, calculateDynamicMaxForInstance]);
 
   // --- Event Handlers & Logic Functions ---
-  const calculateGuestFees = (adults, children, settings) => {
-    if (!settings) return 0;
-    const totalGuests = (parseInt(adults) || 0) + (parseInt(children) || 0);
-    const extraGuests = Math.max(
-      0,
-      totalGuests - (settings.startingAtGuest || 2)
-    );
-    return extraGuests * (settings.extraGuestsPerNight || 0);
+  /**
+   * Calculate guest fees with separate adult/child breakdown and per-night calculation
+   * @param {number} adults - Number of adults
+   * @param {number} children - Number of children
+   * @param {Object} settings - Room settings containing fee info
+   * @param {number} nights - Number of nights for the stay
+   * @returns {Object} - { total, adultFees, childFees, breakdown }
+   */
+  const calculateGuestFees = (adults, children, settings, nights = 1) => {
+    if (!settings) return { total: 0, adultFees: 0, childFees: 0, breakdown: null };
+
+    const numAdults = parseInt(adults) || 0;
+    const numChildren = parseInt(children) || 0;
+    const totalGuests = numAdults + numChildren;
+    const startingAtGuest = settings.startingAtGuest || 2;
+    const extraGuestFeePerNight = settings.extraGuestsPerNight || settings.extraGuestFeePerNight || 0;
+    const extraChildFeePerNight = settings.extraChildPerNight || settings.extraChildFeePerNight || 0;
+
+    let extraAdults = 0;
+    let extraChildren = 0;
+
+    if (totalGuests > startingAtGuest) {
+      if (numAdults >= startingAtGuest) {
+        // All adults beyond startingAtGuest are extra, all children are extra
+        extraAdults = numAdults - startingAtGuest;
+        extraChildren = numChildren;
+      } else {
+        // Some children are included in base
+        extraAdults = 0;
+        const childrenIncludedInBase = startingAtGuest - numAdults;
+        extraChildren = Math.max(0, numChildren - childrenIncludedInBase);
+      }
+    }
+
+    const adultFees = extraAdults * extraGuestFeePerNight * nights;
+    const childFees = extraChildren * extraChildFeePerNight * nights;
+    const total = adultFees + childFees;
+
+    return {
+      total,
+      adultFees,
+      childFees,
+      breakdown: {
+        extraAdults,
+        extraChildren,
+        extraGuestFeePerNight,
+        extraChildFeePerNight,
+        nights,
+        startingAtGuest
+      }
+    };
   };
 
   const validateCouponPeriod = (couponData, arrival, departure) => {
     if (!arrival || !departure) return false;
-    let validityStart = couponData.validityStartDate?.toDate
-      ? couponData.validityStartDate.toDate()
-      : couponData.validityStartDate
+    let validityStart = couponData.validityStartDate
       ? new Date(couponData.validityStartDate)
       : null;
-    let validityEnd = couponData.validityEndDate?.toDate
-      ? couponData.validityEndDate.toDate()
-      : couponData.validityEndDate
+    let validityEnd = couponData.validityEndDate
       ? new Date(couponData.validityEndDate)
       : null;
     if (!validityStart || !validityEnd) return true;
@@ -516,11 +554,18 @@ export const useBookingForm = () => {
     try {
       const selectedExtrasArray = createSelectedExtrasArray();
 
-      const guestFees = calculateGuestFees(
+      // Calculate number of nights
+      const arrivalDate = new Date(formData.arrivalDate);
+      const departureDate = new Date(formData.departureDate);
+      const nights = Math.max(1, Math.round((departureDate - arrivalDate) / (1000 * 60 * 60 * 24)));
+
+      const guestFeesResult = calculateGuestFees(
         formData.adults,
         formData.children,
-        settings
+        settings,
+        nights
       );
+      const guestFees = guestFeesResult.total;
       const basePrice = selectedRoomPrice.originalPrice || 0;
       const extrasTotal = selectedExtrasArray.reduce(
         (sum, extra) =>
@@ -564,13 +609,16 @@ export const useBookingForm = () => {
           roomBasePrice: basePrice,
           calculatedExtrasTotal: extrasTotal,
           calculatedGuestFees: guestFees,
+          adultGuestFees: guestFeesResult.adultFees,
+          childGuestFees: guestFeesResult.childFees,
+          guestFeesBreakdown: guestFeesResult.breakdown,
           subtotal: subtotalBeforeDiscounts,
           appliedLongStayDiscount: longStayDiscount,
           totalAfterLongStayDiscount: totalAfterLongStay,
           appliedCouponDiscount: couponDiscountAmount,
           finalPayableAmount: finalTotal,
         },
-        priceDetailsSnapshot: { ...selectedRoomPrice, guestFees },
+        priceDetailsSnapshot: { ...selectedRoomPrice, guestFees, guestFeesBreakdown: guestFeesResult.breakdown },
 
         spaDateString: formData.spaDateTime
           ? format(new Date(formData.spaDateTime), "yyyy-MM-dd")
@@ -607,11 +655,19 @@ export const useBookingForm = () => {
     }
     const roomOriginalPrice = selectedApartmentPriceDetails.originalPrice || 0;
     const currentSettings = selectedApartmentPriceDetails.settings;
-    const guestFees = calculateGuestFees(
+
+    // Calculate number of nights
+    const arrivalDate = new Date(formData.arrivalDate);
+    const departureDate = new Date(formData.departureDate);
+    const nights = Math.max(1, Math.round((departureDate - arrivalDate) / (1000 * 60 * 60 * 24)));
+
+    const guestFeesResult = calculateGuestFees(
       formData.adults,
       formData.children,
-      currentSettings
+      currentSettings,
+      nights
     );
+    const guestFees = guestFeesResult.total;
     const extrasTotal = selectedExtrasArray.reduce(
       (sum, extra) =>
         sum + (extra.amount || 0) + (extra.extraPersonAmount || 0),
@@ -634,13 +690,16 @@ export const useBookingForm = () => {
         roomBasePrice: roomOriginalPrice,
         calculatedExtrasTotal: extrasTotal,
         calculatedGuestFees: guestFees,
+        adultGuestFees: guestFeesResult.adultFees,
+        childGuestFees: guestFeesResult.childFees,
+        guestFeesBreakdown: guestFeesResult.breakdown,
         subtotal: subtotalBeforeDiscounts,
         appliedLongStayDiscount: longStayDiscount,
         totalAfterLongStayDiscount: totalAfterLongStay,
         appliedCouponDiscount: couponDiscount,
         finalPayableAmount: finalTotal,
       },
-      priceDetailsSnapshot: { ...selectedApartmentPriceDetails, guestFees },
+      priceDetailsSnapshot: { ...selectedApartmentPriceDetails, guestFees, guestFeesBreakdown: guestFeesResult.breakdown },
       price: finalTotal,
       couponApplied: appliedCoupon
         ? {
@@ -714,20 +773,17 @@ export const useBookingForm = () => {
     setError(null);
     setCouponError(null); // Clear previous coupon error
     try {
-      const couponsRef = collection(db, "coupons");
-      const q = query(
-        couponsRef,
-        where("code", "==", couponCode.toUpperCase())
-      );
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
+      // Fetch coupon from API instead of Firebase
+      const response = await api.get(`/coupons/lookup/${encodeURIComponent(couponCode.toUpperCase())}`);
+
+      if (!response.data.found) {
         return {
           error: "not_found",
           message: t("booking.coupon.errors.notFound"),
         };
       }
-      const couponDoc = querySnapshot.docs[0];
-      const couponData = { id: couponDoc.id, ...couponDoc.data() };
+
+      const couponData = response.data.coupon;
 
       // Basic coupon validations
       if (couponData.status !== "active")
@@ -741,9 +797,7 @@ export const useBookingForm = () => {
           message: t("booking.coupon.errors.maxUsageReached"),
         };
       const now = new Date();
-      const expiryDate = couponData.expiryDate?.toDate
-        ? couponData.expiryDate.toDate()
-        : couponData.expiryDate
+      const expiryDate = couponData.expiryDate
         ? new Date(couponData.expiryDate)
         : null;
       if (expiryDate && now > expiryDate)
@@ -758,12 +812,12 @@ export const useBookingForm = () => {
           formData.departureDate
         )
       ) {
-        const validityStart =
-          couponData.validityStartDate?.toDate?.() ||
-          new Date(couponData.validityStartDate);
-        const validityEnd =
-          couponData.validityEndDate?.toDate?.() ||
-          new Date(couponData.validityEndDate);
+        const validityStart = couponData.validityStartDate
+          ? new Date(couponData.validityStartDate)
+          : null;
+        const validityEnd = couponData.validityEndDate
+          ? new Date(couponData.validityEndDate)
+          : null;
         return {
           error: "invalid_dates",
           message: t("booking.coupon.errors.invalid_dates", {
@@ -813,11 +867,18 @@ export const useBookingForm = () => {
         0
       );
 
-      const guestFeesForCoupon = calculateGuestFees(
+      // Calculate number of nights for coupon calculation
+      const arrivalDateForCoupon = new Date(formData.arrivalDate);
+      const departureDateForCoupon = new Date(formData.departureDate);
+      const nightsForCoupon = Math.max(1, Math.round((departureDateForCoupon - arrivalDateForCoupon) / (1000 * 60 * 60 * 24)));
+
+      const guestFeesForCouponResult = calculateGuestFees(
         formData.adults,
         formData.children,
-        currentRoomPriceDetails.settings
+        currentRoomPriceDetails.settings,
+        nightsForCoupon
       );
+      const guestFeesForCoupon = guestFeesForCouponResult.total;
 
       const grandTotalEligibleItems = Math.max(
         0,
@@ -924,10 +985,7 @@ export const useBookingForm = () => {
 
     switch (currentStep) {
       case 3: // Contact Details Step
-        // Clear errors from previous steps when moving to/validating step 3
-        setSpaValidationError("");
-        setDrinkValidationError("");
-
+        // Note: Error clearing moved to nextStep to avoid setState during render
         const isValidContact =
           formData.firstName &&
           formData.lastName &&
@@ -1095,7 +1153,13 @@ export const useBookingForm = () => {
 
   const nextStep = () => {
     if (isStepValid()) {
-      setCurrentStep((prev) => Math.min(prev + 1, 3));
+      const nextStepValue = Math.min(currentStep + 1, 3);
+      // Clear validation errors when moving to step 3
+      if (nextStepValue === 3) {
+        setSpaValidationError("");
+        setDrinkValidationError("");
+      }
+      setCurrentStep(nextStepValue);
     } else {
       if (currentStep === 2 && spaValidationError) {
         // Check if spaValidationError was set

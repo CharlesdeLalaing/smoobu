@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useEffect } from "react";
 import Slider from "react-slick";
 import { useTranslation } from "react-i18next";
-import { roomsData } from "../hooks/roomsData";
 import { isRoomAvailable } from "../hooks/roomUtils";
 import { PriceDetails } from "./PriceDetails";
 import { CalendarRoom } from "./CustomRoom";
 import { GuestSelect } from "./GuestSelect";
 import { adultes, childrenOptions } from "../utils/constants";
+import { getRoomName } from "../hooks/useDynamicRoomsData";
 
 import Fox from "../../assets/GlobalImg/fox.webp";
 
@@ -15,6 +15,22 @@ import Group from "../../assets/icons8-group-48.png";
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+
+/**
+ * Helper to get display text - handles both translation keys and direct values
+ * @param {string} value - The value to display (either a translation key or direct text)
+ * @param {function} t - The translation function
+ * @returns {string} The translated or direct text
+ */
+const getDisplayText = (value, t) => {
+  if (!value) return "";
+  // If it starts with "rooms." it's a translation key
+  if (value.startsWith && value.startsWith("rooms.")) {
+    return t(value);
+  }
+  // Otherwise return the value directly
+  return value;
+};
 
 export const PropertyDetails = ({
   formData,
@@ -33,6 +49,7 @@ export const PropertyDetails = ({
   roomRefs,
   viewingRoomId,
   onGuestChange,
+  roomsData = {}, // Accept roomsData as prop
 }) => {
   const { t } = useTranslation();
   const totalGuests =
@@ -205,16 +222,49 @@ export const PropertyDetails = ({
       if (!roomPriceDetails?.settings) return null;
 
       const settings = roomPriceDetails.settings;
-      const extraGuests = Math.max(0, totalGuests - settings.startingAtGuest);
+      const numAdults = parseInt(formData?.adults) || 0;
+      const numChildren = parseInt(formData?.children) || 0;
+      const startingAtGuest = settings.startingAtGuest || 2;
+      const extraGuestFeePerNight = settings.extraGuestsPerNight || settings.extraGuestFeePerNight || 0;
+      const extraChildFeePerNight = settings.extraChildPerNight || settings.extraChildFeePerNight || 0;
 
-      if (extraGuests > 0) {
+      // Calculate extra adults and children
+      let extraAdults = 0;
+      let extraChildren = 0;
+
+      if (totalGuests > startingAtGuest) {
+        if (numAdults >= startingAtGuest) {
+          extraAdults = numAdults - startingAtGuest;
+          extraChildren = numChildren;
+        } else {
+          extraAdults = 0;
+          const childrenIncludedInBase = startingAtGuest - numAdults;
+          extraChildren = Math.max(0, numChildren - childrenIncludedInBase);
+        }
+      }
+
+      const hasExtraGuests = extraAdults > 0 || extraChildren > 0;
+
+      if (hasExtraGuests) {
         return (
-          <div className="mt-2 text-sm text-gray-600">
-            {t("propertyDetails.extraGuestFee", {
-              count: extraGuests,
-              fee: settings.extraGuestsPerNight,
-              threshold: settings.startingAtGuest,
-            })}
+          <div className="mt-2 text-sm text-gray-600 space-y-1">
+            {extraAdults > 0 && (
+              <div>
+                {t("propertyDetails.extraAdultFee", {
+                  count: extraAdults,
+                  fee: extraGuestFeePerNight,
+                  threshold: startingAtGuest,
+                })}
+              </div>
+            )}
+            {extraChildren > 0 && extraChildFeePerNight > 0 && (
+              <div>
+                {t("propertyDetails.extraChildFee", {
+                  count: extraChildren,
+                  fee: extraChildFeePerNight,
+                })}
+              </div>
+            )}
           </div>
         );
       }
@@ -379,10 +429,10 @@ export const PropertyDetails = ({
                   </div>
                   <div className="my-5">
                     <p className="text-lg sm:text-base md:text-lg font-montserrat text-[#D3B574]">
-                      {t(room.type)}
+                      {getDisplayText(room.type, t)}
                     </p>
                     <h2 className="text-lg sm:text-base md:text-[25px] font-medium uppercase sm:mb-2 md:mb-10 sm:my-3 md:my-4 font-cormorant">
-                      {t(room.nameKey)}
+                      {getRoomName(room, t)}
                     </h2>
                   </div>
                   {showOnlySelected && onGuestChange ? (
@@ -527,7 +577,7 @@ export const PropertyDetails = ({
               />
 
               <p className="my-4 text-gray-600 font-cormorant">
-                {t(room.description)}
+                {getDisplayText(room.description, t)}
               </p>
               {getGuestFeeInfo()}
               <button
@@ -535,7 +585,7 @@ export const PropertyDetails = ({
                 onClick={() => {
                   if (hasSearched && isAvailable && !isOverCapacity) {
                     onRoomSelect(room.id);
-                    scrollTo(10);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}
                 disabled={!hasSearched || !isAvailable || isOverCapacity}
@@ -610,10 +660,10 @@ export const PropertyDetails = ({
                   {formData.apartmentId !== room.id && (
                     <div className="mb-4 text-left">
                       <h4 className="font-montserrat text-xl md:text-1xl lg:text-2xl mb-4 text-[#D3B574]">
-                        {t(room.type)}
+                        {getDisplayText(room.type, t)}
                       </h4>
                       <h3 className="font-cormorant text-3xl text-gray-800 mb-2 md:text-2xl lg:text-[40px] font-light">
-                        {t(room.nameKey)}
+                        {getRoomName(room, t)}
                       </h3>
                     </div>
                   )}

@@ -158,7 +158,7 @@ const BookingConfirmation = () => {
       const attemptFetch = async () => {
         try {
           const response = await fetch(
-            `${API_URL}/api/bookings/${paymentIntentId}`,
+            `${API_URL}/api/bookings/by-payment/${paymentIntentId}`,
             { method: "GET", headers: { "Content-Type": "application/json" } }
           );
 
@@ -701,11 +701,52 @@ const BookingConfirmation = () => {
                     €
                   </span>
                 </p>
+                {/* Guest Fees Breakdown - Adults */}
+                {Number(bookingDetails.priceBreakdown?.adultGuestFees || 0) > 0 && (
+                  <p className="text-sm item-line">
+                    <span>
+                      {t(
+                        "bookingConfirmation.success.sections.priceDetails.adultGuestFees_label",
+                        {
+                          extraAdults: bookingDetails.priceBreakdown?.guestFeesBreakdown?.extraAdults || 0,
+                          feePerNight: formatPrice(bookingDetails.priceBreakdown?.guestFeesBreakdown?.extraGuestFeePerNight || 0),
+                          nights: bookingDetails.priceBreakdown?.guestFeesBreakdown?.nights || 1
+                        }
+                      )}
+                    </span>
+                    <span className="price-value">
+                      {formatPrice(bookingDetails.priceBreakdown?.adultGuestFees)}€
+                    </span>
+                  </p>
+                )}
+
+                {/* Guest Fees Breakdown - Children */}
+                {Number(bookingDetails.priceBreakdown?.childGuestFees || 0) > 0 && (
+                  <p className="text-sm item-line">
+                    <span>
+                      {t(
+                        "bookingConfirmation.success.sections.priceDetails.childGuestFees_label",
+                        {
+                          extraChildren: bookingDetails.priceBreakdown?.guestFeesBreakdown?.extraChildren || 0,
+                          feePerNight: formatPrice(bookingDetails.priceBreakdown?.guestFeesBreakdown?.extraChildFeePerNight || 0),
+                          nights: bookingDetails.priceBreakdown?.guestFeesBreakdown?.nights || 1
+                        }
+                      )}
+                    </span>
+                    <span className="price-value">
+                      {formatPrice(bookingDetails.priceBreakdown?.childGuestFees)}€
+                    </span>
+                  </p>
+                )}
+
+                {/* Fallback: Legacy guest fees display (for old bookings without breakdown) */}
                 {Number(
                   bookingDetails.priceBreakdown?.calculatedGuestFees ||
                     bookingDetails.guestFees ||
                     0
-                ) > 0 && (
+                ) > 0 &&
+                  !bookingDetails.priceBreakdown?.adultGuestFees &&
+                  !bookingDetails.priceBreakdown?.childGuestFees && (
                   <p className="text-sm item-line">
                     <span>
                       {t(

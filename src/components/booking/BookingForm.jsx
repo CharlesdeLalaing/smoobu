@@ -15,7 +15,7 @@ import { ErrorMessage } from "./ErrorMessage";
 import { LoadingSpinner } from "./LoadingSpinner";
 import StripeWrapper from "../StripeWrapper";
 import { isRoomAvailable } from "../hooks/roomUtils"; // Add this line
-import { roomsData } from "../hooks/roomsData";
+import { useDynamicRoomsData, getRoomName } from "../hooks/useDynamicRoomsData";
 import DebugErrorTrigger from "../DebugErrorTrigger";
 import { BookingErrorBoundary } from "../ErrorBoundry";
 
@@ -29,6 +29,9 @@ const BookingForm = () => {
 
   // State to track which room to show details for (without booking)
   const [viewingRoomId, setViewingRoomId] = useState(null);
+
+  // Fetch rooms dynamically from API
+  const { roomsData, roomsList, loading: roomsLoading, error: roomsError } = useDynamicRoomsData();
 
   const {
     formData,
@@ -143,9 +146,14 @@ const BookingForm = () => {
       // Clear viewing state when actually selecting a room
       setViewingRoomId(null);
 
+      // Get room name from roomsData
+      const selectedRoom = roomsData[roomId];
+      const roomName = selectedRoom?.name || selectedRoom?.nameKey || `Room ${roomId}`;
+
       setFormData((prev) => ({
         ...prev,
         apartmentId: roomId,
+        roomName: roomName,
       }));
 
       if (startDate && endDate) {
@@ -153,6 +161,7 @@ const BookingForm = () => {
           setFormData((prev) => ({
             ...prev,
             price: priceDetails[roomId].finalPrice,
+            roomName: roomName,
           }));
           setShowPriceDetails(true);
           setIsAvailable(true);
@@ -589,6 +598,7 @@ const BookingForm = () => {
     roomRefs, // Add this prop to pass refs to PropertyDetails
     viewingRoomId, // Add this to show room details without booking
     onGuestChange: handleGuestChange, // Add this to allow guest count changes in selected room
+    roomsData, // Pass dynamic rooms data
   };
 
   const extrasSectionProps = {
@@ -642,6 +652,48 @@ const BookingForm = () => {
       handleRoomView(roomId);
     },
   };
+
+  // Show loading state while fetching rooms
+  if (roomsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#fbfdfb]">
+        <div className="text-center">
+          <LoadingSpinner />
+          <p className="mt-4 text-[#668E73]">Loading rooms...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if rooms failed to load
+  if (roomsError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#fbfdfb]">
+        <div className="text-center p-8">
+          <p className="text-red-500 text-lg">Failed to load rooms</p>
+          <p className="text-gray-600 mt-2">{roomsError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-[#668E73] text-white rounded hover:bg-[#5a7d66]"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no rooms found
+  if (Object.keys(roomsData).length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#fbfdfb]">
+        <div className="text-center p-8">
+          <p className="text-gray-600 text-lg">No rooms available</p>
+          <p className="text-gray-500 mt-2">Please check your Smoobu configuration.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <BookingErrorBoundary
