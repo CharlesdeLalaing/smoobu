@@ -167,6 +167,7 @@ const PriceDetailsSection = ({ booking }) => {
   couponDiscountAmount = Math.abs(couponDiscountAmount);
 
   // --- Extract Guest Fees ---
+  // NOTE: For Airbnb, we handle "Additional Guest Fee" separately below, so skip priceElements extraction here
   // Try multiple sources for guest fees
   if (booking.guestFees) {
     guestFees = parseFloat(booking.guestFees) || 0;
@@ -174,8 +175,8 @@ const PriceDetailsSection = ({ booking }) => {
     guestFees = parseFloat(booking.priceBreakdown.calculatedGuestFees) || 0;
   } else if (booking.priceDetailsSnapshot?.guestFees) {
     guestFees = parseFloat(booking.priceDetailsSnapshot.guestFees) || 0;
-  } else if (priceElementsToCheck.length > 0) {
-    // Look for guest fees in price elements
+  } else if (priceElementsToCheck.length > 0 && !isAirbnb) {
+    // Look for guest fees in price elements (NOT for Airbnb - handled separately)
     // CRITICAL: Exclude ALL extra-package-related "Personne supplémentaire" items
     const guestFeeElement = priceElementsToCheck.find((el) => {
       if (!el || !el.name || !el.amount) return false;
@@ -211,6 +212,10 @@ const PriceDetailsSection = ({ booking }) => {
     }
   }
 
+  // Airbnb-specific fees
+  let managementFee = 0;
+  let additionalGuestFee = 0;
+
   // --- Determine Base Price and other fees based on portal ---
   if (isAirbnb) {
     const priceElements = booking.priceDetails?.priceElements || [];
@@ -226,9 +231,26 @@ const PriceDetailsSection = ({ booking }) => {
         el.name &&
         (el.name.includes("LINEN_FEE") ||
           el.name.includes("linen_fee") ||
-          el.name.includes("Linen Fee"))
+          el.name.includes("Linen Fee") ||
+          el.name.includes("PASS_THROUGH_LINEN_FEE"))
     );
     if (linenFeeElement) linenFee = parseFloat(linenFeeElement.amount) || 0;
+
+    // Extract management fee (PASS_THROUGH_MANAGEMENT_FEE)
+    const managementFeeElement = priceElements.find(
+      (el) => el && el.name && el.name.includes("PASS_THROUGH_MANAGEMENT_FEE")
+    );
+    if (managementFeeElement) {
+      managementFee = parseFloat(managementFeeElement.amount) || 0;
+    }
+
+    // Extract additional guest fee
+    const additionalGuestFeeElement = priceElements.find(
+      (el) => el && el.name && el.name.includes("Additional Guest Fee")
+    );
+    if (additionalGuestFeeElement) {
+      additionalGuestFee = parseFloat(additionalGuestFeeElement.amount) || 0;
+    }
 
     // Check for long stay discount in priceElements
     const longStayElement = priceElements.find(
@@ -255,8 +277,14 @@ const PriceDetailsSection = ({ booking }) => {
       booking.priceDetails?.basePrice || booking.basePrice || 0
     );
 
+    // Check if basePrice is explicitly set in priceDetails (even if 0)
+    // For collaboration/free bookings, priceDetails.basePrice is intentionally 0
+    const hasExplicitBasePriceBookingCom = booking.priceDetails?.basePrice !== undefined &&
+                                            booking.priceDetails?.basePrice !== null;
+
     // If basePrice is 0, try to calculate it from the total price minus extras
-    if (basePrice === 0 && booking.priceDetails?.priceElements?.length > 0) {
+    // BUT only if we don't have an explicit priceDetails.basePrice
+    if (basePrice === 0 && !hasExplicitBasePriceBookingCom && booking.priceDetails?.priceElements?.length > 0) {
       // Look for base price in priceElements first
       const basePriceElement = booking.priceDetails.priceElements.find(
         (element) =>
@@ -314,8 +342,15 @@ const PriceDetailsSection = ({ booking }) => {
       booking.priceDetails?.basePrice || booking.basePrice || 0
     );
 
+    // Check if basePrice is explicitly set in priceDetails (even if 0)
+    // For collaboration/free bookings, priceDetails.basePrice is intentionally 0
+    // and should NOT be recalculated from booking.price
+    const hasExplicitBasePrice = booking.priceDetails?.basePrice !== undefined &&
+                                  booking.priceDetails?.basePrice !== null;
+
     // If basePrice is 0, try to calculate it from the total price minus extras
-    if (basePrice === 0 && booking.priceDetails?.priceElements?.length > 0) {
+    // BUT only if we don't have an explicit priceDetails.basePrice (i.e., not a collaboration booking)
+    if (basePrice === 0 && !hasExplicitBasePrice && booking.priceDetails?.priceElements?.length > 0) {
       // Look for base price in priceElements first
       const basePriceElement = booking.priceDetails.priceElements.find(
         (element) =>
@@ -378,9 +413,9 @@ const PriceDetailsSection = ({ booking }) => {
     }
   }
 
-  // Calculate total room price logic
+  // Calculate total room price logic (including Airbnb-specific fees)
   const totalRoomPriceBeforeDiscountsAndTaxes =
-    basePrice + linenFee + guestFees + (isBookingCom ? taxeDeSejour : 0);
+    basePrice + linenFee + guestFees + managementFee + additionalGuestFee + (isBookingCom ? taxeDeSejour : 0);
   const totalDiscountsApplicable = longStayDiscount + couponDiscountAmount; // Both are positive values representing reduction
   const finalTotalRoomPrice =
     totalRoomPriceBeforeDiscountsAndTaxes - totalDiscountsApplicable;
@@ -409,6 +444,22 @@ const PriceDetailsSection = ({ booking }) => {
               Frais voyageurs supplémentaires:
             </span>
             {formatPrice(guestFees)}
+          </p>
+        )}
+
+        {isAirbnb && managementFee > 0 && (
+          <p className="text-sm">
+            <span className="block font-medium">Frais de gestion (Airbnb):</span>
+            {formatPrice(managementFee)}
+          </p>
+        )}
+
+        {isAirbnb && additionalGuestFee > 0 && (
+          <p className="text-sm">
+            <span className="block font-medium">
+              Frais voyageurs supplémentaires (Airbnb):
+            </span>
+            {formatPrice(additionalGuestFee)}
           </p>
         )}
 

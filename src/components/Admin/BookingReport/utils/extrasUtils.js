@@ -159,8 +159,11 @@ export function sortExtras(extras) {
 }
 
 
-export function getCleanExtrasFromPriceElements(priceElements, portalName) {
+export function getCleanExtrasFromPriceElements(priceElements, portalName, options = {}) {
   if (!priceElements || !Array.isArray(priceElements)) return [];
+
+  // Option to exclude "Personne supplémentaire" entries (for bookings with basePrice > 0)
+  const excludePersonExtras = options.excludePersonExtras || false;
 
   // Define unwanted extras patterns
   const unwantedPatterns = [
@@ -195,9 +198,11 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
   const relevantElements = priceElements.filter((el) => {
     if (!el || !el.amount || !el.name) return false;
 
-    // REMOVED: Old deduplication logic that was filtering out legitimate person charges
-    // Person charges should always be shown as separate line items
-    // The backend properly merges and calculates totals, so we should display all items from priceElements
+    // If excludePersonExtras is true, skip "Personne supplémentaire" entries
+    // These are often informational when there's a base price (already factored into booking total)
+    if (excludePersonExtras && el.name.includes("Personne supplémentaire")) {
+      return false;
+    }
 
     // console.log(`🔍 Filtering element: "${el.name}" (amount: ${el.amount})`);
 
@@ -355,6 +360,14 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName) {
   return result;
 }
 
+/**
+ * @deprecated Use calculateBookingTotal from BookingsDetails.jsx instead.
+ * This version is outdated and missing fixes for:
+ * - hasExplicitBasePrice (collaboration bookings)
+ * - excludePersonExtras (person extras double-counting)
+ * - Airbnb management/guest fees
+ * - Guest fees extraction
+ */
 export function calculateBookingTotal(booking) {
   // Check if this is an Airbnb or Booking.com booking
   const portalName =
@@ -443,14 +456,12 @@ export function calculateBookingTotal(booking) {
   // Merge duplicate extras
   const mergedExtras = mergeAndSortExtras(displayExtras);
 
-  // Use the pre-calculated extrasTotal from priceDetails if available (includes extra person amounts)
-  // Otherwise calculate from merged extras
-  const extrasTotal = booking.priceDetails?.extrasTotal
-    ? parseFloat(booking.priceDetails.extrasTotal)
-    : mergedExtras.reduce(
-        (sum, extra) => sum + parseFloat(extra.amount || 0),
-        0
-      );
+  // ALWAYS recalculate extrasTotal from merged/displayed extras
+  // This ensures the total matches what's shown in the UI
+  const extrasTotal = mergedExtras.reduce(
+    (sum, extra) => sum + parseFloat(extra.amount || 0),
+    0
+  );
 
   // Calculate total price
   return roomTotal + extrasTotal;

@@ -45,12 +45,21 @@ export function calculateBookingTotal(booking) {
 
   const priceElements = booking.priceDetails?.priceElements || [];
 
+  // Get base price - check if it's explicitly set in priceDetails
+  // For collaboration/free bookings, priceDetails.basePrice is intentionally 0
+  // and should NOT be recalculated from booking.price
+  const hasExplicitBasePrice = booking.priceDetails?.basePrice !== undefined &&
+                                booking.priceDetails?.basePrice !== null;
+
   let basePrice = parseFloat(
     booking.priceDetails?.basePrice || booking.basePrice || 0
   );
 
-  // If basePrice is 0, try to calculate it from priceElements
-  if (basePrice === 0 && priceElements.length > 0) {
+  // Only try to calculate basePrice if:
+  // 1. basePrice is 0 AND
+  // 2. We don't have explicit priceDetails.basePrice (i.e., it's not a collaboration booking) AND
+  // 3. We have priceElements to calculate from
+  if (basePrice === 0 && !hasExplicitBasePrice && priceElements.length > 0) {
     // Look for base price in priceElements first
     const basePriceElement = priceElements.find(
       (element) =>
@@ -112,6 +121,7 @@ export function calculateBookingTotal(booking) {
   );
 
   // --- Extract Guest Fees ---
+  // NOTE: For Airbnb, we handle "Additional Guest Fee" separately below, so skip it here
   let guestFees = 0;
   if (booking.guestFees) {
     guestFees = parseFloat(booking.guestFees) || 0;
@@ -119,8 +129,8 @@ export function calculateBookingTotal(booking) {
     guestFees = parseFloat(booking.priceBreakdown.calculatedGuestFees) || 0;
   } else if (booking.priceDetailsSnapshot?.guestFees) {
     guestFees = parseFloat(booking.priceDetailsSnapshot.guestFees) || 0;
-  } else if (priceElements.length > 0) {
-    // Look for guest fees in price elements
+  } else if (priceElements.length > 0 && !isAirbnb) {
+    // Look for guest fees in price elements (NOT for Airbnb - handled separately)
     // CRITICAL: Exclude ALL extra-package-related "Personne supplémentaire" items
     const guestFeeElement = priceElements.find((el) => {
       if (!el || !el.name || !el.amount) return false;
@@ -244,20 +254,58 @@ export function calculateBookingTotal(booking) {
     }
   }
 
+  // --- Airbnb-specific fees ---
+  let managementFee = 0;
+  let additionalGuestFee = 0;
+
+  if (isAirbnb && priceElements.length > 0) {
+    // Extract management fee (PASS_THROUGH_MANAGEMENT_FEE)
+    const managementFeeElement = priceElements.find(
+      (el) => el && el.name && el.name.includes("PASS_THROUGH_MANAGEMENT_FEE")
+    );
+    if (managementFeeElement) {
+      managementFee = parseFloat(managementFeeElement.amount) || 0;
+    }
+
+    // Extract additional guest fee
+    const additionalGuestFeeElement = priceElements.find(
+      (el) => el && el.name && el.name.includes("Additional Guest Fee")
+    );
+    if (additionalGuestFeeElement) {
+      additionalGuestFee = parseFloat(additionalGuestFeeElement.amount) || 0;
+    }
+  }
+
   // Calculate room subtotal (Base + Fees + Guest Fees - Discounts)
   let roomTotal =
-    basePrice + linenFee + guestFees - longStayDiscount - couponDiscount;
+    basePrice + linenFee + guestFees + managementFee + additionalGuestFee - longStayDiscount - couponDiscount;
 
   if (isBookingCom) {
     roomTotal += taxeDeSejour;
   }
 
   // --- Extras Calculation ---
+  // Only exclude "Personne supplémentaire" from priceElements when there's a DUPLICATE
+  // in the extras array. A duplicate exists when:
+  // 1. The extras array has a standalone "Personne supplémentaire" entry (not embedded)
+  // 2. OR when the extras array has the same person extra both embedded AND as separate entry
+  //
+  // If extras array only has embedded extraPersonAmount (no standalone entry), then
+  // the priceElements entry is the ONLY source and should be INCLUDED.
+  const extrasArray = booking.extras || [];
+  const hasStandalonePersonExtraInExtras = extrasArray.some(
+    (extra) => extra.name && extra.name.includes("Personne supplémentaire")
+  );
+
+  // Only exclude if there's already a standalone person extra in extras array (duplicate)
+  const excludePersonExtras = hasStandalonePersonExtraInExtras;
+
   let displayExtras = [];
   if (priceElementsToCheck.length > 0) {
     displayExtras = getCleanExtrasFromPriceElements(
       priceElementsToCheck,
-      portalName
+      portalName,
+      { excludePersonExtras }
     );
     // If priceElements didn't yield any extras, fallback to booking.extras
     if (displayExtras.length === 0 && booking.extras?.length > 0) {
@@ -277,14 +325,13 @@ export function calculateBookingTotal(booking) {
 
   const mergedExtras = mergeAndSortExtras(displayExtras);
 
-  // Use the pre-calculated extrasTotal from priceDetails if available (includes extra person amounts)
-  // Otherwise calculate from merged extras
-  const extrasTotal = booking.priceDetails?.extrasTotal
-    ? parseFloat(booking.priceDetails.extrasTotal)
-    : mergedExtras.reduce(
-        (sum, extra) => sum + parseFloat(extra.amount || 0),
-        0
-      );
+  // ALWAYS recalculate extrasTotal from merged/displayed extras
+  // This ensures the total matches what's shown in the UI
+  // The stored priceDetails.extrasTotal may be outdated or incomplete
+  const extrasTotal = mergedExtras.reduce(
+    (sum, extra) => sum + parseFloat(extra.amount || 0),
+    0
+  );
 
   // --- FINAL CALCULATION ---
   const calculatedTotal = roomTotal + extrasTotal;

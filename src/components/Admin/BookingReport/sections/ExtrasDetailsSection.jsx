@@ -10,6 +10,17 @@ const ExtrasDetailsSection = ({ booking }) => {
     booking.portalName || booking.channelName || booking.portal;
   const isBookingCom = portalName === "Booking.com";
 
+  // Only exclude "Personne supplémentaire" from priceElements when there's a DUPLICATE
+  // in the extras array. A duplicate exists when the extras array has a standalone
+  // "Personne supplémentaire" entry (not just embedded extraPersonAmount).
+  const extrasArray = booking.extras || [];
+  const hasStandalonePersonExtraInExtras = extrasArray.some(
+    (extra) => extra.name && extra.name.includes("Personne supplémentaire")
+  );
+
+  // Only exclude if there's already a standalone person extra in extras array (duplicate)
+  const excludePersonExtras = hasStandalonePersonExtraInExtras;
+
   // Process and organize extras
   let displayExtras = [];
 
@@ -17,7 +28,7 @@ const ExtrasDetailsSection = ({ booking }) => {
   if (booking.priceDetails?.priceElements?.length > 0) {
     const priceElements = booking.priceDetails.priceElements;
 
-    displayExtras = getCleanExtrasFromPriceElements(priceElements, portalName);
+    displayExtras = getCleanExtrasFromPriceElements(priceElements, portalName, { excludePersonExtras });
 
     // For Booking.com, remove TVA and taxe de séjour from extras
     if (isBookingCom) {
