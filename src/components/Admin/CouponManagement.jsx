@@ -346,7 +346,10 @@ const handleEdit = (coupon) => {
                   Montant
                 </th>
                 <th className="px-4 py-3 text-xs font-medium text-left text-gray-500 uppercase">
-                  Email
+                  Offert par
+                </th>
+                <th className="px-4 py-3 text-xs font-medium text-left text-gray-500 uppercase">
+                  Utilisé par
                 </th>
                 <th className="px-4 py-3 text-xs font-medium text-left text-gray-500 uppercase">
                   Validité
@@ -385,8 +388,26 @@ const handleEdit = (coupon) => {
                   </td>
                   <td className="px-4 py-4 text-sm">
                     {coupon.isGiftVoucher
-                      ? coupon.customerEmail
-                      : coupon.lastUsedBy || "-"}
+                      ? coupon.customerEmail || "-"
+                      : "-"}
+                  </td>
+                  <td className="px-4 py-4 text-sm">
+                    {coupon.isGiftVoucher ? (
+                      coupon.usageHistory?.[0] ? (
+                        <div className="flex flex-col">
+                          <span>{coupon.usageHistory[0].email}</span>
+                          {coupon.usageHistory[0].smoobuReservationId && (
+                            <span className="text-xs text-gray-500">
+                              SmoobuId: {coupon.usageHistory[0].smoobuReservationId}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        "Non utilisé"
+                      )
+                    ) : (
+                      coupon.lastUsedBy || "-"
+                    )}
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex flex-col space-y-1 text-sm">

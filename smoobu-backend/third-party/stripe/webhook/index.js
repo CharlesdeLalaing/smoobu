@@ -158,6 +158,10 @@ export const handleWebhook = async (req, res) => {
       const { success: couponSuccess, error: couponError } =
         await updateCouponUsage(
           bookingDoc.couponApplied,
+          bookingDoc.email,
+          bookingDoc.firstName,
+          bookingDoc.lastName,
+          bookingDoc.totalPrice || bookingDoc.priceBreakdown?.finalPayableAmount,
           reservationId.toString()
         );
       if (!couponSuccess) {
