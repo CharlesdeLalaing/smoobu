@@ -63,4 +63,49 @@ export class BookingRepository {
   async updateBooking(docId, bookingData) {
     await db.collection("bookings").doc(docId).update(bookingData);
   }
+
+  /**
+   * Deletes booking(s) by smoobuId from Firebase
+   * Backs up the booking to bookings_backup collection before deletion
+   * @param {string|number} smoobuId - Smoobu booking ID
+   * @returns {Promise<number>} - Number of documents deleted
+   */
+  async deleteBookingBySmoobuId(smoobuId) {
+    const normalizedId = normalizeBookingId(smoobuId);
+    const snapshot = await db.collection("bookings")
+      .where('smoobuId', '==', normalizedId)
+      .get();
+
+    if (snapshot.empty) {
+      console.log(`[BookingRepository] No booking found with smoobuId ${smoobuId} to delete`);
+      return 0;
+    }
+
+    const batch = db.batch();
+
+    // Backup each document before deletion
+    for (const doc of snapshot.docs) {
+      const backupData = {
+        ...doc.data(),
+        _backup: {
+          originalDocId: doc.id,
+          deletedAt: new Date().toISOString(),
+          reason: 'cancellation'
+        }
+      };
+      const backupRef = db.collection("bookings_backup").doc();
+      batch.set(backupRef, backupData);
+      console.log(`[BookingRepository] Backing up booking ${smoobuId} to bookings_backup`);
+    }
+
+    // Delete original documents
+    snapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
+    console.log(`[BookingRepository] Backed up and deleted ${snapshot.docs.length} booking(s) with smoobuId ${smoobuId}`);
+    return snapshot.docs.length;
+  }
 }

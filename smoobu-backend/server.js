@@ -76,9 +76,9 @@ app.get("/api/fetch-and-sync", async (req, res) => {
     const repository = new BookingRepository();
     const processor = new BookingProcessor(smoobuClient, repository);
     
-    // Date range - August to September 2025
-    const startDate = '2025-10-01';
-    const endDate = '2025-12-31';
+    // Date range - January to June 2026
+    const startDate = '2026-01-01';
+    const endDate = '2026-06-30';
     console.log(`📅 Date range: ${startDate} to ${endDate}`);
     
     // Fetch existing bookings from Firebase
@@ -116,28 +116,37 @@ app.get("/api/fetch-and-sync", async (req, res) => {
     
     // Fetch missing bookings individually
     let rescuedCount = 0;
+    let deletedCancelledCount = 0;
     for (const missingBooking of missingBookings) {
       try {
         console.log(`🔄 Fetching missing booking ${missingBooking.smoobuId} individually...`);
         const freshBooking = await smoobuClient.fetchIndividualBooking(missingBooking.smoobuId);
         if (freshBooking) {
-          bulkBookings.push(freshBooking);
-          rescuedCount++;
-          console.log(`  ✅ RESCUED: ${missingBooking.smoobuId} (${freshBooking['guest-name']})`);
+          // Check if the booking is cancelled in Smoobu
+          if (freshBooking.type === 'cancellation') {
+            console.log(`  🗑️ DELETING CANCELLED: ${missingBooking.smoobuId} (${freshBooking['guest-name']})`);
+            await repository.deleteBookingBySmoobuId(missingBooking.smoobuId);
+            deletedCancelledCount++;
+          } else {
+            bulkBookings.push(freshBooking);
+            rescuedCount++;
+            console.log(`  ✅ RESCUED: ${missingBooking.smoobuId} (${freshBooking['guest-name']})`);
+          }
         }
       } catch (error) {
         console.log(`  ❌ Could not rescue ${missingBooking.smoobuId}: ${error.message}`);
       }
     }
-    
-    console.log(`🎉 Rescued ${rescuedCount} missing bookings! Total bookings: ${bulkBookings.length}`);
+
+    console.log(`🎉 Rescued ${rescuedCount} missing bookings, deleted ${deletedCancelledCount} cancelled bookings!`);
     
     let stats = {
       totalBookings: bulkBookings.length,
       processed: 0,
       updated: 0,
       added: 0,
-      errors: 0
+      errors: 0,
+      deletedCancelled: deletedCancelledCount
     };
     
     // Process each booking
@@ -187,6 +196,111 @@ app.get("/api/fetch-and-sync", async (req, res) => {
 });
 
 
+// Cleanup cancelled bookings endpoint
+// Usage: GET /api/cleanup-cancelled?smoobuId=113190761 (single booking)
+// Usage: GET /api/cleanup-cancelled (scan all bookings)
+app.get("/api/cleanup-cancelled", async (req, res) => {
+  try {
+    const { SmoobuClient } = await import('./third-party/smoobu/actions/api/fetch-and-sync/smoobu-client.js');
+    const { BookingRepository } = await import('./third-party/smoobu/actions/api/fetch-and-sync/booking-repository.js');
+
+    const smoobuClient = new SmoobuClient();
+    const repository = new BookingRepository();
+    const { smoobuId } = req.query;
+
+    const results = {
+      checked: 0,
+      cancelled: [],
+      deleted: 0,
+      errors: []
+    };
+
+    if (smoobuId) {
+      // Check single booking
+      console.log(`🔍 Checking single booking: ${smoobuId}`);
+
+      try {
+        const smoobuBooking = await smoobuClient.fetchIndividualBooking(smoobuId);
+        results.checked = 1;
+
+        if (!smoobuBooking) {
+          results.errors.push({ smoobuId, error: 'Booking not found in Smoobu' });
+        } else {
+          console.log(`  Smoobu type: ${smoobuBooking.type}`);
+          console.log(`  Guest: ${smoobuBooking['guest-name']}`);
+
+          if (smoobuBooking.type === 'cancellation') {
+            console.log(`  🗑️ CANCELLED - deleting from Firebase...`);
+            const deleted = await repository.deleteBookingBySmoobuId(smoobuId);
+            results.cancelled.push({
+              smoobuId,
+              guestName: smoobuBooking['guest-name'],
+              deleted: deleted > 0
+            });
+            results.deleted += deleted;
+          } else {
+            console.log(`  ✅ Active booking (type: ${smoobuBooking.type})`);
+          }
+        }
+      } catch (error) {
+        results.errors.push({ smoobuId, error: error.message });
+      }
+    } else {
+      // Scan all Firebase bookings
+      console.log(`🔍 Scanning ALL Firebase bookings for cancellations...`);
+
+      const bookingsSnapshot = await db.collection('bookings').get();
+      console.log(`📋 Found ${bookingsSnapshot.size} bookings to check`);
+
+      for (const doc of bookingsSnapshot.docs) {
+        const booking = doc.data();
+        const bookingSmoobuId = booking.smoobuId || booking.smoobuReservationId;
+
+        if (!bookingSmoobuId) continue;
+
+        results.checked++;
+
+        try {
+          const smoobuBooking = await smoobuClient.fetchIndividualBooking(bookingSmoobuId);
+
+          if (smoobuBooking && smoobuBooking.type === 'cancellation') {
+            console.log(`  🗑️ CANCELLED: ${bookingSmoobuId} (${smoobuBooking['guest-name']})`);
+            const deleted = await repository.deleteBookingBySmoobuId(bookingSmoobuId);
+            results.cancelled.push({
+              smoobuId: bookingSmoobuId,
+              guestName: smoobuBooking['guest-name'],
+              deleted: deleted > 0
+            });
+            results.deleted += deleted;
+          }
+        } catch (error) {
+          results.errors.push({ smoobuId: bookingSmoobuId, error: error.message });
+        }
+
+        // Progress log every 50 bookings
+        if (results.checked % 50 === 0) {
+          console.log(`  Progress: ${results.checked}/${bookingsSnapshot.size} checked, ${results.cancelled.length} cancelled found`);
+        }
+      }
+    }
+
+    console.log(`🏁 Cleanup completed!`);
+    console.log(`📊 Results:`, results);
+
+    res.json({
+      success: true,
+      message: smoobuId ? `Checked booking ${smoobuId}` : `Scanned ${results.checked} bookings`,
+      results
+    });
+
+  } catch (error) {
+    console.error("🟥 Cleanup failed:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 
 // Backup database endpoint
