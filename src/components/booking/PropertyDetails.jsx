@@ -535,7 +535,7 @@ export const PropertyDetails = ({
                 onClick={() => {
                   if (hasSearched && isAvailable && !isOverCapacity) {
                     onRoomSelect(room.id);
-                    scrollTo(10);
+                    window.scrollTo({ top: 10, behavior: 'smooth' });
                   }
                 }}
                 disabled={!hasSearched || !isAvailable || isOverCapacity}

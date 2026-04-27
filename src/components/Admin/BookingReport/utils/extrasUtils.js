@@ -212,16 +212,16 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName, optio
       const isValidAirbnbDrink = el.name.includes("Brut de Bioul") ||
                                 el.name.includes("Cortil Barco") ||
                                 el.name.includes("Terre Charlot") ||
-                                el.name.includes("Brune du Condroz") ||
-                                el.name.includes("Ambrée du Condroz") ||
-                                el.name.includes("Triple du Condroz") ||
-                                el.name.includes("Blanche du Condroz") ||
+                                el.name.includes("Brune de Leignion") ||
+                                el.name.includes("Ambrée à la Cardamome") ||
+                                el.name.includes("Triple de Leignion") ||
+                                el.name.includes("Blanche à la Bergamote") ||
+                                el.name.includes("Blonde aux 4 Céréales") ||
                                 el.name.includes("Jus de pomme « Pom d'Happy »") ||
                                 el.name.includes("Ritchie Citron/Framboise") ||
                                 el.name.includes("Ritchie Orange/Vanille") ||
                                 el.name.includes("Ritchie Cola") ||
-                                el.name.includes("Ritchie Cola Zéro") ||
-                                el.name.includes("Houblonde Triple");
+                                el.name.includes("Ritchie Cola Zéro");
 
       // Only allow formules, specific extras, and drinks
       return (
@@ -238,16 +238,16 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName, optio
       const isValidDrink = el.name.includes("Brut de Bioul") ||
                           el.name.includes("Cortil Barco") ||
                           el.name.includes("Terre Charlot") ||
-                          el.name.includes("Brune du Condroz") ||
-                          el.name.includes("Ambrée du Condroz") ||
-                          el.name.includes("Triple du Condroz") ||
-                          el.name.includes("Blanche du Condroz") ||
+                          el.name.includes("Brune de Leignion") ||
+                          el.name.includes("Ambrée à la Cardamome") ||
+                          el.name.includes("Triple de Leignion") ||
+                          el.name.includes("Blanche à la Bergamote") ||
+                          el.name.includes("Blonde aux 4 Céréales") ||
                           el.name.includes("Jus de pomme « Pom d'Happy »") ||
                           el.name.includes("Ritchie Citron/Framboise") ||
                           el.name.includes("Ritchie Orange/Vanille") ||
                           el.name.includes("Ritchie Cola") ||
-                          el.name.includes("Ritchie Cola Zéro") ||
-                          el.name.includes("Houblonde Triple");
+                          el.name.includes("Ritchie Cola Zéro");
 
       const isValidExtra = el.name.includes("formule") ||
                           el.name.includes("Formule") ||

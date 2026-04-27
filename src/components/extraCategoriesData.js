@@ -272,9 +272,9 @@ export const extraCategoriesRaw = {
       },
       {
         id: "bruneCondroz",
-        name: "drinkNames.bruneCondroz", // i18n Key
-        defaultName: "Brune du Condroz (Beer)",
-        defaultFrenchName: "Brune du Condroz",
+        name: "drinkNames.bruneCondroz",
+        defaultName: "Brune de Leignion (Beer)",
+        defaultFrenchName: "Brune de Leignion",
         descriptionKey: "extras.drinks.bruneCondroz.description",
         price: 4,
         imageIdentifier: "bruneCondroz",
@@ -282,9 +282,9 @@ export const extraCategoriesRaw = {
       },
       {
         id: "ambreeCondroz",
-        name: "drinkNames.ambreeCondroz", // i18n Key
-        defaultName: "Ambrée du Condroz (Beer)",
-        defaultFrenchName: "Ambrée du Condroz",
+        name: "drinkNames.ambreeCondroz",
+        defaultName: "Ambrée à la Cardamome (Beer)",
+        defaultFrenchName: "Ambrée à la Cardamome",
         descriptionKey: "extras.drinks.ambreeCondroz.description",
         price: 4,
         imageIdentifier: "ambreeCondroz",
@@ -292,9 +292,9 @@ export const extraCategoriesRaw = {
       },
       {
         id: "tripleCondroz",
-        name: "drinkNames.tripleCondroz", // i18n Key
-        defaultName: "Triple du Condroz (Beer)",
-        defaultFrenchName: "Triple du Condroz",
+        name: "drinkNames.tripleCondroz",
+        defaultName: "Triple de Leignion (Beer)",
+        defaultFrenchName: "Triple de Leignion",
         descriptionKey: "extras.drinks.tripleCondroz.description",
         price: 4,
         imageIdentifier: "tripleCondroz",
@@ -302,12 +302,22 @@ export const extraCategoriesRaw = {
       },
       {
         id: "blancheCondroz",
-        name: "drinkNames.blancheCondroz", // i18n Key
-        defaultName: "Blanche du Condroz (Beer)",
-        defaultFrenchName: "Blanche du Condroz",
+        name: "drinkNames.blancheCondroz",
+        defaultName: "Blanche à la Bergamote (Beer)",
+        defaultFrenchName: "Blanche à la Bergamote",
         descriptionKey: "extras.drinks.blancheCondroz.description",
         price: 4,
         imageIdentifier: "blancheCondroz",
+        typeKey: "extras.drinkTypes.beer",
+      },
+      {
+        id: "blondeCereales",
+        name: "drinkNames.blondeCereales",
+        defaultName: "Blonde aux 4 Céréales (Beer)",
+        defaultFrenchName: "Blonde aux 4 Céréales",
+        descriptionKey: "extras.drinks.blondeCereales.description",
+        price: 4,
+        imageIdentifier: "blondeCereales",
         typeKey: "extras.drinkTypes.beer",
       },
       {
@@ -413,6 +423,7 @@ export const DRINK_OFFER_CONFIG_RAW = {
       beers: extraCategoriesRaw.boissons.items
         .filter((item) => item.typeKey === "extras.drinkTypes.beer")
         .map((item) => item.id),
+
     },
     itemsPerUnit: 2,
     itemsPerSupplementaryPerson: 1,

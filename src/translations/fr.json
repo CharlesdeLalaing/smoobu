@@ -27,10 +27,11 @@
         "brutBioul": "Brut de Bioul (Pétillant)",
         "cortilBarco": "Cortil Barco (Rouge)",
         "terreCharlot": "Terre Charlot (Blanc)",
-        "bruneCondroz": "Brune du Condroz",
-        "ambreeCondroz": "Ambrée du Condroz",
-        "tripleCondroz": "Triple du Condroz",
-        "blancheCondroz": "Blanche du Condroz",
+        "bruneCondroz": "Brune de Leignion",
+        "ambreeCondroz": "Ambrée à la Cardamome",
+        "tripleCondroz": "Triple de Leignion",
+        "blancheCondroz": "Blanche à la Bergamote",
+        "blondeCereales": "Blonde aux 4 Céréales",
         "appleJuice": "Jus de pomme \"Pom d'Happy\"",
         "ritchieLemonRasp": "Ritchie Lemon/Raspberry",
         "ritchieOrangeVan": "Ritchie Orange/Vanilla",
@@ -306,16 +307,19 @@
             "description": "Cette IPA blanche, légère et rafraîchissante, offre une douce amertume et des notes surprenantes d’agrumes."
           },
           "bruneCondroz": {
-            "description": "Cette bière brune, brassée avec des fèves de cacao, offrant une rondeur en bouche et une légère amertume."
+            "description": "Cette Brune vous invite à une expérience de dégustation intense, où s'entrelacent des arômes riches et un goût profond de café torréfié."
           },
           "tripleCondroz": {
-            "description": "La Triple du Condroz enchante par ses arômes de houblon au nez, avant d'offrir une expérience gustative intense typique des bières triple."
+            "description": "Une bière très ronde, offrant des saveurs maltées et des arômes de miel et de caramel, rehaussés de quelques notes fruitées d'ananas et d'agrumes."
           },
           "ambreeCondroz": {
-            "description": "Cette bière ambrée, au profil rond et épicé, vous surprendra par son caractère et son amertume prononcée."
+            "description": "Une bière à la cardamome qui apporte une fraîcheur et une belle rondeur en bouche."
           },
           "blancheCondroz": {
-            "description": "Cette bière blanche, avec des arômes subtils de violette au nez, offre une expérience acidulée et fraîche"
+            "description": "Une recette traditionnelle de bière blanche (orge et froment), à laquelle on a ajouté une purée de bergamote durant la fermentation."
+          },
+          "blondeCereales": {
+            "description": "Cette création unique combine un mélange de malts d'orge, de blé, d'épeautre et d'avoine pour une expérience de dégustation inoubliable."
           },
           "appleJuice": {
             "description": "Un jus de pomme naturel et rafraîchissant."

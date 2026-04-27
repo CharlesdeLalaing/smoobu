@@ -27,10 +27,11 @@
       "brutBioul": "Brut de Bioul (Sparkling)",
       "cortilBarco": "Cortil Barco (Rood)",
       "terreCharlot": "Terre Charlot (Wit)",
-      "bruneCondroz": "Brune du Condroz",
-      "ambreeCondroz": "Ambrée du Condroz",
-      "tripleCondroz": "Triple du Condroz",
-      "blancheCondroz": "Blanche du Condroz",
+      "bruneCondroz": "Brune de Leignion",
+      "ambreeCondroz": "Ambrée à la Cardamome",
+      "tripleCondroz": "Triple de Leignion",
+      "blancheCondroz": "Blanche à la Bergamote",
+      "blondeCereales": "Blonde aux 4 Céréales",
       "appleJuice": "Apple Juice \"Pom d'Happy\"",
       "ritchieLemonRasp": "Ritchie Lemon/Raspberry",
       "ritchieOrangeVan": "Ritchie Orange/Vanilla",
@@ -280,16 +281,19 @@
           "description": "Deze witte IPA, licht en verfrissend, biedt een zachte bitterheid en verrassende citrustoetsen."
         },
         "bruneCondroz": {
-          "description": "Dit bruine bier, gebrouwen met cacaobonen, biedt rondheid in de mond en een lichte bitterheid."
+          "description": "Dit donkere bier nodigt je uit voor een intense smaakbeleving, waarbij rijke aroma's en een diepe geroosterde koffiesmaak verweven zijn."
         },
         "tripleCondroz": {
-          "description": "De Triple du Condroz verleidt met zijn hoppige aroma's in de neus, gevolgd door een intense smaakervaring die typisch is voor tripelbieren."
+          "description": "Een zeer ronde bier, met moutige smaken en aroma's van honing en karamel, aangevuld met fruitige toetsen van ananas en citrus."
         },
         "ambreeCondroz": {
-          "description": "Dit amberkleurige bier, met een rond en kruidig profiel, zal je verrassen met zijn karakter en uitgesproken bitterheid."
+          "description": "Een kardemombier dat frisheid en een mooie rondheid in de mond brengt."
         },
         "blancheCondroz": {
-          "description": "Dit witbier, met subtiele viooltjesaroma's in de neus, biedt een pittige en frisse ervaring"
+          "description": "Een traditioneel witbierrecept (gerst en tarwe), waaraan tijdens de gisting een bergamotpuree is toegevoegd."
+        },
+        "blondeCereales": {
+          "description": "Deze unieke creatie combineert een blend van gerst-, tarwe-, spelt- en havermouten voor een onvergetelijke smaakbeleving."
         },
         "appleJuice": {
           "description": "Een natuurlijk en verfrissend appelsap."

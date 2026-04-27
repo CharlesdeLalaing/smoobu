@@ -167,7 +167,7 @@ const FreeDrinksSelection = ({
                     src={drinkDetails.image}
                     alt={wineImageAltText}
                     // Increased image size
-                    className="object-cover ml-3 mr-3 border border-gray-200 rounded-md w-14 h-14 md:w-16 md:h-16"
+                    className="object-contain ml-3 mr-3 border border-gray-200 rounded-md w-14 h-14 md:w-16 md:h-16"
                   />
                 )}
                 <span
@@ -272,7 +272,7 @@ const FreeDrinksSelection = ({
                                 src={drink.image}
                                 alt={itemName}
                                 // Increased image size
-                                className="object-cover mr-4 border border-gray-200 rounded-md w-14 h-14 md:w-16 md:h-16"
+                                className="object-contain mr-4 border border-gray-200 rounded-md w-14 h-14 md:w-16 md:h-16"
                               />
                             )}
                             <div>

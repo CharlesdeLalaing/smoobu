@@ -165,7 +165,7 @@ export const ExtrasSection = ({
           <img
             src={item.image}
             alt={itemName}
-            className="object-cover w-20 h-20 rounded-lg shrink-0 md:w-24 md:h-24"
+            className={`${item.typeKey === "extras.drinkTypes.beer" ? "object-contain" : "object-cover"} w-20 h-20 rounded-lg shrink-0 md:w-24 md:h-24`}
           />
           <div className="flex-grow min-w-0 space-y-1.5">
             <div className="flex items-start justify-between">

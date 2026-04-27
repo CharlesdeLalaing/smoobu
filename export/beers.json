@@ -1,0 +1,77 @@
+[
+  {
+    "id": "bruneCondroz",
+    "price": 4,
+    "image": "brune.webp",
+    "names": {
+      "fr": "Brune de Leignion",
+      "en": "Brune de Leignion",
+      "nl": "Brune de Leignion"
+    },
+    "descriptions": {
+      "fr": "Cette Brune vous invite à une expérience de dégustation intense, où s'entrelacent des arômes riches et un goût profond de café torréfié.",
+      "en": "This brown ale invites you to an intense tasting experience, where rich aromas and a deep roasted coffee flavor intertwine.",
+      "nl": "Dit donkere bier nodigt je uit voor een intense smaakbeleving, waarbij rijke aroma's en een diepe geroosterde koffiesmaak verweven zijn."
+    }
+  },
+  {
+    "id": "ambreeCondroz",
+    "price": 4,
+    "image": "ambree.webp",
+    "names": {
+      "fr": "Ambrée à la Cardamome",
+      "en": "Ambrée à la Cardamome",
+      "nl": "Ambrée à la Cardamome"
+    },
+    "descriptions": {
+      "fr": "Une bière à la cardamome qui apporte une fraîcheur et une belle rondeur en bouche.",
+      "en": "A cardamom beer that brings freshness and a beautiful roundness on the palate.",
+      "nl": "Een kardemombier dat frisheid en een mooie rondheid in de mond brengt."
+    }
+  },
+  {
+    "id": "tripleCondroz",
+    "price": 4,
+    "image": "triple leignon.webp",
+    "names": {
+      "fr": "Triple de Leignion",
+      "en": "Triple de Leignion",
+      "nl": "Triple de Leignion"
+    },
+    "descriptions": {
+      "fr": "Une bière très ronde, offrant des saveurs maltées et des arômes de miel et de caramel, rehaussés de quelques notes fruitées d'ananas et d'agrumes.",
+      "en": "A very smooth beer, offering malty flavors and aromas of honey and caramel, enhanced with fruity notes of pineapple and citrus.",
+      "nl": "Een zeer ronde bier, met moutige smaken en aroma's van honing en karamel, aangevuld met fruitige toetsen van ananas en citrus."
+    }
+  },
+  {
+    "id": "blancheCondroz",
+    "price": 4,
+    "image": "bergamote.webp",
+    "names": {
+      "fr": "Blanche à la Bergamote",
+      "en": "Blanche à la Bergamote",
+      "nl": "Blanche à la Bergamote"
+    },
+    "descriptions": {
+      "fr": "Une recette traditionnelle de bière blanche (orge et froment), à laquelle on a ajouté une purée de bergamote durant la fermentation.",
+      "en": "A traditional white beer recipe (barley and wheat), to which a bergamot purée has been added during fermentation.",
+      "nl": "Een traditioneel witbierrecept (gerst en tarwe), waaraan tijdens de gisting een bergamotpuree is toegevoegd."
+    }
+  },
+  {
+    "id": "blondeCereales",
+    "price": 4,
+    "image": "4Cereales.webp",
+    "names": {
+      "fr": "Blonde aux 4 Céréales",
+      "en": "Blonde aux 4 Céréales",
+      "nl": "Blonde aux 4 Céréales"
+    },
+    "descriptions": {
+      "fr": "Cette création unique combine un mélange de malts d'orge, de blé, d'épeautre et d'avoine pour une expérience de dégustation inoubliable.",
+      "en": "This unique creation combines a blend of barley, wheat, spelt and oat malts for an unforgettable tasting experience.",
+      "nl": "Deze unieke creatie combineert een blend van gerst-, tarwe-, spelt- en havermouten voor een onvergetelijke smaakbeleving."
+    }
+  }
+]

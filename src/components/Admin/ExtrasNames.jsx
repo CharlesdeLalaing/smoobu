@@ -43,10 +43,11 @@ const ExtrasList = () => {
     "Brut de Bioul",
     "Cortil Barco",
     "Terre Charlot",
-    "Brune du Condroz",
-    "Ambrée du Condroz",
-    "Triple du Condroz",
-    "Blanche du Condroz",
+    "Brune de Leignion",
+    "Ambrée à la Cardamome",
+    "Triple de Leignion",
+    "Blanche à la Bergamote",
+    "Blonde aux 4 Céréales",
     "Jus de pomme « Pom d'Happy »",
     "Ritchie Citron/Framboise",
     "Ritchie Orange/Vanille",
@@ -67,7 +68,7 @@ const ExtrasList = () => {
       filtered = extras.filter(extra => extra.toLowerCase().includes('formule'));
     } else if (filterType === 'boissons') {
       filtered = extras.filter(extra => 
-        ['houblonde', 'condroz', 'bioul', 'ritchie', 'jus'].some(term => 
+        ['leignion', 'cardamome', 'bergamote', 'céréales', 'bioul', 'cortil', 'charlot', 'ritchie', 'jus'].some(term =>
           extra.toLowerCase().includes(term)
         )
       );

@@ -29,10 +29,11 @@ import raclette from "./assets/Repas/raclette.webp";
 import babrecue from "./assets/Repas/barbecue.webp"; // Assuming this is barbecue.webp
 
 // --- Boissons ---
-import ambreeCondroz from "./assets/Boissons/ambreeCondroz.webp";
-import blancheCondroz from "./assets/Boissons/Blanche-du-Condroz.webp";
-import bruneCondroz from "./assets/Boissons/bruneCondroz.webp";
-import tripleCondroz from "./assets/Boissons/tripleCondroz.webp";
+import ambreeCondroz from "./assets/Boissons/ambree.webp";
+import blancheCondroz from "./assets/Boissons/bergamote.webp";
+import bruneCondroz from "./assets/Boissons/brune.webp";
+import tripleCondroz from "./assets/Boissons/triple leignon.webp";
+import blondeCereales from "./assets/Boissons/4Cereales.webp";
 import brutBioul from "./assets/Boissons/brutBioul.webp";
 import cortilBarco from "./assets/Boissons/cortilBarco.webp";
 import pomHappy from "./assets/Boissons/pomHappy.webp";
@@ -68,6 +69,7 @@ const imageAssetMap = {
   blancheCondroz,
   bruneCondroz,
   tripleCondroz,
+  blondeCereales,
   brutBioul,
   cortilBarco,
   pomHappy,

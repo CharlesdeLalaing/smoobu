@@ -27,10 +27,11 @@
         "brutBioul": "Brut de Bioul (Sparkling)",
         "cortilBarco": "Cortil Barco (Red)",
         "terreCharlot": "Terre Charlot (White)",
-        "bruneCondroz": "Brune du Condroz",
-        "ambreeCondroz": "Ambrée du Condroz",
-        "tripleCondroz": "Triple du Condroz",
-        "blancheCondroz": "Blanche du Condroz",
+        "bruneCondroz": "Brune de Leignion",
+        "ambreeCondroz": "Ambrée à la Cardamome",
+        "tripleCondroz": "Triple de Leignion",
+        "blancheCondroz": "Blanche à la Bergamote",
+        "blondeCereales": "Blonde aux 4 Céréales",
         "appleJuice": "Apple Juice \"Pom d'Happy\"",
         "ritchieLemonRasp": "Ritchie Lemon/Raspberry",
         "ritchieOrangeVan": "Ritchie Orange/Vanilla",
@@ -305,16 +306,19 @@
             "description": "This white IPA, light and refreshing, offers a gentle bitterness and surprising citrus notes."
           },
           "bruneCondroz": {
-            "description": "This brown beer, brewed with cocoa beans, offering roundness in the mouth and a slight bitterness."
+            "description": "This brown ale invites you to an intense tasting experience, where rich aromas and a deep roasted coffee flavor intertwine."
           },
           "tripleCondroz": {
-            "description": "The Triple du Condroz delights with its hoppy aromas on the nose, followed by an intense tasting experience typical of triple beers."
+            "description": "A very smooth beer, offering malty flavors and aromas of honey and caramel, enhanced with fruity notes of pineapple and citrus."
           },
           "ambreeCondroz": {
-            "description": "This amber beer, with a round and spicy profile, will surprise you with its character and pronounced bitterness."
+            "description": "A cardamom beer that brings freshness and a beautiful roundness on the palate."
           },
           "blancheCondroz": {
-            "description": "This white beer, with subtle violet aromas on the nose, offers a tangy and fresh experience"
+            "description": "A traditional white beer recipe (barley and wheat), to which a bergamot purée has been added during fermentation."
+          },
+          "blondeCereales": {
+            "description": "This unique creation combines a blend of barley, wheat, spelt and oat malts for an unforgettable tasting experience."
           },
           "appleJuice": {
             "description": "A natural and refreshing apple juice."
