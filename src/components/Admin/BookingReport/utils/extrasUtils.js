@@ -217,13 +217,19 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName, optio
                                 el.name.includes("Triple de Leignion") ||
                                 el.name.includes("Blanche à la Bergamote") ||
                                 el.name.includes("Blonde aux 4 Céréales") ||
+                                // Legacy names for old reservations
+                                el.name.includes("Brune du Condroz") ||
+                                el.name.includes("Ambrée du Condroz") ||
+                                el.name.includes("Triple du Condroz") ||
+                                el.name.includes("Blanche du Condroz") ||
+                                el.name.includes("Houblonde Triple") ||
                                 el.name.includes("Jus de pomme « Pom d'Happy »") ||
                                 el.name.includes("Ritchie Citron/Framboise") ||
                                 el.name.includes("Ritchie Orange/Vanille") ||
                                 el.name.includes("Ritchie Cola") ||
                                 el.name.includes("Ritchie Cola Zéro");
 
-      // Only allow formules, specific extras, and drinks
+      // Only allow formules, specific extras, drinks, meals, and person supplements
       return (
         el.name.toLowerCase().includes("formule") ||
         el.name.toLowerCase().includes("anniversaire") ||
@@ -231,6 +237,13 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName, optio
         el.name.toLowerCase().includes("gourmet") ||
         el.name.toLowerCase().includes("essentiel") ||
         el.name.toLowerCase().includes("romantique") ||
+        el.name.toLowerCase().includes("spa") ||
+        el.name.includes("Personne supplémentaire") ||
+        el.name.includes("Boulettes") ||
+        el.name.includes("Waterzooi") ||
+        el.name.includes("Linguines") ||
+        el.name.includes("Risotto") ||
+        el.name.includes("Poulet") ||
         isValidAirbnbDrink
       );
     } else {
@@ -243,6 +256,12 @@ export function getCleanExtrasFromPriceElements(priceElements, portalName, optio
                           el.name.includes("Triple de Leignion") ||
                           el.name.includes("Blanche à la Bergamote") ||
                           el.name.includes("Blonde aux 4 Céréales") ||
+                          // Legacy names for old reservations
+                          el.name.includes("Brune du Condroz") ||
+                          el.name.includes("Ambrée du Condroz") ||
+                          el.name.includes("Triple du Condroz") ||
+                          el.name.includes("Blanche du Condroz") ||
+                          el.name.includes("Houblonde Triple") ||
                           el.name.includes("Jus de pomme « Pom d'Happy »") ||
                           el.name.includes("Ritchie Citron/Framboise") ||
                           el.name.includes("Ritchie Orange/Vanille") ||
