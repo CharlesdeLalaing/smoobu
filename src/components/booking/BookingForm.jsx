@@ -93,14 +93,11 @@ const BookingForm = () => {
     // Load initial availability data when component mounts
     const loadInitialAvailability = async () => {
       try {
-        // Create date range for current month plus next 12 months
+        // Create date range from the current month through the end of next year
+        // (Smoobu publishes rates up to 31 Dec of the following year)
         const today = new Date();
         const startOfRange = new Date(today.getFullYear(), today.getMonth(), 1);
-        const endOfRange = new Date(
-          today.getFullYear(),
-          today.getMonth() + 12,
-          0
-        );
+        const endOfRange = new Date(today.getFullYear() + 1, 11, 31);
 
         // Use the existing checkAvailability function
         await checkAvailability(startOfRange, endOfRange);

@@ -172,11 +172,9 @@ export const useAvailabilityCheck = (formData) => {
     try {
       const today = new Date();
       const startOfRange = new Date(today.getFullYear(), today.getMonth(), 1);
-      const endOfRange = new Date(
-        today.getFullYear(),
-        today.getMonth() + 12,
-        0
-      );
+      // Through the end of next year — Smoobu publishes rates up to 31 Dec of
+      // the following year; beyond that days come back price:null/available:0
+      const endOfRange = new Date(today.getFullYear() + 1, 11, 31);
       // Use checkAvailability WITHOUT preserveExistingData flag
       await checkAvailability(startOfRange, endOfRange);
     } catch (error) {
