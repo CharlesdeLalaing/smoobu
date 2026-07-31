@@ -1,5 +1,12 @@
 {
   "translation": {
+    "maintenance": {
+      "title": "Reserveringen tijdelijk niet beschikbaar",
+      "message": "Ons online reserveringssysteem is momenteel in onderhoud. We zijn zeer binnenkort terug.",
+      "contact": "Voor een reservering of vraag kunt u rechtstreeks contact met ons opnemen:",
+      "phone": "+32 475 20 16 19",
+      "email": "fermedebasseilles@gmail.com"
+    },
     "header": {
       "contact": {
         "phone": "+32 475 20 16 19",

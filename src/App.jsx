@@ -18,8 +18,24 @@ import i18n from "./i18n";
 import "./index.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/Admin/ProtectedRoute";
+import Maintenance from "./components/Maintenance";
+
+// Maintenance mode: set VITE_MAINTENANCE_MODE=true in Vercel and redeploy.
+// Guest-facing routes show the maintenance page; /admin/* stays reachable.
+// Append ?preview=1 once to bypass it for the rest of the browser session.
+function isMaintenanceActive() {
+  const enabled = import.meta.env.VITE_MAINTENANCE_MODE === "true";
+  if (!enabled) return false;
+
+  if (new URLSearchParams(window.location.search).get("preview") === "1") {
+    sessionStorage.setItem("maintenanceBypass", "1");
+  }
+  return sessionStorage.getItem("maintenanceBypass") !== "1";
+}
 
 function App() {
+  const maintenance = isMaintenanceActive();
+
   return (
     <AuthProvider>
       <I18nextProvider i18n={i18n}>
@@ -27,9 +43,12 @@ function App() {
           <Routes>
             <Route
               path="/booking-confirmation"
-              element={<BookingConfirmation />}
+              element={maintenance ? <Maintenance /> : <BookingConfirmation />}
             />
-            <Route path="/" element={<Booking2 />} />
+            <Route
+              path="/"
+              element={maintenance ? <Maintenance /> : <Booking2 />}
+            />
             <Route path="/admin/login" element={<Login />} />
             <Route
               element={

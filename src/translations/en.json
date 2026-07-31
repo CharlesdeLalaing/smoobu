@@ -1,5 +1,12 @@
 {
     "translation": {
+      "maintenance": {
+        "title": "Bookings temporarily unavailable",
+        "message": "Our online booking system is currently under maintenance. We will be back very shortly.",
+        "contact": "For any booking or question, you can contact us directly:",
+        "phone": "+32 475 20 16 19",
+        "email": "fermedebasseilles@gmail.com"
+      },
       "header": {
         "contact": {
           "phone": "+32 475 20 16 19",

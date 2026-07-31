@@ -1,5 +1,12 @@
 {
     "translation": {
+      "maintenance": {
+        "title": "Réservations temporairement indisponibles",
+        "message": "Notre système de réservation en ligne est en cours de maintenance. Nous serons de retour très prochainement.",
+        "contact": "Pour toute réservation ou question, vous pouvez nous contacter directement :",
+        "phone": "+32 475 20 16 19",
+        "email": "fermedebasseilles@gmail.com"
+      },
       "header": {
         "contact": {
           "phone": "+32 475 20 16 19",
